@@ -21,79 +21,125 @@ async function api(path,opts={}){
   return d;
 }
 const roleLabel={super_admin:'Super Admin',admin:'Admin',department_admin:'Department Admin',editor:'Editor',employee:'Employee'};
+const I18N={
+  bn:{
+    appName:'কর্মকর্তা-কর্মচারী ডিজিটাল সেবা',
+    appSub:'স্বাধীন ডিজিটাল সেবা প্ল্যাটফর্ম',
+    login:'লগইন',
+    logout:'লগআউট',
+    home:'হোম',
+    dashboard:'আমার ড্যাশবোর্ড',
+    promotion:'পদোন্নতি',
+    salary:'বেতন ও পে-স্কেল',
+    employees:'কর্মকর্তা-কর্মচারী ব্যবস্থাপনা',
+    directory:'বিভাগ ও পদবি',
+    admin:'অ্যাডমিন প্যানেল',
+    language:'English',
+    independent:'এটি একটি স্বাধীন ও অনানুষ্ঠানিক ডিজিটাল সেবা প্ল্যাটফর্ম।',
+    welcome:'স্বাগতম'
+  },
+  en:{
+    appName:'Employee Digital Service Platform',
+    appSub:'Independent Digital Service Platform',
+    login:'Login',
+    logout:'Logout',
+    home:'Home',
+    dashboard:'My Dashboard',
+    promotion:'Promotion',
+    salary:'Salary & Pay Scale',
+    employees:'Employee Management',
+    directory:'Department & Designation',
+    admin:'Admin Panel',
+    language:'বাংলা',
+    independent:'This is an independent and unofficial digital service platform.',
+    welcome:'Welcome'
+  }
+};
+function LangToggle({lang,setLang}){return <button className="lang-btn" onClick={()=>setLang(lang==='bn'?'en':'bn')}>{I18N[lang].language}</button>}
 
-function Login({onLogin,onBack}){
+
+
+function Login({onLogin,onBack,lang,setLang}){
   const[email,setEmail]=useState(''),[password,setPassword]=useState(''),[err,setErr]=useState(''),[busy,setBusy]=useState(false);
+  const en=lang==='en';
   async function submit(e){e.preventDefault();setErr('');setBusy(true);try{const x=await api('/api/login',{method:'POST',body:JSON.stringify({email,password})});onLogin(x.user)}catch(e){setErr(e.message)}finally{setBusy(false)}}
   return <div className="login-shell"><form className="login-card" onSubmit={submit}>
-    <button type="button" className="back-link" onClick={onBack}>← হোমে ফিরুন</button>
-    <div className="logo">ক-ক</div><h1>DU Employee ERP</h1><p>স্বেচ্ছাসেবী ডিজিটাল সেবা প্ল্যাটফর্ম</p>
-    <label>ইমেইল<input value={email} onChange={e=>setEmail(e.target.value)} type="email" required/></label>
-    <label>পাসওয়ার্ড<input value={password} onChange={e=>setPassword(e.target.value)} type="password" required/></label>
+    <div className="login-top"><button type="button" className="back-link" onClick={onBack}>{en?'← Back to Home':'← হোমে ফিরুন'}</button><LangToggle lang={lang} setLang={setLang}/></div>
+    <h1>{en?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা ব্যবস্থা'}</h1><p>{en?'Independent Digital Service Platform':'স্বাধীন ডিজিটাল সেবা প্ল্যাটফর্ম'}</p>
+    <label>{en?'Email':'ইমেইল'}<input value={email} onChange={e=>setEmail(e.target.value)} type="email" required/></label>
+    <label>{en?'Password':'পাসওয়ার্ড'}<input value={password} onChange={e=>setPassword(e.target.value)} type="password" required/></label>
     {err&&<div className="error">{err}</div>}
-    <button disabled={busy}>{busy?'লগইন হচ্ছে...':'লগইন'}</button>
-    <small>এটি কোনো অফিসিয়াল ঢাকা বিশ্ববিদ্যালয় ERP নয়।</small>
+    <button disabled={busy}>{busy?(en?'Signing in...':'লগইন হচ্ছে...'):(en?'Login':'লগইন')}</button>
+    <small>{en?'This is an independent and unofficial digital service platform.':'এটি একটি স্বাধীন ও অনানুষ্ঠানিক ডিজিটাল সেবা প্ল্যাটফর্ম।'}</small>
   </form></div>
 }
-
-function PublicHome({onLogin}){
-  return <div className="public">
-    <header className="public-nav">
-      <div className="public-brand"><div className="logo small">ক-ক</div><div><b>DU Employee ERP</b><small>কর্মকর্তা-কর্মচারী ডিজিটাল সেবা</small></div></div>
-      <nav><a href="#services">সেবা</a><a href="#updates">আপডেট</a><a href="#help">সহায়তা</a><button onClick={onLogin}>লগইন</button></nav>
+function PublicHome({onLogin,lang,setLang}){
+  const t=I18N[lang];
+  if(lang==='en')return <div className="public">
+    <header className="public-nav"><div className="public-brand"><div><b>{t.appName}</b><small>{t.appSub}</small></div></div>
+      <nav><a href="#services">Services</a><a href="#updates">Updates</a><a href="#help">Help</a><LangToggle lang={lang} setLang={setLang}/><button onClick={onLogin}>Login</button></nav>
     </header>
-    <section className="public-hero">
-      <div className="public-copy">
-        <span className="eyebrow">ZERO-COST DIGITAL FOUNDATION</span>
-        <h1>ঢাকা বিশ্ববিদ্যালয়ের কর্মকর্তা-কর্মচারীদের জন্য একটি আধুনিক ডিজিটাল সেবা প্ল্যাটফর্ম</h1>
-        <p>পদোন্নতি, পে-স্কেল, Employee Profile, service information এবং ভবিষ্যৎ online service—এক জায়গায়।</p>
-        <div className="public-actions"><button onClick={onLogin}>ERP-তে লগইন <ArrowRight size={17}/></button><a href="#services">সেবাগুলো দেখুন</a></div>
-        <div className="trust-row"><span><CheckCircle2/> Cloudflare Hosted</span><span><ShieldCheck/> Secure Session</span><span><Database/> D1 Database</span></div>
-      </div>
-      <div className="hero-panel">
-        <div className="hero-panel-head"><Landmark/><div><b>Quick Services</b><small>Phase 3 Active</small></div></div>
-        <div className="quick-grid">
-          <button onClick={onLogin}><TrendingUp/><b>পদোন্নতি</b><small>Eligibility + Roadmap</small></button>
-          <button onClick={onLogin}><WalletCards/><b>পে-স্কেল</b><small>2015 → 2026</small></button>
-          <button onClick={onLogin}><Users/><b>Employee</b><small>Profile Management</small></button>
-          <button onClick={onLogin}><Calculator/><b>Calculator</b><small>Service Tools</small></button>
-        </div>
-      </div>
-    </section>
-    <section id="services" className="public-section"><div className="section-title"><span>QUICK ACCESS</span><h2>প্রধান সেবা</h2></div>
-      <div className="service-grid">
-        {[['পদোন্নতি কেন্দ্র','বর্তমান গ্রেড, যোগদানের তারিখ, শিক্ষা ও ACR থেকে সম্ভাব্য পদোন্নতি হিসাব।',TrendingUp],
-          ['বেতন ও পে-স্কেল ERP','২০১৫ বর্তমান basic থেকে ২০২৬ fixation, বাস্তবায়িত basic, gross ও net হিসাব।',WalletCards],
-          ['Employee Management','Employee ID, পদবি, grade, joining date ও service status পরিচালনা।',Users],
-          ['Rules & Policies','পর্যায়ক্রমে promotion, leave, salary ও retirement rule library যুক্ত হবে।',BookOpen]
-        ].map(([t,p,I])=><article className="service-card" key={t}><div className="service-icon"><I/></div><h3>{t}</h3><p>{p}</p><button onClick={onLogin}>খুলুন <ChevronRight size={15}/></button></article>)}
-      </div>
-    </section>
-    <section id="updates" className="public-section muted-section"><div className="section-title"><span>LATEST</span><h2>সিস্টেম আপডেট</h2></div>
-      <div className="update-list">
-        <article><Bell/><div><b>Phase 3 চালু</b><p>Homepage, Promotion Calculator এবং Pay Scale Calculator একীভূত করা হয়েছে।</p></div></article>
-        <article><ShieldCheck/><div><b>Secure login active</b><p>Cloudflare Worker + D1 + HttpOnly secure session foundation কার্যকর।</p></div></article>
-        <article><FileText/><div><b>স্বাধীন/অনঅফিসিয়াল টুল</b><p>অফিসিয়াল সিদ্ধান্তের জন্য সংশ্লিষ্ট বিশ্ববিদ্যালয় আদেশ/নীতিমালা অনুসরণযোগ্য।</p></div></article>
-      </div>
-    </section>
-    <footer id="help"><div><b>DU Employee ERP</b><p>স্বেচ্ছাসেবী ও স্বাধীন ডিজিটাল উদ্যোগ</p></div><div><HelpCircle/> সহায়তা · <Phone/> 01759084692</div></footer>
+    <section className="public-hero"><div className="public-copy"><span className="eyebrow">INDEPENDENT DIGITAL SERVICE PLATFORM</span>
+      <h1>A modern digital service platform for officers and employees</h1>
+      <p>Promotion, pay scale, employee profile, service information and future online services in one place.</p>
+      <div className="public-actions"><button onClick={onLogin}>Login to ERP <ArrowRight size={17}/></button><a href="#services">View Services</a></div>
+      <div className="trust-row"><span><ShieldCheck/> Secure Session</span><span><Database/> Cloud Database</span><span><Activity/> Responsive Platform</span></div>
+    </div><div className="hero-panel"><div className="hero-panel-head"><Landmark/><div><b>Quick Services</b><small>Active Modules</small></div></div>
+      <div className="quick-grid"><button onClick={onLogin}><TrendingUp/><b>Promotion</b><small>Eligibility and Roadmap</small></button><button onClick={onLogin}><WalletCards/><b>Pay Scale</b><small>Salary Calculation</small></button><button onClick={onLogin}><Users/><b>Employees</b><small>Profile Management</small></button><button onClick={onLogin}><Calculator/><b>Calculators</b><small>Service Tools</small></button></div>
+    </div></section>
+    <section id="services" className="public-section"><div className="section-title"><span>QUICK ACCESS</span><h2>Main Services</h2></div><div className="service-grid">
+      {[['Promotion Centre','Calculate eligibility, annual cycle and projected roadmap.',TrendingUp],['Salary & Pay Scale','Calculate fixation, payable basic, gross and net salary.',WalletCards],['Employee Management','Manage employee profile, grade, joining and service status.',Users],['Rules & Policies','A dedicated rules and policy library can be maintained.',BookOpen]].map(([a,b,I])=><article className="service-card" key={a}><div className="service-icon"><I/></div><h3>{a}</h3><p>{b}</p><button onClick={onLogin}>Open <ChevronRight size={15}/></button></article>)}
+    </div></section>
+    <section id="updates" className="public-section muted-section"><div className="section-title"><span>LATEST</span><h2>System Updates</h2></div><div className="update-list">
+      <article><Bell/><div><b>Service modules active</b><p>Homepage, promotion, salary, employee profile and service history are integrated.</p></div></article>
+      <article><ShieldCheck/><div><b>Secure login active</b><p>Role-based access and secure session controls are enabled.</p></div></article>
+      <article><FileText/><div><b>Independent platform</b><p>This platform is not an official institutional system.</p></div></article>
+    </div></section>
+    <footer id="help"><div><b>{t.appName}</b><p>{t.independent}</p></div><div><HelpCircle/> Help · <Phone/> 01759084692</div></footer>
+  </div>;
+
+  return <div className="public">
+    <header className="public-nav"><div className="public-brand"><div><b>{t.appName}</b><small>{t.appSub}</small></div></div>
+      <nav><a href="#services">সেবা</a><a href="#updates">আপডেট</a><a href="#help">সহায়তা</a><LangToggle lang={lang} setLang={setLang}/><button onClick={onLogin}>লগইন</button></nav>
+    </header>
+    <section className="public-hero"><div className="public-copy"><span className="eyebrow">স্বাধীন ডিজিটাল সেবা প্ল্যাটফর্ম</span>
+      <h1>কর্মকর্তা-কর্মচারীদের জন্য একটি আধুনিক ডিজিটাল সেবা প্ল্যাটফর্ম</h1>
+      <p>পদোন্নতি, পে-স্কেল, কর্মী প্রোফাইল, চাকরির তথ্য এবং ভবিষ্যৎ অনলাইন সেবা—এক জায়গায়।</p>
+      <div className="public-actions"><button onClick={onLogin}>সিস্টেমে লগইন <ArrowRight size={17}/></button><a href="#services">সেবাগুলো দেখুন</a></div>
+      <div className="trust-row"><span><ShieldCheck/> নিরাপদ সেশন</span><span><Database/> ক্লাউড ডাটাবেজ</span><span><Activity/> রেসপনসিভ প্ল্যাটফর্ম</span></div>
+    </div><div className="hero-panel"><div className="hero-panel-head"><Landmark/><div><b>দ্রুত সেবা</b><small>সক্রিয় মডিউল</small></div></div>
+      <div className="quick-grid"><button onClick={onLogin}><TrendingUp/><b>পদোন্নতি</b><small>যোগ্যতা ও ভবিষ্যৎ ধাপ</small></button><button onClick={onLogin}><WalletCards/><b>পে-স্কেল</b><small>বেতন হিসাব</small></button><button onClick={onLogin}><Users/><b>কর্মকর্তা-কর্মচারী</b><small>প্রোফাইল ব্যবস্থাপনা</small></button><button onClick={onLogin}><Calculator/><b>ক্যালকুলেটর</b><small>চাকরি সংক্রান্ত হিসাব</small></button></div>
+    </div></section>
+    <section id="services" className="public-section"><div className="section-title"><span>দ্রুত প্রবেশ</span><h2>প্রধান সেবা</h2></div><div className="service-grid">
+      {[['পদোন্নতি কেন্দ্র','যোগ্যতা, বার্ষিক প্রক্রিয়া এবং সম্ভাব্য ভবিষ্যৎ ধাপ হিসাব করুন।',TrendingUp],['বেতন ও পে-স্কেল','ফিক্সেশন, প্রাপ্য বেসিক, মোট ও নেট বেতন হিসাব করুন।',WalletCards],['কর্মকর্তা-কর্মচারী ব্যবস্থাপনা','প্রোফাইল, গ্রেড, যোগদান ও চাকরির অবস্থা পরিচালনা করুন।',Users],['বিধি ও নীতিমালা','নিয়ম ও নীতিমালার আলাদা তথ্যভান্ডার রাখা যাবে।',BookOpen]].map(([a,b,I])=><article className="service-card" key={a}><div className="service-icon"><I/></div><h3>{a}</h3><p>{b}</p><button onClick={onLogin}>খুলুন <ChevronRight size={15}/></button></article>)}
+    </div></section>
+    <section id="updates" className="public-section muted-section"><div className="section-title"><span>সর্বশেষ</span><h2>সিস্টেম আপডেট</h2></div><div className="update-list">
+      <article><Bell/><div><b>সেবা মডিউল সক্রিয়</b><p>হোমপেজ, পদোন্নতি, বেতন, প্রোফাইল ও চাকরি ইতিহাস একীভূত করা হয়েছে।</p></div></article>
+      <article><ShieldCheck/><div><b>নিরাপদ লগইন সক্রিয়</b><p>ভূমিকা-ভিত্তিক প্রবেশাধিকার ও নিরাপদ সেশন ব্যবস্থা চালু আছে।</p></div></article>
+      <article><FileText/><div><b>স্বাধীন প্ল্যাটফর্ম</b><p>এটি কোনো প্রতিষ্ঠানের অফিসিয়াল সিস্টেম নয়।</p></div></article>
+    </div></section>
+    <footer id="help"><div><b>{t.appName}</b><p>{t.independent}</p></div><div><HelpCircle/> সহায়তা · <Phone/> 01759084692</div></footer>
   </div>
 }
-
 function Stat({label,value,icon:Icon}){return <article className="stat-card"><div className="stat-icon"><Icon size={19}/></div><div><small>{label}</small><b>{value}</b></div></article>}
 
-function DashboardHome({user,onPage}){
-  return <>
-    <section className="hero"><div><span>PHASE 3</span><h1>Employee ERP Foundation</h1><p>Homepage, Promotion Calculator, Pay Scale Calculator, Employee Management ও secure foundation সক্রিয়।</p></div><div className="hero-chip"><Activity size={16}/> System Active</div></section>
+
+function DashboardHome({user,onPage,lang='bn'}){
+  if(lang==='en')return <>
+    <section className="hero"><div><span>SERVICE PLATFORM</span><h1>Employee Service Foundation</h1><p>Homepage, promotion calculator, pay scale calculator, employee management and service history are active.</p></div><div className="hero-chip"><Activity size={16}/> System Active</div></section>
     <section className="stats-grid"><Stat label="Role" value={roleLabel[user.role]||user.role} icon={ShieldCheck}/><Stat label="Employee ID" value={user.employee_id||'—'} icon={IdCard}/><Stat label="Account Status" value="Active" icon={Activity}/><Stat label="Security" value="Session Protected" icon={LockKeyhole}/></section>
-    <section className="module-grid">
-      <article className="module-card"><div className="module-icon"><TrendingUp/></div><h3>পদোন্নতি কেন্দ্র</h3><p>Eligibility date, annual cycle এবং future roadmap হিসাব করুন।</p><button className="ghost-btn" onClick={()=>onPage('promotion')}>হিসাব করুন <ChevronRight size={16}/></button></article>
-      <article className="module-card"><div className="module-icon green"><WalletCards/></div><h3>বেতন ও পে-স্কেল ERP</h3><p>২০১৫ basic থেকে ২০২৬ fixation, payable basic, gross ও net হিসাব করুন।</p><button className="ghost-btn" onClick={()=>onPage('salary')}>হিসাব করুন <ChevronRight size={16}/></button></article>
-    </section>
-    <section className="notice"><b>দ্রষ্টব্য</b><p>এটি ব্যক্তিগত ও স্বেচ্ছাসেবী উদ্যোগ। অফিসিয়াল সিদ্ধান্তে সংশ্লিষ্ট কর্তৃপক্ষের নোটিশ/বিধি/আদেশ অনুসরণ করতে হবে।</p></section>
+    <section className="module-grid"><article className="module-card"><div className="module-icon"><TrendingUp/></div><h3>Promotion Centre</h3><p>Calculate eligibility date, annual cycle and future roadmap.</p><button className="ghost-btn" onClick={()=>onPage('promotion')}>Calculate <ChevronRight size={16}/></button></article>
+    <article className="module-card"><div className="module-icon green"><WalletCards/></div><h3>Salary & Pay Scale</h3><p>Calculate fixation, payable basic, gross and net salary.</p><button className="ghost-btn" onClick={()=>onPage('salary')}>Calculate <ChevronRight size={16}/></button></article></section>
+    <section className="notice"><b>Notice</b><p>This is an independent and unofficial digital service platform.</p></section>
+  </>;
+  return <>
+    <section className="hero"><div><span>সেবা প্ল্যাটফর্ম</span><h1>কর্মকর্তা-কর্মচারী সেবা ব্যবস্থা</h1><p>হোমপেজ, পদোন্নতি হিসাব, পে-স্কেল হিসাব, কর্মকর্তা-কর্মচারী ব্যবস্থাপনা ও চাকরি ইতিহাস সক্রিয়।</p></div><div className="hero-chip"><Activity size={16}/> সিস্টেম সক্রিয়</div></section>
+    <section className="stats-grid"><Stat label="ভূমিকা" value={roleLabel[user.role]||user.role} icon={ShieldCheck}/><Stat label="কর্মী নম্বর" value={user.employee_id||'—'} icon={IdCard}/><Stat label="অ্যাকাউন্ট অবস্থা" value="সক্রিয়" icon={Activity}/><Stat label="নিরাপত্তা" value="সুরক্ষিত সেশন" icon={LockKeyhole}/></section>
+    <section className="module-grid"><article className="module-card"><div className="module-icon"><TrendingUp/></div><h3>পদোন্নতি কেন্দ্র</h3><p>যোগ্যতার তারিখ, বার্ষিক প্রক্রিয়া এবং ভবিষ্যৎ ধাপ হিসাব করুন।</p><button className="ghost-btn" onClick={()=>onPage('promotion')}>হিসাব করুন <ChevronRight size={16}/></button></article>
+    <article className="module-card"><div className="module-icon green"><WalletCards/></div><h3>বেতন ও পে-স্কেল</h3><p>ফিক্সেশন, প্রাপ্য বেসিক, মোট ও নেট বেতন হিসাব করুন।</p><button className="ghost-btn" onClick={()=>onPage('salary')}>হিসাব করুন <ChevronRight size={16}/></button></article></section>
+    <section className="notice"><b>দ্রষ্টব্য</b><p>এটি একটি স্বাধীন ও অনানুষ্ঠানিক ডিজিটাল সেবা প্ল্যাটফর্ম।</p></section>
   </>
 }
-
 function DMY({label,value,onChange}){
   const d=value?new Date(value):null;
   const day=d&&!isNaN(d)?d.getDate():'',month=d&&!isNaN(d)?d.getMonth()+1:'',year=d&&!isNaN(d)?d.getFullYear():'';
@@ -112,7 +158,7 @@ function PromotionCenter(){
     const rule=PROMO_RULES[f.grade];
     if(!f.currentDate||!f.duDate)return setResult({error:'দুইটি যোগদানের তারিখ নির্বাচন করুন।'});
     const current=new Date(f.currentDate),du=new Date(f.duDate),today=new Date();today.setHours(0,0,0,0);
-    if(du>current)return setResult({error:'ঢাকা বিশ্ববিদ্যালয়ে প্রথম যোগদানের তারিখ বর্তমান পদে যোগদানের তারিখের পরে হতে পারে না।'});
+    if(du>current)return setResult({error:'প্রথম যোগদানের তারিখ বর্তমান পদে যোগদানের তারিখের পরে হতে পারে না।'});
     if(!rule)return setResult({error:'এই গ্রেডের rule map পাওয়া যায়নি।'});
     if(rule.noPromotion||rule.top)return setResult({stop:true,rule});
     const req=(rule.years&&rule.years[f.edu])||4;
@@ -131,7 +177,7 @@ function PromotionCenter(){
         <label>বর্তমান গ্রেড<select value={f.grade} onChange={e=>setF({...f,grade:e.target.value})}>{['16','17','15','14','13','12','11','10','9','6','4'].map(g=><option key={g} value={g}>গ্রেড {g}</option>)}</select></label>
         <label>শিক্ষাগত যোগ্যতা<select value={f.edu} onChange={e=>setF({...f,edu:e.target.value})}><option value="masters">Masters</option><option value="bachelor">Bachelor</option><option value="hsc">HSC</option><option value="diploma">Diploma</option><option value="bsceng">BSc Engineering</option><option value="mbbs">MBBS</option></select></label>
         <DMY label="বর্তমান পদে যোগদানের তারিখ" value={f.currentDate} onChange={v=>setF({...f,currentDate:v})}/>
-        <DMY label="ঢাকা বিশ্ববিদ্যালয়ে প্রথম যোগদানের তারিখ" value={f.duDate} onChange={v=>setF({...f,duDate:v})}/>
+        <DMY label="প্রথম যোগদানের তারিখ" value={f.duDate} onChange={v=>setF({...f,duDate:v})}/>
         <label>কম্পিউটার দক্ষতা/প্রশিক্ষণ<select value={f.computer} onChange={e=>setF({...f,computer:e.target.value})}><option value="yes">আছে</option><option value="no">নেই</option></select></label>
         <label>ACR শর্ত<select value={f.acr} onChange={e=>setF({...f,acr:e.target.value})}><option value="yes">সন্তোষজনক</option><option value="no">অসম্পূর্ণ/না</option></select></label>
       </div>
@@ -180,11 +226,11 @@ function SalaryCalculator(){
       <label>Post-2015 Annual Increment<input type="number" min="0" value={f.postInc} onChange={e=>setF({...f,postInc:e.target.value})}/></label>
       <label>বর্তমান ২০১৫ ধাপ<input readOnly value={`ধাপ ${currentIndex+1} — ৳${money(stages[currentIndex]||0)}`}/></label>
       <label>হিসাবের তারিখ<input type="date" value={f.date} onChange={e=>setF({...f,date:e.target.value})}/></label>
-      <label>DU Category<select value={f.category} onChange={e=>setF({...f,category:e.target.value})}><option value="officer">কর্মকর্তা</option><option value="class3">Class III</option><option value="class4">Class IV</option></select></label>
+      <label>Employee Category<select value={f.category} onChange={e=>setF({...f,category:e.target.value})}><option value="officer">কর্মকর্তা</option><option value="class3">Class III</option><option value="class4">Class IV</option></select></label>
       <label>সরকারি/বিশ্ববিদ্যালয় বাসা<select value={f.housing} onChange={e=>setF({...f,housing:e.target.value})}><option value="no">না</option><option value="yes">হ্যাঁ</option></select></label>
       <label>শিক্ষা ভাতা সন্তানের সংখ্যা<select value={f.children} onChange={e=>setF({...f,children:e.target.value})}><option>0</option><option>1</option><option>2</option></select></label>
       <label>টিফিন ভাতা প্রযোজ্য<select value={f.tiffin} onChange={e=>setF({...f,tiffin:e.target.value})}><option value="yes">হ্যাঁ</option><option value="no">না</option></select></label>
-      <label>কর্মস্থল<select value={f.zone} onChange={e=>setF({...f,zone:e.target.value})}><option value="dhaka">DU / Dhaka City</option><option value="other">অন্যান্য</option></select></label>
+      <label>কর্মস্থল<select value={f.zone} onChange={e=>setF({...f,zone:e.target.value})}><option value="dhaka">Dhaka City</option><option value="other">অন্যান্য</option></select></label>
     </div>
     <details className="deduction-box"><summary>নিয়মিত Deduction সম্পাদনা</summary><div className="form-grid compact">
       {[['health','Health Insurance'],['group','Group Insurance'],['stamp','Revenue Stamp'],['association','Association'],['tax','Tax'],['loan','Loan'],['other','Other']].map(([k,l])=><label key={k}>{l}<input type="number" step="0.01" value={f[k]} onChange={e=>setF({...f,[k]:e.target.value})}/></label>)}
@@ -300,7 +346,7 @@ function EmployeeModal({open,onClose,onSaved,editing,departments,designations}){
       <label>Office / Unit<input value={form.office_name} onChange={e=>change('office_name',e.target.value)}/></label>
       <label>গ্রেড<select value={form.grade} onChange={e=>change('grade',e.target.value)}><option value="">নির্বাচন</option>{Array.from({length:20},(_,i)=>i+1).map(g=><option key={g}>{g}</option>)}</select></label>
       <label>বেসিক বেতন<input type="number" min="0" value={form.basic_salary} onChange={e=>change('basic_salary',e.target.value)}/></label>
-      <DMY label="ঢাকা বিশ্ববিদ্যালয়ে প্রথম যোগদানের তারিখ" value={form.joining_date} onChange={v=>change('joining_date',v)}/>
+      <DMY label="প্রথম যোগদানের তারিখ" value={form.joining_date} onChange={v=>change('joining_date',v)}/>
       <label>বর্তমান পদ<input value={form.current_position} onChange={e=>change('current_position',e.target.value)}/></label>
       <DMY label="বর্তমান পদে যোগদানের তারিখ" value={form.current_position_joining_date} onChange={v=>change('current_position_joining_date',v)}/>
       <label>Employment Type<select value={form.employment_type} onChange={e=>change('employment_type',e.target.value)}><option value="">নির্বাচন</option><option value="permanent">স্থায়ী</option><option value="temporary">অস্থায়ী</option><option value="contract">চুক্তিভিত্তিক</option></select></label>
@@ -467,24 +513,30 @@ function AdminPanel(){
 }
 
 function App(){
-  const[user,setUser]=useState(null),[loading,setLoading]=useState(true),[page,setPage]=useState('dashboard'),[showLogin,setShowLogin]=useState(false);
+  const[user,setUser]=useState(null),[loading,setLoading]=useState(true),[page,setPage]=useState('dashboard'),[showLogin,setShowLogin]=useState(false),[lang,setLang]=useState(()=>localStorage.getItem('app_lang')||'bn');
   useEffect(()=>{api('/api/me').then(x=>setUser(x.user)).catch(()=>{}).finally(()=>setLoading(false))},[]);
   async function logout(){try{await api('/api/logout',{method:'POST'})}catch{}setUser(null);setShowLogin(false);setPage('dashboard')}
   if(loading)return <div className="loading">Loading...</div>;
-  if(!user)return showLogin?<Login onLogin={setUser} onBack={()=>setShowLogin(false)}/>:<PublicHome onLogin={()=>setShowLogin(true)}/>;
+  useEffect(()=>{localStorage.setItem('app_lang',lang)},[lang]);
+  if(!user)return showLogin?<Login onLogin={setUser} onBack={()=>setShowLogin(false)} lang={lang} setLang={setLang}/>:<PublicHome onLogin={()=>setShowLogin(true)} lang={lang} setLang={setLang}/>;
   const admin=['super_admin','admin','department_admin'].includes(user.role);
-  return <div className="app"><aside className="side"><div className="brand"><div className="logo small">ক-ক</div><div><b>DU Employee ERP</b><small>Zero-Cost Foundation</small></div></div><nav>
-    <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}><LayoutDashboard size={18}/> আমার ড্যাশবোর্ড</button>
-    <button className={page==='promotion'?'active':''} onClick={()=>setPage('promotion')}><TrendingUp size={18}/> পদোন্নতি</button>
-    <button className={page==='salary'?'active':''} onClick={()=>setPage('salary')}><WalletCards size={18}/> বেতন ও পে-স্কেল</button>
-    {admin&&<button className={page==='employees'?'active':''} onClick={()=>setPage('employees')}><Users size={18}/> Employee Management</button>}
-    {admin&&<button className={page==='directory'?'active':''} onClick={()=>setPage('directory')}><Building2 size={18}/> Department & Designation</button>}{admin&&<button className={page==='admin'?'active':''} onClick={()=>setPage('admin')}><ShieldCheck size={18}/> Admin Panel</button>}
-  </nav></aside><main><header><div><h2>স্বাগতম, {user.name}</h2><p>{roleLabel[user.role]||user.role}</p></div><button className="logout" onClick={logout}><LogOut size={16}/> লগআউট</button></header>
-    {page==='dashboard'&&<DashboardHome user={user} onPage={setPage}/>}
-    {page==='promotion'&&<PromotionCenter/>}
-    {page==='salary'&&<SalaryCalculator/>}
-    {page==='employees'&&admin&&<EmployeeManagement/>}
-    {page==='directory'&&admin&&<MasterDirectory/>}{page==='admin'&&admin&&<AdminPanel/>}
-  </main></div>
+  return <div className="app"><aside className="side">
+    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform':'স্বাধীন প্ল্যাটফর্ম'}</small></div></div>
+    <nav>
+      <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}><LayoutDashboard size={18}/>{lang==='en'?'My Dashboard':'আমার ড্যাশবোর্ড'}</button>
+      <button className={page==='promotion'?'active':''} onClick={()=>setPage('promotion')}><TrendingUp size={18}/>{lang==='en'?'Promotion':'পদোন্নতি'}</button>
+      <button className={page==='salary'?'active':''} onClick={()=>setPage('salary')}><WalletCards size={18}/>{lang==='en'?'Salary & Pay Scale':'বেতন ও পে-স্কেল'}</button>
+      {admin&&<button className={page==='employees'?'active':''} onClick={()=>setPage('employees')}><Users size={18}/>{lang==='en'?'Employee Management':'কর্মকর্তা-কর্মচারী ব্যবস্থাপনা'}</button>}
+      {admin&&<button className={page==='directory'?'active':''} onClick={()=>setPage('directory')}><Building2 size={18}/>{lang==='en'?'Department & Designation':'বিভাগ ও পদবি'}</button>}
+      {admin&&<button className={page==='admin'?'active':''} onClick={()=>setPage('admin')}><ShieldCheck size={18}/>{lang==='en'?'Admin Panel':'অ্যাডমিন প্যানেল'}</button>}
+    </nav></aside>
+    <main><header><div><h2>{lang==='en'?`Welcome, ${user.name}`:`স্বাগতম, ${user.name}`}</h2><p>{roleLabel[user.role]||user.role}</p></div><div className="header-actions"><LangToggle lang={lang} setLang={setLang}/><button className="logout" onClick={logout}><LogOut size={16}/>{lang==='en'?'Logout':'লগআউট'}</button></div></header>
+      {page==='dashboard'&&<DashboardHome user={user} onPage={setPage} lang={lang}/>}
+      {page==='promotion'&&<PromotionCenter lang={lang}/>}
+      {page==='salary'&&<SalaryCalculator lang={lang}/>}
+      {page==='employees'&&admin&&<EmployeeManagement lang={lang}/>}
+      {page==='directory'&&admin&&<MasterDirectory lang={lang}/>}
+      {page==='admin'&&admin&&<AdminPanel lang={lang}/>}
+    </main></div>
 }
 createRoot(document.getElementById('root')).render(<App/>);

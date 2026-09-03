@@ -22,7 +22,7 @@ export default{async fetch(req,env){
   const C=cors(req);if(req.method==='OPTIONS')return new Response(null,{status:204,headers:C});
   const u=new URL(req.url);
   try{
-    if(u.pathname==='/api/health')return json({ok:true,service:'DU Employee ERP API',phase:4},200,C);
+    if(u.pathname==='/api/health')return json({ok:true,service:'Employee Service ERP API',phase:4},200,C);
 
     if(u.pathname==='/api/bootstrap'&&req.method==='POST'){
       const c=await env.DB.prepare('SELECT COUNT(*) c FROM users').first();
