@@ -85,6 +85,58 @@ async function recoveryHash(code){return sha(normalizeRecoveryCode(code))}
       return json({ok:true,message:'Password changed successfully'},200,C);
     }
 
+    // Phase 9: Personal Digital Service Book
+    if(u.pathname==='/api/my-career'&&req.method==='GET'){
+      if(!user)return json({error:'Unauthenticated'},401,C);
+      const [profile,education,events]=await Promise.all([
+        env.DB.prepare(`SELECT * FROM career_profiles WHERE user_id=?`).bind(user.id).first(),
+        env.DB.prepare(`SELECT * FROM career_education WHERE user_id=? ORDER BY COALESCE(passing_year,0) DESC,id DESC`).bind(user.id).all(),
+        env.DB.prepare(`SELECT * FROM career_events WHERE user_id=? ORDER BY event_date DESC,id DESC`).bind(user.id).all()
+      ]);
+      return json({profile:profile||null,education:education.results||[],events:events.results||[]},200,C);
+    }
+    if(u.pathname==='/api/my-career/profile'&&req.method==='PUT'){
+      if(!user)return json({error:'Unauthenticated'},401,C);
+      const b=await req.json();
+      await env.DB.prepare(`INSERT INTO career_profiles(user_id,first_joining_date,current_post,current_grade,current_post_joining_date,employment_type,office_name,department_name,employee_reference,retirement_age,notes,updated_at)
+        VALUES(?,?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP)
+        ON CONFLICT(user_id) DO UPDATE SET first_joining_date=excluded.first_joining_date,current_post=excluded.current_post,current_grade=excluded.current_grade,current_post_joining_date=excluded.current_post_joining_date,employment_type=excluded.employment_type,office_name=excluded.office_name,department_name=excluded.department_name,employee_reference=excluded.employee_reference,retirement_age=excluded.retirement_age,notes=excluded.notes,updated_at=CURRENT_TIMESTAMP`)
+        .bind(user.id,b.first_joining_date||null,b.current_post||null,b.current_grade?Number(b.current_grade):null,b.current_post_joining_date||null,b.employment_type||null,b.office_name||null,b.department_name||null,b.employee_reference||null,b.retirement_age?Number(b.retirement_age):null,b.notes||null).run();
+      await audit(env,user,'career_profile_update','career_profile',user.id,{});
+      return json({ok:true},200,C);
+    }
+    if(u.pathname==='/api/my-career/education'&&req.method==='POST'){
+      if(!user)return json({error:'Unauthenticated'},401,C);
+      const b=await req.json();if(!String(b.level||'').trim())return json({error:'Education level is required'},400,C);
+      const r=await env.DB.prepare(`INSERT INTO career_education(user_id,level,institution,subject,passing_year,result,notes) VALUES(?,?,?,?,?,?,?)`)
+        .bind(user.id,String(b.level).trim(),b.institution||null,b.subject||null,b.passing_year?Number(b.passing_year):null,b.result||null,b.notes||null).run();
+      await audit(env,user,'career_education_create','career_education',r.meta?.last_row_id,{});
+      return json({ok:true,id:r.meta?.last_row_id||null},201,C);
+    }
+    const ce=u.pathname.match(/^\/api\/my-career\/education\/(\d+)$/);
+    if(ce&&req.method==='DELETE'){
+      if(!user)return json({error:'Unauthenticated'},401,C);
+      const id=Number(ce[1]);await env.DB.prepare(`DELETE FROM career_education WHERE id=? AND user_id=?`).bind(id,user.id).run();
+      await audit(env,user,'career_education_delete','career_education',id,{});
+      return json({ok:true},200,C);
+    }
+    if(u.pathname==='/api/my-career/events'&&req.method==='POST'){
+      if(!user)return json({error:'Unauthenticated'},401,C);
+      const b=await req.json();if(!b.event_type||!b.event_date||!String(b.title||'').trim())return json({error:'Event type, date and title are required'},400,C);
+      const allowed=['appointment','promotion','transfer','increment','training','grade_change','other'];if(!allowed.includes(b.event_type))return json({error:'Invalid event type'},400,C);
+      const r=await env.DB.prepare(`INSERT INTO career_events(user_id,event_type,event_date,title,post_name,grade,office_name,reference_no,notes) VALUES(?,?,?,?,?,?,?,?,?)`)
+        .bind(user.id,b.event_type,b.event_date,String(b.title).trim(),b.post_name||null,b.grade?Number(b.grade):null,b.office_name||null,b.reference_no||null,b.notes||null).run();
+      await audit(env,user,'career_event_create','career_event',r.meta?.last_row_id,{event_type:b.event_type});
+      return json({ok:true,id:r.meta?.last_row_id||null},201,C);
+    }
+    const cev=u.pathname.match(/^\/api\/my-career\/events\/(\d+)$/);
+    if(cev&&req.method==='DELETE'){
+      if(!user)return json({error:'Unauthenticated'},401,C);
+      const id=Number(cev[1]);await env.DB.prepare(`DELETE FROM career_events WHERE id=? AND user_id=?`).bind(id,user.id).run();
+      await audit(env,user,'career_event_delete','career_event',id,{});
+      return json({ok:true},200,C);
+    }
+
     if(u.pathname==='/api/departments'&&req.method==='GET'){
       if(!user)return json({error:'Unauthenticated'},401,C);
       const x=await env.DB.prepare(`SELECT * FROM departments ORDER BY name_bn COLLATE NOCASE`).all();
