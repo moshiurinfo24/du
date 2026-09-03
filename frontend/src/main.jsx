@@ -74,51 +74,83 @@ function Login({onLogin,onBack,lang,setLang}){
   </form></div>
 }
 function PublicHome({onLogin,lang,setLang}){
-  const t=I18N[lang];
-  if(lang==='en')return <div className="public">
-    <header className="public-nav"><div className="public-brand"><div><b>{t.appName}</b><small>{t.appSub}</small></div></div>
-      <nav><a href="#services">Services</a><a href="#updates">Updates</a><a href="#help">Help</a><LangToggle lang={lang} setLang={setLang}/><button onClick={onLogin}>Login</button></nav>
+  const t=I18N[lang], en=lang==='en';
+  const [publicTool,setPublicTool]=useState('promotion');
+  const scrollTo=(id)=>requestAnimationFrame(()=>document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'}));
+  const openTool=(tool)=>{setPublicTool(tool);scrollTo('public-calculator');};
+  const copy=en?{
+    nav:['Services','Calculators','Updates','Help'],
+    eyebrow:'INDEPENDENT · SMART · SECURE',
+    title:'A premium digital service experience for officers and employees',
+    desc:'Promotion eligibility, pay-scale calculation, service tools and secure ERP access — brought together in one modern platform.',
+    login:'Login to ERP', explore:'Explore Services', live:'PUBLIC CALCULATORS · NO LOGIN REQUIRED',
+    quick:'Instant Access', active:'Public tools available now', promo:'Promotion Calculator', promoSub:'Eligibility, annual cycle and roadmap', pay:'Pay Scale Calculator', paySub:'Fixation, payable basic, gross and net salary', employee:'Employee ERP', employeeSub:'Secure profile and service management', rules:'Rules & Policies', rulesSub:'Structured policy library',
+    services:'Premium Services', servicesSub:'Everything important, presented clearly and beautifully.', open:'Open', loginOpen:'Login Required',
+    calcTitle:'Calculate without logging in', calcSub:'Promotion and pay-scale calculators are temporarily available to everyone from the homepage.', promoTab:'Promotion', payTab:'Pay Scale',
+    updates:'Platform Highlights', u1:'Public calculation enabled',u1d:'Promotion and pay-scale calculations can now be used without login.',u2:'Secure ERP remains protected',u2d:'Employee records and administrative modules still require authenticated access.',u3:'Independent platform',u3d:'This is not an official institutional system.',
+    help:'Need assistance?', helpText:'For platform support and technical assistance', call:'Call 01759084692'
+  }:{
+    nav:['সেবা','ক্যালকুলেটর','আপডেট','সহায়তা'],
+    eyebrow:'স্বাধীন · আধুনিক · নিরাপদ',
+    title:'কর্মকর্তা-কর্মচারীদের জন্য প্রিমিয়াম ডিজিটাল সেবার অভিজ্ঞতা',
+    desc:'পদোন্নতির যোগ্যতা, পে-স্কেল হিসাব, চাকরি-সংক্রান্ত টুল এবং নিরাপদ ERP প্রবেশ—সবকিছু এক আধুনিক প্ল্যাটফর্মে।',
+    login:'ERP-তে লগইন', explore:'সেবাগুলো দেখুন', live:'পাবলিক ক্যালকুলেটর · লগইন প্রয়োজন নেই',
+    quick:'দ্রুত প্রবেশ', active:'এখনই ব্যবহারযোগ্য পাবলিক সেবা', promo:'পদোন্নতি ক্যালকুলেটর', promoSub:'যোগ্যতা, বার্ষিক প্রক্রিয়া ও ভবিষ্যৎ ধাপ', pay:'পে-স্কেল ক্যালকুলেটর', paySub:'ফিক্সেশন, প্রাপ্য বেসিক, মোট ও নেট বেতন', employee:'কর্মকর্তা-কর্মচারী ERP', employeeSub:'নিরাপদ প্রোফাইল ও চাকরি ব্যবস্থাপনা', rules:'বিধি ও নীতিমালা', rulesSub:'সুশৃঙ্খল নীতিমালা তথ্যভান্ডার',
+    services:'প্রিমিয়াম সেবাসমূহ', servicesSub:'প্রয়োজনীয় সেবাগুলো সহজ, সুন্দর ও পরিষ্কারভাবে সাজানো।', open:'খুলুন', loginOpen:'লগইন প্রয়োজন',
+    calcTitle:'লগইন ছাড়াই হিসাব করুন', calcSub:'পদোন্নতি ও পে-স্কেল হিসাব আপাতত হোমপেজ থেকেই সবাই ব্যবহার করতে পারবেন।', promoTab:'পদোন্নতি', payTab:'পে-স্কেল',
+    updates:'প্ল্যাটফর্মের বিশেষ সুবিধা', u1:'পাবলিক হিসাব চালু',u1d:'এখন লগইন ছাড়াই পদোন্নতি ও পে-স্কেল হিসাব করা যাবে।',u2:'ERP নিরাপদই থাকছে',u2d:'কর্মী তথ্য ও প্রশাসনিক মডিউলে প্রবেশের জন্য লগইন প্রয়োজন হবে।',u3:'স্বাধীন প্ল্যাটফর্ম',u3d:'এটি কোনো প্রতিষ্ঠানের অফিসিয়াল সিস্টেম নয়।',
+    help:'সহায়তা প্রয়োজন?', helpText:'প্ল্যাটফর্ম সহায়তা ও কারিগরি সহযোগিতার জন্য', call:'কল করুন 01759084692'
+  };
+  return <div className={'public premium-public '+(en?'lang-en':'lang-bn')}>
+    <header className="public-nav luxury-nav">
+      <div className="public-brand"><div className="brand-orb"><ShieldCheck size={19}/></div><div><b>{t.appName}</b><small>{t.appSub}</small></div></div>
+      <nav>
+        <a href="#services">{copy.nav[0]}</a><a href="#public-calculator">{copy.nav[1]}</a><a href="#updates">{copy.nav[2]}</a><a href="#help">{copy.nav[3]}</a>
+        <LangToggle lang={lang} setLang={setLang}/><button className="nav-login" onClick={onLogin}>{t.login}<ArrowRight size={15}/></button>
+      </nav>
     </header>
-    <section className="public-hero"><div className="public-copy"><span className="eyebrow">INDEPENDENT DIGITAL SERVICE PLATFORM</span>
-      <h1>A modern digital service platform for officers and employees</h1>
-      <p>Promotion, pay scale, employee profile, service information and future online services in one place.</p>
-      <div className="public-actions"><button onClick={onLogin}>Login to ERP <ArrowRight size={17}/></button><a href="#services">View Services</a></div>
-      <div className="trust-row"><span><ShieldCheck/> Secure Session</span><span><Database/> Cloud Database</span><span><Activity/> Responsive Platform</span></div>
-    </div><div className="hero-panel"><div className="hero-panel-head"><Landmark/><div><b>Quick Services</b><small>Active Modules</small></div></div>
-      <div className="quick-grid"><button onClick={onLogin}><TrendingUp/><b>Promotion</b><small>Eligibility and Roadmap</small></button><button onClick={onLogin}><WalletCards/><b>Pay Scale</b><small>Salary Calculation</small></button><button onClick={onLogin}><Users/><b>Employees</b><small>Profile Management</small></button><button onClick={onLogin}><Calculator/><b>Calculators</b><small>Service Tools</small></button></div>
-    </div></section>
-    <section id="services" className="public-section"><div className="section-title"><span>QUICK ACCESS</span><h2>Main Services</h2></div><div className="service-grid">
-      {[['Promotion Centre','Calculate eligibility, annual cycle and projected roadmap.',TrendingUp],['Salary & Pay Scale','Calculate fixation, payable basic, gross and net salary.',WalletCards],['Employee Management','Manage employee profile, grade, joining and service status.',Users],['Rules & Policies','A dedicated rules and policy library can be maintained.',BookOpen]].map(([a,b,I])=><article className="service-card" key={a}><div className="service-icon"><I/></div><h3>{a}</h3><p>{b}</p><button onClick={onLogin}>Open <ChevronRight size={15}/></button></article>)}
-    </div></section>
-    <section id="updates" className="public-section muted-section"><div className="section-title"><span>LATEST</span><h2>System Updates</h2></div><div className="update-list">
-      <article><Bell/><div><b>Service modules active</b><p>Homepage, promotion, salary, employee profile and service history are integrated.</p></div></article>
-      <article><ShieldCheck/><div><b>Secure login active</b><p>Role-based access and secure session controls are enabled.</p></div></article>
-      <article><FileText/><div><b>Independent platform</b><p>This platform is not an official institutional system.</p></div></article>
-    </div></section>
-    <footer id="help"><div><b>{t.appName}</b><p>{t.independent}</p></div><div><HelpCircle/> Help · <Phone/> 01759084692</div></footer>
-  </div>;
 
-  return <div className="public">
-    <header className="public-nav"><div className="public-brand"><div><b>{t.appName}</b><small>{t.appSub}</small></div></div>
-      <nav><a href="#services">সেবা</a><a href="#updates">আপডেট</a><a href="#help">সহায়তা</a><LangToggle lang={lang} setLang={setLang}/><button onClick={onLogin}>লগইন</button></nav>
-    </header>
-    <section className="public-hero"><div className="public-copy"><span className="eyebrow">স্বাধীন ডিজিটাল সেবা প্ল্যাটফর্ম</span>
-      <h1>কর্মকর্তা-কর্মচারীদের জন্য একটি আধুনিক ডিজিটাল সেবা প্ল্যাটফর্ম</h1>
-      <p>পদোন্নতি, পে-স্কেল, কর্মী প্রোফাইল, চাকরির তথ্য এবং ভবিষ্যৎ অনলাইন সেবা—এক জায়গায়।</p>
-      <div className="public-actions"><button onClick={onLogin}>সিস্টেমে লগইন <ArrowRight size={17}/></button><a href="#services">সেবাগুলো দেখুন</a></div>
-      <div className="trust-row"><span><ShieldCheck/> নিরাপদ সেশন</span><span><Database/> ক্লাউড ডাটাবেজ</span><span><Activity/> রেসপনসিভ প্ল্যাটফর্ম</span></div>
-    </div><div className="hero-panel"><div className="hero-panel-head"><Landmark/><div><b>দ্রুত সেবা</b><small>সক্রিয় মডিউল</small></div></div>
-      <div className="quick-grid"><button onClick={onLogin}><TrendingUp/><b>পদোন্নতি</b><small>যোগ্যতা ও ভবিষ্যৎ ধাপ</small></button><button onClick={onLogin}><WalletCards/><b>পে-স্কেল</b><small>বেতন হিসাব</small></button><button onClick={onLogin}><Users/><b>কর্মকর্তা-কর্মচারী</b><small>প্রোফাইল ব্যবস্থাপনা</small></button><button onClick={onLogin}><Calculator/><b>ক্যালকুলেটর</b><small>চাকরি সংক্রান্ত হিসাব</small></button></div>
+    <section className="public-hero luxury-hero">
+      <div className="hero-glow glow-one"></div><div className="hero-glow glow-two"></div>
+      <div className="public-copy">
+        <span className="eyebrow luxury-eyebrow"><span className="pulse-dot"></span>{copy.eyebrow}</span>
+        <h1>{copy.title}</h1><p>{copy.desc}</p>
+        <div className="public-actions"><button className="luxury-primary" onClick={()=>openTool('promotion')}>{copy.promo}<ArrowRight size={17}/></button><button className="luxury-secondary" onClick={onLogin}>{copy.login}</button></div>
+        <div className="public-live"><Activity size={16}/><b>{copy.live}</b></div>
+        <div className="trust-row"><span><ShieldCheck/> {en?'Secure Session':'নিরাপদ সেশন'}</span><span><Database/> {en?'Cloud Ready':'ক্লাউড প্রস্তুত'}</span><span><Activity/> {en?'Responsive':'রেসপনসিভ'}</span></div>
+      </div>
+      <div className="hero-panel luxury-panel">
+        <div className="hero-panel-head"><div className="panel-icon"><Landmark/></div><div><b>{copy.quick}</b><small>{copy.active}</small></div><span className="status-pill"><span></span>{en?'LIVE':'সক্রিয়'}</span></div>
+        <div className="quick-grid luxury-quick">
+          <button onClick={()=>openTool('promotion')}><span className="quick-icon"><TrendingUp/></span><b>{copy.promo}</b><small>{copy.promoSub}</small><ChevronRight className="quick-arrow"/></button>
+          <button onClick={()=>openTool('salary')}><span className="quick-icon gold"><WalletCards/></span><b>{copy.pay}</b><small>{copy.paySub}</small><ChevronRight className="quick-arrow"/></button>
+          <button onClick={onLogin}><span className="quick-icon violet"><Users/></span><b>{copy.employee}</b><small>{copy.employeeSub}</small><ChevronRight className="quick-arrow"/></button>
+          <button onClick={()=>scrollTo('updates')}><span className="quick-icon teal"><BookOpen/></span><b>{copy.rules}</b><small>{copy.rulesSub}</small><ChevronRight className="quick-arrow"/></button>
+        </div>
+      </div>
+    </section>
+
+    <section id="services" className="public-section luxury-section">
+      <div className="section-title centered"><span>{en?'PREMIUM ACCESS':'প্রিমিয়াম প্রবেশ'}</span><h2>{copy.services}</h2><p>{copy.servicesSub}</p></div>
+      <div className="service-grid luxury-services">
+        {[[copy.promo,copy.promoSub,TrendingUp,'promotion',false],[copy.pay,copy.paySub,WalletCards,'salary',false],[copy.employee,copy.employeeSub,Users,'login',true],[copy.rules,copy.rulesSub,BookOpen,'updates',true]].map(([a,b,I,target,locked],idx)=><article className="service-card luxury-card" key={a}><div className="card-number">0{idx+1}</div><div className="service-icon"><I/></div><h3>{a}</h3><p>{b}</p><button onClick={()=>target==='login'?onLogin():target==='updates'?scrollTo('updates'):openTool(target)}>{locked?copy.loginOpen:copy.open}<ChevronRight size={15}/></button></article>)}
+      </div>
+    </section>
+
+    <section id="public-calculator" className="public-section calculator-stage">
+      <div className="section-title centered"><span>{en?'PUBLIC TOOLS':'পাবলিক টুল'}</span><h2>{copy.calcTitle}</h2><p>{copy.calcSub}</p></div>
+      <div className="calculator-switch"><button className={publicTool==='promotion'?'active':''} onClick={()=>setPublicTool('promotion')}><TrendingUp/>{copy.promoTab}</button><button className={publicTool==='salary'?'active':''} onClick={()=>setPublicTool('salary')}><WalletCards/>{copy.payTab}</button></div>
+      <div className="public-calculator-card">{publicTool==='promotion'?<PromotionCenter lang={lang}/>:<SalaryCalculator lang={lang}/>}</div>
+    </section>
+
+    <section id="updates" className="public-section muted-section luxury-updates"><div className="section-title centered"><span>{en?'PLATFORM':'প্ল্যাটফর্ম'}</span><h2>{copy.updates}</h2></div><div className="update-list premium-update-list">
+      <article><div className="update-icon"><Calculator/></div><div><b>{copy.u1}</b><p>{copy.u1d}</p></div></article>
+      <article><div className="update-icon"><LockKeyhole/></div><div><b>{copy.u2}</b><p>{copy.u2d}</p></div></article>
+      <article><div className="update-icon"><FileText/></div><div><b>{copy.u3}</b><p>{copy.u3d}</p></div></article>
     </div></section>
-    <section id="services" className="public-section"><div className="section-title"><span>দ্রুত প্রবেশ</span><h2>প্রধান সেবা</h2></div><div className="service-grid">
-      {[['পদোন্নতি কেন্দ্র','যোগ্যতা, বার্ষিক প্রক্রিয়া এবং সম্ভাব্য ভবিষ্যৎ ধাপ হিসাব করুন।',TrendingUp],['বেতন ও পে-স্কেল','ফিক্সেশন, প্রাপ্য বেসিক, মোট ও নেট বেতন হিসাব করুন।',WalletCards],['কর্মকর্তা-কর্মচারী ব্যবস্থাপনা','প্রোফাইল, গ্রেড, যোগদান ও চাকরির অবস্থা পরিচালনা করুন।',Users],['বিধি ও নীতিমালা','নিয়ম ও নীতিমালার আলাদা তথ্যভান্ডার রাখা যাবে।',BookOpen]].map(([a,b,I])=><article className="service-card" key={a}><div className="service-icon"><I/></div><h3>{a}</h3><p>{b}</p><button onClick={onLogin}>খুলুন <ChevronRight size={15}/></button></article>)}
-    </div></section>
-    <section id="updates" className="public-section muted-section"><div className="section-title"><span>সর্বশেষ</span><h2>সিস্টেম আপডেট</h2></div><div className="update-list">
-      <article><Bell/><div><b>সেবা মডিউল সক্রিয়</b><p>হোমপেজ, পদোন্নতি, বেতন, প্রোফাইল ও চাকরি ইতিহাস একীভূত করা হয়েছে।</p></div></article>
-      <article><ShieldCheck/><div><b>নিরাপদ লগইন সক্রিয়</b><p>ভূমিকা-ভিত্তিক প্রবেশাধিকার ও নিরাপদ সেশন ব্যবস্থা চালু আছে।</p></div></article>
-      <article><FileText/><div><b>স্বাধীন প্ল্যাটফর্ম</b><p>এটি কোনো প্রতিষ্ঠানের অফিসিয়াল সিস্টেম নয়।</p></div></article>
-    </div></section>
-    <footer id="help"><div><b>{t.appName}</b><p>{t.independent}</p></div><div><HelpCircle/> সহায়তা · <Phone/> 01759084692</div></footer>
+
+    <section className="public-cta"><div><span>{en?'SUPPORT':'সহায়তা'}</span><h2>{copy.help}</h2><p>{copy.helpText}</p></div><a href="tel:01759084692"><PhoneCall/>{copy.call}</a></section>
+    <footer id="help"><div><b>{t.appName}</b><p>{t.independent}</p></div><div><HelpCircle/> {en?'Developer Support':'ডেভেলপার সহায়তা'} · <Phone/> 01759084692</div></footer>
   </div>
 }
 function Stat({label,value,icon:Icon}){return <article className="stat-card"><div className="stat-icon"><Icon size={19}/></div><div><small>{label}</small><b>{value}</b></div></article>}
