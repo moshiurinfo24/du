@@ -37,7 +37,7 @@ async function recoveryHash(code){return sha(normalizeRecoveryCode(code))}
       const exists=await env.DB.prepare('SELECT id FROM users WHERE email=?').bind(email).first();
       if(exists)return json({error:'An account already exists with this email'},409,C);
       const p=await mkpass(password),recoveryCode=makeRecoveryCode(),rh=await recoveryHash(recoveryCode);
-      const r=await env.DB.prepare(`INSERT INTO users(name,email,password_hash,password_salt,role,is_active,account_type,email_verified,recovery_code_hash) VALUES(?,?,?,?,?,?,?,?,?)`)
+      const r=await env.DB.prepare(`INSERT INTO users(name,email,password_hash,password_salt,role,is_active,account_type,email_verified,recovery_code_hash,registered_at) VALUES(?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP)`)
         .bind(name,email,p.hash,p.salt,'employee',1,accountType,1,rh).run();
       return json({ok:true,recoveryCode,message:'Account created. Save the recovery code now; it will not be shown again.'},201,C);
     }
@@ -135,6 +135,50 @@ async function recoveryHash(code){return sha(normalizeRecoveryCode(code))}
       const id=Number(cev[1]);await env.DB.prepare(`DELETE FROM career_events WHERE id=? AND user_id=?`).bind(id,user.id).run();
       await audit(env,user,'career_event_delete','career_event',id,{});
       return json({ok:true},200,C);
+    }
+
+    // Phase 11.1 analytics usage tracking
+    if(u.pathname==='/api/usage'&&req.method==='POST'){
+      if(!user)return json({error:'Unauthenticated'},401,C);
+      const b=await req.json(),module=String(b.module||'').trim().slice(0,40);
+      const allowed=['dashboard','career','promotion','salary','calculators','library','account','employees','directory','admin'];
+      if(!allowed.includes(module))return json({ok:true},200,C);
+      await env.DB.prepare(`INSERT INTO usage_events(user_id,module) VALUES(?,?)`).bind(user.id,module).run();
+      return json({ok:true},201,C);
+    }
+
+    if(u.pathname==='/api/admin/dashboard-analytics'&&req.method==='GET'){
+      if(!canManage(user))return json({error:'Forbidden'},403,C);
+      const now=new Date(),days=[];
+      for(let i=6;i>=0;i--){const d=new Date(now);d.setDate(d.getDate()-i);days.push(d.toISOString().slice(0,10))}
+      const [users,active,officers,employees,profiles,deps,desigs,notices,policies,sessions,expired,inactive,recovery,usage,recentUsers,recentAudit,activity]=await Promise.all([
+        env.DB.prepare(`SELECT COUNT(*) c FROM users`).first(),
+        env.DB.prepare(`SELECT COUNT(*) c FROM users WHERE is_active=1`).first(),
+        env.DB.prepare(`SELECT COUNT(*) c FROM users WHERE account_type='officer'`).first(),
+        env.DB.prepare(`SELECT COUNT(*) c FROM users WHERE COALESCE(account_type,'employee')='employee'`).first(),
+        env.DB.prepare(`SELECT COUNT(*) c FROM career_profiles`).first(),
+        env.DB.prepare(`SELECT COUNT(*) c FROM departments`).first(),
+        env.DB.prepare(`SELECT COUNT(*) c FROM designations WHERE is_active=1`).first(),
+        env.DB.prepare(`SELECT COUNT(*) c FROM notices WHERE is_active=1`).first(),
+        env.DB.prepare(`SELECT COUNT(*) c FROM policies WHERE is_active=1`).first(),
+        env.DB.prepare(`SELECT COUNT(*) c FROM sessions WHERE expires_at>CURRENT_TIMESTAMP`).first(),
+        env.DB.prepare(`SELECT COUNT(*) c FROM sessions WHERE expires_at<=CURRENT_TIMESTAMP`).first(),
+        env.DB.prepare(`SELECT COUNT(*) c FROM users WHERE is_active=0`).first(),
+        env.DB.prepare(`SELECT COUNT(*) c FROM users WHERE recovery_code_hash IS NOT NULL AND recovery_code_hash<>''`).first(),
+        env.DB.prepare(`SELECT module,COUNT(*) c FROM usage_events GROUP BY module ORDER BY c DESC LIMIT 7`).all(),
+        env.DB.prepare(`SELECT id,name,email,role,is_active,COALESCE(account_type,'employee') account_type,registered_at FROM users ORDER BY id DESC LIMIT 6`).all(),
+        env.DB.prepare(`SELECT a.id,a.action,a.created_at,u.name user_name FROM audit_logs a LEFT JOIN users u ON u.id=a.user_id ORDER BY a.id DESC LIMIT 6`).all(),
+        env.DB.prepare(`SELECT substr(created_at,1,10) day,COUNT(*) c FROM usage_events WHERE created_at>=datetime('now','-7 days') GROUP BY substr(created_at,1,10)`).all()
+      ]);
+      const amap=Object.fromEntries((activity.results||[]).map(r=>[r.day,+r.c]));
+      return json({
+        kpis:{total_users:+users.c,active_users:+active.c,officers:+officers.c,employees:+employees.c,career_profiles:+profiles.c,departments:+deps.c,designations:+desigs.c,notices:+notices.c,policies:+policies.c},
+        health:{ok:true,active_sessions:+sessions.c,expired_sessions:+expired.c,inactive_users:+inactive.c,recovery_ready_users:+recovery.c},
+        usage:(usage.results||[]).map(r=>({label:r.module,value:+r.c})),
+        activity_trend:days.map(d=>({label:d.slice(5),value:amap[d]||0})),
+        recent_users:recentUsers.results||[],
+        recent_audit:recentAudit.results||[]
+      },200,C);
     }
 
     if(u.pathname==='/api/departments'&&req.method==='GET'){
