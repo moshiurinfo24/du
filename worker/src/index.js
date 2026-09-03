@@ -35,7 +35,7 @@ export default{async fetch(req,env){
   if(req.method==='OPTIONS')return new Response(null,{status:204,headers:C});
   const u=new URL(req.url);
   try{
-    if(u.pathname==='/api/health')return json({ok:true,service:'Employee Service ERP API',phase:'11.2'},200,C);
+    if(u.pathname==='/api/health')return json({ok:true,service:'Employee Service ERP API',phase:'12'},200,C);
 
     // Phase 8 FREE: self-service registration and recovery code password reset
     if(u.pathname==='/api/register'&&req.method==='POST'){
@@ -226,7 +226,32 @@ export default{async fetch(req,env){
     }
 
     if(u.pathname==='/api/phase-status'&&req.method==='GET'){
-      return json({ok:true,phase:'11.2',routes:{my_career:true,admin_analytics:true,usage:true,recovery:true,login_analytics:true,public_traffic:true}},200,C);
+      return json({ok:true,phase:'12',routes:{my_career:true,admin_analytics:true,usage:true,recovery:true,login_analytics:true,public_traffic:true,salary_history:true}},200,C);
+    }
+
+    // Phase 12: Personal Salary & Pay History
+    if(u.pathname==='/api/my-salary-history'&&req.method==='GET'){
+      if(!user)return json({error:'Unauthenticated'},401,C);
+      const x=await env.DB.prepare(`SELECT * FROM salary_history WHERE user_id=? ORDER BY effective_date DESC,id DESC`).bind(user.id).all();
+      return json({items:x.results||[]},200,C);
+    }
+    if(u.pathname==='/api/my-salary-history'&&req.method==='POST'){
+      if(!user)return json({error:'Unauthenticated'},401,C);
+      const b=await req.json();
+      if(!b.effective_date||!b.grade)return json({error:'Effective date and grade are required'},400,C);
+      const r=await env.DB.prepare(`INSERT INTO salary_history(user_id,effective_date,grade,stage_2015,basic_2015,fixed_2026,payable_basic,gross_salary,total_deduction,net_salary,source,notes)
+        VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`)
+        .bind(user.id,b.effective_date,Number(b.grade),Number(b.stage_2015||0),Number(b.basic_2015||0),Number(b.fixed_2026||0),Number(b.payable_basic||0),Number(b.gross_salary||0),Number(b.total_deduction||0),Number(b.net_salary||0),String(b.source||'manual').slice(0,30),b.notes||null).run();
+      await audit(env,user,'salary_history_create','salary_history',r.meta?.last_row_id,{});
+      return json({ok:true,id:r.meta?.last_row_id||null},201,C);
+    }
+    const sh=u.pathname.match(/^\/api\/my-salary-history\/(\d+)$/);
+    if(sh&&req.method==='DELETE'){
+      if(!user)return json({error:'Unauthenticated'},401,C);
+      const id=Number(sh[1]);
+      await env.DB.prepare(`DELETE FROM salary_history WHERE id=? AND user_id=?`).bind(id,user.id).run();
+      await audit(env,user,'salary_history_delete','salary_history',id,{});
+      return json({ok:true},200,C);
     }
 
     if(u.pathname==='/api/departments'&&req.method==='GET'){
