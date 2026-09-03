@@ -35,7 +35,7 @@ export default{async fetch(req,env){
   if(req.method==='OPTIONS')return new Response(null,{status:204,headers:C});
   const u=new URL(req.url);
   try{
-    if(u.pathname==='/api/health')return json({ok:true,service:'Employee Service ERP API',phase:'15'},200,C);
+    if(u.pathname==='/api/health')return json({ok:true,service:'Employee Service ERP API',phase:'16.0-final'},200,C);
 
     // Phase 8 FREE: self-service registration and recovery code password reset
     if(u.pathname==='/api/register'&&req.method==='POST'){
@@ -82,6 +82,16 @@ export default{async fetch(req,env){
 
     const user=await me(req,env);
     if(u.pathname==='/api/me'){if(!user)return json({error:'Unauthenticated'},401,C);return json({user},200,C)}
+
+    if(u.pathname==='/api/my-security/logout-others'&&req.method==='POST'){
+      if(!user)return json({error:'Unauthenticated'},401,C);
+      const t=cookies(req).du_session;
+      if(!t)return json({error:'Current session not found'},401,C);
+      const currentHash=await sha(t);
+      await env.DB.prepare(`DELETE FROM sessions WHERE user_id=? AND token_hash<>?`).bind(user.id,currentHash).run();
+      await audit(env,user,'logout_other_sessions','session',user.id,{});
+      return json({ok:true,message:'Other sessions signed out'},200,C);
+    }
 
     if(u.pathname==='/api/change-password'&&req.method==='POST'){
       if(!user)return json({error:'Unauthenticated'},401,C);
