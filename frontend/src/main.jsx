@@ -22,6 +22,7 @@ import {KnowledgeCenter,PersonalCareerReports,PrivacyControlCenter,FinalReleaseS
 import PremiumPersonalDashboard from './premium-dashboard-v16-1.jsx';
 import './mobile-app-v16-2.css';
 import './public-home-v16-3.css';
+import './mobile-menu-hotfix-v16-3-1.css';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import {
   PAY2015,PAY2026,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
@@ -331,7 +332,7 @@ function PublicHome({onLogin,lang,setLang}){
   };
   const navItems=[[copy.home,'top'],[copy.promotion,'public-calculator','promotion'],[copy.pay,'public-calculator','salary'],[copy.policies,'policies'],[copy.notices,'notices'],[copy.forms,'forms'],[copy.help,'help']];
   const goto=(id,tool)=>{setPublicMenu(false);if(tool)return openTool(tool);trackPublic('section_view',id);scrollTo(id);};
-  return <div id="top" data-public-version="v16.3" className={'public premium-public premium-home-v16-3 '+(en?'lang-en':'lang-bn')}>
+  return <div id="top" data-public-version="v16.3.1" className={'public premium-public premium-home-v16-3 '+(en?'lang-en':'lang-bn')}>
     <header className="public-nav luxury-nav premium-v16-nav">
       <div className="public-brand"><div className="brand-orb"><ShieldCheck size={19}/></div><div><b>{t.appName}</b><small>{t.appSub}</small></div></div>
       <button className="public-mobile-trigger" onClick={()=>setPublicMenu(true)} aria-label={en?'Open menu':'মেনু খুলুন'}><span></span><span></span><span></span></button>
@@ -1707,6 +1708,12 @@ function SuperAdminControlCenter({lang='bn',onPage}){
 function AdminPanel({lang='bn',onPage}){return <SuperAdminControlCenter lang={lang} onPage={onPage}/>}
 
 function App(){
+  useEffect(()=>{
+    const touch=('ontouchstart' in window)||navigator.maxTouchPoints>0;
+    const apply=()=>document.documentElement.classList.toggle('mobile-device',touch&&window.innerWidth<=1180);
+    apply();window.addEventListener('resize',apply);
+    return()=>window.removeEventListener('resize',apply);
+  },[]);
   const params=new URLSearchParams(window.location.search);
   const queryAuth=params.get('auth')||'';
   const queryToken=params.get('token')||'';
@@ -1726,7 +1733,7 @@ function App(){
   if(!user)return showLogin?<AuthPortal onLogin={u=>{setUser(u);window.history.replaceState({},'',window.location.pathname)}} onBack={()=>{setShowLogin(false);setAuthMode('login');setAuthToken('');window.history.replaceState({},'',window.location.pathname)}} lang={lang} setLang={setLang} initialMode={authMode} initialToken={authToken}/>:<PublicHome onLogin={()=>{setAuthMode('login');setShowLogin(true)}} lang={lang} setLang={setLang}/>;
   const admin=['super_admin','admin','department_admin'].includes(user.role);
   return <div className={`app ${mobileMenu?'mobile-menu-open':''}`}><button className={`mobile-drawer-backdrop ${mobileMenu?'show':''}`} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'} onClick={()=>setMobileMenu(false)}></button><aside className={`side ${mobileMenu?'mobile-open':''}`}>
-    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v16.2 Mobile App':'স্বাধীন প্ল্যাটফর্ম · v16.2 Mobile App'}</small></div><button className="mobile-drawer-close" onClick={()=>setMobileMenu(false)} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'}><X size={19}/></button></div>
+    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v16.3.1 Mobile Fix':'স্বাধীন প্ল্যাটফর্ম · v16.3.1 Mobile Fix'}</small></div><button className="mobile-drawer-close" onClick={()=>setMobileMenu(false)} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'}><X size={19}/></button></div>
     <nav>
       <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}><LayoutDashboard size={18}/>{lang==='en'?'My Dashboard':'আমার ড্যাশবোর্ড'}</button>
       <button className={page==='career'?'active':''} onClick={()=>setPage('career')}><BookUser size={18}/>{lang==='en'?'My Career':'আমার চাকরি'}</button>
