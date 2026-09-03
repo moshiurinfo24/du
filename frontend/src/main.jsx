@@ -5,7 +5,7 @@ import {
   LayoutDashboard,TrendingUp,WalletCards,Users,ShieldCheck,LogOut,Plus,Search,
   UserRound,Building2,IdCard,Activity,ChevronRight,X,Save,Trash2,RefreshCw,
   Settings,Database,LockKeyhole,Home,BookOpen,Calculator,HelpCircle,Phone,
-  Bell,ArrowRight,CalendarDays,CheckCircle2,AlertTriangle,Landmark,FileText,Camera,Briefcase,MapPin,Mail,PhoneCall,MessageCircle,Edit3,UserCircle2,History,ArrowRightLeft,GraduationCap,BadgeDollarSign,Clock3,FileClock,ServerCog,Gauge,UserCog,ScrollText,SlidersHorizontal,ShieldAlert,Link2,Eye,Power,BookUser,NotebookTabs,Milestone,Award
+  Bell,ArrowRight,CalendarDays,CheckCircle2,AlertTriangle,Landmark,FileText,Camera,Briefcase,MapPin,Mail,PhoneCall,MessageCircle,Edit3,UserCircle2,History,ArrowRightLeft,GraduationCap,BadgeDollarSign,Clock3,FileClock,ServerCog,Gauge,UserCog,ScrollText,SlidersHorizontal,ShieldAlert,Link2,Eye,Power,BookUser,NotebookTabs,Milestone,Award,BarChart3,PieChart,LineChart,MonitorCheck,Sparkles,UserCheck,UserX,Boxes,Command,DatabaseZap,ShieldEllipsis,Radio,TrendingDown
 } from 'lucide-react';
 import './styles.css';
 import './auth-phase8.css';
@@ -13,6 +13,7 @@ import './admin-premium.css';
 import './career-phase9.css';
 import './career-dashboard-phase10.css';
 import './calculator-phase11.css';
+import './dashboard-phase11-1.css';
 import {
   PAY2015,PAY2026,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
   annualPromotionCycle,futureRoadmap,serviceExperiencePoints,fixed2026,implementationRate,houseRent2015
@@ -386,7 +387,105 @@ function PublicHome({onLogin,lang,setLang}){
 function Stat({label,value,icon:Icon}){return <article className="stat-card"><div className="stat-icon"><Icon size={19}/></div><div><small>{label}</small><b>{value}</b></div></article>}
 
 
+
+function MiniBars({data=[]}){
+  const vals=data.map(x=>Number(x.value||0)),max=Math.max(1,...vals);
+  return <div className="mini-bars">{data.map((x,i)=><div key={i} className="mini-bar-wrap" title={`${x.label}: ${x.value}`}><div className="mini-bar" style={{height:`${Math.max(8,(Number(x.value||0)/max)*100)}%`}}></div><small>{x.label}</small></div>)}</div>
+}
+function DonutStat({a=0,b=0,labelA='A',labelB='B'}){
+  const total=Math.max(1,Number(a)+Number(b)),pct=Math.round((Number(a)/total)*100);
+  return <div className="donut-stat"><div className="donut-ring" style={{'--pct':`${pct}%`}}><div><b>{pct}%</b><small>{labelA}</small></div></div><div className="donut-legend"><span><i className="dot-one"></i>{labelA}<b>{a}</b></span><span><i className="dot-two"></i>{labelB}<b>{b}</b></span></div></div>
+}
+function TrendLine({data=[]}){
+  const vals=data.map(x=>Number(x.value||0)),max=Math.max(1,...vals),min=Math.min(0,...vals),w=460,h=150,pad=14;
+  const pts=vals.map((v,i)=>{const x=pad+(i*(w-pad*2)/Math.max(1,vals.length-1));const y=h-pad-((v-min)/(Math.max(1,max-min)))*(h-pad*2);return [x,y]});
+  const path=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+  return <div className="trend-chart"><svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none"><path className="trend-fill" d={`${path} L ${pts.at(-1)?.[0]||w-pad} ${h-pad} L ${pts[0]?.[0]||pad} ${h-pad} Z`}/><path className="trend-line" d={path}/>{pts.map((p,i)=><circle key={i} cx={p[0]} cy={p[1]} r="3.3"/>)}</svg><div className="trend-labels">{data.map((x,i)=><span key={i}>{x.label}</span>)}</div></div>
+}
+function AdminAnalyticsDashboard({user,onPage,lang='bn'}){
+  const en=lang==='en';
+  const [d,setD]=useState(null),[busy,setBusy]=useState(true),[err,setErr]=useState('');
+  async function load(){setBusy(true);setErr('');try{setD(await api('/api/admin/dashboard-analytics'))}catch(e){setErr(e.message)}finally{setBusy(false)}}
+  useEffect(()=>{load()},[]);
+  if(busy)return <div className="loading">{en?'Loading dashboard...':'ড্যাশবোর্ড লোড হচ্ছে...'}</div>;
+  if(err)return <div className="error">{err}</div>;
+  const k=d?.kpis||{},health=d?.health||{},usage=d?.usage||[],activity=d?.activity_trend||[],recent=d?.recent_users||[],audit=d?.recent_audit||[];
+  return <div className="admin-analytics-dashboard">
+    <section className="analytics-hero">
+      <div><span>{en?'PREMIUM SYSTEM COMMAND CENTER':'প্রিমিয়াম সিস্টেম কমান্ড সেন্টার'}</span><h1>{en?'System Administrator Dashboard':'সিস্টেম ব্যবস্থাপক ড্যাশবোর্ড'}</h1><p>{en?'Live platform overview, user analytics, security health, content activity and system controls in one workspace.':'প্ল্যাটফর্ম সারসংক্ষেপ, ব্যবহারকারী বিশ্লেষণ, নিরাপত্তা, কনটেন্ট কার্যক্রম ও সিস্টেম কন্ট্রোল এক জায়গায়।'}</p></div>
+      <div className="hero-command-panel"><div><MonitorCheck/><span>{en?'System status':'সিস্টেম অবস্থা'}</span><b>{health.ok?(en?'Healthy':'সচল'):(en?'Attention':'যাচাই প্রয়োজন')}</b></div><button onClick={()=>onPage('admin')}><Command/>{en?'Open System Control':'সিস্টেম কন্ট্রোল খুলুন'}</button></div>
+    </section>
+
+    <section className="analytics-kpi-grid">
+      <article><div className="kpi-icon"><Users/></div><div><small>{en?'Total Users':'মোট ব্যবহারকারী'}</small><b>{k.total_users??0}</b><span>{en?'Registered accounts':'নিবন্ধিত অ্যাকাউন্ট'}</span></div></article>
+      <article><div className="kpi-icon"><UserCheck/></div><div><small>{en?'Active Users':'সক্রিয় ব্যবহারকারী'}</small><b>{k.active_users??0}</b><span>{en?'Currently enabled':'বর্তমানে সক্রিয়'}</span></div></article>
+      <article><div className="kpi-icon"><Briefcase/></div><div><small>{en?'Officers':'কর্মকর্তা'}</small><b>{k.officers??0}</b><span>{en?'Self-service accounts':'স্ব-পরিচালিত অ্যাকাউন্ট'}</span></div></article>
+      <article><div className="kpi-icon"><UserRound/></div><div><small>{en?'Employees':'কর্মচারী'}</small><b>{k.employees??0}</b><span>{en?'Self-service accounts':'স্ব-পরিচালিত অ্যাকাউন্ট'}</span></div></article>
+      <article><div className="kpi-icon"><BookUser/></div><div><small>{en?'Career Profiles':'ক্যারিয়ার প্রোফাইল'}</small><b>{k.career_profiles??0}</b><span>{en?'Personal records created':'ব্যক্তিগত রেকর্ড তৈরি'}</span></div></article>
+      <article><div className="kpi-icon"><LockKeyhole/></div><div><small>{en?'Active Sessions':'সক্রিয় সেশন'}</small><b>{health.active_sessions??0}</b><span>{en?'Secure sessions':'নিরাপদ সেশন'}</span></div></article>
+    </section>
+
+    <section className="analytics-grid top">
+      <article className="analytics-card wide">
+        <div className="analytics-card-head"><div><LineChart/><div><span>{en?'ACTIVITY TREND':'কার্যক্রমের প্রবণতা'}</span><h3>{en?'Platform activity — last 7 days':'গত ৭ দিনের প্ল্যাটফর্ম কার্যক্রম'}</h3></div></div><small>{en?'Tracked module opens':'মডিউল ব্যবহারের হিসাব'}</small></div>
+        <TrendLine data={activity}/>
+      </article>
+      <article className="analytics-card">
+        <div className="analytics-card-head"><div><PieChart/><div><span>{en?'ACCOUNT MIX':'অ্যাকাউন্ট অনুপাত'}</span><h3>{en?'Officer vs Employee':'কর্মকর্তা বনাম কর্মচারী'}</h3></div></div></div>
+        <DonutStat a={k.officers||0} b={k.employees||0} labelA={en?'Officer':'কর্মকর্তা'} labelB={en?'Employee':'কর্মচারী'}/>
+      </article>
+    </section>
+
+    <section className="analytics-grid mid">
+      <article className="analytics-card">
+        <div className="analytics-card-head"><div><BarChart3/><div><span>{en?'MODULE USAGE':'মডিউল ব্যবহার'}</span><h3>{en?'Most-used services':'সর্বাধিক ব্যবহৃত সেবা'}</h3></div></div></div>
+        <MiniBars data={usage.length?usage:[{label:en?'No data':'ডাটা নেই',value:0}]}/>
+      </article>
+      <article className="analytics-card">
+        <div className="analytics-card-head"><div><ShieldEllipsis/><div><span>{en?'SECURITY':'নিরাপত্তা'}</span><h3>{en?'Authentication health':'অথেনটিকেশন স্বাস্থ্য'}</h3></div></div><button className="mini-link" onClick={()=>onPage('admin')}>{en?'Open center':'কেন্দ্র খুলুন'}<ChevronRight size={14}/></button></div>
+        <div className="security-health-list">
+          <div><span>{en?'Active sessions':'সক্রিয় সেশন'}</span><b>{health.active_sessions??0}</b></div>
+          <div><span>{en?'Expired sessions':'মেয়াদোত্তীর্ণ সেশন'}</span><b>{health.expired_sessions??0}</b></div>
+          <div><span>{en?'Inactive users':'নিষ্ক্রিয় ব্যবহারকারী'}</span><b>{health.inactive_users??0}</b></div>
+          <div><span>{en?'Recovery-ready users':'রিকভারি প্রস্তুত ব্যবহারকারী'}</span><b>{health.recovery_ready_users??0}</b></div>
+        </div>
+      </article>
+      <article className="analytics-card">
+        <div className="analytics-card-head"><div><Boxes/><div><span>{en?'CONTENT':'কনটেন্ট'}</span><h3>{en?'Published reference content':'প্রকাশিত রেফারেন্স কনটেন্ট'}</h3></div></div></div>
+        <div className="content-kpis">
+          <div><Bell/><span>{en?'Notices':'নোটিশ'}</span><b>{k.notices??0}</b></div>
+          <div><BookOpen/><span>{en?'Policies':'নীতিমালা'}</span><b>{k.policies??0}</b></div>
+          <div><Building2/><span>{en?'Departments':'বিভাগ/অফিস'}</span><b>{k.departments??0}</b></div>
+          <div><Briefcase/><span>{en?'Designations':'পদবি'}</span><b>{k.designations??0}</b></div>
+        </div>
+      </article>
+    </section>
+
+    <section className="analytics-grid lower">
+      <article className="analytics-card wide">
+        <div className="analytics-card-head"><div><UserCog/><div><span>{en?'RECENT USERS':'সাম্প্রতিক ব্যবহারকারী'}</span><h3>{en?'Latest self-service accounts':'সর্বশেষ স্ব-পরিচালিত অ্যাকাউন্ট'}</h3></div></div><button className="mini-link" onClick={()=>onPage('admin')}>{en?'Manage':'ব্যবস্থাপনা'}<ChevronRight size={14}/></button></div>
+        <div className="recent-users-list">{recent.length===0?<div className="empty">{en?'No users yet.':'এখনো ব্যবহারকারী নেই।'}</div>:recent.map(x=><div className="recent-user-row" key={x.id}><div className="recent-avatar">{String(x.name||'?').slice(0,1).toUpperCase()}</div><div><b>{x.name}</b><small>{x.email}</small></div><span>{x.account_type==='officer'?(en?'Officer':'কর্মকর্তা'):(en?'Employee':'কর্মচারী')}</span><i className={x.is_active?'online':'offline'}></i></div>)}</div>
+      </article>
+      <article className="analytics-card">
+        <div className="analytics-card-head"><div><ScrollText/><div><span>{en?'AUDIT':'অডিট'}</span><h3>{en?'Recent system activity':'সাম্প্রতিক সিস্টেম কার্যক্রম'}</h3></div></div></div>
+        <div className="compact-audit-list">{audit.length===0?<div className="empty">{en?'No audit activity.':'অডিট কার্যক্রম নেই।'}</div>:audit.map(x=><div key={x.id}><History/><div><b>{x.action}</b><small>{x.user_name||'System'} · {x.created_at||'—'}</small></div></div>)}</div>
+      </article>
+    </section>
+
+    <section className="admin-quick-command">
+      <button onClick={()=>onPage('admin')}><SlidersHorizontal/><span>{en?'System Control':'সিস্টেম কন্ট্রোল'}</span></button>
+      <button onClick={()=>onPage('library')}><BookOpen/><span>{en?'Notices & Policies':'নোটিশ ও নীতিমালা'}</span></button>
+      <button onClick={()=>onPage('calculators')}><Calculator/><span>{en?'Calculator Center':'ক্যালকুলেটর সেন্টার'}</span></button>
+      <button onClick={()=>onPage('account')}><LockKeyhole/><span>{en?'Account Security':'অ্যাকাউন্ট নিরাপত্তা'}</span></button>
+    </section>
+  </div>
+}
 function DashboardHome({user,onPage,lang='bn'}){
+  const admin=['super_admin','admin','department_admin'].includes(user.role);
+  return admin?<AdminAnalyticsDashboard user={user} onPage={onPage} lang={lang}/>:<PersonalCareerDashboard user={user} onPage={onPage} lang={lang}/>;
+}
+
+function PersonalCareerDashboard({user,onPage,lang='bn'}){
   const en=lang==='en';
   const [career,setCareer]=useState({profile:null,education:[],events:[]}),[loadingCareer,setLoadingCareer]=useState(true);
   useEffect(()=>{
@@ -1145,6 +1244,7 @@ function App(){
   useEffect(()=>{api('/api/me').then(x=>setUser(x.user)).catch(()=>{}).finally(()=>setLoading(false))},[]);
   useEffect(()=>{localStorage.setItem('app_lang',lang)},[lang]);
   async function logout(){try{await api('/api/logout',{method:'POST'})}catch{}setUser(null);setShowLogin(false);setPage('dashboard')}
+  useEffect(()=>{if(user&&page)api('/api/usage',{method:'POST',body:JSON.stringify({module:page})}).catch(()=>{})},[user?.id,page]);
   if(loading)return <div className="loading">Loading...</div>;
   if(!user)return showLogin?<AuthPortal onLogin={u=>{setUser(u);window.history.replaceState({},'',window.location.pathname)}} onBack={()=>{setShowLogin(false);setAuthMode('login');setAuthToken('');window.history.replaceState({},'',window.location.pathname)}} lang={lang} setLang={setLang} initialMode={authMode} initialToken={authToken}/>:<PublicHome onLogin={()=>{setAuthMode('login');setShowLogin(true)}} lang={lang} setLang={setLang}/>;
   const admin=['super_admin','admin','department_admin'].includes(user.role);
