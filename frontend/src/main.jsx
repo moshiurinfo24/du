@@ -331,14 +331,16 @@ function DashboardHome({user,onPage,lang='bn'}){
     <section className="hero"><div><span>SERVICE PLATFORM</span><h1>Employee Service Foundation</h1><p>Homepage, promotion calculator, pay scale calculator, employee management and service history are active.</p></div><div className="hero-chip"><Activity size={16}/> System Active</div></section>
     <section className="stats-grid"><Stat label="Role" value={roleLabel[user.role]||user.role} icon={ShieldCheck}/><Stat label="Employee ID" value={user.employee_id||'—'} icon={IdCard}/><Stat label="Account Status" value="Active" icon={Activity}/><Stat label="Security" value="Session Protected" icon={LockKeyhole}/></section>
     <section className="module-grid"><article className="module-card"><div className="module-icon"><TrendingUp/></div><h3>Promotion Centre</h3><p>Calculate eligibility date, annual cycle and future roadmap.</p><button className="ghost-btn" onClick={()=>onPage('promotion')}>Calculate <ChevronRight size={16}/></button></article>
-    <article className="module-card"><div className="module-icon green"><WalletCards/></div><h3>Salary & Pay Scale</h3><p>Calculate fixation, payable basic, gross and net salary.</p><button className="ghost-btn" onClick={()=>onPage('salary')}>Calculate <ChevronRight size={16}/></button></article></section>
+    <article className="module-card"><div className="module-icon green"><WalletCards/></div><h3>Salary & Pay Scale</h3><p>Calculate fixation, payable basic, gross and net salary.</p><button className="ghost-btn" onClick={()=>onPage('salary')}>Calculate <ChevronRight size={16}/></button></article>
+    <article className="module-card"><div className="module-icon"><Calculator/></div><h3>Calculator Center</h3><p>Service length, age, date difference and retirement-date estimate.</p><button className="ghost-btn" onClick={()=>onPage('calculators')}>Open Center <ChevronRight size={16}/></button></article></section>
     <section className="notice"><b>Notice</b><p>This is an independent and unofficial digital service platform.</p></section>
   </>;
   return <>
     <section className="hero"><div><span>সেবা প্ল্যাটফর্ম</span><h1>কর্মকর্তা-কর্মচারী সেবা ব্যবস্থা</h1><p>হোমপেজ, পদোন্নতি হিসাব, পে-স্কেল হিসাব, কর্মকর্তা-কর্মচারী ব্যবস্থাপনা ও চাকরি ইতিহাস সক্রিয়।</p></div><div className="hero-chip"><Activity size={16}/> সিস্টেম সক্রিয়</div></section>
     <section className="stats-grid"><Stat label="ভূমিকা" value={roleLabel[user.role]||user.role} icon={ShieldCheck}/><Stat label="কর্মী নম্বর" value={user.employee_id||'—'} icon={IdCard}/><Stat label="অ্যাকাউন্ট অবস্থা" value="সক্রিয়" icon={Activity}/><Stat label="নিরাপত্তা" value="সুরক্ষিত সেশন" icon={LockKeyhole}/></section>
     <section className="module-grid"><article className="module-card"><div className="module-icon"><TrendingUp/></div><h3>পদোন্নতি কেন্দ্র</h3><p>যোগ্যতার তারিখ, বার্ষিক প্রক্রিয়া এবং ভবিষ্যৎ ধাপ হিসাব করুন।</p><button className="ghost-btn" onClick={()=>onPage('promotion')}>হিসাব করুন <ChevronRight size={16}/></button></article>
-    <article className="module-card"><div className="module-icon green"><WalletCards/></div><h3>বেতন ও পে-স্কেল</h3><p>ফিক্সেশন, প্রাপ্য বেসিক, মোট ও নেট বেতন হিসাব করুন।</p><button className="ghost-btn" onClick={()=>onPage('salary')}>হিসাব করুন <ChevronRight size={16}/></button></article></section>
+    <article className="module-card"><div className="module-icon green"><WalletCards/></div><h3>বেতন ও পে-স্কেল</h3><p>ফিক্সেশন, প্রাপ্য বেসিক, মোট ও নেট বেতন হিসাব করুন।</p><button className="ghost-btn" onClick={()=>onPage('salary')}>হিসাব করুন <ChevronRight size={16}/></button></article>
+    <article className="module-card"><div className="module-icon"><Calculator/></div><h3>ক্যালকুলেটর সেন্টার</h3><p>চাকরিকাল, বয়স, তারিখের ব্যবধান এবং অবসর তারিখের অনুমান।</p><button className="ghost-btn" onClick={()=>onPage('calculators')}>সেন্টার খুলুন <ChevronRight size={16}/></button></article></section>
     <section className="notice"><b>দ্রষ্টব্য</b><p>এটি একটি স্বাধীন ও অনানুষ্ঠানিক ডিজিটাল সেবা প্ল্যাটফর্ম।</p></section>
   </>
 }
@@ -665,6 +667,105 @@ function MasterDirectory(){
 }
 
 
+
+function CalculatorCenter({lang='bn',onPage}){
+  const en=lang==='en';
+  const [tool,setTool]=useState('service');
+  const [service,setService]=useState({start:'',end:todayLocalIso()});
+  const [age,setAge]=useState({dob:'',asOf:todayLocalIso()});
+  const [gap,setGap]=useState({from:'',to:''});
+  const [retire,setRetire]=useState({dob:'',age:'60'});
+  const [result,setResult]=useState(null);
+
+  const validDate=v=>!!v&&!isNaN(new Date(v+'T00:00:00'));
+  const dateObj=v=>new Date(v+'T00:00:00');
+  function cleanDuration(a,b){
+    if(!validDate(a)||!validDate(b))return null;
+    if(dateObj(a)>dateObj(b))return null;
+    return diffYMD(a,b);
+  }
+  function calcService(){
+    const end=todayLocalIso();
+    const d=cleanDuration(service.start,end);
+    setService(x=>({...x,end}));
+    setResult(d?{type:'service',d,start:service.start,end}:{error:en?'Enter a valid joining/start date.':'সঠিক যোগদান/শুরুর তারিখ দিন।'});
+  }
+  function calcAge(){
+    const asOf=todayLocalIso();
+    const d=cleanDuration(age.dob,asOf);
+    setAge(x=>({...x,asOf}));
+    setResult(d?{type:'age',d,dob:age.dob,asOf}:{error:en?'Enter a valid date of birth.':'সঠিক জন্মতারিখ দিন।'});
+  }
+  function calcGap(){
+    const d=cleanDuration(gap.from,gap.to);
+    setResult(d?{type:'gap',d,from:gap.from,to:gap.to}:{error:en?'Enter two valid dates in chronological order.':'সঠিক ক্রমে দুটি তারিখ দিন।'});
+  }
+  function calcRetire(){
+    const years=Number(retire.age);
+    if(!validDate(retire.dob)||!Number.isFinite(years)||years<1||years>100){
+      return setResult({error:en?'Enter a valid date of birth and retirement age.':'সঠিক জন্মতারিখ ও অবসরের বয়স দিন।'});
+    }
+    const retirement=addYears(retire.dob,years);
+    const today=todayLocalIso();
+    const remaining=dateObj(retirement)>=dateObj(today)?cleanDuration(today,retirement):null;
+    setResult({type:'retire',dob:retire.dob,years,retirement,remaining,passed:dateObj(retirement)<dateObj(today)});
+  }
+  const showDur=d=>en?`${numLang(d.y,lang,0)} years ${numLang(d.m,lang,0)} months ${numLang(d.d,lang,0)} days`:durationBn(d);
+  const tools=[
+    ['service',Clock3,en?'Service Length':'চাকরিকাল'],
+    ['age',UserRound,en?'Age Calculator':'বয়স হিসাব'],
+    ['gap',CalendarDays,en?'Date Difference':'তারিখের ব্যবধান'],
+    ['retire',FileClock,en?'Retirement Estimate':'অবসর তারিখ']
+  ];
+  return <div className="calculator-center">
+    <div className="page-head"><div><h2>{en?'Calculator Center':'ক্যালকুলেটর সেন্টার'}</h2><p>{en?'Simple service and date calculators. Policy-specific formulas are kept only in their verified modules.':'চাকরি ও তারিখভিত্তিক সহজ হিসাব। নীতিমালানির্ভর হিসাব শুধু যাচাইকৃত নিজস্ব মডিউলেই রাখা হয়েছে।'}</p></div></div>
+
+    <div className="calc-hub-grid">
+      <button className="calc-hub-card promotion" onClick={()=>onPage?.('promotion')}><TrendingUp/><div><b>{en?'Promotion Calculator':'পদোন্নতি হিসাব'}</b><small>{en?'Verified promotion rules and roadmap':'যাচাইকৃত পদোন্নতি নীতিমালা ও রোডম্যাপ'}</small></div><ChevronRight/></button>
+      <button className="calc-hub-card salary" onClick={()=>onPage?.('salary')}><WalletCards/><div><b>{en?'Pay Scale Calculator':'পে-স্কেল হিসাব'}</b><small>{en?'Fixation, gross, deductions and payslip':'ফিক্সেশন, মোট বেতন, কর্তন ও পে-স্লিপ'}</small></div><ChevronRight/></button>
+    </div>
+
+    <div className="calculator-tabs">
+      {tools.map(([k,I,l])=><button key={k} className={tool===k?'active':''} onClick={()=>{setTool(k);setResult(null)}}><I size={17}/>{l}</button>)}
+    </div>
+
+    <section className="calc-card calculator-tool-card">
+      {tool==='service'&&<>
+        <div className="tool-head"><Clock3/><div><h3>{en?'Service Length Calculator':'চাকরিকাল হিসাব'}</h3><p>{en?'Calculation date is taken automatically as today.':'হিসাবের তারিখ স্বয়ংক্রিয়ভাবে আজকের তারিখ নেওয়া হবে।'}</p></div></div>
+        <div className="form-grid"><DMY label={en?'Joining / start date':'যোগদান / শুরুর তারিখ'} value={service.start} onChange={v=>setService({...service,start:v})}/></div>
+        <div className="notice"><b>{en?'As of:':'হিসাব পর্যন্ত:'}</b> {fmtDateLang(todayLocalIso(),lang)}</div>
+        <button className="primary wide" onClick={calcService}>{en?'Calculate Service Length':'চাকরিকাল হিসাব করুন'}</button>
+      </>}
+      {tool==='age'&&<>
+        <div className="tool-head"><UserRound/><div><h3>{en?'Age Calculator':'বয়স হিসাব'}</h3><p>{en?'Exact age in years, months and days as of today.':'আজকের তারিখ অনুযায়ী বছর, মাস ও দিনে সঠিক বয়স।'}</p></div></div>
+        <div className="form-grid"><DMY label={en?'Date of birth':'জন্মতারিখ'} value={age.dob} onChange={v=>setAge({...age,dob:v})}/></div>
+        <div className="notice"><b>{en?'As of:':'হিসাব পর্যন্ত:'}</b> {fmtDateLang(todayLocalIso(),lang)}</div>
+        <button className="primary wide" onClick={calcAge}>{en?'Calculate Age':'বয়স হিসাব করুন'}</button>
+      </>}
+      {tool==='gap'&&<>
+        <div className="tool-head"><CalendarDays/><div><h3>{en?'Date Difference Calculator':'দুই তারিখের ব্যবধান'}</h3><p>{en?'Find the exact interval between any two dates.':'যেকোনো দুই তারিখের সঠিক ব্যবধান বের করুন।'}</p></div></div>
+        <div className="form-grid"><DMY label={en?'From date':'শুরুর তারিখ'} value={gap.from} onChange={v=>setGap({...gap,from:v})}/><DMY label={en?'To date':'শেষ তারিখ'} value={gap.to} onChange={v=>setGap({...gap,to:v})}/></div>
+        <button className="primary wide" onClick={calcGap}>{en?'Calculate Difference':'ব্যবধান হিসাব করুন'}</button>
+      </>}
+      {tool==='retire'&&<>
+        <div className="tool-head"><FileClock/><div><h3>{en?'Retirement Date Estimate':'অবসর তারিখ অনুমান'}</h3><p>{en?'Enter the retirement age applicable to you; the system does not assume a policy age.':'আপনার ক্ষেত্রে প্রযোজ্য অবসরের বয়স নিজে দিন; সিস্টেম কোনো নীতিগত বয়স অনুমান করবে না।'}</p></div></div>
+        <div className="form-grid"><DMY label={en?'Date of birth':'জন্মতারিখ'} value={retire.dob} onChange={v=>setRetire({...retire,dob:v})}/><label>{en?'Applicable retirement age':'প্রযোজ্য অবসরের বয়স'}<input type="number" min="1" max="100" value={retire.age} onChange={e=>setRetire({...retire,age:e.target.value})}/></label></div>
+        <button className="primary wide" onClick={calcRetire}>{en?'Estimate Retirement Date':'অবসর তারিখ হিসাব করুন'}</button>
+      </>}
+    </section>
+
+    {result&&<section className={`calculator-result ${result.error?'warn':'ok'}`}>
+      {result.error?<><AlertTriangle/><div><h3>{en?'Unable to calculate':'হিসাব করা যায়নি'}</h3><p>{result.error}</p></div></>:
+      result.type==='service'?<><CheckCircle2/><div><small>{en?'Total service length':'মোট চাকরিকাল'}</small><h3>{showDur(result.d)}</h3><p>{fmtDateLang(result.start,lang)} → {fmtDateLang(result.end,lang)}</p></div></>:
+      result.type==='age'?<><CheckCircle2/><div><small>{en?'Current age':'বর্তমান বয়স'}</small><h3>{showDur(result.d)}</h3><p>{en?'Date of birth':'জন্মতারিখ'}: {fmtDateLang(result.dob,lang)}</p></div></>:
+      result.type==='gap'?<><CheckCircle2/><div><small>{en?'Exact difference':'সঠিক ব্যবধান'}</small><h3>{showDur(result.d)}</h3><p>{fmtDateLang(result.from,lang)} → {fmtDateLang(result.to,lang)}</p></div></>:
+      <><FileClock/><div><small>{en?'Estimated retirement date':'সম্ভাব্য অবসর তারিখ'}</small><h3>{fmtDateLang(result.retirement,lang)}</h3><p>{en?`Based on the retirement age you entered: ${numLang(result.years,lang,0)} years.`:`আপনার দেওয়া অবসরের বয়স ${numLang(result.years,lang,0)} বছর ধরে হিসাব করা হয়েছে।`}</p>{result.passed?<p className="calc-status-note">{en?'This calculated date has already passed.':'হিসাবকৃত তারিখটি ইতোমধ্যে অতিক্রান্ত হয়েছে।'}</p>:result.remaining&&<p className="calc-status-note">{en?'Time remaining: ':'বাকি সময়: '}{showDur(result.remaining)}</p>}</div></>}
+    </section>}
+
+    <section className="calculator-safety-note"><ShieldCheck/><div><b>{en?'Policy-safe design':'নীতিমালা-নিরাপদ নকশা'}</b><p>{en?'No unverified pension, gratuity, leave, increment or retirement formula has been added. Those calculators can be activated after their governing rules are verified.':'যাচাই ছাড়া পেনশন, গ্র্যাচুইটি, ছুটি, ইনক্রিমেন্ট বা অবসরের কোনো সূত্র যোগ করা হয়নি। সংশ্লিষ্ট নীতিমালা যাচাই হলে সেগুলো সক্রিয় করা যাবে।'}</p></div></section>
+  </div>
+}
+
 function NoticePolicyCenter({lang='bn',canManage=false}){
   const en=lang==='en';
   const [tab,setTab]=useState('notices'),[notices,setNotices]=useState([]),[policies,setPolicies]=useState([]),[busy,setBusy]=useState(false),[err,setErr]=useState('');
@@ -750,6 +851,7 @@ function App(){
       <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}><LayoutDashboard size={18}/>{lang==='en'?'My Dashboard':'আমার ড্যাশবোর্ড'}</button>
       <button className={page==='promotion'?'active':''} onClick={()=>setPage('promotion')}><TrendingUp size={18}/>{lang==='en'?'Promotion':'পদোন্নতি'}</button>
       <button className={page==='salary'?'active':''} onClick={()=>setPage('salary')}><WalletCards size={18}/>{lang==='en'?'Salary & Pay Scale':'বেতন ও পে-স্কেল'}</button>
+      <button className={page==='calculators'?'active':''} onClick={()=>setPage('calculators')}><Calculator size={18}/>{lang==='en'?'Calculator Center':'ক্যালকুলেটর সেন্টার'}</button>
       <button className={page==='library'?'active':''} onClick={()=>setPage('library')}><BookOpen size={18}/>{lang==='en'?'Notices & Policies':'নোটিশ ও নীতিমালা'}</button>
       {admin&&<button className={page==='employees'?'active':''} onClick={()=>setPage('employees')}><Users size={18}/>{lang==='en'?'Employee Management':'কর্মকর্তা-কর্মচারী ব্যবস্থাপনা'}</button>}
       {admin&&<button className={page==='directory'?'active':''} onClick={()=>setPage('directory')}><Building2 size={18}/>{lang==='en'?'Department & Designation':'বিভাগ ও পদবি'}</button>}
@@ -759,6 +861,7 @@ function App(){
       {page==='dashboard'&&<DashboardHome user={user} onPage={setPage} lang={lang}/>}
       {page==='promotion'&&<PromotionCenter lang={lang}/>}
       {page==='salary'&&<SalaryCalculator lang={lang}/>}
+      {page==='calculators'&&<CalculatorCenter lang={lang} onPage={setPage}/>}
       {page==='library'&&<NoticePolicyCenter lang={lang} canManage={admin}/>}
       {page==='employees'&&admin&&<EmployeeManagement lang={lang}/>}
       {page==='directory'&&admin&&<MasterDirectory lang={lang}/>}
