@@ -14,11 +14,11 @@ export const PROMO_RULES={
   "17":{targetGrade:13,target:"উচ্চমান সহকারী/সমমান",years:{masters:3,bachelor:4,hsc:4,diploma:4,bsceng:3,mbbs:3},ref:"সম্পূরক পৃষ্ঠা ১১"},
   "15":{targetGrade:13,target:"উচ্চমান সহকারী/সমমান",years:{masters:3,bachelor:4,hsc:4,diploma:4,bsceng:3,mbbs:3},ref:"সম্পূরক পৃষ্ঠা ১১"},
   "14":{targetGrade:13,target:"উচ্চমান সহকারী/সমমান",years:{masters:3,bachelor:4,hsc:4,diploma:4,bsceng:3,mbbs:3},ref:"সম্পূরক পৃষ্ঠা ১১"},
-  "13":{targetGrade:12,target:"প্রধান সহকারী/সমমান",years:{masters:3,bachelor:3,hsc:4,diploma:4,bsceng:3,mbbs:3},ref:"পৃষ্ঠা ৩"},
+  "13":{targetGrade:12,target:"প্রধান সহকারী/সমমান",years:{masters:3,bachelor:4,hsc:4,diploma:4,bsceng:3,mbbs:3},ref:"পৃষ্ঠা ৩"},
   "12":{targetGrade:9,target:"সেকশন অফিসার/টেকনিক্যাল অফিসার/সমমান",years:{masters:3,bachelor:4,hsc:6,diploma:4,bsceng:3,mbbs:3},ref:"পৃষ্ঠা ৬ ও সম্পূরক পৃষ্ঠা ১১"},
   "11":{targetGrade:9,target:"সেকশন অফিসার/টেকনিক্যাল অফিসার/সমমান",years:{masters:3,bachelor:4,hsc:6,diploma:4,bsceng:3,mbbs:3},ref:"পৃষ্ঠা ৬ ও সম্পূরক পৃষ্ঠা ১১"},
   "10":{noPromotion:true,target:"এই ধারায় সরাসরি পদোন্নতি নেই",ref:"সম্পূরক পৃষ্ঠা ১১"},
-  "9":{targetGrade:6,target:"সহকারী রেজিস্ট্রার/নির্বাহী প্রকৌশলী/মেডিকেল অফিসার/সমমান",years:{masters:3,bachelor:3,hsc:6,diploma:5,bsceng:4,mbbs:3},ref:"পৃষ্ঠা ৭ ও সম্পূরক পৃষ্ঠা ১১"},
+  "9":{targetGrade:6,target:"সহকারী রেজিস্ট্রার/নির্বাহী প্রকৌশলী/মেডিকেল অফিসার/সমমান",years:{masters:3,bachelor:4,hsc:6,diploma:5,bsceng:4,mbbs:3},ref:"পৃষ্ঠা ৭ ও সম্পূরক পৃষ্ঠা ১১"},
   "6":{targetGrade:4,target:"ডেপুটি রেজিস্ট্রার/তত্ত্বাবধায়ক প্রকৌশলী/সিনিয়র মেডিকেল অফিসার/সমমান",years:{masters:3,bachelor:4,hsc:6,diploma:5,bsceng:4,mbbs:3},ref:"পৃষ্ঠা ৮ ও সম্পূরক পৃষ্ঠা ১১"},
   "4":{top:true,target:"এই নীতিমালার প্রদর্শিত পদোন্নতি কাঠামোর সর্বোচ্চ ধাপ",ref:"পৃষ্ঠা ৮"}
 };
@@ -68,27 +68,19 @@ export function futureRoadmap(startGrade,startDate,edu,maxSteps=6){
 }
 
 
-export function serviceExperiencePoints({currentPostStart,immediatePastStart,firstJoin,asOf}){
+export function serviceExperiencePoints({currentPostStart,firstJoin,asOf}){
   const MSY=365.2425*24*3600*1000;
   const current=new Date(currentPostStart), first=new Date(firstJoin), calc=new Date(asOf||new Date());
   if(isNaN(current)||isNaN(first)||isNaN(calc)) return {valid:false,error:'তারিখ সঠিক নয়।'};
-  const pastStart=immediatePastStart?new Date(immediatePastStart):null;
   if(first>current||current>calc) return {valid:false,error:'তারিখের ক্রম সঠিক নয়।'};
-  if(pastStart && (isNaN(pastStart)||pastStart<first||pastStart>current)) return {valid:false,error:'অব্যবহিত পূর্বের পদে যোগদানের তারিখ প্রথম যোগদান ও বর্তমান পদে যোগদানের তারিখের মাঝামাঝি হতে হবে।'};
   const currentYears=Math.max(0,(calc-current)/MSY);
-  let immediatePastYears=0,earlierYears=0;
-  if(pastStart){
-    immediatePastYears=Math.max(0,(current-pastStart)/MSY);
-    earlierYears=Math.max(0,(pastStart-first)/MSY);
-  }else if(first<current){
-    immediatePastYears=Math.max(0,(current-first)/MSY);
-  }
-  const cutoff=new Date('2025-12-31T23:59:59');
+  // UI-তে আলাদা পূর্বের পদের তারিখ নেওয়া হবে না। প্রথম যোগদান থেকে বর্তমান পদে যোগদানের আগের
+  // সম্পূর্ণ চাকরিকালকে prior service ধরে স্বয়ংক্রিয়ভাবে ৩ বছরে ১ পয়েন্ট গণনা করা হয়।
+  const priorServiceYears=Math.max(0,(current-first)/MSY);
   const currentPoints=currentYears;
-  const immediatePastPoints=immediatePastYears/3;
-  const earlierPoints=calc<=cutoff?earlierYears/5:0;
-  const points=currentPoints+immediatePastPoints+earlierPoints;
-  return {valid:true,currentYears,immediatePastYears,earlierYears,currentPoints,immediatePastPoints,earlierPoints,points,earlierIncluded:calc<=cutoff,approximate:!pastStart&&first<current};
+  const priorServicePoints=priorServiceYears/3;
+  const points=currentPoints+priorServicePoints;
+  return {valid:true,currentYears,priorServiceYears,currentPoints,priorServicePoints,points,autoCalculated:true};
 }
 
 export function fixed2026(grade,currentBasic){
