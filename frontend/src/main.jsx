@@ -18,6 +18,7 @@ import './traffic-analytics-phase11-2.css';
 import './salary-history-phase12.css';
 import './promotion-timeline-phase13.css';
 import './leave-phase14.css';
+import {KnowledgeCenter,PersonalCareerReports,PrivacyControlCenter,FinalReleaseStatus} from './final-core-phase16-19.jsx';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import {
   PAY2015,PAY2026,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
@@ -572,7 +573,7 @@ function AdminAnalyticsDashboard({user,onPage,lang='bn'}){
 
     <section className="admin-quick-command">
       <button onClick={()=>onPage('admin')}><SlidersHorizontal/><span>{en?'System Control':'সিস্টেম কন্ট্রোল'}</span></button>
-      <button onClick={()=>onPage('library')}><BookOpen/><span>{en?'Notices & Policies':'নোটিশ ও নীতিমালা'}</span></button>
+      <button onClick={()=>onPage('admin-content')}><BookOpen/><span>{en?'Notices & Policies':'নোটিশ ও নীতিমালা'}</span></button>
       <button onClick={()=>onPage('calculators')}><Calculator/><span>{en?'Calculator Center':'ক্যালকুলেটর সেন্টার'}</span></button>
       <button onClick={()=>onPage('account')}><LockKeyhole/><span>{en?'Account Security':'অ্যাকাউন্ট নিরাপত্তা'}</span></button>
     </section>
@@ -1625,7 +1626,7 @@ function SuperAdminControlCenter({lang='bn',onPage}){
       <section className="admin-action-grid">
         <button onClick={()=>onPage?.('employees')}><Users/><div><b>{en?'User & Career Records':'ব্যবহারকারী ও ক্যারিয়ার রেকর্ড'}</b><small>{en?'Structured profiles and service history':'স্ট্রাকচার্ড প্রোফাইল ও চাকরি ইতিহাস'}</small></div><ChevronRight/></button>
         <button onClick={()=>onPage?.('directory')}><Building2/><div><b>{en?'Master Directory':'মাস্টার ডিরেক্টরি'}</b><small>{en?'Manage master data':'মাস্টার ডাটা পরিচালনা'}</small></div><ChevronRight/></button>
-        <button onClick={()=>onPage?.('library')}><BookOpen/><div><b>{en?'Notices & Policies':'নোটিশ ও নীতিমালা'}</b><small>{en?'Publish reference content':'রেফারেন্স কনটেন্ট প্রকাশ'}</small></div><ChevronRight/></button>
+        <button onClick={()=>onPage?.('admin-content')}><BookOpen/><div><b>{en?'Notices & Policies':'নোটিশ ও নীতিমালা'}</b><small>{en?'Publish reference content':'রেফারেন্স কনটেন্ট প্রকাশ'}</small></div><ChevronRight/></button>
         <button onClick={()=>setTab('security')}><ShieldCheck/><div><b>{en?'Security Center':'নিরাপত্তা কেন্দ্র'}</b><small>{en?'Sessions and account status':'সেশন ও অ্যাকাউন্ট অবস্থা'}</small></div><ChevronRight/></button>
       </section>
     </>}
@@ -1640,8 +1641,8 @@ function SuperAdminControlCenter({lang='bn',onPage}){
     {tab==='content'&&<section className="admin-panel-card">
       <div className="admin-panel-head"><div><h3>{en?'System Content Management':'সিস্টেম কনটেন্ট ব্যবস্থাপনা'}</h3><p>{en?'Public references, notices, policies, forms and help content.':'পাবলিক রেফারেন্স, নোটিশ, নীতিমালা, ফরম ও সহায়তা কনটেন্ট।'}</p></div></div>
       <div className="admin-action-grid compact-actions">
-        <button onClick={()=>onPage?.('library')}><Bell/><div><b>{en?'Notices':'নোটিশ'}</b><small>{en?'Publish and pin verified updates':'যাচাইকৃত আপডেট প্রকাশ/পিন'}</small></div><ChevronRight/></button>
-        <button onClick={()=>onPage?.('library')}><BookOpen/><div><b>{en?'Policies & Rules':'নীতিমালা ও বিধি'}</b><small>{en?'Reference library':'রেফারেন্স লাইব্রেরি'}</small></div><ChevronRight/></button>
+        <button onClick={()=>onPage?.('admin-content')}><Bell/><div><b>{en?'Notices':'নোটিশ'}</b><small>{en?'Publish and pin verified updates':'যাচাইকৃত আপডেট প্রকাশ/পিন'}</small></div><ChevronRight/></button>
+        <button onClick={()=>onPage?.('admin-content')}><BookOpen/><div><b>{en?'Policies & Rules':'নীতিমালা ও বিধি'}</b><small>{en?'Reference library':'রেফারেন্স লাইব্রেরি'}</small></div><ChevronRight/></button>
         <button><FileText/><div><b>{en?'Forms & Links':'ফরম ও লিংক'}</b><small>{en?'Reference links only; no file storage':'শুধু রেফারেন্স লিংক; ফাইল স্টোরেজ নয়'}</small></div><ChevronRight/></button>
         <button><HelpCircle/><div><b>{en?'Help & FAQ':'সহায়তা ও প্রশ্নোত্তর'}</b><small>{en?'Support guidance':'ব্যবহার সহায়িকা'}</small></div><ChevronRight/></button>
       </div>
@@ -1713,7 +1714,7 @@ function App(){
   if(!user)return showLogin?<AuthPortal onLogin={u=>{setUser(u);window.history.replaceState({},'',window.location.pathname)}} onBack={()=>{setShowLogin(false);setAuthMode('login');setAuthToken('');window.history.replaceState({},'',window.location.pathname)}} lang={lang} setLang={setLang} initialMode={authMode} initialToken={authToken}/>:<PublicHome onLogin={()=>{setAuthMode('login');setShowLogin(true)}} lang={lang} setLang={setLang}/>;
   const admin=['super_admin','admin','department_admin'].includes(user.role);
   return <div className="app"><aside className="side">
-    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v15.2':'স্বাধীন প্ল্যাটফর্ম · v15.2'}</small></div></div>
+    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v16.0 Final':'স্বাধীন প্ল্যাটফর্ম · v16.0 Final'}</small></div></div>
     <nav>
       <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}><LayoutDashboard size={18}/>{lang==='en'?'My Dashboard':'আমার ড্যাশবোর্ড'}</button>
       <button className={page==='career'?'active':''} onClick={()=>setPage('career')}><BookUser size={18}/>{lang==='en'?'My Career':'আমার চাকরি'}</button>
@@ -1724,9 +1725,12 @@ function App(){
       <button className={page==='leave'?'active':''} onClick={()=>setPage('leave')}><CalendarDays size={18}/>{lang==='en'?'My Leave Record':'আমার ছুটির হিসাব'}</button>
       <button className={page==='calendar'?'active':''} onClick={()=>setPage('calendar')}><CalendarDays size={18}/>{lang==='en'?'My Calendar':'আমার ক্যালেন্ডার'}</button>
       <button className={page==='calculators'?'active':''} onClick={()=>setPage('calculators')}><Calculator size={18}/>{lang==='en'?'Calculator Center':'ক্যালকুলেটর সেন্টার'}</button>
-      <button className={page==='library'?'active':''} onClick={()=>setPage('library')}><BookOpen size={18}/>{lang==='en'?'Notices & Policies':'নোটিশ ও নীতিমালা'}</button>
+      <button className={page==='library'?'active':''} onClick={()=>setPage('library')}><BookOpen size={18}/>{lang==='en'?'Knowledge Center':'নলেজ সেন্টার'}</button>
+      <button className={page==='reports'?'active':''} onClick={()=>setPage('reports')}><FileText size={18}/>{lang==='en'?'My Reports':'আমার রিপোর্ট'}</button>
+      <button className={page==='privacy'?'active':''} onClick={()=>setPage('privacy')}><ShieldCheck size={18}/>{lang==='en'?'My Data & Privacy':'আমার ডাটা ও গোপনীয়তা'}</button>
       <button className={page==='account'?'active':''} onClick={()=>setPage('account')}><LockKeyhole size={18}/>{lang==='en'?'Account & Security':'অ্যাকাউন্ট ও নিরাপত্তা'}</button>
       {admin&&<button className={page==='admin'?'active':''} onClick={()=>setPage('admin')}><ShieldCheck size={18}/>{lang==='en'?'System Control':'সিস্টেম কন্ট্রোল'}</button>}
+      {admin&&<button className={page==='release-status'?'active':''} onClick={()=>setPage('release-status')}><CheckCircle2 size={18}/>{lang==='en'?'Release Status':'রিলিজ স্ট্যাটাস'}</button>}
     </nav></aside>
     <main><header><div><h2>{lang==='en'?`Welcome, ${user.name}`:`স্বাগতম, ${user.name}`}</h2><p>{lang==='en'?(roleLabel[user.role]||user.role):({super_admin:'সিস্টেম ব্যবস্থাপক',admin:'অ্যাডমিন',department_admin:'বিভাগীয় অ্যাডমিন',editor:'সম্পাদক',employee:'কর্মকর্তা-কর্মচারী'}[user.role]||user.role)}</p></div><div className="header-actions"><LangToggle lang={lang} setLang={setLang}/><button className="logout" onClick={logout}><LogOut size={16}/>{lang==='en'?'Logout':'লগআউট'}</button></div></header>
       {page==='dashboard'&&<DashboardHome user={user} onPage={setPage} lang={lang}/>} 
@@ -1738,7 +1742,11 @@ function App(){
       {page==='leave'&&<PersonalLeaveRecord lang={lang}/>} 
       {page==='calendar'&&<LoggedInOfficeCalendar lang={lang}/>} 
       {page==='calculators'&&<CalculatorCenter lang={lang} onPage={setPage}/>}
-      {page==='library'&&<NoticePolicyCenter lang={lang} canManage={admin}/>} 
+      {page==='admin-content'&&admin&&<NoticePolicyCenter lang={lang} canManage={true}/>}
+      {page==='library'&&<KnowledgeCenter lang={lang}/>}
+      {page==='reports'&&<PersonalCareerReports lang={lang}/>}
+      {page==='privacy'&&<PrivacyControlCenter lang={lang}/>}
+      {page==='release-status'&&admin&&<FinalReleaseStatus lang={lang}/>} 
       {page==='account'&&<AccountSecurity lang={lang}/>}
       {page==='employees'&&admin&&<EmployeeManagement lang={lang}/>}
       {page==='directory'&&admin&&<MasterDirectory lang={lang}/>}
