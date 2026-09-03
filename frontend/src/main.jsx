@@ -8,6 +8,7 @@ import {
   Bell,ArrowRight,CalendarDays,CheckCircle2,AlertTriangle,Landmark,FileText,Camera,Briefcase,MapPin,Mail,PhoneCall,MessageCircle,Edit3,UserCircle2,History,ArrowRightLeft,GraduationCap,BadgeDollarSign,Clock3,FileClock
 } from 'lucide-react';
 import './styles.css';
+import './auth-phase8.css';
 import {
   PAY2015,PAY2026,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
   annualPromotionCycle,futureRoadmap,serviceExperiencePoints,fixed2026,implementationRate,houseRent2015
@@ -188,19 +189,108 @@ function salaryReportHtml(r,lang='bn'){
   return reportShell(title,en?'A4 payslip-style salary statement':'এ-ফোর পে-স্লিপধর্মী বেতন বিবরণী',body,lang);
 }
 
-function Login({onLogin,onBack,lang,setLang}){
-  const[email,setEmail]=useState(''),[password,setPassword]=useState(''),[err,setErr]=useState(''),[busy,setBusy]=useState(false);
+function AuthPortal({onLogin,onBack,lang,setLang,initialMode='login',initialToken=''}) {
   const en=lang==='en';
-  async function submit(e){e.preventDefault();setErr('');setBusy(true);try{const x=await api('/api/login',{method:'POST',body:JSON.stringify({email,password})});onLogin(x.user)}catch(e){setErr(e.message)}finally{setBusy(false)}}
-  return <div className="login-shell"><form className="login-card" onSubmit={submit}>
+  const [mode,setMode]=useState(initialMode);
+  const [token,setToken]=useState(initialToken);
+  const [form,setForm]=useState({name:'',email:'',password:'',confirm:'',account_type:'employee',current_password:'',new_password:''});
+  const [err,setErr]=useState(''),[msg,setMsg]=useState(''),[busy,setBusy]=useState(false);
+
+  useEffect(()=>{setMode(initialMode);setToken(initialToken);setErr('');setMsg('')},[initialMode,initialToken]);
+  useEffect(()=>{
+    if(mode==='verify'&&token){
+      setBusy(true);setErr('');setMsg('');
+      api('/api/verify-email',{method:'POST',body:JSON.stringify({token})})
+        .then(()=>setMsg(en?'Email verified. You can now log in.':'ইমেইল যাচাই সম্পন্ন হয়েছে। এখন লগইন করতে পারবেন।'))
+        .catch(e=>setErr(e.message)).finally(()=>setBusy(false));
+    }
+  },[mode,token,lang]);
+
+  const change=(k,v)=>setForm(f=>({...f,[k]:v}));
+  const switchMode=m=>{setMode(m);setErr('');setMsg('')};
+
+  async function submit(e){
+    e.preventDefault();setBusy(true);setErr('');setMsg('');
+    try{
+      if(mode==='login'){
+        const x=await api('/api/login',{method:'POST',body:JSON.stringify({email:form.email,password:form.password})});onLogin(x.user);return;
+      }
+      if(mode==='register'){
+        if(form.password!==form.confirm)throw new Error(en?'Passwords do not match':'পাসওয়ার্ড দুটি মিলছে না');
+        const x=await api('/api/register',{method:'POST',body:JSON.stringify({name:form.name,email:form.email,password:form.password,account_type:form.account_type})});
+        setMsg(x.emailSent?(en?'Account created. Check your email and verify the account.':'অ্যাকাউন্ট তৈরি হয়েছে। ইমেইল দেখে অ্যাকাউন্ট যাচাই করুন।'):(en?'Account created, but verification email could not be sent. Configure email service and use Resend Verification.':'অ্যাকাউন্ট তৈরি হয়েছে, তবে যাচাই ইমেইল পাঠানো যায়নি। ইমেইল সার্ভিস সেটআপ করে আবার যাচাই ইমেইল পাঠান।'));
+        setMode('verify-help');return;
+      }
+      if(mode==='forgot'){
+        await api('/api/forgot-password',{method:'POST',body:JSON.stringify({email:form.email})});
+        setMsg(en?'If the account exists, a password reset link has been sent.':'অ্যাকাউন্টটি থাকলে পাসওয়ার্ড রিসেট লিংক ইমেইলে পাঠানো হয়েছে।');return;
+      }
+      if(mode==='reset'){
+        if(form.password!==form.confirm)throw new Error(en?'Passwords do not match':'পাসওয়ার্ড দুটি মিলছে না');
+        await api('/api/reset-password',{method:'POST',body:JSON.stringify({token,password:form.password})});
+        setMsg(en?'Password reset completed. Please log in.':'পাসওয়ার্ড পরিবর্তন হয়েছে। এখন লগইন করুন।');setMode('login');return;
+      }
+      if(mode==='verify-help'){
+        await api('/api/resend-verification',{method:'POST',body:JSON.stringify({email:form.email})});
+        setMsg(en?'Verification email sent.':'যাচাই ইমেইল পাঠানো হয়েছে।');return;
+      }
+    }catch(e){setErr(e.message)}finally{setBusy(false)}
+  }
+
+  const title=mode==='register'?(en?'Create your account':'নিজের অ্যাকাউন্ট তৈরি করুন'):
+    mode==='forgot'?(en?'Forgot password':'পাসওয়ার্ড ভুলে গেছেন'):
+    mode==='reset'?(en?'Set a new password':'নতুন পাসওয়ার্ড দিন'):
+    mode==='verify'||mode==='verify-help'?(en?'Email verification':'ইমেইল যাচাই'):(en?'Secure login':'নিরাপদ লগইন');
+
+  return <div className="login-shell phase8-auth"><form className="login-card phase8-card" onSubmit={submit}>
     <div className="login-top"><button type="button" className="back-link" onClick={onBack}>{en?'← Back to Home':'← হোমে ফিরুন'}</button><LangToggle lang={lang} setLang={setLang}/></div>
-    <h1>{en?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা ব্যবস্থা'}</h1><p>{en?'Independent Digital Service Platform':'স্বাধীন ডিজিটাল সেবা প্ল্যাটফর্ম'}</p>
-    <label>{en?'Email':'ইমেইল'}<input value={email} onChange={e=>setEmail(e.target.value)} type="email" required/></label>
-    <label>{en?'Password':'পাসওয়ার্ড'}<input value={password} onChange={e=>setPassword(e.target.value)} type="password" required/></label>
-    {err&&<div className="error">{err}</div>}
-    <button disabled={busy}>{busy?(en?'Signing in...':'লগইন হচ্ছে...'):(en?'Login':'লগইন')}</button>
-    <small>{en?'This is an independent and unofficial digital service platform.':'এটি একটি স্বাধীন ও অনানুষ্ঠানিক ডিজিটাল সেবা প্ল্যাটফর্ম।'}</small>
+    <div className="auth-badge"><ShieldCheck size={15}/>{en?'SELF-SERVICE ACCOUNT':'স্বয়ংক্রিয় ব্যবহারকারী অ্যাকাউন্ট'}</div>
+    <h1>{title}</h1>
+    <p>{en?'Employee Digital Service Platform':'কর্মকর্তা-কর্মচারী ডিজিটাল সেবা'}</p>
+
+    {mode==='verify' ? <>
+      {busy&&<div className="auth-info">{en?'Verifying your email...':'ইমেইল যাচাই হচ্ছে...'}</div>}
+      {err&&<div className="error">{err}</div>}{msg&&<div className="auth-success">{msg}</div>}
+      <button type="button" onClick={()=>switchMode('login')}>{en?'Go to Login':'লগইনে যান'}</button>
+    </> : <>
+      {mode==='register'&&<>
+        <label>{en?'Full name':'পূর্ণ নাম'}<input value={form.name} onChange={e=>change('name',e.target.value)} required/></label>
+        <label>{en?'Account type':'অ্যাকাউন্টের ধরন'}<select value={form.account_type} onChange={e=>change('account_type',e.target.value)}><option value="officer">{en?'Officer':'কর্মকর্তা'}</option><option value="employee">{en?'Employee':'কর্মচারী'}</option></select></label>
+      </>}
+      {(mode==='login'||mode==='register'||mode==='forgot'||mode==='verify-help')&&<label>{en?'Email':'ইমেইল'}<input value={form.email} onChange={e=>change('email',e.target.value)} type="email" required/></label>}
+      {(mode==='login'||mode==='register'||mode==='reset')&&<label>{en?'Password':'পাসওয়ার্ড'}<input value={form.password} onChange={e=>change('password',e.target.value)} type="password" minLength="10" required/></label>}
+      {(mode==='register'||mode==='reset')&&<label>{en?'Confirm password':'পাসওয়ার্ড নিশ্চিত করুন'}<input value={form.confirm} onChange={e=>change('confirm',e.target.value)} type="password" minLength="10" required/></label>}
+      {(mode==='register'||mode==='reset')&&<small className="password-rule">{en?'Use at least 10 characters with letters and numbers.':'কমপক্ষে ১০ অক্ষর ব্যবহার করুন এবং অক্ষর ও সংখ্যা রাখুন।'}</small>}
+      {err&&<div className="error">{err}</div>}{msg&&<div className="auth-success">{msg}</div>}
+      <button disabled={busy}>{busy?(en?'Please wait...':'অপেক্ষা করুন...'):
+        mode==='register'?(en?'Create Account':'অ্যাকাউন্ট তৈরি করুন'):
+        mode==='forgot'?(en?'Send Reset Link':'রিসেট লিংক পাঠান'):
+        mode==='reset'?(en?'Reset Password':'পাসওয়ার্ড পরিবর্তন করুন'):
+        mode==='verify-help'?(en?'Resend Verification':'যাচাই ইমেইল আবার পাঠান'):(en?'Login':'লগইন')}</button>
+
+      <div className="auth-links">
+        {mode==='login'&&<><button type="button" onClick={()=>switchMode('forgot')}>{en?'Forgot password?':'পাসওয়ার্ড ভুলে গেছেন?'}</button><button type="button" onClick={()=>switchMode('register')}>{en?'Create new account':'নতুন অ্যাকাউন্ট তৈরি করুন'}</button></>}
+        {mode==='register'&&<button type="button" onClick={()=>switchMode('login')}>{en?'Already have an account? Login':'অ্যাকাউন্ট আছে? লগইন করুন'}</button>}
+        {mode==='forgot'&&<button type="button" onClick={()=>switchMode('login')}>{en?'Back to login':'লগইনে ফিরুন'}</button>}
+        {mode==='verify-help'&&<button type="button" onClick={()=>switchMode('login')}>{en?'Go to login':'লগইনে যান'}</button>}
+      </div>
+    </>}
+    <small>{en?'Independent and unofficial digital service platform.':'স্বাধীন ও অনানুষ্ঠানিক ডিজিটাল সেবা প্ল্যাটফর্ম।'}</small>
   </form></div>
+}
+
+function AccountSecurity({lang='bn'}){
+  const en=lang==='en'; const [f,setF]=useState({current_password:'',new_password:'',confirm:''}),[busy,setBusy]=useState(false),[err,setErr]=useState(''),[msg,setMsg]=useState('');
+  async function save(e){e.preventDefault();setErr('');setMsg('');if(f.new_password!==f.confirm)return setErr(en?'New passwords do not match':'নতুন পাসওয়ার্ড দুটি মিলছে না');setBusy(true);try{await api('/api/change-password',{method:'POST',body:JSON.stringify({current_password:f.current_password,new_password:f.new_password})});setF({current_password:'',new_password:'',confirm:''});setMsg(en?'Password changed successfully.':'পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে।')}catch(e){setErr(e.message)}finally{setBusy(false)}}
+  return <div><div className="page-head"><div><h2>{en?'Account & Security':'অ্যাকাউন্ট ও নিরাপত্তা'}</h2><p>{en?'Change your password without contacting support.':'সহায়তায় যোগাযোগ ছাড়াই নিজের পাসওয়ার্ড পরিবর্তন করুন।'}</p></div></div>
+    <section className="calc-card security-card"><form onSubmit={save} className="form-grid">
+      <label>{en?'Current password':'বর্তমান পাসওয়ার্ড'}<input type="password" value={f.current_password} onChange={e=>setF({...f,current_password:e.target.value})} required/></label>
+      <label>{en?'New password':'নতুন পাসওয়ার্ড'}<input type="password" minLength="10" value={f.new_password} onChange={e=>setF({...f,new_password:e.target.value})} required/></label>
+      <label>{en?'Confirm new password':'নতুন পাসওয়ার্ড নিশ্চিত করুন'}<input type="password" minLength="10" value={f.confirm} onChange={e=>setF({...f,confirm:e.target.value})} required/></label>
+      <div className="span-2 password-rule">{en?'Minimum 10 characters with letters and numbers.':'কমপক্ষে ১০ অক্ষর, সঙ্গে অক্ষর ও সংখ্যা থাকতে হবে।'}</div>
+      {err&&<div className="error span-2">{err}</div>}{msg&&<div className="auth-success span-2">{msg}</div>}
+      <div className="span-2"><button className="primary" disabled={busy}><LockKeyhole size={16}/>{busy?(en?'Changing...':'পরিবর্তন হচ্ছে...'):(en?'Change Password':'পাসওয়ার্ড পরিবর্তন করুন')}</button></div>
+    </form></section></div>
 }
 function PublicHome({onLogin,lang,setLang}){
   const t=I18N[lang], en=lang==='en';
@@ -838,12 +928,17 @@ function AdminPanel(){
 }
 
 function App(){
-  const[user,setUser]=useState(null),[loading,setLoading]=useState(true),[page,setPage]=useState('dashboard'),[showLogin,setShowLogin]=useState(false),[lang,setLang]=useState(()=>localStorage.getItem('app_lang')||'bn');
+  const params=new URLSearchParams(window.location.search);
+  const queryAuth=params.get('auth')||'';
+  const queryToken=params.get('token')||'';
+  const[user,setUser]=useState(null),[loading,setLoading]=useState(true),[page,setPage]=useState('dashboard'),
+    [showLogin,setShowLogin]=useState(()=>!!queryAuth),[authMode,setAuthMode]=useState(()=>queryAuth||'login'),[authToken,setAuthToken]=useState(()=>queryToken),
+    [lang,setLang]=useState(()=>localStorage.getItem('app_lang')||'bn');
   useEffect(()=>{api('/api/me').then(x=>setUser(x.user)).catch(()=>{}).finally(()=>setLoading(false))},[]);
   useEffect(()=>{localStorage.setItem('app_lang',lang)},[lang]);
   async function logout(){try{await api('/api/logout',{method:'POST'})}catch{}setUser(null);setShowLogin(false);setPage('dashboard')}
   if(loading)return <div className="loading">Loading...</div>;
-  if(!user)return showLogin?<Login onLogin={setUser} onBack={()=>setShowLogin(false)} lang={lang} setLang={setLang}/>:<PublicHome onLogin={()=>setShowLogin(true)} lang={lang} setLang={setLang}/>;
+  if(!user)return showLogin?<AuthPortal onLogin={u=>{setUser(u);window.history.replaceState({},'',window.location.pathname)}} onBack={()=>{setShowLogin(false);setAuthMode('login');setAuthToken('');window.history.replaceState({},'',window.location.pathname)}} lang={lang} setLang={setLang} initialMode={authMode} initialToken={authToken}/>:<PublicHome onLogin={()=>{setAuthMode('login');setShowLogin(true)}} lang={lang} setLang={setLang}/>;
   const admin=['super_admin','admin','department_admin'].includes(user.role);
   return <div className="app"><aside className="side">
     <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform':'স্বাধীন প্ল্যাটফর্ম'}</small></div></div>
@@ -853,6 +948,7 @@ function App(){
       <button className={page==='salary'?'active':''} onClick={()=>setPage('salary')}><WalletCards size={18}/>{lang==='en'?'Salary & Pay Scale':'বেতন ও পে-স্কেল'}</button>
       <button className={page==='calculators'?'active':''} onClick={()=>setPage('calculators')}><Calculator size={18}/>{lang==='en'?'Calculator Center':'ক্যালকুলেটর সেন্টার'}</button>
       <button className={page==='library'?'active':''} onClick={()=>setPage('library')}><BookOpen size={18}/>{lang==='en'?'Notices & Policies':'নোটিশ ও নীতিমালা'}</button>
+      <button className={page==='account'?'active':''} onClick={()=>setPage('account')}><LockKeyhole size={18}/>{lang==='en'?'Account & Security':'অ্যাকাউন্ট ও নিরাপত্তা'}</button>
       {admin&&<button className={page==='employees'?'active':''} onClick={()=>setPage('employees')}><Users size={18}/>{lang==='en'?'Employee Management':'কর্মকর্তা-কর্মচারী ব্যবস্থাপনা'}</button>}
       {admin&&<button className={page==='directory'?'active':''} onClick={()=>setPage('directory')}><Building2 size={18}/>{lang==='en'?'Department & Designation':'বিভাগ ও পদবি'}</button>}
       {admin&&<button className={page==='admin'?'active':''} onClick={()=>setPage('admin')}><ShieldCheck size={18}/>{lang==='en'?'Admin Panel':'অ্যাডমিন প্যানেল'}</button>}
@@ -862,7 +958,8 @@ function App(){
       {page==='promotion'&&<PromotionCenter lang={lang}/>}
       {page==='salary'&&<SalaryCalculator lang={lang}/>}
       {page==='calculators'&&<CalculatorCenter lang={lang} onPage={setPage}/>}
-      {page==='library'&&<NoticePolicyCenter lang={lang} canManage={admin}/>}
+      {page==='library'&&<NoticePolicyCenter lang={lang} canManage={admin}/>} 
+      {page==='account'&&<AccountSecurity lang={lang}/>}
       {page==='employees'&&admin&&<EmployeeManagement lang={lang}/>}
       {page==='directory'&&admin&&<MasterDirectory lang={lang}/>}
       {page==='admin'&&admin&&<AdminPanel lang={lang}/>}
