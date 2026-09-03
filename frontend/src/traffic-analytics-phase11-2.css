@@ -1,0 +1,22 @@
+
+/* Phase 11.2 — Login & Public Visitor Analytics */
+.traffic-login-grid{grid-template-columns:1.4fr .6fr}
+.traffic-login-grid.second{grid-template-columns:1.25fr .75fr}
+.traffic-kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:16px}
+.traffic-kpi-row>div{padding:12px;border:1px solid #e5eaf1;border-radius:14px;background:linear-gradient(180deg,#fcfdff,#f8faff)}
+.traffic-kpi-row small{display:block;color:#7f8b9d;font-size:10px}.traffic-kpi-row b{display:block;margin-top:4px;font-size:22px;color:#182740}
+.hourly-chart{height:155px;display:grid;grid-template-columns:repeat(24,1fr);align-items:end;gap:3px;padding:10px 2px 0;border-top:1px dashed #e4e9f0}
+.hourly-chart>div{height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px}
+.hourly-chart i{display:block;width:72%;min-height:6px;border-radius:5px 5px 2px 2px;background:linear-gradient(180deg,#7768ef,#4d6de7);transition:.2s}.hourly-chart>div:hover i{filter:brightness(1.1);transform:translateY(-2px)}
+.hourly-chart small{font-size:7.5px;color:#8a95a6}
+.login-kpi-list{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.login-kpi-list>div{padding:13px;border:1px solid #e5eaf1;border-radius:14px;background:#fbfcfe}.login-kpi-list span{display:block;color:#7e899a;font-size:10px}.login-kpi-list b{display:block;margin-top:4px;font-size:22px;color:#192841}
+.recent-login-list{display:flex;flex-direction:column;gap:7px;max-height:250px;overflow:auto}
+.recent-login-list>div{display:grid;grid-template-columns:1fr auto;gap:8px;padding:9px 10px;border:1px solid #e6ebf1;border-radius:12px;background:#fbfcfe}
+.recent-login-list>div.ok{border-left:3px solid #17b26a}.recent-login-list>div.fail{border-left:3px solid #f04438}
+.recent-login-list b{display:block;font-size:11px}.recent-login-list small{display:block;color:#8590a1;font-size:9.5px;margin-top:1px}
+.recent-login-list span{font-size:9.5px;font-weight:800}.recent-login-list .ok span{color:#067647}.recent-login-list .fail span{color:#b42318}
+.recent-login-list time{grid-column:1/-1;color:#909bab;font-size:9px}
+@media(max-width:980px){.traffic-login-grid,.traffic-login-grid.second{grid-template-columns:1fr}}
+@media(max-width:720px){.traffic-kpi-row{grid-template-columns:1fr 1fr}.hourly-chart{gap:2px}.hourly-chart small{display:none}}
+@media(max-width:480px){.traffic-kpi-row,.login-kpi-list{grid-template-columns:1fr}}

@@ -14,6 +14,7 @@ import './career-phase9.css';
 import './career-dashboard-phase10.css';
 import './calculator-phase11.css';
 import './dashboard-phase11-1.css';
+import './traffic-analytics-phase11-2.css';
 import {
   PAY2015,PAY2026,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
   annualPromotionCycle,futureRoadmap,serviceExperiencePoints,fixed2026,implementationRate,houseRent2015
@@ -26,6 +27,23 @@ async function api(path,opts={}){
   if(!r.ok) throw new Error(d.error||d.detail||'Request failed');
   return d;
 }
+
+function visitorId(){
+  let id=localStorage.getItem('public_visitor_id');
+  if(!id){
+    id=(crypto.randomUUID?.()||`${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    localStorage.setItem('public_visitor_id',id);
+  }
+  return id;
+}
+function trackPublic(event='page_view',section='home'){
+  return fetch(API+'/api/public/track',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({visitor_id:visitorId(),event,section,path:location.pathname})
+  }).catch(()=>{});
+}
+
 const roleLabel={super_admin:'System Administrator',admin:'Admin',department_admin:'Department Admin',editor:'Editor',employee:'Employee'};
 const I18N={
   bn:{
@@ -269,13 +287,14 @@ function PublicHome({onLogin,lang,setLang}){
   const [publicNotices,setPublicNotices]=useState([]);
   const [publicPolicies,setPublicPolicies]=useState([]);
   useEffect(()=>{
+    trackPublic('page_view','home');
     Promise.all([
       api('/api/public/notices?limit=6').catch(()=>({notices:[]})),
       api('/api/public/policies?limit=6').catch(()=>({policies:[]}))
     ]).then(([n,p])=>{setPublicNotices(n.notices||[]);setPublicPolicies(p.policies||[])});
   },[]);
   const scrollTo=(id)=>requestAnimationFrame(()=>document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'}));
-  const openTool=(tool)=>{setPublicTool(tool);scrollTo('public-calculator');};
+  const openTool=(tool)=>{setPublicTool(tool);trackPublic('section_view',tool==='promotion'?'promotion_calculator':'pay_scale_calculator');scrollTo('public-calculator');};
   const copy=en?{
     home:'Home',promotion:'Promotion Calculator',pay:'Pay Scale Calculator',policies:'Policies',notices:'Notices',forms:'Forms',help:'Help',login:'Login',
     eyebrow:'INDEPENDENT · SMART · SECURE',title:'A premium digital service experience for officers and employees',desc:'Promotion eligibility, pay-scale calculation, policy guidance, forms and secure ERP access — together in one modern platform.',
@@ -302,7 +321,7 @@ function PublicHome({onLogin,lang,setLang}){
     footerNav:'দ্রুত লিংক'
   };
   const navItems=[[copy.home,'top'],[copy.promotion,'public-calculator','promotion'],[copy.pay,'public-calculator','salary'],[copy.policies,'policies'],[copy.notices,'notices'],[copy.forms,'forms'],[copy.help,'help']];
-  const goto=(id,tool)=>tool?openTool(tool):scrollTo(id);
+  const goto=(id,tool)=>{if(tool)return openTool(tool);trackPublic('section_view',id);scrollTo(id);};
   return <div id="top" className={'public premium-public '+(en?'lang-en':'lang-bn')}>
     <header className="public-nav luxury-nav">
       <div className="public-brand"><div className="brand-orb"><ShieldCheck size={19}/></div><div><b>{t.appName}</b><small>{t.appSub}</small></div></div>
@@ -426,7 +445,15 @@ function AdminAnalyticsDashboard({user,onPage,lang='bn'}){
             {label:'-6',value:0},{label:'-5',value:0},{label:'-4',value:0},{label:'-3',value:0},
             {label:'-2',value:0},{label:'-1',value:0},{label:'Today',value:0}
           ],
-          recent_users:[],recent_audit:[]
+          recent_users:[],recent_audit:[],
+          traffic:{today_views:0,today_unique:0,today_calculator_views:0,returning_today:0},
+          login:{today_success:0,today_failed:0,today_unique_users:0,today_attempts:0},
+          hourly_traffic:Array.from({length:24},(_,hour)=>({hour,value:0,views:0,percent:0})),
+          login_trend:[
+            {label:'-6',value:0},{label:'-5',value:0},{label:'-4',value:0},{label:'-3',value:0},
+            {label:'-2',value:0},{label:'-1',value:0},{label:'Today',value:0}
+          ],
+          recent_logins:[]
         });
         setErr(en?'Analytics API is not active yet; basic system statistics are shown.':'অ্যানালিটিক্স API এখনো সক্রিয় হয়নি; আপাতত মৌলিক সিস্টেম পরিসংখ্যান দেখানো হচ্ছে।');
       }catch(e2){setErr(e2.message)}
@@ -435,7 +462,8 @@ function AdminAnalyticsDashboard({user,onPage,lang='bn'}){
   useEffect(()=>{load()},[]);
   if(busy)return <div className="loading">{en?'Loading dashboard...':'ড্যাশবোর্ড লোড হচ্ছে...'}</div>;
   if(!d&&err)return <div className="error">{err}</div>;
-  const k=d?.kpis||{},health=d?.health||{},usage=d?.usage||[],activity=d?.activity_trend||[],recent=d?.recent_users||[],audit=d?.recent_audit||[];
+  const k=d?.kpis||{},health=d?.health||{},usage=d?.usage||[],activity=d?.activity_trend||[],recent=d?.recent_users||[],audit=d?.recent_audit||[],
+    traffic=d?.traffic||{},login=d?.login||{},hourly=d?.hourly_traffic||[],loginTrend=d?.login_trend||[],recentLogins=d?.recent_logins||[];
   return <div className="admin-analytics-dashboard">
     {err&&<div className="notice"><b>{en?'Dashboard notice:':'ড্যাশবোর্ড নোটিশ:'}</b> {err}</div>}
     <section className="analytics-hero">
@@ -496,6 +524,43 @@ function AdminAnalyticsDashboard({user,onPage,lang='bn'}){
       <article className="analytics-card">
         <div className="analytics-card-head"><div><ScrollText/><div><span>{en?'AUDIT':'অডিট'}</span><h3>{en?'Recent system activity':'সাম্প্রতিক সিস্টেম কার্যক্রম'}</h3></div></div></div>
         <div className="compact-audit-list">{audit.length===0?<div className="empty">{en?'No audit activity.':'অডিট কার্যক্রম নেই।'}</div>:audit.map(x=><div key={x.id}><History/><div><b>{x.action}</b><small>{x.user_name||'System'} · {x.created_at||'—'}</small></div></div>)}</div>
+      </article>
+    </section>
+
+
+    <section className="analytics-grid traffic-login-grid">
+      <article className="analytics-card wide">
+        <div className="analytics-card-head"><div><Eye/><div><span>{en?'PUBLIC TRAFFIC':'পাবলিক ট্রাফিক'}</span><h3>{en?"Today's website visitors":"আজকের ওয়েবসাইট ভিজিটর"}</h3></div></div><small>{en?'Anonymous, privacy-safe estimate':'অ্যানোনিমাস, প্রাইভেসি-সুরক্ষিত অনুমান'}</small></div>
+        <div className="traffic-kpi-row">
+          <div><small>{en?'Page Views':'পেজ ভিউ'}</small><b>{traffic.today_views??0}</b></div>
+          <div><small>{en?'Unique Visitors (est.)':'ইউনিক ভিজিটর (আনুমানিক)'}</small><b>{traffic.today_unique??0}</b></div>
+          <div><small>{en?'Public Calculator Views':'পাবলিক ক্যালকুলেটর ভিউ'}</small><b>{traffic.today_calculator_views??0}</b></div>
+          <div><small>{en?'Returning Visitors (est.)':'রিটার্নিং ভিজিটর (আনুমানিক)'}</small><b>{traffic.returning_today??0}</b></div>
+        </div>
+        <div className="hourly-chart">
+          {hourly.map((x,i)=><div key={i} title={`${x.hour}:00 — ${x.views}`}><i style={{height:`${Math.max(6,Math.min(100,x.percent||0))}%`}}></i><small>{x.hour}</small></div>)}
+        </div>
+      </article>
+
+      <article className="analytics-card">
+        <div className="analytics-card-head"><div><LockKeyhole/><div><span>{en?'LOGIN ANALYTICS':'লগইন অ্যানালিটিক্স'}</span><h3>{en?"Today's login activity":"আজকের লগইন কার্যক্রম"}</h3></div></div></div>
+        <div className="login-kpi-list">
+          <div><span>{en?'Successful logins':'সফল লগইন'}</span><b>{login.today_success??0}</b></div>
+          <div><span>{en?'Failed attempts':'ব্যর্থ চেষ্টা'}</span><b>{login.today_failed??0}</b></div>
+          <div><span>{en?'Unique logged-in users':'ইউনিক লগইন ব্যবহারকারী'}</span><b>{login.today_unique_users??0}</b></div>
+          <div><span>{en?'Total attempts':'মোট লগইন চেষ্টা'}</span><b>{login.today_attempts??0}</b></div>
+        </div>
+      </article>
+    </section>
+
+    <section className="analytics-grid traffic-login-grid second">
+      <article className="analytics-card wide">
+        <div className="analytics-card-head"><div><LineChart/><div><span>{en?'LOGIN TREND':'লগইন ট্রেন্ড'}</span><h3>{en?'Successful logins — last 7 days':'গত ৭ দিনের সফল লগইন'}</h3></div></div></div>
+        <TrendLine data={loginTrend}/>
+      </article>
+      <article className="analytics-card">
+        <div className="analytics-card-head"><div><History/><div><span>{en?'RECENT LOGINS':'সাম্প্রতিক লগইন'}</span><h3>{en?'Latest login activity':'সর্বশেষ লগইন কার্যক্রম'}</h3></div></div></div>
+        <div className="recent-login-list">{recentLogins.length===0?<div className="empty">{en?'No login activity yet.':'এখনো লগইন কার্যক্রম নেই।'}</div>:recentLogins.map(x=><div key={x.id} className={x.success?'ok':'fail'}><div><b>{x.email||'—'}</b><small>{x.user_name|| (en?'Unknown user':'অজানা ব্যবহারকারী')}</small></div><span>{x.success?(en?'Success':'সফল'):(en?'Failed':'ব্যর্থ')}</span><time>{x.created_at||'—'}</time></div>)}</div>
       </article>
     </section>
 
