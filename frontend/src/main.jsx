@@ -21,6 +21,7 @@ import './leave-phase14.css';
 import {KnowledgeCenter,PersonalCareerReports,PrivacyControlCenter,FinalReleaseStatus} from './final-core-phase16-19.jsx';
 import PremiumPersonalDashboard from './premium-dashboard-v16-1.jsx';
 import './mobile-app-v16-2.css';
+import './public-home-v16-3.css';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import {
   PAY2015,PAY2026,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
@@ -293,6 +294,7 @@ function PublicHome({onLogin,lang,setLang}){
   const [publicTool,setPublicTool]=useState('promotion');
   const [publicNotices,setPublicNotices]=useState([]);
   const [publicPolicies,setPublicPolicies]=useState([]);
+  const [publicMenu,setPublicMenu]=useState(false);
   useEffect(()=>{
     trackPublic('page_view','home');
     Promise.all([
@@ -328,14 +330,17 @@ function PublicHome({onLogin,lang,setLang}){
     footerNav:'দ্রুত লিংক'
   };
   const navItems=[[copy.home,'top'],[copy.promotion,'public-calculator','promotion'],[copy.pay,'public-calculator','salary'],[copy.policies,'policies'],[copy.notices,'notices'],[copy.forms,'forms'],[copy.help,'help']];
-  const goto=(id,tool)=>{if(tool)return openTool(tool);trackPublic('section_view',id);scrollTo(id);};
-  return <div id="top" className={'public premium-public '+(en?'lang-en':'lang-bn')}>
-    <header className="public-nav luxury-nav">
+  const goto=(id,tool)=>{setPublicMenu(false);if(tool)return openTool(tool);trackPublic('section_view',id);scrollTo(id);};
+  return <div id="top" data-public-version="v16.3" className={'public premium-public premium-home-v16-3 '+(en?'lang-en':'lang-bn')}>
+    <header className="public-nav luxury-nav premium-v16-nav">
       <div className="public-brand"><div className="brand-orb"><ShieldCheck size={19}/></div><div><b>{t.appName}</b><small>{t.appSub}</small></div></div>
-      <nav className="public-menu">
+      <button className="public-mobile-trigger" onClick={()=>setPublicMenu(true)} aria-label={en?'Open menu':'মেনু খুলুন'}><span></span><span></span><span></span></button>
+      <nav className={`public-menu ${publicMenu?'mobile-open':''}`}>
+        <div className="public-mobile-head"><div><b>{t.appName}</b><small>{t.appSub}</small></div><button onClick={()=>setPublicMenu(false)}><X/></button></div>
         <div className="public-menu-links">{navItems.map(([label,id,tool])=><button key={label} className="nav-text-btn" onClick={()=>goto(id,tool)}>{label}</button>)}</div>
-        <LangToggle lang={lang} setLang={setLang}/><button className="nav-login" onClick={onLogin}>{copy.login}<ArrowRight size={15}/></button>
+        <div className="public-menu-actions"><LangToggle lang={lang} setLang={setLang}/><button className="nav-login" onClick={()=>{setPublicMenu(false);onLogin()}}>{copy.login}<ArrowRight size={15}/></button></div>
       </nav>
+      <button className={`public-menu-backdrop ${publicMenu?'show':''}`} onClick={()=>setPublicMenu(false)} aria-label={en?'Close menu':'মেনু বন্ধ করুন'}></button>
     </header>
 
     <section className="public-hero luxury-hero">
