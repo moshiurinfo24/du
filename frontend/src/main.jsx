@@ -1,5 +1,5 @@
 
-import React,{useEffect,useMemo,useState} from 'react';
+import React,{useEffect,useMemo,useRef,useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {
   LayoutDashboard,TrendingUp,WalletCards,Users,ShieldCheck,LogOut,Plus,Search,
@@ -92,20 +92,49 @@ function reportShell(title,subtitle,body){
 }
 function kv(label,value){return `<div style="display:flex;justify-content:space-between;gap:16px;padding:7px 0;border-bottom:1px dashed #dfe4ec"><span style="color:#667085">${escapeHtml(label)}</span><b style="text-align:right;color:#182230">${escapeHtml(value)}</b></div>`}
 function section(title,content){return `<div style="margin:14px 0 0;page-break-inside:avoid"><div style="font-size:13px;font-weight:800;color:#1d3263;margin-bottom:5px">${escapeHtml(title)}</div><div style="border:1px solid #e1e6ef;border-radius:10px;padding:9px 12px;background:#fff">${content}</div></div>`}
-async function saveA4Pdf(html,filename){
-  let node=document.createElement('div');
-  node.style.position='fixed';node.style.left='-100000px';node.style.top='0';node.style.background='#fff';
-  node.innerHTML=html;document.body.appendChild(node);
-  try{
-    const html2pdf=await loadHtml2Pdf();
-    await html2pdf().set({
-      margin:[8,8,8,8],filename,
-      image:{type:'jpeg',quality:.98},
-      html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false},
-      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
-      pagebreak:{mode:['css','legacy']}
-    }).from(node.firstElementChild).save();
-  }finally{node.remove()}
+async function saveA4Pdf(element,filename){
+  if(!element)throw new Error('PDF preview পাওয়া যায়নি');
+  const html2pdf=await loadHtml2Pdf();
+  await document.fonts?.ready?.catch?.(()=>{});
+  await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+  await html2pdf().set({
+    margin:[8,8,8,8],filename,
+    image:{type:'jpeg',quality:.98},
+    html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false,scrollX:0,scrollY:0},
+    jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+    pagebreak:{mode:['css','legacy']}
+  }).from(element).save();
+}
+function PdfPreviewModal({html,filename,onClose}){
+  const reportRef=useRef(null);
+  const[busy,setBusy]=useState(false);
+  async function download(){
+    try{
+      setBusy(true);
+      await saveA4Pdf(reportRef.current,filename);
+    }catch(e){alert('PDF তৈরি করা যায়নি: '+e.message)}
+    finally{setBusy(false)}
+  }
+  useEffect(()=>{
+    const onKey=e=>{if(e.key==='Escape')onClose?.()};
+    document.addEventListener('keydown',onKey);
+    const prev=document.body.style.overflow;document.body.style.overflow='hidden';
+    return()=>{document.removeEventListener('keydown',onKey);document.body.style.overflow=prev};
+  },[onClose]);
+  return <div style={{position:'fixed',inset:0,zIndex:99999,background:'rgba(7,12,28,.78)',backdropFilter:'blur(8px)',display:'flex',flexDirection:'column'}}>
+    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,padding:'12px 18px',background:'#101936',color:'#fff',boxShadow:'0 8px 28px rgba(0,0,0,.24)'}}>
+      <div><b style={{fontSize:16}}>A4 PDF প্রিভিউ</b><div style={{fontSize:12,opacity:.78}}>তথ্য ঠিক আছে কিনা দেখে তারপর PDF ডাউনলোড করুন</div></div>
+      <div style={{display:'flex',gap:10,flexWrap:'wrap',justifyContent:'flex-end'}}>
+        <button onClick={onClose} style={{border:'1px solid rgba(255,255,255,.28)',background:'transparent',color:'#fff',padding:'9px 14px',borderRadius:10,cursor:'pointer'}}>বন্ধ করুন</button>
+        <button onClick={download} disabled={busy} style={{border:0,background:'linear-gradient(135deg,#d7a84f,#f0c86e)',color:'#17120a',fontWeight:800,padding:'9px 15px',borderRadius:10,cursor:busy?'wait':'pointer',opacity:busy?.7:1}}>{busy?'PDF তৈরি হচ্ছে...':'PDF ডাউনলোড'}</button>
+      </div>
+    </div>
+    <div style={{flex:1,overflow:'auto',padding:'24px 12px 40px'}}>
+      <div style={{width:'210mm',minHeight:'297mm',margin:'0 auto',background:'#fff',boxShadow:'0 18px 60px rgba(0,0,0,.34)',padding:'8mm',boxSizing:'border-box'}}>
+        <div ref={reportRef} style={{background:'#fff'}} dangerouslySetInnerHTML={{__html:html}}/>
+      </div>
+    </div>
+  </div>
 }
 function promotionReportHtml(r){
   const f=r.input||{};
@@ -291,8 +320,11 @@ function PromotionCenter(){
 }
 
 function PromotionResult({r}){
+  const[preview,setPreview]=useState(false);
+  const report=promotionReportHtml(r);
+  const filename=`promotion-report-${Date.now()}.pdf`;
   if(r.error)return <div className="error">{r.error}</div>;
-  if(r.stop)return <div className="result-stack"><section className="result-panel warn"><h3>{r.rule.target}</h3><p>রেফারেন্স: {r.rule.ref||r.rule.page||'—'}</p></section><button className="primary wide" onClick={()=>saveA4Pdf(promotionReportHtml(r),`promotion-report-${Date.now()}.pdf`).catch(e=>alert('PDF তৈরি করা যায়নি: '+e.message))}><FileText size={17}/> বিস্তারিত A4 PDF ডাউনলোড</button></div>;
+  if(r.stop)return <div className="result-stack"><section className="result-panel warn"><h3>{r.rule.target}</h3><p>রেফারেন্স: {r.rule.ref||r.rule.page||'—'}</p></section><button className="primary wide" onClick={()=>setPreview(true)}><FileText size={17}/> বিস্তারিত A4 PDF প্রিভিউ</button>{preview&&<PdfPreviewModal html={report} filename={filename} onClose={()=>setPreview(false)}/>}</div>;
   return <div className="result-stack">
     <section className={'result-panel '+(r.prelim?'ok':'')}><small>সম্ভাব্য পরবর্তী পদোন্নতি</small><h3>{r.rule.target} — গ্রেড {r.rule.targetGrade}</h3><div className="big-date">{fmtDate(r.cycle.completionDeadline)}</div><p>Projected promotion-process completion deadline · নীতিগত যোগ্যতা পূর্ণ: {fmtDate(r.eligible)}</p></section>
     <section className="metric-grid">
@@ -301,7 +333,8 @@ function PromotionResult({r}){
     <section className="cycle-card"><h3>বার্ষিক পদোন্নতি প্রক্রিয়া</h3><div className="cycle-flow"><div><small>যোগ্যতা পূর্ণ</small><b>{fmtDate(r.eligible)}</b></div><span>→</span><div><small>আবেদন/সার্কুলার</small><b>{fmtDate(r.cycle.circularDeadline)}</b></div><span>→</span><div><small>Projected completion</small><b>{fmtDate(r.cycle.completionDeadline)}</b></div></div><p>নীতিমালায় প্রতি বছর ১ বার, ৩১ ডিসেম্বরের মধ্যে দরখাস্ত আহ্বান এবং জুন মাসের মধ্যে কার্যক্রম সম্পন্ন করার কথা বলা হয়েছে।</p></section>
     <section className="roadmap-card"><h3>ভবিষ্যৎ সম্ভাব্য Promotion Roadmap</h3>{r.roadmap.map((x,i)=>x.stop?<div className="roadmap-row stop" key={i}><b>{x.fromGrade} গ্রেডের পর</b><span>{x.label}</span></div>:<div className="roadmap-row" key={i}><div><b>{x.fromGrade} → {x.toGrade} · {x.title}</b><small>{x.years} বছর · {x.ref}</small></div><div><b>{fmtDate(x.completionDeadline)}</b><small>Projected completion</small></div></div>)}</section>
     <div className="notice"><b>সতর্কতা:</b> এটি simplified দুই-তারিখ model। একাধিক পূর্ববর্তী পদ বা technical/medical stream-এর বিশেষ শর্ত থাকলে অফিসিয়াল নীতিমালা যাচাই প্রয়োজন।</div>
-    <button className="primary wide" onClick={()=>saveA4Pdf(promotionReportHtml(r),`promotion-report-${Date.now()}.pdf`).catch(e=>alert('PDF তৈরি করা যায়নি: '+e.message))}><FileText size={17}/> বিস্তারিত A4 PDF ডাউনলোড</button>
+    <button className="primary wide" onClick={()=>setPreview(true)}><FileText size={17}/> বিস্তারিত A4 PDF প্রিভিউ</button>
+    {preview&&<PdfPreviewModal html={report} filename={filename} onClose={()=>setPreview(false)}/>}
   </div>
 }
 
@@ -345,6 +378,9 @@ function SalaryCalculator(){
 }
 
 function SalaryResult({r}){
+  const[preview,setPreview]=useState(false);
+  const report=salaryReportHtml(r);
+  const filename=`pay-scale-report-${Date.now()}.pdf`;
   return <div className="result-stack">
     <section className="result-panel ok"><small>প্রাপ্য Basic</small><h3>৳{money(r.payable)}</h3><p>২০১৫ বর্তমান basic ৳{money(r.currentBasic)} · ২০২৬ full fixed basic ৳{money(r.fixed)} · বাস্তবায়ন {(r.rate*100).toLocaleString('bn-BD')}%</p></section>
     <section className="salary-summary">
@@ -355,7 +391,8 @@ function SalaryResult({r}){
       <section className="breakdown-card"><h3>Deduction</h3>{[['PF Subscription 10%',r.pf],['Benevolent',r.bene],['Health Insurance',r.health],['Group Insurance',r.group],['Revenue Stamp',r.stamp],['Association',r.association],['Tax',r.tax],['Loan',r.loan],['Other',r.other]].map(([l,v])=><div className="money-row" key={l}><span>{l}</span><b>৳{money(v)}</b></div>)}</section>
     </div>
     <div className="notice"><b>নিয়ম:</b> Special Benefit সম্পূর্ণ বাদ। ৩১ ডিসেম্বর ২০২৭ পর্যন্ত house rent/medical/education/tiffin/conveyance ২০১৫ current basic ও ২০১৫ rule layer ধরে হিসাব করা হয়েছে। PF Advance Installment default deduction-এ নেই। ২০২৮-এর নতুন allowance rate এখানে অনুমান করা হয়নি।</div>
-    <button className="primary wide" onClick={()=>saveA4Pdf(salaryReportHtml(r),`pay-scale-report-${Date.now()}.pdf`).catch(e=>alert('PDF তৈরি করা যায়নি: '+e.message))}><FileText size={17}/> বিস্তারিত A4 PDF ডাউনলোড</button>
+    <button className="primary wide" onClick={()=>setPreview(true)}><FileText size={17}/> বিস্তারিত A4 PDF প্রিভিউ</button>
+    {preview&&<PdfPreviewModal html={report} filename={filename} onClose={()=>setPreview(false)}/>}
   </div>
 }
 
