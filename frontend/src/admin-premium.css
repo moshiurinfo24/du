@@ -22,3 +22,17 @@
 @media(max-width:1180px){.admin-metrics-grid{grid-template-columns:repeat(3,1fr)}.admin-action-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:760px){.admin-control-hero{align-items:flex-start;flex-direction:column}.admin-metrics-grid,.admin-metrics-grid.small{grid-template-columns:repeat(2,1fr)}.rules-registry,.admin-action-grid,.admin-action-grid.compact-actions{grid-template-columns:1fr}.admin-panel-card{padding:15px}.admin-panel-head{flex-direction:column}.audit-list article{grid-template-columns:36px 1fr}.audit-list time{grid-column:2}}
 @media(max-width:480px){.admin-metrics-grid,.admin-metrics-grid.small{grid-template-columns:1fr}.admin-control-hero{padding:20px}.admin-control-hero h2{font-size:25px}}
+
+.internal-admin-note{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  margin-bottom:10px;
+  padding:7px 10px;
+  border-radius:999px;
+  background:#eef3ff;
+  color:#3657c7;
+  border:1px solid #dbe4ff;
+  font-size:11px;
+  font-weight:800;
+}

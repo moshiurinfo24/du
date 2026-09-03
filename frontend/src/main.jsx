@@ -694,7 +694,7 @@ function EmployeeManagement(){
     <EmployeeModal open={modal} editing={editing} departments={departments} designations={designations} onClose={()=>setModal(false)} onSaved={load}/></>;
 
   return <>
-    <div className="page-head"><div><h2>Employee Management</h2><p>Profile, Department, Designation, Grade, joining information ও service status পরিচালনা করুন।</p></div><button onClick={()=>{setEditing(null);setModal(true)}}><Plus size={17}/> নতুন Employee</button></div>
+    <div className="internal-admin-note"><ShieldCheck size={15}/> System Control → User & Career Records</div><div className="page-head"><div><h2>Employee Management</h2><p>Profile, Department, Designation, Grade, joining information ও service status পরিচালনা করুন।</p></div><button onClick={()=>{setEditing(null);setModal(true)}}><Plus size={17}/> নতুন Employee</button></div>
     <div className="toolbar"><div className="search"><Search size={17}/><input placeholder="Employee ID, নাম, বিভাগ, পদবি..." value={q} onChange={e=>setQ(e.target.value)}/></div><button className="secondary" onClick={load}><RefreshCw size={16}/> Refresh</button></div>
     {err&&<div className="error">{err}</div>}
     <div className="table-card">{loading?<div className="empty">Loading...</div>:filtered.length===0?<div className="empty">কোনো Employee record পাওয়া যায়নি।</div>:<div className="table-wrap"><table>
@@ -717,7 +717,7 @@ function MasterDirectory(){
   useEffect(()=>{load()},[]);
   async function addDepartment(){if(!depName.trim())return;try{await api('/api/departments',{method:'POST',body:JSON.stringify({name_bn:depName.trim(),type:'department'})});setDepName('');load()}catch(e){setErr(e.message)}}
   async function addDesignation(){if(!desName.trim())return;try{await api('/api/designations',{method:'POST',body:JSON.stringify({name_bn:desName.trim()})});setDesName('');load()}catch(e){setErr(e.message)}}
-  return <div><div className="page-head"><div><h2>Department & Designation</h2><p>Employee profile-এর জন্য master directory পরিচালনা করুন।</p></div></div>{err&&<div className="error">{err}</div>}
+  return <div><div className="internal-admin-note"><ShieldCheck size={15}/> System Control → Master Directory</div><div className="page-head"><div><h2>Department & Designation</h2><p>Employee profile-এর জন্য master directory পরিচালনা করুন।</p></div></div>{err&&<div className="error">{err}</div>}
     <div className="split-grid"><section className="breakdown-card"><h3>Departments / Offices</h3><div className="inline-add"><input placeholder="নতুন Department/Office" value={depName} onChange={e=>setDepName(e.target.value)}/><button className="primary" onClick={addDepartment}><Plus size={15}/> Add</button></div>{departments.map(x=><div className="directory-row" key={x.id}><Building2 size={16}/><span>{x.name_bn||x.name_en}</span><small>{x.type||'department'}</small></div>)}</section>
     <section className="breakdown-card"><h3>Designations</h3><div className="inline-add"><input placeholder="নতুন Designation" value={desName} onChange={e=>setDesName(e.target.value)}/><button className="primary" onClick={addDesignation}><Plus size={15}/> Add</button></div>{designations.map(x=><div className="directory-row" key={x.id}><Briefcase size={16}/><span>{x.name_bn||x.name_en}</span><small>{x.grade?`Grade ${x.grade}`:'—'}</small></div>)}</section></div>
   </div>
@@ -951,8 +951,8 @@ function SuperAdminControlCenter({lang='bn',onPage}){
         <AdminMetric label={en?'Audit Events':'অডিট ইভেন্ট'} value={health?.audit_events} icon={ScrollText}/>
       </section>
       <section className="admin-action-grid">
-        <button onClick={()=>onPage?.('employees')}><Users/><div><b>{en?'Employee Records':'কর্মকর্তা-কর্মচারী রেকর্ড'}</b><small>{en?'Structured profiles and service history':'স্ট্রাকচার্ড প্রোফাইল ও চাকরি ইতিহাস'}</small></div><ChevronRight/></button>
-        <button onClick={()=>onPage?.('directory')}><Building2/><div><b>{en?'Directory':'বিভাগ ও পদবি'}</b><small>{en?'Manage master data':'মাস্টার ডাটা পরিচালনা'}</small></div><ChevronRight/></button>
+        <button onClick={()=>onPage?.('employees')}><Users/><div><b>{en?'User & Career Records':'ব্যবহারকারী ও ক্যারিয়ার রেকর্ড'}</b><small>{en?'Structured profiles and service history':'স্ট্রাকচার্ড প্রোফাইল ও চাকরি ইতিহাস'}</small></div><ChevronRight/></button>
+        <button onClick={()=>onPage?.('directory')}><Building2/><div><b>{en?'Master Directory':'মাস্টার ডিরেক্টরি'}</b><small>{en?'Manage master data':'মাস্টার ডাটা পরিচালনা'}</small></div><ChevronRight/></button>
         <button onClick={()=>onPage?.('library')}><BookOpen/><div><b>{en?'Notices & Policies':'নোটিশ ও নীতিমালা'}</b><small>{en?'Publish reference content':'রেফারেন্স কনটেন্ট প্রকাশ'}</small></div><ChevronRight/></button>
         <button onClick={()=>setTab('security')}><ShieldCheck/><div><b>{en?'Security Center':'নিরাপত্তা কেন্দ্র'}</b><small>{en?'Sessions and account status':'সেশন ও অ্যাকাউন্ট অবস্থা'}</small></div><ChevronRight/></button>
       </section>
@@ -1047,8 +1047,6 @@ function App(){
       <button className={page==='calculators'?'active':''} onClick={()=>setPage('calculators')}><Calculator size={18}/>{lang==='en'?'Calculator Center':'ক্যালকুলেটর সেন্টার'}</button>
       <button className={page==='library'?'active':''} onClick={()=>setPage('library')}><BookOpen size={18}/>{lang==='en'?'Notices & Policies':'নোটিশ ও নীতিমালা'}</button>
       <button className={page==='account'?'active':''} onClick={()=>setPage('account')}><LockKeyhole size={18}/>{lang==='en'?'Account & Security':'অ্যাকাউন্ট ও নিরাপত্তা'}</button>
-      {admin&&<button className={page==='employees'?'active':''} onClick={()=>setPage('employees')}><Users size={18}/>{lang==='en'?'Employee Management':'কর্মকর্তা-কর্মচারী ব্যবস্থাপনা'}</button>}
-      {admin&&<button className={page==='directory'?'active':''} onClick={()=>setPage('directory')}><Building2 size={18}/>{lang==='en'?'Department & Designation':'বিভাগ ও পদবি'}</button>}
       {admin&&<button className={page==='admin'?'active':''} onClick={()=>setPage('admin')}><ShieldCheck size={18}/>{lang==='en'?'System Control':'সিস্টেম কন্ট্রোল'}</button>}
     </nav></aside>
     <main><header><div><h2>{lang==='en'?`Welcome, ${user.name}`:`স্বাগতম, ${user.name}`}</h2><p>{lang==='en'?(roleLabel[user.role]||user.role):({super_admin:'সিস্টেম ব্যবস্থাপক',admin:'অ্যাডমিন',department_admin:'বিভাগীয় অ্যাডমিন',editor:'সম্পাদক',employee:'কর্মকর্তা-কর্মচারী'}[user.role]||user.role)}</p></div><div className="header-actions"><LangToggle lang={lang} setLang={setLang}/><button className="logout" onClick={logout}><LogOut size={16}/>{lang==='en'?'Logout':'লগআউট'}</button></div></header>
