@@ -18,6 +18,7 @@ import './traffic-analytics-phase11-2.css';
 import './salary-history-phase12.css';
 import './promotion-timeline-phase13.css';
 import './leave-phase14.css';
+import FiscalOfficeCalendar from './calendar-phase15.jsx';
 import {
   PAY2015,PAY2026,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
   annualPromotionCycle,futureRoadmap,serviceExperiencePoints,fixed2026,implementationRate,houseRent2015
@@ -366,6 +367,8 @@ function PublicHome({onLogin,lang,setLang}){
       <div className="calculator-switch"><button className={publicTool==='promotion'?'active':''} onClick={()=>setPublicTool('promotion')}><TrendingUp/>{copy.promoTab}</button><button className={publicTool==='salary'?'active':''} onClick={()=>setPublicTool('salary')}><WalletCards/>{copy.payTab}</button></div>
       <div className="public-calculator-card">{publicTool==='promotion'?<PromotionCenter lang={lang}/>:<SalaryCalculator lang={lang}/>}</div>
     </section>
+
+    <FiscalOfficeCalendar lang={lang}/>
 
     <section id="policies" className="public-section info-stage">
       <div className="section-title centered"><span>{en?'REFERENCE':'তথ্য সহায়িকা'}</span><h2>{copy.policyTitle}</h2><p>{copy.policySub}</p></div>
