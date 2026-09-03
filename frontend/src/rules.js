@@ -67,6 +67,30 @@ export function futureRoadmap(startGrade,startDate,edu,maxSteps=6){
   return out;
 }
 
+
+export function serviceExperiencePoints({currentPostStart,immediatePastStart,firstJoin,asOf}){
+  const MSY=365.2425*24*3600*1000;
+  const current=new Date(currentPostStart), first=new Date(firstJoin), calc=new Date(asOf||new Date());
+  if(isNaN(current)||isNaN(first)||isNaN(calc)) return {valid:false,error:'তারিখ সঠিক নয়।'};
+  const pastStart=immediatePastStart?new Date(immediatePastStart):null;
+  if(first>current||current>calc) return {valid:false,error:'তারিখের ক্রম সঠিক নয়।'};
+  if(pastStart && (isNaN(pastStart)||pastStart<first||pastStart>current)) return {valid:false,error:'অব্যবহিত পূর্বের পদে যোগদানের তারিখ প্রথম যোগদান ও বর্তমান পদে যোগদানের তারিখের মাঝামাঝি হতে হবে।'};
+  const currentYears=Math.max(0,(calc-current)/MSY);
+  let immediatePastYears=0,earlierYears=0;
+  if(pastStart){
+    immediatePastYears=Math.max(0,(current-pastStart)/MSY);
+    earlierYears=Math.max(0,(pastStart-first)/MSY);
+  }else if(first<current){
+    immediatePastYears=Math.max(0,(current-first)/MSY);
+  }
+  const cutoff=new Date('2025-12-31T23:59:59');
+  const currentPoints=currentYears;
+  const immediatePastPoints=immediatePastYears/3;
+  const earlierPoints=calc<=cutoff?earlierYears/5:0;
+  const points=currentPoints+immediatePastPoints+earlierPoints;
+  return {valid:true,currentYears,immediatePastYears,earlierYears,currentPoints,immediatePastPoints,earlierPoints,points,earlierIncluded:calc<=cutoff,approximate:!pastStart&&first<current};
+}
+
 export function fixed2026(grade,currentBasic){
   const oldArr=PAY2015[grade]||[],newArr=PAY2026[grade]||[];
   if(!oldArr.length||!newArr.length)return 0;

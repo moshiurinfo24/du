@@ -10,7 +10,7 @@ import {
 import './styles.css';
 import {
   PAY2015,PAY2026,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
-  annualPromotionCycle,futureRoadmap,fixed2026,implementationRate,houseRent2015
+  annualPromotionCycle,futureRoadmap,serviceExperiencePoints,fixed2026,implementationRate,houseRent2015
 } from './rules';
 
 const API=import.meta.env.VITE_API_BASE||'';
@@ -138,13 +138,13 @@ function PdfPreviewModal({html,filename,onClose}){
 }
 function promotionReportHtml(r){
   const f=r.input||{};
-  let overview=kv('বর্তমান গ্রেড',`গ্রেড ${f.grade||'—'}`)+kv('শিক্ষাগত যোগ্যতা',eduBn[f.edu]||f.edu||'—')+kv('বর্তমান পদে যোগদান',f.currentDate?fmtDate(new Date(f.currentDate)):'—')+kv('প্রথম যোগদান',f.duDate?fmtDate(new Date(f.duDate)):'—')+kv('কম্পিউটার দক্ষতা/প্রশিক্ষণ',f.computer==='yes'?'আছে':'নেই')+kv('ACR শর্ত',f.acr==='yes'?'সন্তোষজনক':'অসম্পূর্ণ/না');
+  let overview=kv('বর্তমান গ্রেড',`গ্রেড ${f.grade||'—'}`)+kv('শিক্ষাগত যোগ্যতা',eduBn[f.edu]||f.edu||'—')+kv('বর্তমান পদে যোগদান',f.currentDate?fmtDate(new Date(f.currentDate)):'—')+kv('অব্যবহিত পূর্বের পদে যোগদান',f.immediatePastDate?fmtDate(new Date(f.immediatePastDate)):'—')+kv('প্রথম যোগদান',f.firstJoinDate?fmtDate(new Date(f.firstJoinDate)):'—')+kv('হিসাবের তারিখ',f.calcDate?fmtDate(new Date(f.calcDate)):'—')+kv('কম্পিউটার দক্ষতা/প্রশিক্ষণ',f.computer==='yes'?'আছে':'নেই')+kv('ACR শর্ত',f.acr==='yes'?'সন্তোষজনক':'অসম্পূর্ণ/না');
   let result='';
   if(r.stop) result=kv('ফলাফল',r.rule.target)+kv('রেফারেন্স',r.rule.ref||r.rule.page||'—');
-  else result=kv('সম্ভাব্য পরবর্তী পদ/ধাপ',`${r.rule.target} - গ্রেড ${r.rule.targetGrade}`)+kv('নীতিগত যোগ্যতার তারিখ',fmtDate(r.eligible))+kv('আবেদন/সার্কুলার সময়সীমা',fmtDate(r.cycle.circularDeadline))+kv('প্রক্রিয়া সম্পন্নের সম্ভাব্য সর্বশেষ সময়',fmtDate(r.cycle.completionDeadline))+kv('প্রয়োজনীয় অভিজ্ঞতা',`${r.req} বছর`)+kv('বর্তমান পদে চাকরি',durationBn(r.elapsed))+kv('অবশিষ্ট সময়',r.remaining.y||r.remaining.m||r.remaining.d?durationBn(r.remaining):'সময় পূর্ণ')+kv('Experience Point',r.points.toLocaleString('bn-BD',{maximumFractionDigits:2}))+kv('প্রাথমিক শর্তের অবস্থা',r.prelim?'যোগ্যতার মূল শর্ত পূর্ণ':'এক বা একাধিক শর্ত অসম্পূর্ণ');
+  else result=kv('সম্ভাব্য পরবর্তী পদ/ধাপ',`${r.rule.target} - গ্রেড ${r.rule.targetGrade}`)+kv('নীতিগত যোগ্যতার তারিখ',fmtDate(r.eligible))+kv('আবেদন/সার্কুলার সময়সীমা',fmtDate(r.cycle.circularDeadline))+kv('প্রক্রিয়া সম্পন্নের সম্ভাব্য সর্বশেষ সময়',fmtDate(r.cycle.completionDeadline))+kv('প্রয়োজনীয় অভিজ্ঞতা',`${r.req} বছর`)+kv('বর্তমান পদে চাকরি',durationBn(r.elapsed))+kv('অবশিষ্ট সময়',r.remaining.y||r.remaining.m||r.remaining.d?durationBn(r.remaining):'সময় পূর্ণ')+kv('মোট সার্ভিস পয়েন্ট',r.points.toLocaleString('bn-BD',{maximumFractionDigits:2}))+kv('বর্তমান পদের পয়েন্ট',(r.exp?.currentPoints||0).toLocaleString('bn-BD',{maximumFractionDigits:2}))+kv('অব্যবহিত পূর্বের পদের পয়েন্ট',(r.exp?.immediatePastPoints||0).toLocaleString('bn-BD',{maximumFractionDigits:2}))+kv('আরও আগের পদের পয়েন্ট',r.exp?.earlierIncluded?(r.exp?.earlierPoints||0).toLocaleString('bn-BD',{maximumFractionDigits:2}):'২০২৬ থেকে গণনায় নেই')+kv('প্রাথমিক শর্তের অবস্থা',r.prelim?'যোগ্যতার মূল শর্ত পূর্ণ':'এক বা একাধিক শর্ত অসম্পূর্ণ');
   let roadmap='';
   if(!r.stop&&r.roadmap?.length) roadmap=r.roadmap.map((x,i)=>x.stop?kv(`${i+1}. গ্রেড ${x.fromGrade} এর পর`,x.label):kv(`${i+1}. গ্রেড ${x.fromGrade} → ${x.toGrade}`,`${x.title} | ${x.years} বছর | সম্ভাব্য সম্পন্ন: ${fmtDate(x.completionDeadline)}`)).join('');
-  const body=section('প্রদত্ত তথ্য',overview)+section('হিসাবের বিস্তারিত ফলাফল',result)+(roadmap?section('ভবিষ্যৎ সম্ভাব্য পদোন্নতি রোডম্যাপ',roadmap):'')+`<div style="margin-top:14px;padding:10px 12px;border-left:4px solid #d59b35;background:#fff8e8;border-radius:8px;font-size:10.5px"><b>গুরুত্বপূর্ণ:</b> যোগ্যতার তারিখ ও পদোন্নতি প্রক্রিয়া সম্পন্নের তারিখ এক নয়। বার্ষিক চক্র অনুযায়ী প্রদর্শিত ৩০ জুন একটি conservative projected completion deadline, নিশ্চিত পদোন্নতির তারিখ নয়। Simplified দুই-তারিখ model ব্যবহৃত হয়েছে; একাধিক পূর্ববর্তী পদ বা বিশেষ technical/medical stream থাকলে মূল নীতিমালা যাচাই প্রয়োজন।</div>`;
+  const body=section('প্রদত্ত তথ্য',overview)+section('হিসাবের বিস্তারিত ফলাফল',result)+(roadmap?section('ভবিষ্যৎ সম্ভাব্য পদোন্নতি রোডম্যাপ',roadmap):'')+`<div style="margin-top:14px;padding:10px 12px;border-left:4px solid #d59b35;background:#fff8e8;border-radius:8px;font-size:10.5px"><b>গুরুত্বপূর্ণ:</b> যোগ্যতার তারিখ ও পদোন্নতি প্রক্রিয়া সম্পন্নের তারিখ এক নয়। বার্ষিক চক্র অনুযায়ী প্রদর্শিত ৩০ জুন একটি conservative projected completion deadline, নিশ্চিত পদোন্নতির তারিখ নয়। সার্ভিস পয়েন্টে বর্তমান পদ ১:১, অব্যবহিত পূর্বের পদ ৩:১ এবং ৩১ ডিসেম্বর ২০২৫ পর্যন্ত আরও আগের পদ ৫:১ অনুপাতে গণনা করা হয়েছে। শিক্ষাগত যোগ্যতা আলাদা সার্ভিস পয়েন্ট যোগ করে না; এটি সংশ্লিষ্ট গ্রেডে প্রয়োজনীয় চাকরিকাল নির্ধারণ করে। বিশেষ টেকনিক্যাল/মেডিকেল stream-এর অতিরিক্ত শর্ত থাকলে সংশ্লিষ্ট পদধারা যাচাই প্রয়োজন।</div>`;
   return reportShell('পদোন্নতি হিসাবের বিস্তারিত প্রতিবেদন','A4 PDF · যোগ্যতা, অভিজ্ঞতা পয়েন্ট, বার্ষিক চক্র ও ভবিষ্যৎ রোডম্যাপ',body);
 }
 function salaryReportHtml(r){
@@ -285,34 +285,38 @@ function DMY({label,value,onChange}){
 }
 
 function PromotionCenter(){
-  const [f,setF]=useState({grade:'13',edu:'bachelor',currentDate:'',duDate:'',computer:'yes',acr:'yes'}),[result,setResult]=useState(null);
+  const todayIso=useMemo(()=>{const d=new Date();d.setHours(0,0,0,0);return d.toISOString().slice(0,10)},[]);
+  const [f,setF]=useState({grade:'13',edu:'bachelor',currentDate:'',immediatePastDate:'',firstJoinDate:'',calcDate:todayIso,computer:'yes',acr:'yes'}),[result,setResult]=useState(null);
   function calc(){
     const rule=PROMO_RULES[f.grade];
-    if(!f.currentDate||!f.duDate)return setResult({error:'দুইটি যোগদানের তারিখ নির্বাচন করুন।',input:{...f}});
-    const current=new Date(f.currentDate),du=new Date(f.duDate),today=new Date();today.setHours(0,0,0,0);
-    if(du>current)return setResult({error:'প্রথম যোগদানের তারিখ বর্তমান পদে যোগদানের তারিখের পরে হতে পারে না।',input:{...f}});
+    if(!f.currentDate||!f.firstJoinDate)return setResult({error:'বর্তমান পদে যোগদানের তারিখ এবং প্রথম যোগদানের তারিখ নির্বাচন করুন।',input:{...f}});
+    const current=new Date(f.currentDate),first=new Date(f.firstJoinDate),asOf=new Date(f.calcDate||todayIso);
+    if(first>current)return setResult({error:'প্রথম যোগদানের তারিখ বর্তমান পদে যোগদানের তারিখের পরে হতে পারে না।',input:{...f}});
+    if(current>asOf)return setResult({error:'হিসাবের তারিখ বর্তমান পদে যোগদানের তারিখের আগে হতে পারে না।',input:{...f}});
     if(!rule)return setResult({error:'এই গ্রেডের rule map পাওয়া যায়নি।',input:{...f}});
     if(rule.noPromotion||rule.top)return setResult({stop:true,rule,input:{...f}});
     const req=(rule.years&&rule.years[f.edu])||4;
     const eligible=addYears(current,req),cycle=annualPromotionCycle(eligible);
-    const currentYears=Math.max(0,(today-current)/(365.2425*86400000));
-    const pastYears=Math.max(0,(current-du)/(365.2425*86400000));
-    const points=currentYears+(pastYears/3);
-    const elapsed=diffYMD(current,today),remaining=today>=eligible?{y:0,m:0,d:0}:diffYMD(today,eligible);
-    const prelim=today>=eligible&&f.computer==='yes'&&f.acr==='yes';
-    setResult({rule,req,eligible,cycle,points,elapsed,remaining,prelim,roadmap:futureRoadmap(f.grade,current,f.edu,6),input:{...f}});
+    const exp=serviceExperiencePoints({currentPostStart:f.currentDate,immediatePastStart:f.immediatePastDate,firstJoin:f.firstJoinDate,asOf:f.calcDate||todayIso});
+    if(!exp.valid)return setResult({error:exp.error,input:{...f}});
+    const elapsed=diffYMD(current,asOf),remaining=asOf>=eligible?{y:0,m:0,d:0}:diffYMD(asOf,eligible);
+    const prelim=asOf>=eligible&&f.computer==='yes'&&f.acr==='yes';
+    setResult({rule,req,eligible,cycle,points:exp.points,exp,elapsed,remaining,prelim,roadmap:futureRoadmap(f.grade,current,f.edu,6),input:{...f}});
   }
   return <div>
-    <div className="page-head"><div><h2>পদোন্নতি কেন্দ্র</h2><p>দুইটি তারিখ থেকে service, point, eligibility এবং annual promotion cycle স্বয়ংক্রিয়ভাবে হিসাব হবে।</p></div></div>
+    <div className="page-head"><div><h2>পদোন্নতি কেন্দ্র</h2><p>নীতিমালার অভিজ্ঞতার বছর, সার্ভিস পয়েন্ট এবং বার্ষিক পদোন্নতি চক্র অনুযায়ী হিসাব।</p></div></div>
     <section className="calc-card">
       <div className="form-grid promo-form">
         <label>বর্তমান গ্রেড<select value={f.grade} onChange={e=>setF({...f,grade:e.target.value})}>{['16','17','15','14','13','12','11','10','9','6','4'].map(g=><option key={g} value={g}>গ্রেড {g}</option>)}</select></label>
-        <label>শিক্ষাগত যোগ্যতা<select value={f.edu} onChange={e=>setF({...f,edu:e.target.value})}><option value="masters">Masters</option><option value="bachelor">Bachelor</option><option value="hsc">HSC</option><option value="diploma">Diploma</option><option value="bsceng">BSc Engineering</option><option value="mbbs">MBBS</option></select></label>
+        <label>শিক্ষাগত যোগ্যতা<select value={f.edu} onChange={e=>setF({...f,edu:e.target.value})}><option value="masters">মাস্টার্স</option><option value="bachelor">স্নাতক</option><option value="hsc">এইচএসসি</option><option value="diploma">ডিপ্লোমা</option><option value="bsceng">বিএসসি ইঞ্জিনিয়ারিং</option><option value="mbbs">এমবিবিএস</option></select></label>
         <DMY label="বর্তমান পদে যোগদানের তারিখ" value={f.currentDate} onChange={v=>setF({...f,currentDate:v})}/>
-        <DMY label="প্রথম যোগদানের তারিখ" value={f.duDate} onChange={v=>setF({...f,duDate:v})}/>
+        <DMY label="অব্যবহিত পূর্বের পদে যোগদানের তারিখ" value={f.immediatePastDate} onChange={v=>setF({...f,immediatePastDate:v})}/>
+        <DMY label="প্রথম যোগদানের তারিখ" value={f.firstJoinDate} onChange={v=>setF({...f,firstJoinDate:v})}/>
+        <DMY label="হিসাবের তারিখ" value={f.calcDate} onChange={v=>setF({...f,calcDate:v})}/>
         <label>কম্পিউটার দক্ষতা/প্রশিক্ষণ<select value={f.computer} onChange={e=>setF({...f,computer:e.target.value})}><option value="yes">আছে</option><option value="no">নেই</option></select></label>
-        <label>ACR শর্ত<select value={f.acr} onChange={e=>setF({...f,acr:e.target.value})}><option value="yes">সন্তোষজনক</option><option value="no">অসম্পূর্ণ/না</option></select></label>
+        <label>বার্ষিক গোপনীয় প্রতিবেদন<select value={f.acr} onChange={e=>setF({...f,acr:e.target.value})}><option value="yes">সন্তোষজনক</option><option value="no">অসম্পূর্ণ/না</option></select></label>
       </div>
+      <div className="notice" style={{marginTop:12}}><b>পয়েন্টের নিয়ম:</b> বর্তমান পদে প্রতি ১ বছর = ১ পয়েন্ট; অব্যবহিত পূর্বের পদে প্রতি ৩ বছর = ১ পয়েন্ট; আরও আগের পদে প্রতি ৫ বছর = ১ পয়েন্ট শুধু ৩১ ডিসেম্বর ২০২৫ পর্যন্ত। ২০২৬ থেকে আরও আগের পদের ১/৫ পয়েন্ট বাদ থাকবে।</div>
       <button className="primary wide" onClick={calc}>পদোন্নতি হিসাব করুন</button>
     </section>
     {result&&<PromotionResult r={result}/>}
@@ -321,18 +325,26 @@ function PromotionCenter(){
 
 function PromotionResult({r}){
   const[preview,setPreview]=useState(false);
-  const report=promotionReportHtml(r);
   const filename=`promotion-report-${Date.now()}.pdf`;
   if(r.error)return <div className="error">{r.error}</div>;
+  const report=promotionReportHtml(r);
   if(r.stop)return <div className="result-stack"><section className="result-panel warn"><h3>{r.rule.target}</h3><p>রেফারেন্স: {r.rule.ref||r.rule.page||'—'}</p></section><button className="primary wide" onClick={()=>setPreview(true)}><FileText size={17}/> বিস্তারিত A4 PDF প্রিভিউ</button>{preview&&<PdfPreviewModal html={report} filename={filename} onClose={()=>setPreview(false)}/>}</div>;
+  const e=r.exp||{};
   return <div className="result-stack">
-    <section className={'result-panel '+(r.prelim?'ok':'')}><small>সম্ভাব্য পরবর্তী পদোন্নতি</small><h3>{r.rule.target} — গ্রেড {r.rule.targetGrade}</h3><div className="big-date">{fmtDate(r.cycle.completionDeadline)}</div><p>Projected promotion-process completion deadline · নীতিগত যোগ্যতা পূর্ণ: {fmtDate(r.eligible)}</p></section>
+    <section className={'result-panel '+(r.prelim?'ok':'')}><small>সম্ভাব্য পরবর্তী পদোন্নতি</small><h3>{r.rule.target} — গ্রেড {r.rule.targetGrade}</h3><div className="big-date">{fmtDate(r.cycle.completionDeadline)}</div><p>প্রক্রিয়া সম্পন্নের সম্ভাব্য সর্বশেষ সময় · নীতিগত যোগ্যতা পূর্ণ: {fmtDate(r.eligible)}</p></section>
     <section className="metric-grid">
-      <Stat label="বর্তমান পদে চাকরি" value={durationBn(r.elapsed)} icon={CalendarDays}/><Stat label="প্রয়োজনীয় অভিজ্ঞতা" value={`${r.req} বছর`} icon={CheckCircle2}/><Stat label="অবশিষ্ট সময়" value={r.remaining.y||r.remaining.m||r.remaining.d?durationBn(r.remaining):'সময় পূর্ণ'} icon={Activity}/><Stat label="Experience Point" value={r.points.toLocaleString('bn-BD',{maximumFractionDigits:2})} icon={TrendingUp}/>
+      <Stat label="বর্তমান পদে চাকরি" value={durationBn(r.elapsed)} icon={CalendarDays}/><Stat label="শিক্ষাগত যোগ্যতা অনুযায়ী প্রয়োজনীয় অভিজ্ঞতা" value={`${r.req} বছর`} icon={GraduationCap}/><Stat label="যোগ্য হতে অবশিষ্ট" value={r.remaining.y||r.remaining.m||r.remaining.d?durationBn(r.remaining):'সময় পূর্ণ'} icon={Activity}/><Stat label="মোট সার্ভিস পয়েন্ট" value={r.points.toLocaleString('bn-BD',{maximumFractionDigits:2})} icon={TrendingUp}/>
     </section>
-    <section className="cycle-card"><h3>বার্ষিক পদোন্নতি প্রক্রিয়া</h3><div className="cycle-flow"><div><small>যোগ্যতা পূর্ণ</small><b>{fmtDate(r.eligible)}</b></div><span>→</span><div><small>আবেদন/সার্কুলার</small><b>{fmtDate(r.cycle.circularDeadline)}</b></div><span>→</span><div><small>Projected completion</small><b>{fmtDate(r.cycle.completionDeadline)}</b></div></div><p>নীতিমালায় প্রতি বছর ১ বার, ৩১ ডিসেম্বরের মধ্যে দরখাস্ত আহ্বান এবং জুন মাসের মধ্যে কার্যক্রম সম্পন্ন করার কথা বলা হয়েছে।</p></section>
-    <section className="roadmap-card"><h3>ভবিষ্যৎ সম্ভাব্য Promotion Roadmap</h3>{r.roadmap.map((x,i)=>x.stop?<div className="roadmap-row stop" key={i}><b>{x.fromGrade} গ্রেডের পর</b><span>{x.label}</span></div>:<div className="roadmap-row" key={i}><div><b>{x.fromGrade} → {x.toGrade} · {x.title}</b><small>{x.years} বছর · {x.ref}</small></div><div><b>{fmtDate(x.completionDeadline)}</b><small>Projected completion</small></div></div>)}</section>
-    <div className="notice"><b>সতর্কতা:</b> এটি simplified দুই-তারিখ model। একাধিক পূর্ববর্তী পদ বা technical/medical stream-এর বিশেষ শর্ত থাকলে অফিসিয়াল নীতিমালা যাচাই প্রয়োজন।</div>
+    <section className="breakdown-card"><h3>সার্ভিস পয়েন্টের বিস্তারিত</h3>
+      <div className="money-row"><span>বর্তমান পদ: {Number(e.currentYears||0).toLocaleString('bn-BD',{maximumFractionDigits:2})} বছর × ১</span><b>{Number(e.currentPoints||0).toLocaleString('bn-BD',{maximumFractionDigits:2})}</b></div>
+      <div className="money-row"><span>অব্যবহিত পূর্বের পদ: {Number(e.immediatePastYears||0).toLocaleString('bn-BD',{maximumFractionDigits:2})} বছর ÷ ৩</span><b>{Number(e.immediatePastPoints||0).toLocaleString('bn-BD',{maximumFractionDigits:2})}</b></div>
+      <div className="money-row"><span>আরও আগের পদ: {Number(e.earlierYears||0).toLocaleString('bn-BD',{maximumFractionDigits:2})} বছর ÷ ৫</span><b>{e.earlierIncluded?Number(e.earlierPoints||0).toLocaleString('bn-BD',{maximumFractionDigits:2}):'২০২৬ থেকে বাদ'}</b></div>
+      <div className="money-row"><span>শিক্ষাগত যোগ্যতার ভূমিকা</span><b>আলাদা পয়েন্ট নয়; প্রয়োজনীয় চাকরিকাল নির্ধারণ করে</b></div>
+    </section>
+    {e.approximate&&<div className="notice"><b>তথ্য অসম্পূর্ণ:</b> অব্যবহিত পূর্বের পদে যোগদানের তারিখ দেওয়া হয়নি। তাই প্রথম যোগদান থেকে বর্তমান পদে যোগদানের আগের পুরো সময়কে অব্যবহিত পূর্বের পদ ধরে আনুমানিক পয়েন্ট দেখানো হয়েছে। সঠিক পয়েন্টের জন্য তৃতীয় তারিখ দিন।</div>}
+    <section className="cycle-card"><h3>বার্ষিক পদোন্নতি প্রক্রিয়া</h3><div className="cycle-flow"><div><small>যোগ্যতা পূর্ণ</small><b>{fmtDate(r.eligible)}</b></div><span>→</span><div><small>দরখাস্ত আহ্বানের সময়সীমা</small><b>{fmtDate(r.cycle.circularDeadline)}</b></div><span>→</span><div><small>সম্ভাব্য সম্পন্ন</small><b>{fmtDate(r.cycle.completionDeadline)}</b></div></div><p>নীতিমালা অনুযায়ী পদোন্নতির জন্য প্রতি বছর একবার, ৩১ ডিসেম্বরের মধ্যে দরখাস্ত আহ্বান এবং জুন মাসের মধ্যে পদোন্নতির কার্যক্রম সম্পন্ন করা বাঞ্ছনীয়। ৩০ জুনকে এখানে সম্ভাব্য সর্বশেষ সময় হিসেবে দেখানো হয়েছে, নিশ্চিত পদোন্নতির তারিখ হিসেবে নয়।</p></section>
+    <section className="roadmap-card"><h3>পরবর্তী পদোন্নতির সম্ভাব্য রোডম্যাপ</h3>{r.roadmap.map((x,i)=>x.stop?<div className="roadmap-row stop" key={i}><b>{x.fromGrade} গ্রেডের পর</b><span>{x.label}</span></div>:<div className="roadmap-row" key={i}><div><b>{x.fromGrade} → {x.toGrade} · {x.title}</b><small>{x.years} বছর · {x.ref}</small></div><div><b>{fmtDate(x.completionDeadline)}</b><small>সম্ভাব্য প্রক্রিয়া সম্পন্ন</small></div></div>)}</section>
+    <div className="notice"><b>নীতিমালা ভিত্তি:</b> শিক্ষাগত যোগ্যতা অনুযায়ী প্রয়োজনীয় চাকরিকাল গ্রেডভেদে rule map থেকে নেওয়া হয়েছে। বিশেষ টেকনিক্যাল/মেডিকেল পদে আলাদা যোগ্যতা বা অতিরিক্ত চাকরিকালের শর্ত থাকলে সংশ্লিষ্ট পদধারার শর্ত প্রাধান্য পাবে।</div>
     <button className="primary wide" onClick={()=>setPreview(true)}><FileText size={17}/> বিস্তারিত A4 PDF প্রিভিউ</button>
     {preview&&<PdfPreviewModal html={report} filename={filename} onClose={()=>setPreview(false)}/>}
   </div>
