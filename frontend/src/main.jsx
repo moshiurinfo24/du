@@ -22,7 +22,7 @@ import {KnowledgeCenter,PersonalCareerReports,PrivacyControlCenter,FinalReleaseS
 import PremiumPersonalDashboard from './premium-dashboard-v16-1.jsx';
 import './mobile-app-v16-2.css';
 import './public-home-v16-3.css';
-import './mobile-menu-hotfix-v16-3-1.css';
+import './mobile-menu-hotfix-v16-3-2.css';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import {
   PAY2015,PAY2026,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
@@ -269,7 +269,7 @@ function AuthPortal({onLogin,onBack,lang,setLang,initialMode='login'}) {
       {mode==='login'&&<><button type="button" onClick={()=>switchMode('forgot')}>{en?'Forgot password?':'পাসওয়ার্ড ভুলে গেছেন?'}</button><button type="button" onClick={()=>switchMode('register')}>{en?'Create new account':'নতুন অ্যাকাউন্ট তৈরি করুন'}</button></>}
       {(mode==='register'||mode==='forgot')&&!recovery&&<button type="button" onClick={()=>switchMode('login')}>{en?'Back to login':'লগইনে ফিরুন'}</button>}
     </div>
-    <small>{en?'No paid email, SMS or domain is required. Independent and unofficial platform.':'কোনো পেইড ইমেইল, এসএমএস বা ডোমেইন প্রয়োজন নেই। স্বাধীন ও অনানুষ্ঠানিক প্ল্যাটফর্ম।'}</small>
+    <small>{en?'':''}</small>
   </form></div>
 }
 
@@ -332,10 +332,10 @@ function PublicHome({onLogin,lang,setLang}){
   };
   const navItems=[[copy.home,'top'],[copy.promotion,'public-calculator','promotion'],[copy.pay,'public-calculator','salary'],[copy.policies,'policies'],[copy.notices,'notices'],[copy.forms,'forms'],[copy.help,'help']];
   const goto=(id,tool)=>{setPublicMenu(false);if(tool)return openTool(tool);trackPublic('section_view',id);scrollTo(id);};
-  return <div id="top" data-public-version="v16.3.1" className={'public premium-public premium-home-v16-3 '+(en?'lang-en':'lang-bn')}>
+  return <div id="top" data-public-version="v16.3.2" className={'public premium-public premium-home-v16-3 '+(en?'lang-en':'lang-bn')}>
     <header className="public-nav luxury-nav premium-v16-nav">
       <div className="public-brand"><div className="brand-orb"><ShieldCheck size={19}/></div><div><b>{t.appName}</b><small>{t.appSub}</small></div></div>
-      <button className="public-mobile-trigger" onClick={()=>setPublicMenu(true)} aria-label={en?'Open menu':'মেনু খুলুন'}><span></span><span></span><span></span></button>
+      <button className="public-mobile-trigger" onClick={()=>setPublicMenu(v=>!v)} aria-label={en?(publicMenu?'Close menu':'Open menu'):(publicMenu?'মেনু বন্ধ করুন':'মেনু খুলুন')}><span></span><span></span><span></span></button>
       <nav className={`public-menu ${publicMenu?'mobile-open':''}`}>
         <div className="public-mobile-head"><div><b>{t.appName}</b><small>{t.appSub}</small></div><button onClick={()=>setPublicMenu(false)}><X/></button></div>
         <div className="public-menu-links">{navItems.map(([label,id,tool])=><button key={label} className="nav-text-btn" onClick={()=>goto(id,tool)}>{label}</button>)}</div>
@@ -1733,7 +1733,7 @@ function App(){
   if(!user)return showLogin?<AuthPortal onLogin={u=>{setUser(u);window.history.replaceState({},'',window.location.pathname)}} onBack={()=>{setShowLogin(false);setAuthMode('login');setAuthToken('');window.history.replaceState({},'',window.location.pathname)}} lang={lang} setLang={setLang} initialMode={authMode} initialToken={authToken}/>:<PublicHome onLogin={()=>{setAuthMode('login');setShowLogin(true)}} lang={lang} setLang={setLang}/>;
   const admin=['super_admin','admin','department_admin'].includes(user.role);
   return <div className={`app ${mobileMenu?'mobile-menu-open':''}`}><button className={`mobile-drawer-backdrop ${mobileMenu?'show':''}`} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'} onClick={()=>setMobileMenu(false)}></button><aside className={`side ${mobileMenu?'mobile-open':''}`}>
-    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v16.3.1 Mobile Fix':'স্বাধীন প্ল্যাটফর্ম · v16.3.1 Mobile Fix'}</small></div><button className="mobile-drawer-close" onClick={()=>setMobileMenu(false)} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'}><X size={19}/></button></div>
+    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v16.3.2 Mobile Fix':'স্বাধীন প্ল্যাটফর্ম · v16.3.2 Mobile Fix'}</small></div><button className="mobile-drawer-close" onClick={()=>setMobileMenu(false)} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'}><X size={19}/></button></div>
     <nav>
       <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}><LayoutDashboard size={18}/>{lang==='en'?'My Dashboard':'আমার ড্যাশবোর্ড'}</button>
       <button className={page==='career'?'active':''} onClick={()=>setPage('career')}><BookUser size={18}/>{lang==='en'?'My Career':'আমার চাকরি'}</button>
@@ -1751,7 +1751,7 @@ function App(){
       {admin&&<button className={page==='admin'?'active':''} onClick={()=>setPage('admin')}><ShieldCheck size={18}/>{lang==='en'?'System Control':'সিস্টেম কন্ট্রোল'}</button>}
       {admin&&<button className={page==='release-status'?'active':''} onClick={()=>setPage('release-status')}><CheckCircle2 size={18}/>{lang==='en'?'Release Status':'রিলিজ স্ট্যাটাস'}</button>}
     </nav></aside>
-    <main><header className="app-topbar"><div className="mobile-topbar-left"><button className="mobile-menu-trigger" onClick={()=>setMobileMenu(true)} aria-label={lang==='en'?'Open menu':'মেনু খুলুন'}><span></span><span></span><span></span></button><div><h2>{lang==='en'?`Welcome, ${user.name}`:`স্বাগতম, ${user.name}`}</h2><p>{lang==='en'?(roleLabel[user.role]||user.role):({super_admin:'সিস্টেম ব্যবস্থাপক',admin:'অ্যাডমিন',department_admin:'বিভাগীয় অ্যাডমিন',editor:'সম্পাদক',employee:'কর্মকর্তা-কর্মচারী'}[user.role]||user.role)}</p></div></div><div className="header-actions"><LangToggle lang={lang} setLang={setLang}/><button className="logout" onClick={logout}><LogOut size={16}/><span>{lang==='en'?'Logout':'লগআউট'}</span></button></div></header>
+    <main><header className="app-topbar"><div className="mobile-topbar-left"><button className="mobile-menu-trigger" onClick={()=>setMobileMenu(v=>!v)} aria-label={lang==='en'?(mobileMenu?'Close menu':'Open menu'):(mobileMenu?'মেনু বন্ধ করুন':'মেনু খুলুন')}><span></span><span></span><span></span></button><div><h2>{lang==='en'?`Welcome, ${user.name}`:`স্বাগতম, ${user.name}`}</h2><p>{lang==='en'?(roleLabel[user.role]||user.role):({super_admin:'সিস্টেম ব্যবস্থাপক',admin:'অ্যাডমিন',department_admin:'বিভাগীয় অ্যাডমিন',editor:'সম্পাদক',employee:'কর্মকর্তা-কর্মচারী'}[user.role]||user.role)}</p></div></div><div className="header-actions"><LangToggle lang={lang} setLang={setLang}/><button className="logout" onClick={logout}><LogOut size={16}/><span>{lang==='en'?'Logout':'লগআউট'}</span></button></div></header>
       {page==='dashboard'&&<DashboardHome user={user} onPage={setPage} lang={lang}/>} 
       {page==='career'&&<MyCareer lang={lang}/>}
       {page==='promotion'&&<PromotionCenter lang={lang}/>}
@@ -1776,7 +1776,7 @@ function App(){
       <button className={page==='career'?'active':''} onClick={()=>setPage('career')}><BookUser/><span>{lang==='en'?'Career':'চাকরি'}</span></button>
       <button className={page==='promotion'?'active':''} onClick={()=>setPage('promotion')}><TrendingUp/><span>{lang==='en'?'Promotion':'পদোন্নতি'}</span></button>
       <button className={page==='calendar'?'active':''} onClick={()=>setPage('calendar')}><CalendarDays/><span>{lang==='en'?'Calendar':'ক্যালেন্ডার'}</span></button>
-      <button className={mobileMenu?'active':''} onClick={()=>setMobileMenu(true)}><Boxes/><span>{lang==='en'?'Menu':'মেনু'}</span></button>
+      <button className={mobileMenu?'active':''} onClick={()=>setMobileMenu(v=>!v)}><Boxes/><span>{lang==='en'?'Menu':'মেনু'}</span></button>
     </nav>
   </div>
 }

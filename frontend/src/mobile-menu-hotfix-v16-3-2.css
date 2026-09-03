@@ -1,0 +1,89 @@
+/* v16.3.1 Mobile Menu Hotfix
+   Forces both public and logged-in mobile navigation to appear on real touch devices
+   even when an old stylesheet or unusual mobile viewport prevents the earlier media
+   query from winning. Loaded LAST on purpose. */
+
+/* Default desktop */
+.mobile-menu-trigger,
+.mobile-drawer-close,
+.mobile-bottom-nav,
+.mobile-drawer-backdrop,
+.public-mobile-trigger,
+.public-mobile-head,
+.public-menu-backdrop{}
+
+/* Standard responsive widths */
+@media(max-width:1100px){
+  .public-mobile-trigger{display:grid!important}
+}
+
+/* Real touch/mobile override */
+@media (hover:none) and (pointer:coarse){
+  html.mobile-device .public-mobile-trigger,
+  html.mobile-device .mobile-menu-trigger{display:grid!important}
+
+  html.mobile-device .public-menu{
+    display:flex!important;
+    position:fixed!important;
+    top:0!important;right:0!important;bottom:0!important;left:auto!important;
+    width:min(88vw,350px)!important;height:100dvh!important;
+    z-index:10000!important;
+    flex-direction:column!important;
+    align-items:stretch!important;
+    padding:18px!important;
+    background:#fff!important;
+    transform:translateX(105%)!important;
+    transition:transform .25s ease!important;
+    overflow-y:auto!important;
+    box-shadow:-24px 0 60px rgba(3,18,43,.28)!important;
+    border-radius:22px 0 0 22px!important;
+  }
+  html.mobile-device .public-menu.mobile-open{transform:translateX(0)!important}
+  html.mobile-device .public-mobile-head{display:flex!important}
+  html.mobile-device .public-menu-backdrop{display:block!important;z-index:9999!important}
+  html.mobile-device .public-menu-backdrop.show{opacity:1!important;visibility:visible!important;pointer-events:auto!important}
+
+  html.mobile-device .side{
+    display:flex!important;
+    position:fixed!important;
+    left:0!important;top:0!important;bottom:0!important;
+    width:min(88vw,350px)!important;height:100dvh!important;
+    z-index:10000!important;
+    transform:translateX(-105%)!important;
+    transition:transform .25s ease!important;
+    overflow:hidden!important;
+    flex-direction:column!important;
+  }
+  html.mobile-device .side.mobile-open{transform:translateX(0)!important}
+  html.mobile-device .mobile-drawer-close{display:grid!important}
+  html.mobile-device .mobile-drawer-backdrop{display:block!important;z-index:9999!important}
+  html.mobile-device .mobile-drawer-backdrop.show{opacity:1!important;visibility:visible!important;pointer-events:auto!important}
+  html.mobile-device .mobile-bottom-nav{display:grid!important}
+
+  html.mobile-device .premium-home-v16-3 .public-menu-links{display:grid!important}
+  html.mobile-device .premium-home-v16-3 .public-menu-actions{display:grid!important}
+}
+
+/* Fallback for Android/iOS browsers reporting coarse pointer incorrectly */
+@media(max-width:820px){
+  .public-mobile-trigger,.mobile-menu-trigger{display:grid!important}
+  .mobile-bottom-nav{display:grid!important}
+}
+
+/* Keep hamburger above sticky header layers */
+.public-mobile-trigger,.mobile-menu-trigger{
+  position:relative!important;
+  z-index:10001!important;
+  cursor:pointer!important;
+  flex:0 0 auto!important;
+}
+
+
+/* v16.3.2 — hamburger toggle feedback */
+.public-mobile-trigger,
+.mobile-menu-trigger{transition:background .18s ease,border-color .18s ease,transform .18s ease!important}
+.public-menu.mobile-open ~ .public-menu-backdrop{}
+.mobile-menu-open .mobile-menu-trigger,
+.premium-home-v16-3:has(.public-menu.mobile-open) .public-mobile-trigger{
+  background:#edf3ff!important;border-color:#b9c9eb!important;
+}
