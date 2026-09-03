@@ -5,7 +5,7 @@ import {
   LayoutDashboard,TrendingUp,WalletCards,Users,ShieldCheck,LogOut,Plus,Search,
   UserRound,Building2,IdCard,Activity,ChevronRight,X,Save,Trash2,RefreshCw,
   Settings,Database,LockKeyhole,Home,BookOpen,Calculator,HelpCircle,Phone,
-  Bell,ArrowRight,CalendarDays,CheckCircle2,AlertTriangle,Landmark,FileText,Camera,Briefcase,MapPin,Mail,PhoneCall,MessageCircle,Edit3,UserCircle2,History,ArrowRightLeft,GraduationCap,BadgeDollarSign,Clock3,FileClock,ServerCog,Gauge,UserCog,ScrollText,SlidersHorizontal,ShieldAlert,Link2,Eye,Power,BookUser,NotebookTabs,Milestone,Award,BarChart3,PieChart,LineChart,MonitorCheck,Sparkles,UserCheck,UserX,Boxes,Command,DatabaseZap,ShieldEllipsis,Radio,TrendingDown,ReceiptText,ChartNoAxesCombined,Route,Flag,Target
+  Bell,ArrowRight,CalendarDays,CheckCircle2,AlertTriangle,Landmark,FileText,Camera,Briefcase,MapPin,Mail,PhoneCall,MessageCircle,Edit3,UserCircle2,History,ArrowRightLeft,GraduationCap,BadgeDollarSign,Clock3,FileClock,ServerCog,Gauge,UserCog,ScrollText,SlidersHorizontal,ShieldAlert,Link2,Eye,Power,BookUser,NotebookTabs,Milestone,Award,BarChart3,PieChart,LineChart,MonitorCheck,Sparkles,UserCheck,UserX,Boxes,Command,DatabaseZap,ShieldEllipsis,Radio,TrendingDown,ReceiptText,ChartNoAxesCombined,Route,Flag,Target,PalmTree,CalendarCheck
 } from 'lucide-react';
 import './styles.css';
 import './auth-phase8.css';
@@ -17,6 +17,7 @@ import './dashboard-phase11-1.css';
 import './traffic-analytics-phase11-2.css';
 import './salary-history-phase12.css';
 import './promotion-timeline-phase13.css';
+import './leave-phase14.css';
 import {
   PAY2015,PAY2026,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
   annualPromotionCycle,futureRoadmap,serviceExperiencePoints,fixed2026,implementationRate,houseRent2015
@@ -581,10 +582,16 @@ function DashboardHome({user,onPage,lang='bn'}){
 
 function PersonalCareerDashboard({user,onPage,lang='bn'}){
   const en=lang==='en';
-  const [career,setCareer]=useState({profile:null,education:[],events:[]}),[loadingCareer,setLoadingCareer]=useState(true);
+  const [career,setCareer]=useState({profile:null,education:[],events:[]}),[loadingCareer,setLoadingCareer]=useState(true),[leaveSummary,setLeaveSummary]=useState({records:0,days:0});
   useEffect(()=>{
     api('/api/my-career').then(x=>setCareer({profile:x.profile||null,education:x.education||[],events:x.events||[]}))
       .catch(()=>setCareer({profile:null,education:[],events:[]})).finally(()=>setLoadingCareer(false));
+  },[]);
+  useEffect(()=>{
+    api('/api/my-leave-records').then(x=>{
+      const y=String(new Date().getFullYear()),items=(x.items||[]).filter(i=>String(i.start_date||'').startsWith(y));
+      setLeaveSummary({records:items.length,days:items.reduce((s,i)=>s+Number(i.total_days||0),0)});
+    }).catch(()=>{});
   },[]);
   const p=career.profile||{};
   const today=todayLocalIso();
@@ -659,6 +666,7 @@ function PersonalCareerDashboard({user,onPage,lang='bn'}){
           <button onClick={()=>onPage('calculators')}><Clock3/><div><b>{en?'Service Length':'চাকরিকাল'}</b><small>{en?'Years, months, days':'বছর, মাস, দিন'}</small></div><ChevronRight/></button>
           <button onClick={()=>onPage('promotion')}><TrendingUp/><div><b>{en?'Promotion':'পদোন্নতি'}</b><small>{en?'Eligibility & roadmap':'যোগ্যতা ও রোডম্যাপ'}</small></div><ChevronRight/></button>
           <button onClick={()=>onPage('salary')}><WalletCards/><div><b>{en?'Pay Scale':'পে-স্কেল'}</b><small>{en?'Gross, deductions, net':'মোট, কর্তন, নিট'}</small></div><ChevronRight/></button>
+          <button onClick={()=>onPage('leave')}><PalmTree/><div><b>{en?'Leave Record':'ছুটির হিসাব'}</b><small>{en?`${leaveSummary.days} day(s) this year`:`চলতি বছরে ${numLang(leaveSummary.days,lang,1)} দিন`}</small></div><ChevronRight/></button>
         </div>
       </article>
     </section>
@@ -993,6 +1001,116 @@ function MasterDirectory(){
 
 
 
+
+
+function PersonalLeaveRecord({lang='bn'}){
+  const en=lang==='en';
+  const blank={leave_type:'casual',start_date:'',end_date:'',day_mode:'full',notes:''};
+  const [items,setItems]=useState([]),[form,setForm]=useState(blank),[editing,setEditing]=useState(null),
+    [busy,setBusy]=useState(false),[err,setErr]=useState(''),[msg,setMsg]=useState('');
+  const labels=en?{
+    casual:'Casual Leave',earned:'Earned Leave',medical:'Medical Leave',maternity:'Maternity Leave',
+    paternity:'Paternity Leave',study:'Study Leave',special:'Special Leave',other:'Other'
+  }:{
+    casual:'নৈমিত্তিক ছুটি',earned:'অর্জিত ছুটি',medical:'চিকিৎসা ছুটি',maternity:'মাতৃত্বকালীন ছুটি',
+    paternity:'পিতৃত্বকালীন ছুটি',study:'শিক্ষা ছুটি',special:'বিশেষ ছুটি',other:'অন্যান্য'
+  };
+
+  async function load(){
+    setBusy(true);setErr('');
+    try{const x=await api('/api/my-leave-records');setItems(x.items||[])}
+    catch(e){setErr(e.message)}finally{setBusy(false)}
+  }
+  useEffect(()=>{load()},[]);
+
+  function calcDays(start,end,mode='full'){
+    if(!start||!end)return 0;
+    const a=new Date(start+'T00:00:00'),b=new Date(end+'T00:00:00');
+    if(isNaN(a)||isNaN(b)||b<a)return 0;
+    const days=Math.floor((b-a)/86400000)+1;
+    return mode==='half'?0.5:days;
+  }
+  const days=calcDays(form.start_date,form.end_date,form.day_mode);
+
+  async function save(e){
+    e.preventDefault();setErr('');setMsg('');
+    if(!form.start_date||!form.end_date)return setErr(en?'Start and end dates are required.':'শুরুর ও শেষের তারিখ প্রয়োজন।');
+    if(new Date(form.end_date)<new Date(form.start_date))return setErr(en?'End date cannot be earlier than start date.':'শেষের তারিখ শুরুর তারিখের আগে হতে পারে না।');
+    setBusy(true);
+    try{
+      const payload={...form,total_days:days};
+      if(editing)await api('/api/my-leave-records/'+editing.id,{method:'PUT',body:JSON.stringify(payload)});
+      else await api('/api/my-leave-records',{method:'POST',body:JSON.stringify(payload)});
+      setForm(blank);setEditing(null);setMsg(en?'Leave record saved.':'ছুটির রেকর্ড সংরক্ষণ হয়েছে।');await load();
+    }catch(e){setErr(e.message)}finally{setBusy(false)}
+  }
+  function edit(x){
+    setEditing(x);
+    setForm({leave_type:x.leave_type,start_date:x.start_date,end_date:x.end_date,day_mode:x.day_mode||'full',notes:x.notes||''});
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  async function remove(id){
+    if(!confirm(en?'Delete this leave record?':'এই ছুটির রেকর্ড মুছে ফেলবেন?'))return;
+    try{await api('/api/my-leave-records/'+id,{method:'DELETE'});await load()}catch(e){alert(e.message)}
+  }
+
+  const thisYear=String(new Date().getFullYear());
+  const yearItems=items.filter(x=>String(x.start_date||'').startsWith(thisYear));
+  const yearDays=yearItems.reduce((s,x)=>s+Number(x.total_days||0),0);
+  const typeTotals=Object.entries(yearItems.reduce((m,x)=>{m[x.leave_type]=(m[x.leave_type]||0)+Number(x.total_days||0);return m},{}))
+    .map(([type,value])=>({type,label:labels[type]||type,value})).sort((a,b)=>b.value-a.value);
+  const maxType=Math.max(1,...typeTotals.map(x=>x.value));
+
+  return <div className="leave-page">
+    <section className="leave-hero">
+      <div><span>{en?'PERSONAL LEAVE RECORD':'ব্যক্তিগত ছুটির হিসাব'}</span><h2>{en?'My Leave Record':'আমার ছুটির হিসাব'}</h2><p>{en?'Keep your own leave history for personal planning. This is not an official leave approval or HR record.':'নিজের পরিকল্পনার জন্য ছুটির ইতিহাস সংরক্ষণ করুন। এটি অফিসিয়াল ছুটি অনুমোদন বা HR রেকর্ড নয়।'}</p></div>
+      <div className="leave-chip"><PalmTree size={17}/>{en?'Self-service only':'শুধু ব্যক্তিগত ব্যবহারের জন্য'}</div>
+    </section>
+
+    <section className="leave-summary-grid">
+      <article><CalendarCheck/><div><small>{en?'This Year Records':'চলতি বছরের রেকর্ড'}</small><b>{numLang(yearItems.length,lang,0)}</b><span>{thisYear}</span></div></article>
+      <article><Clock3/><div><small>{en?'Recorded Leave Days':'রেকর্ডকৃত ছুটির দিন'}</small><b>{numLang(yearDays,lang,1)}</b><span>{en?'Personal total':'ব্যক্তিগত মোট'}</span></div></article>
+      <article><PieChart/><div><small>{en?'Leave Types Used':'ব্যবহৃত ছুটির ধরন'}</small><b>{numLang(typeTotals.length,lang,0)}</b><span>{en?'This year':'চলতি বছর'}</span></div></article>
+    </section>
+
+    {err&&<div className="error">{err}</div>}{msg&&<div className="auth-success">{msg}</div>}
+
+    <section className="leave-card">
+      <div className="leave-head"><div><CalendarDays/><div><h3>{editing?(en?'Edit Leave Record':'ছুটির রেকর্ড সম্পাদনা'):(en?'Add Leave Record':'ছুটির রেকর্ড যোগ করুন')}</h3><p>{en?'Dates and total days are calculated automatically.':'তারিখ অনুযায়ী মোট দিন স্বয়ংক্রিয়ভাবে হিসাব হবে।'}</p></div></div>{editing&&<button className="secondary" onClick={()=>{setEditing(null);setForm(blank)}}>{en?'Cancel Edit':'সম্পাদনা বাতিল'}</button>}</div>
+      <form className="form-grid" onSubmit={save}>
+        <label>{en?'Leave type':'ছুটির ধরন'}<select value={form.leave_type} onChange={e=>setForm({...form,leave_type:e.target.value})}>{Object.entries(labels).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
+        <label>{en?'Day mode':'দিনের ধরন'}<select value={form.day_mode} onChange={e=>setForm({...form,day_mode:e.target.value})}><option value="full">{en?'Full day(s)':'পূর্ণ দিন'}</option><option value="half">{en?'Half day':'অর্ধদিবস'}</option></select></label>
+        <label>{en?'Start date':'শুরুর তারিখ'}<input type="date" value={form.start_date} onChange={e=>setForm({...form,start_date:e.target.value})} required/></label>
+        <label>{en?'End date':'শেষের তারিখ'}<input type="date" value={form.end_date} onChange={e=>setForm({...form,end_date:e.target.value})} required/></label>
+        <label>{en?'Total days':'মোট দিন'}<input value={numLang(days,lang,1)} readOnly/></label>
+        <label className="span-2">{en?'Personal note':'ব্যক্তিগত নোট'}<textarea rows="3" value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})}/></label>
+        <div className="span-2"><button className="primary" disabled={busy}><Save size={16}/>{busy?(en?'Saving...':'সংরক্ষণ হচ্ছে...'):(editing?(en?'Update Record':'রেকর্ড আপডেট'):(en?'Save Record':'রেকর্ড সংরক্ষণ'))}</button></div>
+      </form>
+    </section>
+
+    <section className="leave-grid">
+      <article className="leave-card">
+        <div className="leave-head"><div><BarChart3/><div><h3>{en?'Leave by Type':'ধরনভিত্তিক ছুটি'}</h3><p>{en?'Current year personal usage.':'চলতি বছরের ব্যক্তিগত হিসাব।'}</p></div></div></div>
+        {typeTotals.length===0?<div className="empty">{en?'No leave data for this year.':'চলতি বছরে কোনো ছুটির রেকর্ড নেই।'}</div>:<div className="leave-bars">
+          {typeTotals.map(x=><div key={x.type}><div className="leave-bar-label"><span>{x.label}</span><b>{numLang(x.value,lang,1)}</b></div><div className="leave-bar-track"><i style={{width:`${Math.max(5,(x.value/maxType)*100)}%`}}></i></div></div>)}
+        </div>}
+      </article>
+
+      <article className="leave-card">
+        <div className="leave-head"><div><History/><div><h3>{en?'Leave History':'ছুটির ইতিহাস'}</h3><p>{en?'Newest record first.':'সর্বশেষ রেকর্ড আগে।'}</p></div></div></div>
+        {items.length===0?<div className="empty">{en?'No leave record yet.':'এখনো কোনো ছুটির রেকর্ড নেই।'}</div>:<div className="leave-history">
+          {items.map(x=><div className="leave-history-row" key={x.id}>
+            <div className="leave-history-icon"><PalmTree/></div>
+            <div><small>{fmtDateLang(x.start_date,lang)} → {fmtDateLang(x.end_date,lang)}</small><b>{labels[x.leave_type]||x.leave_type}</b><span>{numLang(x.total_days,lang,1)} {en?'day(s)':'দিন'}{x.notes?` · ${x.notes}`:''}</span></div>
+            <div className="leave-actions"><button className="icon-btn" onClick={()=>edit(x)}><Edit3 size={15}/></button><button className="icon-btn danger" onClick={()=>remove(x.id)}><Trash2 size={15}/></button></div>
+          </div>)}
+        </div>}
+      </article>
+    </section>
+
+    <section className="calculator-safety-note"><ShieldCheck/><div><b>{en?'Personal record only':'শুধু ব্যক্তিগত রেকর্ড'}</b><p>{en?'This module does not approve, reject or certify leave. Official leave records remain with the competent authority.':'এই মডিউল ছুটি অনুমোদন, প্রত্যাখ্যান বা প্রত্যয়ন করে না। অফিসিয়াল ছুটির রেকর্ড সংশ্লিষ্ট কর্তৃপক্ষের অধীন।'}</p></div></section>
+  </div>
+}
 
 function PromotionCareerTimeline({lang='bn',onPage}){
   const en=lang==='en';
@@ -1589,7 +1707,7 @@ function App(){
   if(!user)return showLogin?<AuthPortal onLogin={u=>{setUser(u);window.history.replaceState({},'',window.location.pathname)}} onBack={()=>{setShowLogin(false);setAuthMode('login');setAuthToken('');window.history.replaceState({},'',window.location.pathname)}} lang={lang} setLang={setLang} initialMode={authMode} initialToken={authToken}/>:<PublicHome onLogin={()=>{setAuthMode('login');setShowLogin(true)}} lang={lang} setLang={setLang}/>;
   const admin=['super_admin','admin','department_admin'].includes(user.role);
   return <div className="app"><aside className="side">
-    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v13.2':'স্বাধীন প্ল্যাটফর্ম · v13.2'}</small></div></div>
+    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v14':'স্বাধীন প্ল্যাটফর্ম · v14'}</small></div></div>
     <nav>
       <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}><LayoutDashboard size={18}/>{lang==='en'?'My Dashboard':'আমার ড্যাশবোর্ড'}</button>
       <button className={page==='career'?'active':''} onClick={()=>setPage('career')}><BookUser size={18}/>{lang==='en'?'My Career':'আমার চাকরি'}</button>
@@ -1597,6 +1715,7 @@ function App(){
       <button className={page==='promotion-timeline'?'active':''} onClick={()=>setPage('promotion-timeline')}><Route size={18}/>{lang==='en'?'Career Roadmap':'ক্যারিয়ার রোডম্যাপ'}</button>
       <button className={page==='salary'?'active':''} onClick={()=>setPage('salary')}><WalletCards size={18}/>{lang==='en'?'Salary & Pay Scale':'বেতন ও পে-স্কেল'}</button>
       <button className={page==='salary-history'?'active':''} onClick={()=>setPage('salary-history')}><ReceiptText size={18}/>{lang==='en'?'My Salary History':'আমার বেতন ইতিহাস'}</button>
+      <button className={page==='leave'?'active':''} onClick={()=>setPage('leave')}><PalmTree size={18}/>{lang==='en'?'My Leave Record':'আমার ছুটির হিসাব'}</button>
       <button className={page==='calculators'?'active':''} onClick={()=>setPage('calculators')}><Calculator size={18}/>{lang==='en'?'Calculator Center':'ক্যালকুলেটর সেন্টার'}</button>
       <button className={page==='library'?'active':''} onClick={()=>setPage('library')}><BookOpen size={18}/>{lang==='en'?'Notices & Policies':'নোটিশ ও নীতিমালা'}</button>
       <button className={page==='account'?'active':''} onClick={()=>setPage('account')}><LockKeyhole size={18}/>{lang==='en'?'Account & Security':'অ্যাকাউন্ট ও নিরাপত্তা'}</button>
@@ -1609,6 +1728,7 @@ function App(){
       {page==='promotion-timeline'&&<PromotionCareerTimeline lang={lang} onPage={setPage}/>}
       {page==='salary'&&<SalaryCalculator lang={lang}/>} 
       {page==='salary-history'&&<SalaryHistory lang={lang}/>}
+      {page==='leave'&&<PersonalLeaveRecord lang={lang}/>}
       {page==='calculators'&&<CalculatorCenter lang={lang} onPage={setPage}/>}
       {page==='library'&&<NoticePolicyCenter lang={lang} canManage={admin}/>} 
       {page==='account'&&<AccountSecurity lang={lang}/>}
