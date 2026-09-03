@@ -11,6 +11,7 @@ import './styles.css';
 import './auth-phase8.css';
 import './admin-premium.css';
 import './career-phase9.css';
+import './career-dashboard-phase10.css';
 import {
   PAY2015,PAY2026,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
   annualPromotionCycle,futureRoadmap,serviceExperiencePoints,fixed2026,implementationRate,houseRent2015
@@ -385,23 +386,94 @@ function Stat({label,value,icon:Icon}){return <article className="stat-card"><di
 
 
 function DashboardHome({user,onPage,lang='bn'}){
-  if(lang==='en')return <>
-    <section className="hero"><div><span>SERVICE PLATFORM</span><h1>Employee Service Foundation</h1><p>Homepage, promotion calculator, pay scale calculator, employee management and service history are active.</p></div><div className="hero-chip"><Activity size={16}/> System Active</div></section>
-    <section className="stats-grid"><Stat label="Role" value={roleLabel[user.role]||user.role} icon={ShieldCheck}/><Stat label="Employee ID" value={user.employee_id||'—'} icon={IdCard}/><Stat label="Account Status" value="Active" icon={Activity}/><Stat label="Security" value="Session Protected" icon={LockKeyhole}/></section>
-    <section className="module-grid"><article className="module-card"><div className="module-icon"><BookUser/></div><h3>My Career</h3><p>Maintain your personal career profile, education and service timeline.</p><button className="ghost-btn" onClick={()=>onPage('career')}>Open Career <ChevronRight size={16}/></button></article><article className="module-card"><div className="module-icon"><TrendingUp/></div><h3>Promotion Centre</h3><p>Calculate eligibility date, annual cycle and future roadmap.</p><button className="ghost-btn" onClick={()=>onPage('promotion')}>Calculate <ChevronRight size={16}/></button></article>
-    <article className="module-card"><div className="module-icon green"><WalletCards/></div><h3>Salary & Pay Scale</h3><p>Calculate fixation, payable basic, gross and net salary.</p><button className="ghost-btn" onClick={()=>onPage('salary')}>Calculate <ChevronRight size={16}/></button></article>
-    <article className="module-card"><div className="module-icon"><Calculator/></div><h3>Calculator Center</h3><p>Service length, age, date difference and retirement-date estimate.</p><button className="ghost-btn" onClick={()=>onPage('calculators')}>Open Center <ChevronRight size={16}/></button></article></section>
-    <section className="notice"><b>Notice</b><p>This is an independent and unofficial digital service platform.</p></section>
-  </>;
-  return <>
-    <section className="hero"><div><span>সেবা প্ল্যাটফর্ম</span><h1>কর্মকর্তা-কর্মচারী সেবা ব্যবস্থা</h1><p>হোমপেজ, পদোন্নতি হিসাব, পে-স্কেল হিসাব, কর্মকর্তা-কর্মচারী ব্যবস্থাপনা ও চাকরি ইতিহাস সক্রিয়।</p></div><div className="hero-chip"><Activity size={16}/> সিস্টেম সক্রিয়</div></section>
-    <section className="stats-grid"><Stat label="ভূমিকা" value={roleLabel[user.role]||user.role} icon={ShieldCheck}/><Stat label="কর্মী নম্বর" value={user.employee_id||'—'} icon={IdCard}/><Stat label="অ্যাকাউন্ট অবস্থা" value="সক্রিয়" icon={Activity}/><Stat label="নিরাপত্তা" value="সুরক্ষিত সেশন" icon={LockKeyhole}/></section>
-    <section className="module-grid"><article className="module-card"><div className="module-icon"><BookUser/></div><h3>আমার চাকরি</h3><p>নিজের চাকরি প্রোফাইল, শিক্ষা ও সার্ভিস টাইমলাইন সংরক্ষণ করুন।</p><button className="ghost-btn" onClick={()=>onPage('career')}>খুলুন <ChevronRight size={16}/></button></article><article className="module-card"><div className="module-icon"><TrendingUp/></div><h3>পদোন্নতি কেন্দ্র</h3><p>যোগ্যতার তারিখ, বার্ষিক প্রক্রিয়া এবং ভবিষ্যৎ ধাপ হিসাব করুন।</p><button className="ghost-btn" onClick={()=>onPage('promotion')}>হিসাব করুন <ChevronRight size={16}/></button></article>
-    <article className="module-card"><div className="module-icon green"><WalletCards/></div><h3>বেতন ও পে-স্কেল</h3><p>ফিক্সেশন, প্রাপ্য বেসিক, মোট ও নেট বেতন হিসাব করুন।</p><button className="ghost-btn" onClick={()=>onPage('salary')}>হিসাব করুন <ChevronRight size={16}/></button></article>
-    <article className="module-card"><div className="module-icon"><Calculator/></div><h3>ক্যালকুলেটর সেন্টার</h3><p>চাকরিকাল, বয়স, তারিখের ব্যবধান এবং অবসর তারিখের অনুমান।</p><button className="ghost-btn" onClick={()=>onPage('calculators')}>সেন্টার খুলুন <ChevronRight size={16}/></button></article></section>
-    <section className="notice"><b>দ্রষ্টব্য</b><p>এটি একটি স্বাধীন ও অনানুষ্ঠানিক ডিজিটাল সেবা প্ল্যাটফর্ম।</p></section>
-  </>
+  const en=lang==='en';
+  const [career,setCareer]=useState({profile:null,education:[],events:[]}),[loadingCareer,setLoadingCareer]=useState(true);
+  useEffect(()=>{
+    api('/api/my-career').then(x=>setCareer({profile:x.profile||null,education:x.education||[],events:x.events||[]}))
+      .catch(()=>setCareer({profile:null,education:[],events:[]})).finally(()=>setLoadingCareer(false));
+  },[]);
+  const p=career.profile||{};
+  const today=todayLocalIso();
+  const service=p.first_joining_date&&!isNaN(new Date(p.first_joining_date))?diffYMD(p.first_joining_date,today):null;
+  const postTenure=p.current_post_joining_date&&!isNaN(new Date(p.current_post_joining_date))?diffYMD(p.current_post_joining_date,today):null;
+  const retirement=(p.first_joining_date||p.retirement_age)&&p.retirement_age&&p.first_joining_date?null:null;
+  const retirementDate=p.retirement_age&&career.events?null:null;
+  const recentEvents=(career.events||[]).slice(0,4);
+  const serviceText=d=>!d?'—':en?`${numLang(d.y,lang,0)}y ${numLang(d.m,lang,0)}m ${numLang(d.d,lang,0)}d`:`${numLang(d.y,lang,0)} বছর ${numLang(d.m,lang,0)} মাস ${numLang(d.d,lang,0)} দিন`;
+  const gradeText=p.current_grade?`${en?'Grade':'গ্রেড'} ${numLang(p.current_grade,lang,0)}`:'—';
+  const currentPost=p.current_post||'—';
+  const eventLabel=t=>en?({appointment:'Appointment/Joining',promotion:'Promotion',transfer:'Transfer/Posting',increment:'Increment',training:'Training',grade_change:'Grade Change',other:'Other'}[t]||t):({appointment:'নিয়োগ/যোগদান',promotion:'পদোন্নতি',transfer:'বদলি/পোস্টিং',increment:'ইনক্রিমেন্ট',training:'প্রশিক্ষণ',grade_change:'গ্রেড পরিবর্তন',other:'অন্যান্য'}[t]||t);
+
+  let nextMilestone=en?'Complete your career profile':'চাকরি প্রোফাইল সম্পূর্ণ করুন';
+  let promoEstimate='';
+  if(p.current_grade&&p.current_post_joining_date&&PROMO_RULES[String(p.current_grade)]){
+    const rule=PROMO_RULES[String(p.current_grade)];
+    if(rule.noPromotion||rule.top)nextMilestone=rule.target||nextMilestone;
+    else{
+      nextMilestone=en?`Review promotion eligibility for Grade ${p.current_grade}`:`গ্রেড ${numLang(p.current_grade,lang,0)} থেকে পদোন্নতির যোগ্যতা যাচাই করুন`;
+      promoEstimate=en?'Open the Promotion Calculator for a verified estimate.':'যাচাইকৃত সম্ভাব্য হিসাবের জন্য পদোন্নতি ক্যালকুলেটর খুলুন।';
+    }
+  }
+
+  return <div className="career-dashboard">
+    <section className="career-dashboard-hero">
+      <div>
+        <span>{en?'PERSONAL CAREER DASHBOARD':'ব্যক্তিগত ক্যারিয়ার ড্যাশবোর্ড'}</span>
+        <h1>{en?`Welcome, ${user.name}`:`স্বাগতম, ${user.name}`}</h1>
+        <p>{en?'Your personal career record, service milestones and verified calculators in one premium workspace.':'আপনার ব্যক্তিগত চাকরি রেকর্ড, সার্ভিস মাইলস্টোন ও যাচাইকৃত ক্যালকুলেটর এক প্রিমিয়াম কর্মপরিসরে।'}</p>
+      </div>
+      <div className="career-profile-chip"><BookUser size={17}/><div><small>{en?'Current position':'বর্তমান পদ'}</small><b>{currentPost}</b><span>{gradeText}</span></div></div>
+    </section>
+
+    <section className="career-dashboard-metrics">
+      <article><div className="career-metric-icon"><Briefcase/></div><div><small>{en?'Current Post':'বর্তমান পদ'}</small><b>{currentPost}</b><span>{gradeText}</span></div></article>
+      <article><div className="career-metric-icon"><Clock3/></div><div><small>{en?'Total Service':'মোট চাকরিকাল'}</small><b>{serviceText(service)}</b><span>{p.first_joining_date?fmtDateLang(p.first_joining_date,lang):'—'}</span></div></article>
+      <article><div className="career-metric-icon"><Milestone/></div><div><small>{en?'Current Post Tenure':'বর্তমান পদে চাকরিকাল'}</small><b>{serviceText(postTenure)}</b><span>{p.current_post_joining_date?fmtDateLang(p.current_post_joining_date,lang):'—'}</span></div></article>
+      <article><div className="career-metric-icon"><GraduationCap/></div><div><small>{en?'Education Records':'শিক্ষাগত রেকর্ড'}</small><b>{numLang(career.education?.length||0,lang,0)}</b><span>{en?'Saved qualifications':'সংরক্ষিত যোগ্যতা'}</span></div></article>
+    </section>
+
+    <section className="career-dashboard-grid">
+      <article className="career-dashboard-card milestone-card">
+        <div className="career-dashboard-card-head"><div><Milestone/><span>{en?'NEXT CAREER MILESTONE':'পরবর্তী ক্যারিয়ার মাইলস্টোন'}</span></div></div>
+        <h3>{nextMilestone}</h3>
+        <p>{promoEstimate|| (en?'Keep your personal career record updated so the platform can provide better estimates.':'আরও নির্ভুল সহায়ক হিসাবের জন্য নিজের চাকরি রেকর্ড হালনাগাদ রাখুন।')}</p>
+        <div className="career-card-actions">
+          <button className="primary" onClick={()=>onPage('promotion')}><TrendingUp size={16}/>{en?'Promotion Estimate':'পদোন্নতি হিসাব'}</button>
+          <button className="secondary" onClick={()=>onPage('career')}><Edit3 size={16}/>{en?'Update My Career':'আমার চাকরি আপডেট'}</button>
+        </div>
+      </article>
+
+      <article className="career-dashboard-card salary-link-card">
+        <div className="career-dashboard-card-head"><div><WalletCards/><span>{en?'SALARY & PAY SCALE':'বেতন ও পে-স্কেল'}</span></div></div>
+        <h3>{en?'Verified salary calculation':'যাচাইকৃত বেতন হিসাব'}</h3>
+        <p>{en?'Use the existing verified 2015→2026 pay-scale logic without changing your personal record.':'আপনার ব্যক্তিগত রেকর্ড না বদলিয়ে বিদ্যমান যাচাইকৃত ২০১৫→২০২৬ পে-স্কেল হিসাব ব্যবহার করুন।'}</p>
+        <button className="ghost-btn" onClick={()=>onPage('salary')}>{en?'Open Pay Scale Calculator':'পে-স্কেল ক্যালকুলেটর খুলুন'}<ChevronRight size={16}/></button>
+      </article>
+    </section>
+
+    <section className="career-dashboard-grid lower">
+      <article className="career-dashboard-card">
+        <div className="career-dashboard-card-head"><div><History/><span>{en?'RECENT CAREER TIMELINE':'সাম্প্রতিক চাকরি টাইমলাইন'}</span></div><button className="mini-link" onClick={()=>onPage('career')}>{en?'View all':'সব দেখুন'}<ChevronRight size={14}/></button></div>
+        {loadingCareer?<div className="empty">{en?'Loading...':'লোড হচ্ছে...'}</div>:recentEvents.length===0?<div className="career-empty-state"><History/><div><b>{en?'No career events yet':'এখনো চাকরি ইভেন্ট নেই'}</b><p>{en?'Add promotion, posting, increment or training records from My Career.':'আমার চাকরি থেকে পদোন্নতি, পোস্টিং, ইনক্রিমেন্ট বা প্রশিক্ষণ রেকর্ড যোগ করুন।'}</p></div></div>:<div className="career-recent-list">
+          {recentEvents.map(x=><div className="career-recent-row" key={x.id}><div className="career-recent-dot"></div><div><small>{fmtDateLang(x.event_date,lang)} · {eventLabel(x.event_type)}</small><b>{x.title}</b><p>{[x.post_name,x.grade?`${en?'Grade':'গ্রেড'} ${x.grade}`:'',x.office_name].filter(Boolean).join(' · ')}</p></div></div>)}
+        </div>}
+      </article>
+
+      <article className="career-dashboard-card">
+        <div className="career-dashboard-card-head"><div><Calculator/><span>{en?'QUICK CALCULATORS':'দ্রুত ক্যালকুলেটর'}</span></div></div>
+        <div className="career-quick-tools">
+          <button onClick={()=>onPage('calculators')}><Clock3/><div><b>{en?'Service Length':'চাকরিকাল'}</b><small>{en?'Years, months, days':'বছর, মাস, দিন'}</small></div><ChevronRight/></button>
+          <button onClick={()=>onPage('promotion')}><TrendingUp/><div><b>{en?'Promotion':'পদোন্নতি'}</b><small>{en?'Eligibility & roadmap':'যোগ্যতা ও রোডম্যাপ'}</small></div><ChevronRight/></button>
+          <button onClick={()=>onPage('salary')}><WalletCards/><div><b>{en?'Pay Scale':'পে-স্কেল'}</b><small>{en?'Gross, deductions, net':'মোট, কর্তন, নিট'}</small></div><ChevronRight/></button>
+        </div>
+      </article>
+    </section>
+
+    {!p.first_joining_date&&<section className="career-dashboard-alert"><AlertTriangle/><div><b>{en?'Career profile incomplete':'চাকরি প্রোফাইল অসম্পূর্ণ'}</b><p>{en?'Add your first joining date, current post and grade to unlock a more useful career dashboard.':'আরও কার্যকর ক্যারিয়ার ড্যাশবোর্ডের জন্য প্রথম যোগদান, বর্তমান পদ ও গ্রেড যোগ করুন।'}</p></div><button onClick={()=>onPage('career')}>{en?'Complete Profile':'প্রোফাইল সম্পূর্ণ করুন'}<ArrowRight size={15}/></button></section>}
+    <section className="calculator-safety-note"><ShieldCheck/><div><b>{en?'Personal assistance only':'শুধু ব্যক্তিগত সহায়তা'}</b><p>{en?'This dashboard organizes your own data and provides estimates. It does not make or issue official employment decisions.':'এই ড্যাশবোর্ড আপনার নিজের তথ্য সংগঠিত করে ও সহায়ক হিসাব দেয়; কোনো অফিসিয়াল চাকরি-সংক্রান্ত সিদ্ধান্ত দেয় না।'}</p></div></section>
+  </div>
 }
+
 function DMY({label,value,onChange}){
   const en=/[A-Za-z]/.test(label||''); const d=value?new Date(value+'T00:00:00'):null; const year=d&&!isNaN(d)?d.getFullYear():''; const month=d&&!isNaN(d)?d.getMonth()+1:''; const day=d&&!isNaN(d)?d.getDate():'';
   const years=Array.from({length:70},(_,i)=>new Date().getFullYear()-i),months=Array.from({length:12},(_,i)=>i+1),days=Array.from({length:31},(_,i)=>i+1);
