@@ -18,7 +18,7 @@ import './traffic-analytics-phase11-2.css';
 import './salary-history-phase12.css';
 import './promotion-timeline-phase13.css';
 import './leave-phase14.css';
-import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget} from './calendar-phase15.jsx';
+import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import {
   PAY2015,PAY2026,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
   annualPromotionCycle,futureRoadmap,serviceExperiencePoints,fixed2026,implementationRate,houseRent2015
@@ -1658,13 +1658,14 @@ function SuperAdminControlCenter({lang='bn',onPage}){
     </section>}
 
     {tab==='calendar'&&<section className="admin-panel-card">
-      <div className="admin-panel-head"><div><h3>{en?'Calendar Reference Management':'ক্যালেন্ডার রেফারেন্স ব্যবস্থাপনা'}</h3><p>{en?'Configure the published calendar source as an independent reference service.':'প্রকাশিত ক্যালেন্ডার উৎসকে স্বাধীন রেফারেন্স সেবা হিসেবে কনফিগার করুন।'}</p></div></div>
+      <div className="admin-panel-head"><div><h3>{en?'Calendar Reference Management':'ক্যালেন্ডার রেফারেন্স ব্যবস্থাপনা'}</h3><p>{en?'Maintain the published source and explicit office-holiday records. Friday and Saturday are calculated automatically.':'প্রকাশিত উৎস ও নির্দিষ্ট অফিস-ছুটির রেকর্ড পরিচালনা করুন। শুক্রবার ও শনিবার স্বয়ংক্রিয়ভাবে হিসাব হবে।'}</p></div></div>
       <div className="form-grid">
         <label>{en?'Calendar reference enabled':'ক্যালেন্ডার রেফারেন্স চালু'}<select value={settings.calendar_enabled||'0'} onChange={e=>setSettings({...settings,calendar_enabled:e.target.value})}><option value="0">{en?'No':'না'}</option><option value="1">{en?'Yes':'হ্যাঁ'}</option></select></label>
         <label>{en?'Published source URL':'প্রকাশিত উৎসের URL'}<input value={settings.calendar_source_url||''} onChange={e=>setSettings({...settings,calendar_source_url:e.target.value})} placeholder="https://..."/></label>
       </div>
       <div className="notice"><b>{en?'Branding safeguard:':'ব্র্যান্ডিং সুরক্ষা:'}</b> {en?'The platform remains independent and unofficial; the calendar appears only as a sourced reference.':'প্ল্যাটফর্ম স্বাধীন ও অনানুষ্ঠানিক থাকবে; ক্যালেন্ডার শুধুমাত্র উৎস-উল্লেখসহ রেফারেন্স হিসেবে দেখানো হবে।'}</div>
       <button className="primary" onClick={saveSettings}><Save size={16}/>{en?'Save Calendar Settings':'ক্যালেন্ডার সেটিংস সংরক্ষণ'}</button>
+      <AdminOfficeCalendarManager lang={lang}/>
     </section>}
 
     {tab==='security'&&<section className="admin-panel-card">
@@ -1712,7 +1713,7 @@ function App(){
   if(!user)return showLogin?<AuthPortal onLogin={u=>{setUser(u);window.history.replaceState({},'',window.location.pathname)}} onBack={()=>{setShowLogin(false);setAuthMode('login');setAuthToken('');window.history.replaceState({},'',window.location.pathname)}} lang={lang} setLang={setLang} initialMode={authMode} initialToken={authToken}/>:<PublicHome onLogin={()=>{setAuthMode('login');setShowLogin(true)}} lang={lang} setLang={setLang}/>;
   const admin=['super_admin','admin','department_admin'].includes(user.role);
   return <div className="app"><aside className="side">
-    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v15.1':'স্বাধীন প্ল্যাটফর্ম · v15.1'}</small></div></div>
+    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v15.2':'স্বাধীন প্ল্যাটফর্ম · v15.2'}</small></div></div>
     <nav>
       <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}><LayoutDashboard size={18}/>{lang==='en'?'My Dashboard':'আমার ড্যাশবোর্ড'}</button>
       <button className={page==='career'?'active':''} onClick={()=>setPage('career')}><BookUser size={18}/>{lang==='en'?'My Career':'আমার চাকরি'}</button>

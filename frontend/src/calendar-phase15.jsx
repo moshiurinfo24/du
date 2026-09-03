@@ -1,5 +1,5 @@
 import React,{useEffect,useMemo,useState} from 'react';
-import {CalendarDays,Clock3,ShieldCheck,ArrowRight} from 'lucide-react';
+import {CalendarDays,Clock3,ShieldCheck,ArrowRight,Plus,Save,Trash2,Edit3,X,RefreshCw} from 'lucide-react';
 import './calendar-phase15.css';
 
 const API=import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE||'';
@@ -112,4 +112,106 @@ export function CalendarDashboardWidget({lang='bn',onOpen}){
   const st=dayStatus(today,hm,en);
   const next=(data?.holidays||[]).map(x=>({...x,d:parseIso(x.holiday_date)})).filter(x=>x.d>=new Date(today.getFullYear(),today.getMonth(),today.getDate())).sort((a,b)=>a.d-b.d)[0];
   return <section className="calendar-dashboard-widget"><div className="cdw-icon"><CalendarDays/></div><div className="cdw-main"><small>{en?'OFFICE CALENDAR':'অফিস ক্যালেন্ডার'}</small><h3>{loading?(en?'Checking today...':'আজকের অবস্থা দেখা হচ্ছে...'):st.label}</h3><p>{err?err:(next?(en?`Next office holiday: ${next.title_en||next.title_bn} · ${fmt(next.d,lang)}`:`পরবর্তী অফিস ছুটি: ${next.title_bn} · ${fmt(next.d,lang)}`):(en?'No listed office holiday ahead in this fiscal year.':'এই অর্থবছরে সামনে তালিকাভুক্ত অফিস ছুটি নেই।'))}</p></div><div className="cdw-side"><span>{en?'Fiscal Year':'অর্থবছর'} {fy}</span>{onOpen&&<button onClick={onOpen}>{en?'Open Calendar':'ক্যালেন্ডার খুলুন'}<ArrowRight size={15}/></button>}</div></section>
+}
+
+
+export function AdminOfficeCalendarManager({lang='bn'}){
+  const en=lang==='en';
+  const currentFy=fiscalYearFromDate(new Date());
+  const blank={fiscal_year:currentFy,holiday_date:'',title_bn:'',title_en:'',notes_bn:'',notes_en:'',source_url:'https://www.du.ac.bd/du_post_details/notice/27726',is_active:true};
+  const [fy,setFy]=useState(currentFy),[items,setItems]=useState([]),[form,setForm]=useState(blank),
+    [editing,setEditing]=useState(null),[busy,setBusy]=useState(false),[err,setErr]=useState(''),[msg,setMsg]=useState('');
+
+  async function request(path,opts={}){
+    const r=await fetch(API+path,{credentials:'include',headers:{'Content-Type':'application/json',...(opts.headers||{})},...opts});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(d.error||'Request failed');
+    return d;
+  }
+  async function load(targetFy=fy){
+    setBusy(true);setErr('');
+    try{
+      const x=await request(`/api/admin/office-calendar?fy=${encodeURIComponent(targetFy)}`);
+      setItems(x.holidays||[]);
+    }catch(e){setErr(e.message)}finally{setBusy(false)}
+  }
+  useEffect(()=>{load(currentFy)},[]);
+
+  function changeFy(v){
+    setFy(v);
+    setForm(x=>({...x,fiscal_year:v}));
+    setEditing(null);setMsg('');
+    load(v);
+  }
+  function edit(x){
+    setEditing(x);
+    setForm({
+      fiscal_year:x.fiscal_year||fy,
+      holiday_date:x.holiday_date||'',
+      title_bn:x.title_bn||'',
+      title_en:x.title_en||'',
+      notes_bn:x.notes_bn||'',
+      notes_en:x.notes_en||'',
+      source_url:x.source_url||'https://www.du.ac.bd/du_post_details/notice/27726',
+      is_active:!!x.is_active
+    });
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  function cancel(){
+    setEditing(null);setForm({...blank,fiscal_year:fy});setErr('');setMsg('');
+  }
+  async function save(e){
+    e.preventDefault();setErr('');setMsg('');
+    if(!form.holiday_date||!form.title_bn.trim())return setErr(en?'Holiday date and Bangla title are required.':'ছুটির তারিখ ও বাংলা শিরোনাম প্রয়োজন।');
+    setBusy(true);
+    try{
+      const path=editing?`/api/admin/office-calendar/${editing.id}`:'/api/admin/office-calendar';
+      await request(path,{method:editing?'PUT':'POST',body:JSON.stringify({...form,fiscal_year:fy})});
+      setMsg(editing?(en?'Office holiday updated.':'অফিস ছুটি আপডেট হয়েছে.'):(en?'Office holiday added.':'অফিস ছুটি যোগ হয়েছে.'));
+      setEditing(null);setForm({...blank,fiscal_year:fy});await load(fy);
+    }catch(e){setErr(e.message)}finally{setBusy(false)}
+  }
+  async function remove(x){
+    if(!confirm(en?`Delete "${x.title_en||x.title_bn}"?`:`"${x.title_bn}" মুছে ফেলবেন?`))return;
+    setErr('');setMsg('');
+    try{await request(`/api/admin/office-calendar/${x.id}`,{method:'DELETE'});setMsg(en?'Office holiday deleted.':'অফিস ছুটি মুছে ফেলা হয়েছে.');await load(fy)}
+    catch(e){setErr(e.message)}
+  }
+
+  return <div className="admin-calendar-manager">
+    <div className="acm-topbar">
+      <div><span>{en?'OFFICE HOLIDAY MAINTENANCE':'অফিস ছুটি ব্যবস্থাপনা'}</span><h3>{en?'Fiscal Office Calendar':'অর্থবছরভিত্তিক অফিস ক্যালেন্ডার'}</h3><p>{en?'Only explicit office holidays are stored here. Friday and Saturday remain automatic weekly holidays.':'এখানে শুধু নির্দিষ্ট অফিস ছুটি সংরক্ষণ হবে। শুক্রবার ও শনিবার স্বয়ংক্রিয় সাপ্তাহিক ছুটি হিসেবেই থাকবে।'}</p></div>
+      <div className="acm-fy"><label>{en?'Fiscal Year':'অর্থবছর'}<select value={fy} onChange={e=>changeFy(e.target.value)}><option value="2025-2026">2025-2026</option><option value="2026-2027">2026-2027</option><option value="2027-2028">2027-2028</option></select></label><button className="secondary" onClick={()=>load()} disabled={busy}><RefreshCw size={15}/>{en?'Refresh':'রিফ্রেশ'}</button></div>
+    </div>
+
+    {err&&<div className="fc-error">{err}</div>}{msg&&<div className="acm-success">{msg}</div>}
+
+    <form className="acm-editor" onSubmit={save}>
+      <div className="acm-editor-head"><div><b>{editing?(en?'Edit office holiday':'অফিস ছুটি সম্পাদনা'):(en?'Add office holiday':'অফিস ছুটি যোগ করুন')}</b><small>{en?'Do not add class-only holidays.':'শুধু ক্লাস ছুটি এখানে যোগ করবেন না।'}</small></div>{editing&&<button type="button" className="secondary" onClick={cancel}><X size={15}/>{en?'Cancel Edit':'সম্পাদনা বাতিল'}</button>}</div>
+      <div className="form-grid">
+        <label>{en?'Holiday date':'ছুটির তারিখ'}<input type="date" value={form.holiday_date} onChange={e=>setForm({...form,holiday_date:e.target.value})} required/></label>
+        <label>{en?'Active':'সক্রিয়'}<select value={form.is_active?'1':'0'} onChange={e=>setForm({...form,is_active:e.target.value==='1'})}><option value="1">{en?'Yes':'হ্যাঁ'}</option><option value="0">{en?'No':'না'}</option></select></label>
+        <label>{en?'Bangla title':'বাংলা শিরোনাম'}<input value={form.title_bn} onChange={e=>setForm({...form,title_bn:e.target.value})} required/></label>
+        <label>{en?'English title':'ইংরেজি শিরোনাম'}<input value={form.title_en} onChange={e=>setForm({...form,title_en:e.target.value})}/></label>
+        <label className="span-2">{en?'Bangla note':'বাংলা নোট'}<textarea rows="2" value={form.notes_bn} onChange={e=>setForm({...form,notes_bn:e.target.value})}/></label>
+        <label className="span-2">{en?'English note':'ইংরেজি নোট'}<textarea rows="2" value={form.notes_en} onChange={e=>setForm({...form,notes_en:e.target.value})}/></label>
+        <label className="span-2">{en?'Published source URL':'প্রকাশিত উৎসের URL'}<input type="url" value={form.source_url} onChange={e=>setForm({...form,source_url:e.target.value})}/></label>
+        <div className="span-2"><button className="primary" disabled={busy}>{editing?<Edit3 size={16}/>:<Plus size={16}/>} {busy?(en?'Saving...':'সংরক্ষণ হচ্ছে...'):(editing?(en?'Update Holiday':'ছুটি আপডেট করুন'):(en?'Add Office Holiday':'অফিস ছুটি যোগ করুন'))}</button></div>
+      </div>
+    </form>
+
+    <div className="acm-list-card">
+      <div className="acm-list-head"><div><CalendarDays/><div><h3>{en?'Stored Office Holidays':'সংরক্ষিত অফিস ছুটি'}</h3><p>{en?`${items.length} record(s) for ${fy}`:`${items.length.toLocaleString('bn-BD')}টি রেকর্ড · ${fy}`}</p></div></div></div>
+      {busy&&items.length===0?<div className="fc-loading">{en?'Loading...':'লোড হচ্ছে...'}</div>:items.length===0?<div className="acm-empty">{en?'No office holiday stored for this fiscal year.':'এই অর্থবছরে কোনো অফিস ছুটি সংরক্ষিত নেই।'}</div>:<div className="acm-list">
+        {items.map(x=><article key={x.id} className={!x.is_active?'inactive':''}>
+          <div className="acm-date"><CalendarDays/><div><b>{fmt(parseIso(x.holiday_date),lang)}</b><small>{x.holiday_date}</small></div></div>
+          <div className="acm-title"><b>{en?(x.title_en||x.title_bn):x.title_bn}</b><small>{en?(x.title_bn||''):(x.title_en||'')}</small>{(x.notes_bn||x.notes_en)&&<p>{en?(x.notes_en||x.notes_bn):(x.notes_bn||x.notes_en)}</p>}</div>
+          <span className={'acm-state '+(x.is_active?'active':'inactive')}>{x.is_active?(en?'Active':'সক্রিয়'):(en?'Inactive':'নিষ্ক্রিয়')}</span>
+          <div className="acm-actions"><button type="button" onClick={()=>edit(x)} title={en?'Edit':'সম্পাদনা'}><Edit3 size={15}/></button><button type="button" className="danger" onClick={()=>remove(x)} title={en?'Delete':'মুছুন'}><Trash2 size={15}/></button></div>
+        </article>)}
+      </div>}
+    </div>
+
+    <div className="fc-disclaimer"><ShieldCheck/><p>{en?'System administrators maintain reference content only. This screen does not approve leave, employment, promotion or any official administrative decision.':'সিস্টেম ব্যবস্থাপক এখানে শুধু রেফারেন্স কনটেন্ট রক্ষণাবেক্ষণ করেন। এই স্ক্রিন ছুটি, চাকরি, পদোন্নতি বা কোনো অফিসিয়াল প্রশাসনিক সিদ্ধান্ত অনুমোদন করে না।'}</p></div>
+  </div>
 }
