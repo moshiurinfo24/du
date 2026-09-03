@@ -46,9 +46,11 @@ export function addYears(date,years){
 export function annualPromotionCycle(eligibilityDate){
   const e=new Date(eligibilityDate); if(isNaN(e)) return null;
   const y=e.getFullYear();
+  // হিসাবনীতি: যোগ্যতা অর্জনের পর আবেদন/প্রক্রিয়া/অনুমোদনসহ একটি পূর্ণ বছর ধরে
+  // পদোন্নতির সম্ভাব্য চূড়ান্ত তারিখ নির্ধারণ করা হবে।
   const circularDeadline=new Date(y,11,31);
-  const completionDeadline=new Date(y+1,5,30);
-  return {eligibilityDate:e,circularDeadline,completionDeadline,delay:diffYMD(e,completionDeadline)};
+  const completionDeadline=addYears(e,1);
+  return {eligibilityDate:e,circularDeadline,completionDeadline,delay:diffYMD(e,completionDeadline),processYears:1};
 }
 export function futureRoadmap(startGrade,startDate,edu,maxSteps=6){
   const out=[]; let grade=String(startGrade),serviceStart=new Date(startDate);
