@@ -278,3 +278,49 @@ html{scroll-behavior:smooth}.premium-public{overflow:hidden;background:radial-gr
   .premium-public .section-title h2{font-size:26px}
   .premium-public .public-calculator-card{padding:10px}
 }
+
+
+/* Phase 5.2.9 — full public homepage navigation + information sections + WhatsApp */
+.premium-public{scroll-behavior:smooth}
+.premium-public section[id]{scroll-margin-top:96px}
+.premium-public .public-menu{display:flex;align-items:center;gap:12px;min-width:0}
+.premium-public .public-menu-links{display:flex;align-items:center;gap:2px;min-width:0}
+.premium-public .nav-text-btn{appearance:none;border:0;background:transparent;color:#203653;padding:10px 8px;border-radius:10px;font-weight:700;cursor:pointer;white-space:nowrap;transition:color .22s ease,background .22s ease,transform .22s ease}
+.premium-public .nav-text-btn:hover{color:#18489f;background:#eef4ff;transform:translateY(-2px)}
+.premium-public .info-stage{padding-top:88px;padding-bottom:88px}
+.premium-public .soft-stage{max-width:none;padding-top:82px;padding-bottom:82px;padding-left:max(28px,calc((100% - 1184px)/2));padding-right:max(28px,calc((100% - 1184px)/2));background:linear-gradient(180deg,#f5f8fc,#eef3f9);border-top:1px solid #dce5f0;border-bottom:1px solid #dce5f0}
+.premium-public .info-grid{display:grid;gap:18px;margin-top:34px}
+.premium-public .info-grid.three-col{grid-template-columns:repeat(3,1fr)}
+.premium-public .info-card{position:relative;padding:26px;border:1px solid #d9e3ef;border-radius:22px;background:#fff;box-shadow:0 16px 36px rgba(20,49,91,.07);overflow:hidden;transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease}
+.premium-public .info-card:after{content:"";position:absolute;inset:auto -35px -45px auto;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(58,107,218,.10),transparent 68%)}
+.premium-public .info-card:hover{transform:translateY(-7px);border-color:#b8cae2;box-shadow:0 24px 48px rgba(20,49,91,.12)}
+.premium-public .info-icon,.premium-public .form-icon,.premium-public .empty-icon{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:#eaf1ff;color:#2859bd}
+.premium-public .info-card h3{color:#10233f;margin:18px 0 9px;line-height:1.4}
+.premium-public .info-card p{color:#5c7089;line-height:1.75;margin:0}
+.premium-public .empty-premium{max-width:850px;margin:32px auto 0;padding:28px;border:1px solid #d6e1ee;border-radius:22px;background:#fff;display:flex;align-items:center;gap:18px;box-shadow:0 16px 38px rgba(20,49,91,.07)}
+.premium-public .empty-premium h3{color:#10233f;margin:0 0 6px;line-height:1.45}
+.premium-public .empty-premium p{color:#61758e;margin:0;line-height:1.65}
+.premium-public .forms-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:34px}
+.premium-public .form-placeholder{position:relative;display:flex;align-items:flex-start;gap:15px;padding:22px;border:1px solid #d9e3ef;border-radius:20px;background:#fff;min-height:132px;box-shadow:0 14px 32px rgba(20,49,91,.06);transition:transform .25s ease,box-shadow .25s ease}
+.premium-public .form-placeholder:hover{transform:translateY(-5px);box-shadow:0 22px 42px rgba(20,49,91,.11)}
+.premium-public .form-placeholder b{display:block;color:#10233f;line-height:1.45;margin:2px 34px 7px 0}
+.premium-public .form-placeholder small{display:block;color:#61758e;line-height:1.6}
+.premium-public .form-placeholder>span{position:absolute;right:18px;top:16px;font-size:25px;font-weight:900;color:#e7edf6}
+.premium-public .support-cta{display:flex;align-items:center;justify-content:space-between;gap:28px}
+.premium-public .support-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.premium-public .support-actions a{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:12px 16px;border-radius:13px;font-weight:800;white-space:nowrap;transition:transform .22s ease,box-shadow .22s ease}
+.premium-public .support-actions a:hover{transform:translateY(-3px);box-shadow:0 12px 26px rgba(0,0,0,.16)}
+.premium-public .support-actions .wa-btn{background:#eaf9f0!important;color:#126b3a!important;border:1px solid #bde7ce!important}
+.premium-public footer{display:grid;grid-template-columns:1.25fr 1fr .9fr;align-items:start}
+.premium-public footer>div{color:#b9c8dd;line-height:1.7}
+.premium-public .footer-links b{display:block;color:#fff;margin-bottom:7px}
+.premium-public .footer-links>div{display:flex;gap:4px 10px;flex-wrap:wrap}
+.premium-public .footer-links button{border:0;background:transparent;color:#b9c8dd;padding:3px 0;cursor:pointer}
+.premium-public .footer-links button:hover{color:#fff}
+.premium-public footer a{color:#d7e6ff;text-decoration:none}
+.premium-public footer a:hover{color:#fff;text-decoration:underline}
+.whatsapp-float{position:fixed;right:22px;bottom:22px;z-index:9990;display:flex;align-items:center;gap:9px;padding:13px 17px;border-radius:999px;background:#168c4e;color:#fff!important;text-decoration:none!important;font-weight:800;box-shadow:0 16px 36px rgba(14,103,57,.30);transition:transform .24s ease,box-shadow .24s ease,filter .24s ease}
+.whatsapp-float:hover{transform:translateY(-5px) scale(1.02);box-shadow:0 22px 42px rgba(14,103,57,.38);filter:brightness(1.05)}
+.whatsapp-float svg{width:20px;height:20px}
+@media(max-width:1180px){.premium-public .public-menu-links{display:none}.premium-public .info-grid.three-col,.premium-public .forms-grid{grid-template-columns:1fr 1fr}.premium-public footer{grid-template-columns:1fr 1fr}.premium-public footer>div:first-child{grid-column:1/-1}}
+@media(max-width:760px){.premium-public .info-stage,.premium-public .soft-stage{padding-top:62px;padding-bottom:62px}.premium-public .info-grid.three-col,.premium-public .forms-grid{grid-template-columns:1fr}.premium-public .support-cta{align-items:flex-start;flex-direction:column}.premium-public .support-actions{width:100%;justify-content:flex-start}.premium-public .support-actions a{flex:1}.premium-public footer{grid-template-columns:1fr}.premium-public footer>div:first-child{grid-column:auto}.whatsapp-float{right:14px;bottom:14px;width:52px;height:52px;padding:0;justify-content:center}.whatsapp-float span{display:none}}

@@ -5,7 +5,7 @@ import {
   LayoutDashboard,TrendingUp,WalletCards,Users,ShieldCheck,LogOut,Plus,Search,
   UserRound,Building2,IdCard,Activity,ChevronRight,X,Save,Trash2,RefreshCw,
   Settings,Database,LockKeyhole,Home,BookOpen,Calculator,HelpCircle,Phone,
-  Bell,ArrowRight,CalendarDays,CheckCircle2,AlertTriangle,Landmark,FileText,Camera,Briefcase,MapPin,Mail,PhoneCall,Edit3,UserCircle2,History,ArrowRightLeft,GraduationCap,BadgeDollarSign,Clock3,FileClock
+  Bell,ArrowRight,CalendarDays,CheckCircle2,AlertTriangle,Landmark,FileText,Camera,Briefcase,MapPin,Mail,PhoneCall,MessageCircle,Edit3,UserCircle2,History,ArrowRightLeft,GraduationCap,BadgeDollarSign,Clock3,FileClock
 } from 'lucide-react';
 import './styles.css';
 import {
@@ -208,34 +208,38 @@ function PublicHome({onLogin,lang,setLang}){
   const scrollTo=(id)=>requestAnimationFrame(()=>document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'}));
   const openTool=(tool)=>{setPublicTool(tool);scrollTo('public-calculator');};
   const copy=en?{
-    nav:['Services','Calculators','Updates','Help'],
-    eyebrow:'INDEPENDENT · SMART · SECURE',
-    title:'A premium digital service experience for officers and employees',
-    desc:'Promotion eligibility, pay-scale calculation, service tools and secure ERP access — brought together in one modern platform.',
-    login:'Login to ERP', explore:'Explore Services', live:'PUBLIC CALCULATORS · NO LOGIN REQUIRED',
-    quick:'Instant Access', active:'Public tools available now', promo:'Promotion Calculator', promoSub:'Eligibility, annual cycle and roadmap', pay:'Pay Scale Calculator', paySub:'Fixation, payable basic, gross and net salary', employee:'Employee ERP', employeeSub:'Secure profile and service management', rules:'Rules & Policies', rulesSub:'Structured policy library',
-    services:'Premium Services', servicesSub:'Everything important, presented clearly and beautifully.', open:'Open', loginOpen:'Login Required',
-    calcTitle:'Calculate without logging in', calcSub:'Promotion and pay-scale calculators are temporarily available to everyone from the homepage.', promoTab:'Promotion', payTab:'Pay Scale',
-    updates:'Platform Highlights', u1:'Public calculation enabled',u1d:'Promotion and pay-scale calculations can now be used without login.',u2:'Secure ERP remains protected',u2d:'Employee records and administrative modules still require authenticated access.',u3:'Independent platform',u3d:'This is not an official institutional system.',
-    help:'Need assistance?', helpText:'For platform support and technical assistance', call:'Call 01759084692'
+    home:'Home',promotion:'Promotion Calculator',pay:'Pay Scale Calculator',policies:'Policies',notices:'Notices',forms:'Forms',help:'Help',login:'Login',
+    eyebrow:'INDEPENDENT · SMART · SECURE',title:'A premium digital service experience for officers and employees',desc:'Promotion eligibility, pay-scale calculation, policy guidance, forms and secure ERP access — together in one modern platform.',
+    heroPromo:'Calculate Promotion',heroLogin:'Login to ERP',live:'PUBLIC CALCULATORS · NO LOGIN REQUIRED',quick:'Instant Access',active:'Essential services in one place',
+    promoSub:'Eligibility, service points, process timeline and future roadmap',paySub:'Fixation, payable basic, gross, deductions and net salary',employee:'Employee ERP',employeeSub:'Secure profile, service history and administration',policiesSub:'Promotion and pay-scale policy guidance',
+    services:'Digital Services',servicesSub:'Fast access to the most important employee-service tools.',open:'Open',loginOpen:'Login Required',
+    calcTitle:'Calculate without logging in',calcSub:'Use the promotion and pay-scale calculators directly from the homepage.',promoTab:'Promotion',payTab:'Pay Scale',
+    policyTitle:'Policies & Rules',policySub:'Clear reference points for the calculations used by this platform.',policy1:'Promotion policy',policy1d:'Education-based service requirement, experience points and the one-year promotion process are reflected in the calculator.',policy2:'Pay-scale calculation rules',policy2d:'2015 pay stage, 2026 fixation, implementation rate, allowances and regular deductions are shown transparently.',policy3:'Independent reference',policy3d:'Always verify the applicable official rules and orders before a final administrative or financial decision.',
+    noticeTitle:'Notices',noticeSub:'Platform notices and service updates.',noticeEmpty:'No new public notice has been published yet.',noticeHint:'When a verified notice is added, it will appear here.',
+    formsTitle:'Forms Center',formsSub:'A dedicated area for useful employee-service forms.',form1:'Promotion-related forms',form2:'Leave and service forms',form3:'Salary and financial forms',formState:'Forms will be added here as verified files become available.',
+    helpTitle:'Help & Support',helpSub:'Need help using the calculators or the platform?',helpText:'Developer support is available by phone and WhatsApp.',call:'Call',whatsapp:'WhatsApp',developer:'Developer Support',
+    footerNav:'Quick links'
   }:{
-    nav:['সেবা','ক্যালকুলেটর','আপডেট','সহায়তা'],
-    eyebrow:'স্বাধীন · আধুনিক · নিরাপদ',
-    title:'কর্মকর্তা-কর্মচারীদের জন্য প্রিমিয়াম ডিজিটাল সেবার অভিজ্ঞতা',
-    desc:'পদোন্নতির যোগ্যতা, পে-স্কেল হিসাব, চাকরি-সংক্রান্ত টুল এবং নিরাপদ ERP প্রবেশ—সবকিছু এক আধুনিক প্ল্যাটফর্মে।',
-    login:'ERP-তে লগইন', explore:'সেবাগুলো দেখুন', live:'পাবলিক ক্যালকুলেটর · লগইন প্রয়োজন নেই',
-    quick:'দ্রুত প্রবেশ', active:'এখনই ব্যবহারযোগ্য পাবলিক সেবা', promo:'পদোন্নতি ক্যালকুলেটর', promoSub:'যোগ্যতা, বার্ষিক প্রক্রিয়া ও ভবিষ্যৎ ধাপ', pay:'পে-স্কেল ক্যালকুলেটর', paySub:'ফিক্সেশন, প্রাপ্য বেসিক, মোট ও নেট বেতন', employee:'কর্মকর্তা-কর্মচারী ERP', employeeSub:'নিরাপদ প্রোফাইল ও চাকরি ব্যবস্থাপনা', rules:'বিধি ও নীতিমালা', rulesSub:'সুশৃঙ্খল নীতিমালা তথ্যভান্ডার',
-    services:'প্রিমিয়াম সেবাসমূহ', servicesSub:'প্রয়োজনীয় সেবাগুলো সহজ, সুন্দর ও পরিষ্কারভাবে সাজানো।', open:'খুলুন', loginOpen:'লগইন প্রয়োজন',
-    calcTitle:'লগইন ছাড়াই হিসাব করুন', calcSub:'পদোন্নতি ও পে-স্কেল হিসাব আপাতত হোমপেজ থেকেই সবাই ব্যবহার করতে পারবেন।', promoTab:'পদোন্নতি', payTab:'পে-স্কেল',
-    updates:'প্ল্যাটফর্মের বিশেষ সুবিধা', u1:'পাবলিক হিসাব চালু',u1d:'এখন লগইন ছাড়াই পদোন্নতি ও পে-স্কেল হিসাব করা যাবে।',u2:'ERP নিরাপদই থাকছে',u2d:'কর্মী তথ্য ও প্রশাসনিক মডিউলে প্রবেশের জন্য লগইন প্রয়োজন হবে।',u3:'স্বাধীন প্ল্যাটফর্ম',u3d:'এটি কোনো প্রতিষ্ঠানের অফিসিয়াল সিস্টেম নয়।',
-    help:'সহায়তা প্রয়োজন?', helpText:'প্ল্যাটফর্ম সহায়তা ও কারিগরি সহযোগিতার জন্য', call:'কল করুন 01759084692'
+    home:'হোম',promotion:'পদোন্নতি হিসাব',pay:'পে-স্কেল হিসাব',policies:'নীতিমালা',notices:'নোটিশ',forms:'ফরমসমূহ',help:'সহায়তা',login:'লগইন',
+    eyebrow:'স্বাধীন · আধুনিক · নিরাপদ',title:'কর্মকর্তা-কর্মচারীদের জন্য প্রিমিয়াম ডিজিটাল সেবার অভিজ্ঞতা',desc:'পদোন্নতির যোগ্যতা, পে-স্কেল হিসাব, নীতিমালা সহায়িকা, ফরম এবং নিরাপদ ERP প্রবেশ—সবকিছু এক আধুনিক প্ল্যাটফর্মে।',
+    heroPromo:'পদোন্নতি হিসাব করুন',heroLogin:'ERP-তে লগইন',live:'পাবলিক ক্যালকুলেটর · লগইন প্রয়োজন নেই',quick:'দ্রুত প্রবেশ',active:'প্রয়োজনীয় সেবা এক জায়গায়',
+    promoSub:'যোগ্যতা, সার্ভিস পয়েন্ট, প্রক্রিয়ার সময় ও ভবিষ্যৎ ধাপ',paySub:'ফিক্সেশন, প্রাপ্য মূল বেতন, মোট, কর্তন ও নিট বেতন',employee:'কর্মকর্তা-কর্মচারী ERP',employeeSub:'নিরাপদ প্রোফাইল, চাকরি ইতিহাস ও প্রশাসন',policiesSub:'পদোন্নতি ও পে-স্কেল হিসাবের নীতিমালা সহায়িকা',
+    services:'ডিজিটাল সেবাসমূহ',servicesSub:'গুরুত্বপূর্ণ কর্মকর্তা-কর্মচারী সেবায় দ্রুত প্রবেশ।',open:'খুলুন',loginOpen:'লগইন প্রয়োজন',
+    calcTitle:'লগইন ছাড়াই হিসাব করুন',calcSub:'হোমপেজ থেকেই পদোন্নতি ও পে-স্কেল হিসাব ব্যবহার করুন।',promoTab:'পদোন্নতি',payTab:'পে-স্কেল',
+    policyTitle:'নীতিমালা ও বিধি',policySub:'এই প্ল্যাটফর্মে ব্যবহৃত হিসাবের নিয়মগুলো সহজভাবে দেখুন।',policy1:'পদোন্নতি নীতিমালা',policy1d:'শিক্ষাগত যোগ্যতাভিত্তিক চাকরিকাল, অভিজ্ঞতা পয়েন্ট এবং এক বছরের পদোন্নতি প্রক্রিয়া ক্যালকুলেটরে অনুসরণ করা হয়েছে।',policy2:'পে-স্কেল হিসাবের নিয়ম',policy2d:'২০১৫ বেতন ধাপ, ২০২৬ ফিক্সেশন, বাস্তবায়ন হার, ভাতা ও নিয়মিত কর্তন স্বচ্ছভাবে দেখানো হয়।',policy3:'স্বাধীন তথ্য সহায়িকা',policy3d:'চূড়ান্ত প্রশাসনিক বা আর্থিক সিদ্ধান্তের আগে প্রযোজ্য অফিসিয়াল বিধি ও আদেশ যাচাই করুন।',
+    noticeTitle:'নোটিশ',noticeSub:'প্ল্যাটফর্ম নোটিশ ও সেবা আপডেট।',noticeEmpty:'এখনো নতুন কোনো পাবলিক নোটিশ প্রকাশ করা হয়নি।',noticeHint:'যাচাইকৃত নোটিশ যুক্ত হলে এখানে দেখা যাবে।',
+    formsTitle:'ফরমসমূহ',formsSub:'প্রয়োজনীয় কর্মকর্তা-কর্মচারী সেবা ফরমের জন্য নির্দিষ্ট কেন্দ্র।',form1:'পদোন্নতি-সংক্রান্ত ফরম',form2:'ছুটি ও চাকরি-সংক্রান্ত ফরম',form3:'বেতন ও আর্থিক ফরম',formState:'যাচাইকৃত ফাইল পাওয়া অনুযায়ী ফরমগুলো এখানে যুক্ত হবে।',
+    helpTitle:'সহায়তা ও যোগাযোগ',helpSub:'ক্যালকুলেটর বা প্ল্যাটফর্ম ব্যবহার করতে সহায়তা প্রয়োজন?',helpText:'ফোন ও হোয়াটসঅ্যাপে ডেভেলপার সহায়তা পাওয়া যাবে।',call:'কল করুন',whatsapp:'হোয়াটসঅ্যাপ',developer:'ডেভেলপার সহায়তা',
+    footerNav:'দ্রুত লিংক'
   };
-  return <div className={'public premium-public '+(en?'lang-en':'lang-bn')}>
+  const navItems=[[copy.home,'top'],[copy.promotion,'public-calculator','promotion'],[copy.pay,'public-calculator','salary'],[copy.policies,'policies'],[copy.notices,'notices'],[copy.forms,'forms'],[copy.help,'help']];
+  const goto=(id,tool)=>tool?openTool(tool):scrollTo(id);
+  return <div id="top" className={'public premium-public '+(en?'lang-en':'lang-bn')}>
     <header className="public-nav luxury-nav">
       <div className="public-brand"><div className="brand-orb"><ShieldCheck size={19}/></div><div><b>{t.appName}</b><small>{t.appSub}</small></div></div>
-      <nav>
-        <a href="#services">{copy.nav[0]}</a><a href="#public-calculator">{copy.nav[1]}</a><a href="#updates">{copy.nav[2]}</a><a href="#help">{copy.nav[3]}</a>
-        <LangToggle lang={lang} setLang={setLang}/><button className="nav-login" onClick={onLogin}>{t.login}<ArrowRight size={15}/></button>
+      <nav className="public-menu">
+        <div className="public-menu-links">{navItems.map(([label,id,tool])=><button key={label} className="nav-text-btn" onClick={()=>goto(id,tool)}>{label}</button>)}</div>
+        <LangToggle lang={lang} setLang={setLang}/><button className="nav-login" onClick={onLogin}>{copy.login}<ArrowRight size={15}/></button>
       </nav>
     </header>
 
@@ -244,25 +248,25 @@ function PublicHome({onLogin,lang,setLang}){
       <div className="public-copy">
         <span className="eyebrow luxury-eyebrow"><span className="pulse-dot"></span>{copy.eyebrow}</span>
         <h1>{copy.title}</h1><p>{copy.desc}</p>
-        <div className="public-actions"><button className="luxury-primary" onClick={()=>openTool('promotion')}>{copy.promo}<ArrowRight size={17}/></button><button className="luxury-secondary" onClick={onLogin}>{copy.login}</button></div>
+        <div className="public-actions"><button className="luxury-primary" onClick={()=>openTool('promotion')}>{copy.heroPromo}<ArrowRight size={17}/></button><button className="luxury-secondary" onClick={onLogin}>{copy.heroLogin}</button></div>
         <div className="public-live"><Activity size={16}/><b>{copy.live}</b></div>
         <div className="trust-row"><span><ShieldCheck/> {en?'Secure Session':'নিরাপদ সেশন'}</span><span><Database/> {en?'Cloud Ready':'ক্লাউড প্রস্তুত'}</span><span><Activity/> {en?'Responsive':'রেসপনসিভ'}</span></div>
       </div>
       <div className="hero-panel luxury-panel">
         <div className="hero-panel-head"><div className="panel-icon"><Landmark/></div><div><b>{copy.quick}</b><small>{copy.active}</small></div><span className="status-pill"><span></span>{en?'LIVE':'সক্রিয়'}</span></div>
         <div className="quick-grid luxury-quick">
-          <button onClick={()=>openTool('promotion')}><span className="quick-icon"><TrendingUp/></span><b>{copy.promo}</b><small>{copy.promoSub}</small><ChevronRight className="quick-arrow"/></button>
+          <button onClick={()=>openTool('promotion')}><span className="quick-icon"><TrendingUp/></span><b>{copy.promotion}</b><small>{copy.promoSub}</small><ChevronRight className="quick-arrow"/></button>
           <button onClick={()=>openTool('salary')}><span className="quick-icon gold"><WalletCards/></span><b>{copy.pay}</b><small>{copy.paySub}</small><ChevronRight className="quick-arrow"/></button>
           <button onClick={onLogin}><span className="quick-icon violet"><Users/></span><b>{copy.employee}</b><small>{copy.employeeSub}</small><ChevronRight className="quick-arrow"/></button>
-          <button onClick={()=>scrollTo('updates')}><span className="quick-icon teal"><BookOpen/></span><b>{copy.rules}</b><small>{copy.rulesSub}</small><ChevronRight className="quick-arrow"/></button>
+          <button onClick={()=>scrollTo('policies')}><span className="quick-icon teal"><BookOpen/></span><b>{copy.policies}</b><small>{copy.policiesSub}</small><ChevronRight className="quick-arrow"/></button>
         </div>
       </div>
     </section>
 
     <section id="services" className="public-section luxury-section">
-      <div className="section-title centered"><span>{en?'PREMIUM ACCESS':'প্রিমিয়াম প্রবেশ'}</span><h2>{copy.services}</h2><p>{copy.servicesSub}</p></div>
+      <div className="section-title centered"><span>{en?'SERVICES':'সেবাসমূহ'}</span><h2>{copy.services}</h2><p>{copy.servicesSub}</p></div>
       <div className="service-grid luxury-services">
-        {[[copy.promo,copy.promoSub,TrendingUp,'promotion',false],[copy.pay,copy.paySub,WalletCards,'salary',false],[copy.employee,copy.employeeSub,Users,'login',true],[copy.rules,copy.rulesSub,BookOpen,'updates',true]].map(([a,b,I,target,locked],idx)=><article className="service-card luxury-card" key={a}><div className="card-number">0{idx+1}</div><div className="service-icon"><I/></div><h3>{a}</h3><p>{b}</p><button onClick={()=>target==='login'?onLogin():target==='updates'?scrollTo('updates'):openTool(target)}>{locked?copy.loginOpen:copy.open}<ChevronRight size={15}/></button></article>)}
+        {[[copy.promotion,copy.promoSub,TrendingUp,'promotion'],[copy.pay,copy.paySub,WalletCards,'salary'],[copy.employee,copy.employeeSub,Users,'login'],[copy.policies,copy.policiesSub,BookOpen,'policies']].map(([a,b,I,target],idx)=><article className="service-card luxury-card" key={a}><div className="card-number">0{idx+1}</div><div className="service-icon"><I/></div><h3>{a}</h3><p>{b}</p><button onClick={()=>target==='login'?onLogin():target==='policies'?scrollTo('policies'):openTool(target)}>{target==='login'?copy.loginOpen:copy.open}<ChevronRight size={15}/></button></article>)}
       </div>
     </section>
 
@@ -272,14 +276,28 @@ function PublicHome({onLogin,lang,setLang}){
       <div className="public-calculator-card">{publicTool==='promotion'?<PromotionCenter lang={lang}/>:<SalaryCalculator lang={lang}/>}</div>
     </section>
 
-    <section id="updates" className="public-section muted-section luxury-updates"><div className="section-title centered"><span>{en?'PLATFORM':'প্ল্যাটফর্ম'}</span><h2>{copy.updates}</h2></div><div className="update-list premium-update-list">
-      <article><div className="update-icon"><Calculator/></div><div><b>{copy.u1}</b><p>{copy.u1d}</p></div></article>
-      <article><div className="update-icon"><LockKeyhole/></div><div><b>{copy.u2}</b><p>{copy.u2d}</p></div></article>
-      <article><div className="update-icon"><FileText/></div><div><b>{copy.u3}</b><p>{copy.u3d}</p></div></article>
-    </div></section>
+    <section id="policies" className="public-section info-stage">
+      <div className="section-title centered"><span>{en?'REFERENCE':'তথ্য সহায়িকা'}</span><h2>{copy.policyTitle}</h2><p>{copy.policySub}</p></div>
+      <div className="info-grid three-col">
+        {[[BookOpen,copy.policy1,copy.policy1d],[WalletCards,copy.policy2,copy.policy2d],[ShieldCheck,copy.policy3,copy.policy3d]].map(([I,h,d])=><article className="info-card" key={h}><div className="info-icon"><I/></div><h3>{h}</h3><p>{d}</p></article>)}
+      </div>
+    </section>
 
-    <section className="public-cta"><div><span>{en?'SUPPORT':'সহায়তা'}</span><h2>{copy.help}</h2><p>{copy.helpText}</p></div><a href="tel:01759084692"><PhoneCall/>{copy.call}</a></section>
-    <footer id="help"><div><b>{t.appName}</b><p>{t.independent}</p></div><div><HelpCircle/> {en?'Developer Support':'ডেভেলপার সহায়তা'} · <Phone/> 01759084692</div></footer>
+    <section id="notices" className="public-section soft-stage">
+      <div className="section-title centered"><span>{en?'UPDATES':'আপডেট'}</span><h2>{copy.noticeTitle}</h2><p>{copy.noticeSub}</p></div>
+      <div className="empty-premium"><div className="empty-icon"><Bell/></div><div><h3>{copy.noticeEmpty}</h3><p>{copy.noticeHint}</p></div></div>
+    </section>
+
+    <section id="forms" className="public-section info-stage">
+      <div className="section-title centered"><span>{en?'DOWNLOAD CENTER':'ডাউনলোড কেন্দ্র'}</span><h2>{copy.formsTitle}</h2><p>{copy.formsSub}</p></div>
+      <div className="forms-grid">{[copy.form1,copy.form2,copy.form3].map((x,i)=><article className="form-placeholder" key={x}><div className="form-icon"><FileText/></div><div><b>{x}</b><small>{copy.formState}</small></div><span>0{i+1}</span></article>)}</div>
+    </section>
+
+    <section id="help" className="public-cta support-cta"><div><span>{en?'SUPPORT':'সহায়তা'}</span><h2>{copy.helpTitle}</h2><p>{copy.helpSub} {copy.helpText}</p></div><div className="support-actions"><a href="tel:01759084692"><PhoneCall/>{copy.call} · 01759084692</a><a className="wa-btn" href="https://wa.me/8801759084692" target="_blank" rel="noreferrer"><MessageCircle/>{copy.whatsapp}</a></div></section>
+
+    <footer><div><b>{t.appName}</b><p>{t.independent}</p></div><div className="footer-links"><b>{copy.footerNav}</b><div>{navItems.slice(0,6).map(([label,id,tool])=><button key={label} onClick={()=>goto(id,tool)}>{label}</button>)}</div></div><div><HelpCircle/> {copy.developer}<br/><Phone/> 01759084692 · <a href="https://wa.me/8801759084692" target="_blank" rel="noreferrer">{copy.whatsapp}</a></div></footer>
+
+    <a className="whatsapp-float" href="https://wa.me/8801759084692" target="_blank" rel="noreferrer" aria-label={copy.whatsapp} title={copy.whatsapp}><MessageCircle/><span>{copy.whatsapp}</span></a>
   </div>
 }
 function Stat({label,value,icon:Icon}){return <article className="stat-card"><div className="stat-icon"><Icon size={19}/></div><div><small>{label}</small><b>{value}</b></div></article>}
