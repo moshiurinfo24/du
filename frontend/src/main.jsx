@@ -189,26 +189,14 @@ function salaryReportHtml(r,lang='bn'){
   return reportShell(title,en?'A4 payslip-style salary statement':'এ-ফোর পে-স্লিপধর্মী বেতন বিবরণী',body,lang);
 }
 
-function AuthPortal({onLogin,onBack,lang,setLang,initialMode='login',initialToken=''}) {
+function AuthPortal({onLogin,onBack,lang,setLang,initialMode='login'}) {
   const en=lang==='en';
-  const [mode,setMode]=useState(initialMode);
-  const [token,setToken]=useState(initialToken);
-  const [form,setForm]=useState({name:'',email:'',password:'',confirm:'',account_type:'employee',current_password:'',new_password:''});
-  const [err,setErr]=useState(''),[msg,setMsg]=useState(''),[busy,setBusy]=useState(false);
-
-  useEffect(()=>{setMode(initialMode);setToken(initialToken);setErr('');setMsg('')},[initialMode,initialToken]);
-  useEffect(()=>{
-    if(mode==='verify'&&token){
-      setBusy(true);setErr('');setMsg('');
-      api('/api/verify-email',{method:'POST',body:JSON.stringify({token})})
-        .then(()=>setMsg(en?'Email verified. You can now log in.':'ইমেইল যাচাই সম্পন্ন হয়েছে। এখন লগইন করতে পারবেন।'))
-        .catch(e=>setErr(e.message)).finally(()=>setBusy(false));
-    }
-  },[mode,token,lang]);
+  const [mode,setMode]=useState(initialMode==='reset'?'forgot':initialMode);
+  const [form,setForm]=useState({name:'',email:'',password:'',confirm:'',account_type:'employee',recovery_code:''});
+  const [err,setErr]=useState(''),[msg,setMsg]=useState(''),[busy,setBusy]=useState(false),[recovery,setRecovery]=useState('');
 
   const change=(k,v)=>setForm(f=>({...f,[k]:v}));
-  const switchMode=m=>{setMode(m);setErr('');setMsg('')};
-
+  const switchMode=m=>{setMode(m);setErr('');setMsg('');setRecovery('')};
   async function submit(e){
     e.preventDefault();setBusy(true);setErr('');setMsg('');
     try{
@@ -218,79 +206,57 @@ function AuthPortal({onLogin,onBack,lang,setLang,initialMode='login',initialToke
       if(mode==='register'){
         if(form.password!==form.confirm)throw new Error(en?'Passwords do not match':'পাসওয়ার্ড দুটি মিলছে না');
         const x=await api('/api/register',{method:'POST',body:JSON.stringify({name:form.name,email:form.email,password:form.password,account_type:form.account_type})});
-        setMsg(x.emailSent?(en?'Account created. Check your email and verify the account.':'অ্যাকাউন্ট তৈরি হয়েছে। ইমেইল দেখে অ্যাকাউন্ট যাচাই করুন।'):(en?'Account created, but verification email could not be sent. Configure email service and use Resend Verification.':'অ্যাকাউন্ট তৈরি হয়েছে, তবে যাচাই ইমেইল পাঠানো যায়নি। ইমেইল সার্ভিস সেটআপ করে আবার যাচাই ইমেইল পাঠান।'));
-        setMode('verify-help');return;
+        setRecovery(x.recoveryCode);setMsg(en?'Account created. Save this recovery code now. It will not be shown again.':'অ্যাকাউন্ট তৈরি হয়েছে। এই রিকভারি কোডটি এখনই সংরক্ষণ করুন। পরে আর দেখানো হবে না।');return;
       }
       if(mode==='forgot'){
-        await api('/api/forgot-password',{method:'POST',body:JSON.stringify({email:form.email})});
-        setMsg(en?'If the account exists, a password reset link has been sent.':'অ্যাকাউন্টটি থাকলে পাসওয়ার্ড রিসেট লিংক ইমেইলে পাঠানো হয়েছে।');return;
-      }
-      if(mode==='reset'){
         if(form.password!==form.confirm)throw new Error(en?'Passwords do not match':'পাসওয়ার্ড দুটি মিলছে না');
-        await api('/api/reset-password',{method:'POST',body:JSON.stringify({token,password:form.password})});
-        setMsg(en?'Password reset completed. Please log in.':'পাসওয়ার্ড পরিবর্তন হয়েছে। এখন লগইন করুন।');setMode('login');return;
-      }
-      if(mode==='verify-help'){
-        await api('/api/resend-verification',{method:'POST',body:JSON.stringify({email:form.email})});
-        setMsg(en?'Verification email sent.':'যাচাই ইমেইল পাঠানো হয়েছে।');return;
+        await api('/api/reset-password-recovery',{method:'POST',body:JSON.stringify({email:form.email,recovery_code:form.recovery_code,password:form.password})});
+        setMsg(en?'Password reset completed. You can now log in.':'পাসওয়ার্ড পরিবর্তন হয়েছে। এখন লগইন করতে পারবেন।');setMode('login');return;
       }
     }catch(e){setErr(e.message)}finally{setBusy(false)}
   }
-
-  const title=mode==='register'?(en?'Create your account':'নিজের অ্যাকাউন্ট তৈরি করুন'):
-    mode==='forgot'?(en?'Forgot password':'পাসওয়ার্ড ভুলে গেছেন'):
-    mode==='reset'?(en?'Set a new password':'নতুন পাসওয়ার্ড দিন'):
-    mode==='verify'||mode==='verify-help'?(en?'Email verification':'ইমেইল যাচাই'):(en?'Secure login':'নিরাপদ লগইন');
-
+  const title=mode==='register'?(en?'Create your account':'নিজের অ্যাকাউন্ট তৈরি করুন'):mode==='forgot'?(en?'Recover your account':'অ্যাকাউন্ট পুনরুদ্ধার করুন'):(en?'Secure login':'নিরাপদ লগইন');
   return <div className="login-shell phase8-auth"><form className="login-card phase8-card" onSubmit={submit}>
     <div className="login-top"><button type="button" className="back-link" onClick={onBack}>{en?'← Back to Home':'← হোমে ফিরুন'}</button><LangToggle lang={lang} setLang={setLang}/></div>
-    <div className="auth-badge"><ShieldCheck size={15}/>{en?'SELF-SERVICE ACCOUNT':'স্বয়ংক্রিয় ব্যবহারকারী অ্যাকাউন্ট'}</div>
-    <h1>{title}</h1>
-    <p>{en?'Employee Digital Service Platform':'কর্মকর্তা-কর্মচারী ডিজিটাল সেবা'}</p>
-
-    {mode==='verify' ? <>
-      {busy&&<div className="auth-info">{en?'Verifying your email...':'ইমেইল যাচাই হচ্ছে...'}</div>}
-      {err&&<div className="error">{err}</div>}{msg&&<div className="auth-success">{msg}</div>}
-      <button type="button" onClick={()=>switchMode('login')}>{en?'Go to Login':'লগইনে যান'}</button>
-    </> : <>
-      {mode==='register'&&<>
-        <label>{en?'Full name':'পূর্ণ নাম'}<input value={form.name} onChange={e=>change('name',e.target.value)} required/></label>
-        <label>{en?'Account type':'অ্যাকাউন্টের ধরন'}<select value={form.account_type} onChange={e=>change('account_type',e.target.value)}><option value="officer">{en?'Officer':'কর্মকর্তা'}</option><option value="employee">{en?'Employee':'কর্মচারী'}</option></select></label>
-      </>}
-      {(mode==='login'||mode==='register'||mode==='forgot'||mode==='verify-help')&&<label>{en?'Email':'ইমেইল'}<input value={form.email} onChange={e=>change('email',e.target.value)} type="email" required/></label>}
-      {(mode==='login'||mode==='register'||mode==='reset')&&<label>{en?'Password':'পাসওয়ার্ড'}<input value={form.password} onChange={e=>change('password',e.target.value)} type="password" minLength="10" required/></label>}
-      {(mode==='register'||mode==='reset')&&<label>{en?'Confirm password':'পাসওয়ার্ড নিশ্চিত করুন'}<input value={form.confirm} onChange={e=>change('confirm',e.target.value)} type="password" minLength="10" required/></label>}
-      {(mode==='register'||mode==='reset')&&<small className="password-rule">{en?'Use at least 10 characters with letters and numbers.':'কমপক্ষে ১০ অক্ষর ব্যবহার করুন এবং অক্ষর ও সংখ্যা রাখুন।'}</small>}
-      {err&&<div className="error">{err}</div>}{msg&&<div className="auth-success">{msg}</div>}
-      <button disabled={busy}>{busy?(en?'Please wait...':'অপেক্ষা করুন...'):
-        mode==='register'?(en?'Create Account':'অ্যাকাউন্ট তৈরি করুন'):
-        mode==='forgot'?(en?'Send Reset Link':'রিসেট লিংক পাঠান'):
-        mode==='reset'?(en?'Reset Password':'পাসওয়ার্ড পরিবর্তন করুন'):
-        mode==='verify-help'?(en?'Resend Verification':'যাচাই ইমেইল আবার পাঠান'):(en?'Login':'লগইন')}</button>
-
-      <div className="auth-links">
-        {mode==='login'&&<><button type="button" onClick={()=>switchMode('forgot')}>{en?'Forgot password?':'পাসওয়ার্ড ভুলে গেছেন?'}</button><button type="button" onClick={()=>switchMode('register')}>{en?'Create new account':'নতুন অ্যাকাউন্ট তৈরি করুন'}</button></>}
-        {mode==='register'&&<button type="button" onClick={()=>switchMode('login')}>{en?'Already have an account? Login':'অ্যাকাউন্ট আছে? লগইন করুন'}</button>}
-        {mode==='forgot'&&<button type="button" onClick={()=>switchMode('login')}>{en?'Back to login':'লগইনে ফিরুন'}</button>}
-        {mode==='verify-help'&&<button type="button" onClick={()=>switchMode('login')}>{en?'Go to login':'লগইনে যান'}</button>}
-      </div>
+    <div className="auth-badge"><ShieldCheck size={15}/>{en?'FREE SELF-SERVICE ACCOUNT':'বিনামূল্যের স্বয়ংক্রিয় অ্যাকাউন্ট'}</div>
+    <h1>{title}</h1><p>{en?'Employee Digital Service Platform':'কর্মকর্তা-কর্মচারী ডিজিটাল সেবা'}</p>
+    {mode==='register'&&<>
+      <label>{en?'Full name':'পূর্ণ নাম'}<input value={form.name} onChange={e=>change('name',e.target.value)} required/></label>
+      <label>{en?'Account type':'অ্যাকাউন্টের ধরন'}<select value={form.account_type} onChange={e=>change('account_type',e.target.value)}><option value="officer">{en?'Officer':'কর্মকর্তা'}</option><option value="employee">{en?'Employee':'কর্মচারী'}</option></select></label>
     </>}
-    <small>{en?'Independent and unofficial digital service platform.':'স্বাধীন ও অনানুষ্ঠানিক ডিজিটাল সেবা প্ল্যাটফর্ম।'}</small>
+    <label>{en?'Email':'ইমেইল'}<input value={form.email} onChange={e=>change('email',e.target.value)} type="email" required/></label>
+    {mode==='forgot'&&<label>{en?'Recovery code':'রিকভারি কোড'}<input value={form.recovery_code} onChange={e=>change('recovery_code',e.target.value)} placeholder="XXXX-XXXX-XXXX-XXXX" required/></label>}
+    <label>{mode==='forgot'?(en?'New password':'নতুন পাসওয়ার্ড'):(en?'Password':'পাসওয়ার্ড')}<input value={form.password} onChange={e=>change('password',e.target.value)} type="password" minLength="10" required/></label>
+    {(mode==='register'||mode==='forgot')&&<label>{en?'Confirm password':'পাসওয়ার্ড নিশ্চিত করুন'}<input value={form.confirm} onChange={e=>change('confirm',e.target.value)} type="password" minLength="10" required/></label>}
+    {(mode==='register'||mode==='forgot')&&<small className="password-rule">{en?'Use at least 10 characters with letters and numbers.':'কমপক্ষে ১০ অক্ষর ব্যবহার করুন এবং অক্ষর ও সংখ্যা রাখুন।'}</small>}
+    {err&&<div className="error">{err}</div>}{msg&&<div className="auth-success">{msg}</div>}
+    {recovery&&<div className="recovery-box"><div>{en?'YOUR RECOVERY CODE':'আপনার রিকভারি কোড'}</div><strong>{recovery}</strong><button type="button" onClick={()=>navigator.clipboard?.writeText(recovery)}>{en?'Copy Code':'কোড কপি করুন'}</button><small>{en?'Keep this code private and safe.':'কোডটি গোপন ও নিরাপদ স্থানে রাখুন।'}</small></div>}
+    {!recovery&&<button disabled={busy}>{busy?(en?'Please wait...':'অপেক্ষা করুন...'):mode==='register'?(en?'Create Account':'অ্যাকাউন্ট তৈরি করুন'):mode==='forgot'?(en?'Reset Password':'পাসওয়ার্ড পরিবর্তন করুন'):(en?'Login':'লগইন')}</button>}
+    {recovery&&<button type="button" onClick={()=>switchMode('login')}>{en?'I saved it — Go to Login':'সংরক্ষণ করেছি — লগইনে যান'}</button>}
+    <div className="auth-links">
+      {mode==='login'&&<><button type="button" onClick={()=>switchMode('forgot')}>{en?'Forgot password?':'পাসওয়ার্ড ভুলে গেছেন?'}</button><button type="button" onClick={()=>switchMode('register')}>{en?'Create new account':'নতুন অ্যাকাউন্ট তৈরি করুন'}</button></>}
+      {(mode==='register'||mode==='forgot')&&!recovery&&<button type="button" onClick={()=>switchMode('login')}>{en?'Back to login':'লগইনে ফিরুন'}</button>}
+    </div>
+    <small>{en?'No paid email, SMS or domain is required. Independent and unofficial platform.':'কোনো পেইড ইমেইল, এসএমএস বা ডোমেইন প্রয়োজন নেই। স্বাধীন ও অনানুষ্ঠানিক প্ল্যাটফর্ম।'}</small>
   </form></div>
 }
 
 function AccountSecurity({lang='bn'}){
-  const en=lang==='en'; const [f,setF]=useState({current_password:'',new_password:'',confirm:''}),[busy,setBusy]=useState(false),[err,setErr]=useState(''),[msg,setMsg]=useState('');
+  const en=lang==='en'; const [f,setF]=useState({current_password:'',new_password:'',confirm:''}),[busy,setBusy]=useState(false),[err,setErr]=useState(''),[msg,setMsg]=useState(''),[recovery,setRecovery]=useState('');
   async function save(e){e.preventDefault();setErr('');setMsg('');if(f.new_password!==f.confirm)return setErr(en?'New passwords do not match':'নতুন পাসওয়ার্ড দুটি মিলছে না');setBusy(true);try{await api('/api/change-password',{method:'POST',body:JSON.stringify({current_password:f.current_password,new_password:f.new_password})});setF({current_password:'',new_password:'',confirm:''});setMsg(en?'Password changed successfully.':'পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে।')}catch(e){setErr(e.message)}finally{setBusy(false)}}
-  return <div><div className="page-head"><div><h2>{en?'Account & Security':'অ্যাকাউন্ট ও নিরাপত্তা'}</h2><p>{en?'Change your password without contacting support.':'সহায়তায় যোগাযোগ ছাড়াই নিজের পাসওয়ার্ড পরিবর্তন করুন।'}</p></div></div>
+  async function regen(){const p=prompt(en?'Enter your current password to create a new recovery code:':'নতুন রিকভারি কোড তৈরির জন্য বর্তমান পাসওয়ার্ড লিখুন:');if(!p)return;setErr('');setMsg('');try{const x=await api('/api/recovery-code/regenerate',{method:'POST',body:JSON.stringify({current_password:p})});setRecovery(x.recoveryCode);setMsg(en?'New recovery code created. Save it now.':'নতুন রিকভারি কোড তৈরি হয়েছে। এখনই সংরক্ষণ করুন।')}catch(e){setErr(e.message)}}
+  return <div><div className="page-head"><div><h2>{en?'Account & Security':'অ্যাকাউন্ট ও নিরাপত্তা'}</h2><p>{en?'Manage your password and private recovery code.':'নিজের পাসওয়ার্ড ও ব্যক্তিগত রিকভারি কোড পরিচালনা করুন।'}</p></div></div>
     <section className="calc-card security-card"><form onSubmit={save} className="form-grid">
       <label>{en?'Current password':'বর্তমান পাসওয়ার্ড'}<input type="password" value={f.current_password} onChange={e=>setF({...f,current_password:e.target.value})} required/></label>
       <label>{en?'New password':'নতুন পাসওয়ার্ড'}<input type="password" minLength="10" value={f.new_password} onChange={e=>setF({...f,new_password:e.target.value})} required/></label>
       <label>{en?'Confirm new password':'নতুন পাসওয়ার্ড নিশ্চিত করুন'}<input type="password" minLength="10" value={f.confirm} onChange={e=>setF({...f,confirm:e.target.value})} required/></label>
-      <div className="span-2 password-rule">{en?'Minimum 10 characters with letters and numbers.':'কমপক্ষে ১০ অক্ষর, সঙ্গে অক্ষর ও সংখ্যা থাকতে হবে।'}</div>
       {err&&<div className="error span-2">{err}</div>}{msg&&<div className="auth-success span-2">{msg}</div>}
-      <div className="span-2"><button className="primary" disabled={busy}><LockKeyhole size={16}/>{busy?(en?'Changing...':'পরিবর্তন হচ্ছে...'):(en?'Change Password':'পাসওয়ার্ড পরিবর্তন করুন')}</button></div>
-    </form></section></div>
+      <div className="span-2"><button className="primary" disabled={busy}><LockKeyhole size={16}/>{en?'Change Password':'পাসওয়ার্ড পরিবর্তন করুন'}</button></div>
+    </form></section>
+    <section className="calc-card security-card"><h3>{en?'Recovery Code':'রিকভারি কোড'}</h3><p>{en?'Use this private code if you forget your password. The server stores only its hash.':'পাসওয়ার্ড ভুলে গেলে এই ব্যক্তিগত কোড ব্যবহার করবেন। সার্ভারে শুধু এর হ্যাশ সংরক্ষিত থাকে।'}</p>
+      {recovery&&<div className="recovery-box"><strong>{recovery}</strong><button type="button" onClick={()=>navigator.clipboard?.writeText(recovery)}>{en?'Copy Code':'কোড কপি করুন'}</button></div>}
+      <button className="ghost-btn" type="button" onClick={regen}>{en?'Generate New Recovery Code':'নতুন রিকভারি কোড তৈরি করুন'}</button>
+    </section></div>
 }
 function PublicHome({onLogin,lang,setLang}){
   const t=I18N[lang], en=lang==='en';
