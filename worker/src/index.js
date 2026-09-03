@@ -120,6 +120,61 @@ export default{async fetch(req,env){
       return json({ok:true},200,C);
     }
 
+
+    if(u.pathname==='/api/service-history'&&req.method==='GET'){
+      if(!canManage(user))return json({error:'Forbidden'},403,C);
+      const employeeId=Number(u.searchParams.get('employee_id')||0);
+      if(!employeeId)return json({error:'employee_id required'},400,C);
+      const x=await env.DB.prepare(`
+        SELECT s.*,d.name_bn department_name_bn,
+          CASE s.event_type
+            WHEN 'appointment' THEN 'নিয়োগ'
+            WHEN 'joining' THEN 'যোগদান'
+            WHEN 'promotion' THEN 'পদোন্নতি'
+            WHEN 'transfer' THEN 'বদলি/পোস্টিং'
+            WHEN 'increment' THEN 'ইনক্রিমেন্ট'
+            WHEN 'training' THEN 'প্রশিক্ষণ'
+            WHEN 'grade_change' THEN 'গ্রেড পরিবর্তন'
+            ELSE 'অন্যান্য'
+          END event_type_label
+        FROM service_history s
+        LEFT JOIN departments d ON d.id=s.department_id
+        WHERE s.employee_id=?
+        ORDER BY s.event_date DESC,s.id DESC
+      `).bind(employeeId).all();
+      return json({events:x.results||[]},200,C);
+    }
+
+    if(u.pathname==='/api/service-history'&&req.method==='POST'){
+      if(!canManage(user))return json({error:'Forbidden'},403,C);
+      const b=await req.json();
+      if(!b.employee_id||!b.event_type||!b.event_date||!b.title)return json({error:'Employee, event type, date এবং title আবশ্যক'},400,C);
+      const r=await env.DB.prepare(`
+        INSERT INTO service_history(employee_id,event_type,event_date,title,from_designation,to_designation,from_grade,to_grade,department_id,office_name,reference_no,notes,created_by)
+        VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)
+      `).bind(b.employee_id,b.event_type,b.event_date,b.title,b.from_designation||null,b.to_designation||null,b.from_grade||null,b.to_grade||null,b.department_id||null,b.office_name||null,b.reference_no||null,b.notes||null,user.id).run();
+      await audit(env,user,'service_history_create','service_history',r.meta?.last_row_id,{employee_id:b.employee_id,event_type:b.event_type});
+      return json({ok:true,id:r.meta?.last_row_id||null},201,C);
+    }
+
+    const sh=u.pathname.match(/^\/api\/service-history\/(\d+)$/);
+    if(sh&&req.method==='PUT'){
+      if(!canManage(user))return json({error:'Forbidden'},403,C);
+      const id=Number(sh[1]),b=await req.json();
+      await env.DB.prepare(`UPDATE service_history SET event_type=?,event_date=?,title=?,from_designation=?,to_designation=?,from_grade=?,to_grade=?,department_id=?,office_name=?,reference_no=?,notes=? WHERE id=?`)
+        .bind(b.event_type,b.event_date,b.title,b.from_designation||null,b.to_designation||null,b.from_grade||null,b.to_grade||null,b.department_id||null,b.office_name||null,b.reference_no||null,b.notes||null,id).run();
+      await audit(env,user,'service_history_update','service_history',id,{});
+      return json({ok:true},200,C);
+    }
+
+    if(sh&&req.method==='DELETE'){
+      if(!canDelete(user))return json({error:'Forbidden'},403,C);
+      const id=Number(sh[1]);
+      await env.DB.prepare('DELETE FROM service_history WHERE id=?').bind(id).run();
+      await audit(env,user,'service_history_delete','service_history',id,{});
+      return json({ok:true},200,C);
+    }
+
     if(u.pathname==='/api/admin/stats'&&req.method==='GET'){
       if(!canManage(user))return json({error:'Forbidden'},403,C);
       const[e,a,us,d,g]=await Promise.all([
