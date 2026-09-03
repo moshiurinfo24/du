@@ -1118,7 +1118,7 @@ function SalaryHistory({lang='bn'}){
     </section>
 
     <section className="salary-history-card">
-      <div className="salary-history-head"><div><ChartNoAxesCombined,Route,Flag,Target/><div><h3>{en?'Salary Timeline':'বেতন টাইমলাইন'}</h3><p>{en?'Your saved salary records, newest first.':'আপনার সংরক্ষিত বেতন রেকর্ড, সর্বশেষটি আগে।'}</p></div></div></div>
+      <div className="salary-history-head"><div><ChartNoAxesCombined/><div><h3>{en?'Salary Timeline':'বেতন টাইমলাইন'}</h3><p>{en?'Your saved salary records, newest first.':'আপনার সংরক্ষিত বেতন রেকর্ড, সর্বশেষটি আগে।'}</p></div></div></div>
       {items.length===0?<div className="empty">{en?'No salary history yet.':'এখনো বেতন ইতিহাস নেই।'}</div>:<div className="salary-history-list">{items.map(x=><article key={x.id} className="salary-history-row">
         <div className="salary-history-date"><CalendarDays/><div><b>{fmtDateLang(x.effective_date,lang)}</b><small>{en?`Grade ${x.grade} · Stage ${Number(x.stage_2015)+1}`:`গ্রেড ${numLang(x.grade,lang,0)} · ধাপ ${numLang(Number(x.stage_2015)+1,lang,0)}`}</small></div></div>
         <div className="salary-history-amounts"><span><small>{en?'Payable basic':'প্রাপ্য মূল বেতন'}</small><b>{amt(x.payable_basic)}</b></span><span><small>{en?'Gross':'মোট'}</small><b>{amt(x.gross_salary)}</b></span><span><small>{en?'Net':'নিট'}</small><b>{amt(x.net_salary)}</b></span></div>
@@ -1589,7 +1589,7 @@ function App(){
   if(!user)return showLogin?<AuthPortal onLogin={u=>{setUser(u);window.history.replaceState({},'',window.location.pathname)}} onBack={()=>{setShowLogin(false);setAuthMode('login');setAuthToken('');window.history.replaceState({},'',window.location.pathname)}} lang={lang} setLang={setLang} initialMode={authMode} initialToken={authToken}/>:<PublicHome onLogin={()=>{setAuthMode('login');setShowLogin(true)}} lang={lang} setLang={setLang}/>;
   const admin=['super_admin','admin','department_admin'].includes(user.role);
   return <div className="app"><aside className="side">
-    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v13.1':'স্বাধীন প্ল্যাটফর্ম · v13.1'}</small></div></div>
+    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v13.2':'স্বাধীন প্ল্যাটফর্ম · v13.2'}</small></div></div>
     <nav>
       <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}><LayoutDashboard size={18}/>{lang==='en'?'My Dashboard':'আমার ড্যাশবোর্ড'}</button>
       <button className={page==='career'?'active':''} onClick={()=>setPage('career')}><BookUser size={18}/>{lang==='en'?'My Career':'আমার চাকরি'}</button>
