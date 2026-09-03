@@ -5,7 +5,7 @@ import {
   LayoutDashboard,TrendingUp,WalletCards,Users,ShieldCheck,LogOut,Plus,Search,
   UserRound,Building2,IdCard,Activity,ChevronRight,X,Save,Trash2,RefreshCw,
   Settings,Database,LockKeyhole,Home,BookOpen,Calculator,HelpCircle,Phone,
-  Bell,ArrowRight,CalendarDays,CheckCircle2,AlertTriangle,Landmark,FileText,Camera,Briefcase,MapPin,Mail,PhoneCall,MessageCircle,Edit3,UserCircle2,History,ArrowRightLeft,GraduationCap,BadgeDollarSign,Clock3,FileClock,ServerCog,Gauge,UserCog,ScrollText,SlidersHorizontal,ShieldAlert,Link2,Eye,Power,BookUser,NotebookTabs,Milestone,Award,BarChart3,PieChart,LineChart,MonitorCheck,Sparkles,UserCheck,UserX,Boxes,Command,DatabaseZap,ShieldEllipsis,Radio,TrendingDown,ReceiptText,ChartNoAxesCombined
+  Bell,ArrowRight,CalendarDays,CheckCircle2,AlertTriangle,Landmark,FileText,Camera,Briefcase,MapPin,Mail,PhoneCall,MessageCircle,Edit3,UserCircle2,History,ArrowRightLeft,GraduationCap,BadgeDollarSign,Clock3,FileClock,ServerCog,Gauge,UserCog,ScrollText,SlidersHorizontal,ShieldAlert,Link2,Eye,Power,BookUser,NotebookTabs,Milestone,Award,BarChart3,PieChart,LineChart,MonitorCheck,Sparkles,UserCheck,UserX,Boxes,Command,DatabaseZap,ShieldEllipsis,Radio,TrendingDown,ReceiptText,ChartNoAxesCombined,Route,Flag,Target
 } from 'lucide-react';
 import './styles.css';
 import './auth-phase8.css';
@@ -16,6 +16,7 @@ import './calculator-phase11.css';
 import './dashboard-phase11-1.css';
 import './traffic-analytics-phase11-2.css';
 import './salary-history-phase12.css';
+import './promotion-timeline-phase13.css';
 import {
   PAY2015,PAY2026,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
   annualPromotionCycle,futureRoadmap,serviceExperiencePoints,fixed2026,implementationRate,houseRent2015
@@ -992,6 +993,68 @@ function MasterDirectory(){
 
 
 
+
+function PromotionCareerTimeline({lang='bn',onPage}){
+  const en=lang==='en';
+  const [career,setCareer]=useState({profile:null,education:[],events:[]}),[loading,setLoading]=useState(true),[err,setErr]=useState('');
+  useEffect(()=>{api('/api/my-career').then(x=>setCareer({profile:x.profile||null,education:x.education||[],events:x.events||[]})).catch(e=>setErr(e.message)).finally(()=>setLoading(false))},[]);
+  if(loading)return <div className="loading">{en?'Loading...':'লোড হচ্ছে...'}</div>;
+  const p=career.profile||{},grade=Number(p.current_grade||0),rule=PROMO_RULES[String(grade)];
+  const currentYears=p.current_post_joining_date?diffYMD(p.current_post_joining_date,todayLocalIso()):null;
+  const priorYears=(p.first_joining_date&&p.current_post_joining_date)?diffYMD(p.first_joining_date,p.current_post_joining_date):null;
+  const currentPoints=currentYears?currentYears.y+currentYears.m/12+currentYears.d/365:0;
+  const priorPoints=priorYears?(priorYears.y+priorYears.m/12+priorYears.d/365)/3:0;
+  const totalPoints=currentPoints+priorPoints;
+  const latestEdu=(career.education||[])[0];
+  const milestones=(career.events||[]).filter(x=>['promotion','grade_change','appointment','transfer'].includes(x.event_type)).slice(0,8);
+  const status=!rule?(en?'No verified rule mapped for this grade':'এই গ্রেডের জন্য যাচাইকৃত নিয়ম ম্যাপ করা নেই'):
+    rule.top?(en?'Highest mapped step':'প্রদর্শিত কাঠামোর সর্বোচ্চ ধাপ'):
+    rule.noPromotion?(en?'No direct promotion in this route':'এই ধারায় সরাসরি পদোন্নতি নেই'):
+    (en?'Promotion route available':'পদোন্নতির রুট রয়েছে');
+  return <div className="promotion-timeline-page">
+    <section className="promotion-timeline-hero">
+      <div><span>{en?'PROMOTION & CAREER TIMELINE':'পদোন্নতি ও ক্যারিয়ার টাইমলাইন'}</span><h2>{en?'My Career Roadmap':'আমার ক্যারিয়ার রোডম্যাপ'}</h2><p>{en?'A personal estimate built from your saved career record and verified promotion rules. It is not an official promotion decision.':'আপনার সংরক্ষিত চাকরি তথ্য ও যাচাইকৃত পদোন্নতি নিয়ম থেকে তৈরি ব্যক্তিগত সহায়ক রোডম্যাপ। এটি কোনো অফিসিয়াল পদোন্নতির সিদ্ধান্ত নয়।'}</p></div>
+      <div className="promotion-route-chip"><Route size={17}/>{status}</div>
+    </section>
+
+    {err&&<div className="error">{err}</div>}
+    <section className="promotion-summary-grid">
+      <article><Target/><div><small>{en?'Current Grade':'বর্তমান গ্রেড'}</small><b>{grade?`${en?'Grade':'গ্রেড'} ${numLang(grade,lang,0)}`:'—'}</b><span>{p.current_post||'—'}</span></div></article>
+      <article><TrendingUp/><div><small>{en?'Target Grade':'টার্গেট গ্রেড'}</small><b>{rule?.targetGrade?`${en?'Grade':'গ্রেড'} ${numLang(rule.targetGrade,lang,0)}`:'—'}</b><span>{rule?.target||'—'}</span></div></article>
+      <article><Clock3/><div><small>{en?'Current Post Service':'বর্তমান পদে চাকরিকাল'}</small><b>{currentYears?(en?`${currentYears.y}y ${currentYears.m}m`:`${numLang(currentYears.y,lang,0)} বছর ${numLang(currentYears.m,lang,0)} মাস`):'—'}</b><span>{p.current_post_joining_date?fmtDateLang(p.current_post_joining_date,lang):'—'}</span></div></article>
+      <article><Award/><div><small>{en?'Estimated Service Points':'আনুমানিক সার্ভিস পয়েন্ট'}</small><b>{numLang(totalPoints,lang,2)}</b><span>{en?'Current + immediate prior service':'বর্তমান + অব্যবহিত পূর্ব সেবা'}</span></div></article>
+    </section>
+
+    <section className="promotion-roadmap-grid">
+      <article className="promotion-roadmap-card">
+        <div className="promotion-roadmap-head"><Flag/><div><h3>{en?'Verified Promotion Route':'যাচাইকৃত পদোন্নতি রুট'}</h3><p>{en?'Based on the currently mapped policy rules.':'বর্তমানে ম্যাপ করা নীতিমালার নিয়ম অনুযায়ী।'}</p></div></div>
+        {!rule?<div className="empty">{en?'No route available for this grade yet.':'এই গ্রেডের জন্য এখনো কোনো রুট পাওয়া যায়নি।'}</div>:
+        <div className="promotion-route-box">
+          <div><small>{en?'From':'বর্তমান'}</small><b>{grade?`${en?'Grade':'গ্রেড'} ${numLang(grade,lang,0)}`:'—'}</b></div><ArrowRight/>
+          <div><small>{en?'To':'পরবর্তী'}</small><b>{rule.targetGrade?`${en?'Grade':'গ্রেড'} ${numLang(rule.targetGrade,lang,0)}`:rule.target}</b></div>
+        </div>}
+        {rule?.ref&&<div className="notice"><b>{en?'Reference:':'রেফারেন্স:'}</b> {rule.ref}</div>}
+        <button className="primary" onClick={()=>onPage?.('promotion')}><TrendingUp size={16}/>{en?'Open Full Promotion Calculator':'পূর্ণ পদোন্নতি হিসাব খুলুন'}</button>
+      </article>
+
+      <article className="promotion-roadmap-card">
+        <div className="promotion-roadmap-head"><GraduationCap/><div><h3>{en?'Education Context':'শিক্ষাগত প্রেক্ষাপট'}</h3><p>{en?'Saved education records used for your own reference.':'নিজের রেফারেন্সের জন্য সংরক্ষিত শিক্ষাগত তথ্য।'}</p></div></div>
+        {latestEdu?<div className="education-highlight"><GraduationCap/><div><b>{latestEdu.level}</b><span>{[latestEdu.subject,latestEdu.institution,latestEdu.passing_year].filter(Boolean).join(' · ')}</span></div></div>:<div className="empty">{en?'No education record saved yet.':'এখনো শিক্ষাগত রেকর্ড সংরক্ষিত নেই।'}</div>}
+        <button className="ghost-btn" onClick={()=>onPage?.('career')}>{en?'Update My Career':'আমার চাকরি আপডেট'}<ChevronRight size={15}/></button>
+      </article>
+    </section>
+
+    <section className="promotion-roadmap-card">
+      <div className="promotion-roadmap-head"><Milestone/><div><h3>{en?'Career Milestones':'ক্যারিয়ার মাইলস্টোন'}</h3><p>{en?'Recent career events from your personal record.':'আপনার ব্যক্তিগত রেকর্ডের সাম্প্রতিক ক্যারিয়ার ইভেন্ট।'}</p></div></div>
+      {milestones.length===0?<div className="empty">{en?'No milestone record yet.':'এখনো কোনো মাইলস্টোন রেকর্ড নেই।'}</div>:<div className="promotion-milestone-list">
+        {milestones.map(x=><div key={x.id} className="promotion-milestone-row"><div className="promotion-milestone-dot"></div><div><small>{fmtDateLang(x.event_date,lang)}</small><b>{x.title}</b><span>{[x.post_name,x.grade?`${en?'Grade':'গ্রেড'} ${x.grade}`:'',x.office_name].filter(Boolean).join(' · ')}</span></div></div>)}
+      </div>}
+    </section>
+
+    <section className="calculator-safety-note"><ShieldCheck/><div><b>{en?'Estimate only':'শুধু সহায়ক অনুমান'}</b><p>{en?'Eligibility and timeline information here supports personal planning only. Official promotion decisions remain with the competent authority.':'এখানকার যোগ্যতা ও টাইমলাইন তথ্য শুধুই ব্যক্তিগত পরিকল্পনার সহায়তা। অফিসিয়াল পদোন্নতির সিদ্ধান্ত সংশ্লিষ্ট কর্তৃপক্ষের।'}</p></div></section>
+  </div>
+}
+
 function SalaryHistory({lang='bn'}){
   const en=lang==='en';
   const blank={effective_date:'',grade:'13',stage_2015:'0',basic_2015:'',fixed_2026:'',payable_basic:'',gross_salary:'',total_deduction:'',net_salary:'',source:'manual',notes:''};
@@ -1055,7 +1118,7 @@ function SalaryHistory({lang='bn'}){
     </section>
 
     <section className="salary-history-card">
-      <div className="salary-history-head"><div><ChartNoAxesCombined/><div><h3>{en?'Salary Timeline':'বেতন টাইমলাইন'}</h3><p>{en?'Your saved salary records, newest first.':'আপনার সংরক্ষিত বেতন রেকর্ড, সর্বশেষটি আগে।'}</p></div></div></div>
+      <div className="salary-history-head"><div><ChartNoAxesCombined,Route,Flag,Target/><div><h3>{en?'Salary Timeline':'বেতন টাইমলাইন'}</h3><p>{en?'Your saved salary records, newest first.':'আপনার সংরক্ষিত বেতন রেকর্ড, সর্বশেষটি আগে।'}</p></div></div></div>
       {items.length===0?<div className="empty">{en?'No salary history yet.':'এখনো বেতন ইতিহাস নেই।'}</div>:<div className="salary-history-list">{items.map(x=><article key={x.id} className="salary-history-row">
         <div className="salary-history-date"><CalendarDays/><div><b>{fmtDateLang(x.effective_date,lang)}</b><small>{en?`Grade ${x.grade} · Stage ${Number(x.stage_2015)+1}`:`গ্রেড ${numLang(x.grade,lang,0)} · ধাপ ${numLang(Number(x.stage_2015)+1,lang,0)}`}</small></div></div>
         <div className="salary-history-amounts"><span><small>{en?'Payable basic':'প্রাপ্য মূল বেতন'}</small><b>{amt(x.payable_basic)}</b></span><span><small>{en?'Gross':'মোট'}</small><b>{amt(x.gross_salary)}</b></span><span><small>{en?'Net':'নিট'}</small><b>{amt(x.net_salary)}</b></span></div>
@@ -1531,6 +1594,7 @@ function App(){
       <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}><LayoutDashboard size={18}/>{lang==='en'?'My Dashboard':'আমার ড্যাশবোর্ড'}</button>
       <button className={page==='career'?'active':''} onClick={()=>setPage('career')}><BookUser size={18}/>{lang==='en'?'My Career':'আমার চাকরি'}</button>
       <button className={page==='promotion'?'active':''} onClick={()=>setPage('promotion')}><TrendingUp size={18}/>{lang==='en'?'Promotion':'পদোন্নতি'}</button>
+      <button className={page==='promotion-timeline'?'active':''} onClick={()=>setPage('promotion-timeline')}><Route size={18}/>{lang==='en'?'Career Roadmap':'ক্যারিয়ার রোডম্যাপ'}</button>
       <button className={page==='salary'?'active':''} onClick={()=>setPage('salary')}><WalletCards size={18}/>{lang==='en'?'Salary & Pay Scale':'বেতন ও পে-স্কেল'}</button>
       <button className={page==='salary-history'?'active':''} onClick={()=>setPage('salary-history')}><ReceiptText size={18}/>{lang==='en'?'My Salary History':'আমার বেতন ইতিহাস'}</button>
       <button className={page==='calculators'?'active':''} onClick={()=>setPage('calculators')}><Calculator size={18}/>{lang==='en'?'Calculator Center':'ক্যালকুলেটর সেন্টার'}</button>
