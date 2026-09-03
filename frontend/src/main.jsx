@@ -20,6 +20,7 @@ import './promotion-timeline-phase13.css';
 import './leave-phase14.css';
 import {KnowledgeCenter,PersonalCareerReports,PrivacyControlCenter,FinalReleaseStatus} from './final-core-phase16-19.jsx';
 import PremiumPersonalDashboard from './premium-dashboard-v16-1.jsx';
+import './mobile-app-v16-2.css';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import {
   PAY2015,PAY2026,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
@@ -1706,16 +1707,21 @@ function App(){
   const queryToken=params.get('token')||'';
   const[user,setUser]=useState(null),[loading,setLoading]=useState(true),[page,setPage]=useState('dashboard'),
     [showLogin,setShowLogin]=useState(()=>!!queryAuth),[authMode,setAuthMode]=useState(()=>queryAuth||'login'),[authToken,setAuthToken]=useState(()=>queryToken),
-    [lang,setLang]=useState(()=>localStorage.getItem('app_lang')||'bn');
+    [lang,setLang]=useState(()=>localStorage.getItem('app_lang')||'bn'),[mobileMenu,setMobileMenu]=useState(false);
   useEffect(()=>{api('/api/me').then(x=>setUser(x.user)).catch(()=>{}).finally(()=>setLoading(false))},[]);
   useEffect(()=>{localStorage.setItem('app_lang',lang)},[lang]);
+  useEffect(()=>{setMobileMenu(false)},[page]);
+  useEffect(()=>{
+    document.body.classList.toggle('mobile-drawer-open',mobileMenu);
+    return()=>document.body.classList.remove('mobile-drawer-open');
+  },[mobileMenu]);
   async function logout(){try{await api('/api/logout',{method:'POST'})}catch{}setUser(null);setShowLogin(false);setPage('dashboard')}
   useEffect(()=>{if(user&&page)api('/api/usage',{method:'POST',body:JSON.stringify({module:page})}).catch(()=>{})},[user?.id,page]);
   if(loading)return <div className="loading">Loading...</div>;
   if(!user)return showLogin?<AuthPortal onLogin={u=>{setUser(u);window.history.replaceState({},'',window.location.pathname)}} onBack={()=>{setShowLogin(false);setAuthMode('login');setAuthToken('');window.history.replaceState({},'',window.location.pathname)}} lang={lang} setLang={setLang} initialMode={authMode} initialToken={authToken}/>:<PublicHome onLogin={()=>{setAuthMode('login');setShowLogin(true)}} lang={lang} setLang={setLang}/>;
   const admin=['super_admin','admin','department_admin'].includes(user.role);
-  return <div className="app"><aside className="side">
-    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v16.1 Premium':'স্বাধীন প্ল্যাটফর্ম · v16.1 Premium'}</small></div></div>
+  return <div className={`app ${mobileMenu?'mobile-menu-open':''}`}><button className={`mobile-drawer-backdrop ${mobileMenu?'show':''}`} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'} onClick={()=>setMobileMenu(false)}></button><aside className={`side ${mobileMenu?'mobile-open':''}`}>
+    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v16.2 Mobile App':'স্বাধীন প্ল্যাটফর্ম · v16.2 Mobile App'}</small></div><button className="mobile-drawer-close" onClick={()=>setMobileMenu(false)} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'}><X size={19}/></button></div>
     <nav>
       <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}><LayoutDashboard size={18}/>{lang==='en'?'My Dashboard':'আমার ড্যাশবোর্ড'}</button>
       <button className={page==='career'?'active':''} onClick={()=>setPage('career')}><BookUser size={18}/>{lang==='en'?'My Career':'আমার চাকরি'}</button>
@@ -1733,7 +1739,7 @@ function App(){
       {admin&&<button className={page==='admin'?'active':''} onClick={()=>setPage('admin')}><ShieldCheck size={18}/>{lang==='en'?'System Control':'সিস্টেম কন্ট্রোল'}</button>}
       {admin&&<button className={page==='release-status'?'active':''} onClick={()=>setPage('release-status')}><CheckCircle2 size={18}/>{lang==='en'?'Release Status':'রিলিজ স্ট্যাটাস'}</button>}
     </nav></aside>
-    <main><header><div><h2>{lang==='en'?`Welcome, ${user.name}`:`স্বাগতম, ${user.name}`}</h2><p>{lang==='en'?(roleLabel[user.role]||user.role):({super_admin:'সিস্টেম ব্যবস্থাপক',admin:'অ্যাডমিন',department_admin:'বিভাগীয় অ্যাডমিন',editor:'সম্পাদক',employee:'কর্মকর্তা-কর্মচারী'}[user.role]||user.role)}</p></div><div className="header-actions"><LangToggle lang={lang} setLang={setLang}/><button className="logout" onClick={logout}><LogOut size={16}/>{lang==='en'?'Logout':'লগআউট'}</button></div></header>
+    <main><header className="app-topbar"><div className="mobile-topbar-left"><button className="mobile-menu-trigger" onClick={()=>setMobileMenu(true)} aria-label={lang==='en'?'Open menu':'মেনু খুলুন'}><span></span><span></span><span></span></button><div><h2>{lang==='en'?`Welcome, ${user.name}`:`স্বাগতম, ${user.name}`}</h2><p>{lang==='en'?(roleLabel[user.role]||user.role):({super_admin:'সিস্টেম ব্যবস্থাপক',admin:'অ্যাডমিন',department_admin:'বিভাগীয় অ্যাডমিন',editor:'সম্পাদক',employee:'কর্মকর্তা-কর্মচারী'}[user.role]||user.role)}</p></div></div><div className="header-actions"><LangToggle lang={lang} setLang={setLang}/><button className="logout" onClick={logout}><LogOut size={16}/><span>{lang==='en'?'Logout':'লগআউট'}</span></button></div></header>
       {page==='dashboard'&&<DashboardHome user={user} onPage={setPage} lang={lang}/>} 
       {page==='career'&&<MyCareer lang={lang}/>}
       {page==='promotion'&&<PromotionCenter lang={lang}/>}
@@ -1752,6 +1758,14 @@ function App(){
       {page==='employees'&&admin&&<EmployeeManagement lang={lang}/>}
       {page==='directory'&&admin&&<MasterDirectory lang={lang}/>}
       {page==='admin'&&admin&&<AdminPanel lang={lang} onPage={setPage}/>}
-    </main></div>
+    </main>
+    <nav className="mobile-bottom-nav" aria-label={lang==='en'?'Mobile navigation':'মোবাইল নেভিগেশন'}>
+      <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}><LayoutDashboard/><span>{lang==='en'?'Home':'হোম'}</span></button>
+      <button className={page==='career'?'active':''} onClick={()=>setPage('career')}><BookUser/><span>{lang==='en'?'Career':'চাকরি'}</span></button>
+      <button className={page==='promotion'?'active':''} onClick={()=>setPage('promotion')}><TrendingUp/><span>{lang==='en'?'Promotion':'পদোন্নতি'}</span></button>
+      <button className={page==='calendar'?'active':''} onClick={()=>setPage('calendar')}><CalendarDays/><span>{lang==='en'?'Calendar':'ক্যালেন্ডার'}</span></button>
+      <button className={mobileMenu?'active':''} onClick={()=>setMobileMenu(true)}><Boxes/><span>{lang==='en'?'Menu':'মেনু'}</span></button>
+    </nav>
+  </div>
 }
 createRoot(document.getElementById('root')).render(<App/>);
