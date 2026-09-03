@@ -87,7 +87,7 @@ async function recoveryHash(code){return sha(normalizeRecoveryCode(code))}
 
     if(u.pathname==='/api/departments'&&req.method==='GET'){
       if(!user)return json({error:'Unauthenticated'},401,C);
-      const x=await env.DB.prepare(`SELECT id,name_bn,name_en,type,phone,email,website FROM departments ORDER BY name_bn COLLATE NOCASE`).all();
+      const x=await env.DB.prepare(`SELECT * FROM departments ORDER BY name_bn COLLATE NOCASE`).all();
       return json({departments:x.results||[]},200,C);
     }
     if(u.pathname==='/api/departments'&&req.method==='POST'){
@@ -100,7 +100,7 @@ async function recoveryHash(code){return sha(normalizeRecoveryCode(code))}
 
     if(u.pathname==='/api/designations'&&req.method==='GET'){
       if(!user)return json({error:'Unauthenticated'},401,C);
-      const x=await env.DB.prepare(`SELECT id,name_bn,name_en,grade,is_active FROM designations WHERE is_active=1 ORDER BY name_bn COLLATE NOCASE`).all();
+      const x=await env.DB.prepare(`SELECT * FROM designations WHERE is_active=1 ORDER BY name_bn COLLATE NOCASE`).all();
       return json({designations:x.results||[]},200,C);
     }
     if(u.pathname==='/api/designations'&&req.method==='POST'){
@@ -289,6 +289,57 @@ async function recoveryHash(code){return sha(normalizeRecoveryCode(code))}
       if(!canDelete(user))return json({error:'Forbidden'},403,C);
       const id=Number(policy[1]); await env.DB.prepare('DELETE FROM policies WHERE id=?').bind(id).run();
       await audit(env,user,'policy_delete','policy',id,{});
+      return json({ok:true},200,C);
+    }
+
+    if(u.pathname==='/api/admin/users'&&req.method==='GET'){
+      if(!canManage(user))return json({error:'Forbidden'},403,C);
+      const x=await env.DB.prepare(`SELECT id,employee_id,name,email,role,is_active,COALESCE(account_type,'employee') account_type,COALESCE(email_verified,1) email_verified FROM users ORDER BY id DESC LIMIT 1000`).all();
+      return json({users:x.results||[]},200,C);
+    }
+    const adminUserStatus=u.pathname.match(/^\/api\/admin\/users\/(\d+)\/status$/);
+    if(adminUserStatus&&req.method==='PUT'){
+      if(!user||!['super_admin','admin'].includes(user.role))return json({error:'Forbidden'},403,C);
+      const id=Number(adminUserStatus[1]); if(id===user.id)return json({error:'You cannot deactivate your own active session account'},400,C);
+      const b=await req.json(),active=b.is_active?1:0;
+      await env.DB.prepare(`UPDATE users SET is_active=? WHERE id=?`).bind(active,id).run();
+      if(!active)await env.DB.prepare(`DELETE FROM sessions WHERE user_id=?`).bind(id).run();
+      await audit(env,user,'user_status_change','user',id,{is_active:active});
+      return json({ok:true},200,C);
+    }
+    if(u.pathname==='/api/admin/audit'&&req.method==='GET'){
+      if(!canManage(user))return json({error:'Forbidden'},403,C);
+      const lim=Math.min(Math.max(Number(u.searchParams.get('limit')||80),1),200);
+      const x=await env.DB.prepare(`SELECT a.id,a.user_id,a.action,a.entity_type,a.entity_id,a.metadata,a.created_at,u.name user_name,u.email user_email
+        FROM audit_logs a LEFT JOIN users u ON u.id=a.user_id ORDER BY a.id DESC LIMIT ?`).bind(lim).all();
+      return json({logs:x.results||[]},200,C);
+    }
+    if(u.pathname==='/api/admin/system-health'&&req.method==='GET'){
+      if(!canManage(user))return json({error:'Forbidden'},403,C);
+      const [active,expired,inactive,recovery,auditCount]=await Promise.all([
+        env.DB.prepare(`SELECT COUNT(*) c FROM sessions WHERE expires_at>CURRENT_TIMESTAMP`).first(),
+        env.DB.prepare(`SELECT COUNT(*) c FROM sessions WHERE expires_at<=CURRENT_TIMESTAMP`).first(),
+        env.DB.prepare(`SELECT COUNT(*) c FROM users WHERE is_active=0`).first(),
+        env.DB.prepare(`SELECT COUNT(*) c FROM users WHERE recovery_code_hash IS NOT NULL AND recovery_code_hash<>''`).first(),
+        env.DB.prepare(`SELECT COUNT(*) c FROM audit_logs`).first()
+      ]);
+      return json({ok:true,active_sessions:+active.c,expired_sessions:+expired.c,inactive_users:+inactive.c,recovery_ready_users:+recovery.c,audit_events:+auditCount.c},200,C);
+    }
+    if(u.pathname==='/api/admin/settings'&&req.method==='GET'){
+      if(!canManage(user))return json({error:'Forbidden'},403,C);
+      const x=await env.DB.prepare(`SELECT key,value FROM system_settings ORDER BY key`).all();
+      return json({settings:Object.fromEntries((x.results||[]).map(r=>[r.key,r.value]))},200,C);
+    }
+    if(u.pathname==='/api/admin/settings'&&req.method==='PUT'){
+      if(!user||!['super_admin','admin'].includes(user.role))return json({error:'Forbidden'},403,C);
+      const b=await req.json(),allowed=['support_phone','whatsapp','calendar_enabled','calendar_source_url','maintenance_mode'];
+      for(const key of allowed){
+        if(Object.prototype.hasOwnProperty.call(b,key)){
+          await env.DB.prepare(`INSERT INTO system_settings(key,value,updated_by,updated_at) VALUES(?,?,?,CURRENT_TIMESTAMP)
+            ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_by=excluded.updated_by,updated_at=CURRENT_TIMESTAMP`).bind(key,String(b[key]??''),user.id).run();
+        }
+      }
+      await audit(env,user,'system_settings_update','system_settings','global',{keys:allowed.filter(k=>Object.prototype.hasOwnProperty.call(b,k))});
       return json({ok:true},200,C);
     }
 
