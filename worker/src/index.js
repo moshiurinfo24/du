@@ -13,25 +13,44 @@ async function derive(p,s){const k=await crypto.subtle.importKey('raw',enc.encod
 async function mkpass(p){const s=crypto.getRandomValues(new Uint8Array(16));return{salt:b64(s),hash:await derive(p,s)}}
 async function ver(p,s,h){return(await derive(p,ub64(s)))===h}
 function cookies(req){return Object.fromEntries((req.headers.get('Cookie')||'').split(';').map(x=>x.trim()).filter(Boolean).map(x=>{const i=x.indexOf('=');return[x.slice(0,i),decodeURIComponent(x.slice(i+1))]}))}
-async function me(req,env){const t=cookies(req).du_session;if(!t)return null;const h=await sha(t);return env.DB.prepare(`SELECT u.id,u.employee_id,u.name,u.email,u.role FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at>CURRENT_TIMESTAMP AND u.is_active=1`).bind(h).first()}
+async function me(req,env){const t=cookies(req).du_session;if(!t)return null;const h=await sha(t);return env.DB.prepare(`SELECT u.id,u.employee_id,u.name,u.email,u.role,COALESCE(u.account_type,'employee') account_type,COALESCE(u.email_verified,1) email_verified FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at>CURRENT_TIMESTAMP AND u.is_active=1`).bind(h).first()}
 function canManage(user){return user&&['super_admin','admin','department_admin'].includes(user.role)}
 function canDelete(user){return user&&['super_admin','admin'].includes(user.role)}
 async function audit(env,user,action,type,id,metadata={}){try{await env.DB.prepare(`INSERT INTO audit_logs(user_id,action,entity_type,entity_id,metadata) VALUES(?,?,?,?,?)`).bind(user.id,action,type,String(id||''),JSON.stringify(metadata)).run()}catch{}}
 
-export default{async fetch(req,env){
-  const C=cors(req);if(req.method==='OPTIONS')return new Response(null,{status:204,headers:C});
-  const u=new URL(req.url);
-  try{
-    if(u.pathname==='/api/health')return json({ok:true,service:'Employee Service ERP API',phase:6},200,C);
+function emailNorm(v){return String(v||'').trim().toLowerCase()}
+function strongPassword(p){return typeof p==='string'&&p.length>=10&&/[A-Za-z]/.test(p)&&/\d/.test(p)}
+function safeName(v){return String(v||'').trim().slice(0,120)}
+function makeRecoveryCode(){
+  const alphabet='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const bytes=crypto.getRandomValues(new Uint8Array(16));
+  let s=''; for(let i=0;i<16;i++)s+=alphabet[bytes[i]%alphabet.length];
+  return `${s.slice(0,4)}-${s.slice(4,8)}-${s.slice(8,12)}-${s.slice(12,16)}`;
+}
+function normalizeRecoveryCode(v){return String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'')}
+async function recoveryHash(code){return sha(normalizeRecoveryCode(code))}
+    // Phase 8 FREE: self-service registration and recovery code password reset
+    if(u.pathname==='/api/register'&&req.method==='POST'){
+      const b=await req.json(),name=safeName(b.name),email=emailNorm(b.email),password=String(b.password||''),accountType=['officer','employee'].includes(b.account_type)?b.account_type:'employee';
+      if(!name||!email||!email.includes('@'))return json({error:'Valid name and email are required'},400,C);
+      if(!strongPassword(password))return json({error:'Password must be at least 10 characters and include letters and numbers'},400,C);
+      const exists=await env.DB.prepare('SELECT id FROM users WHERE email=?').bind(email).first();
+      if(exists)return json({error:'An account already exists with this email'},409,C);
+      const p=await mkpass(password),recoveryCode=makeRecoveryCode(),rh=await recoveryHash(recoveryCode);
+      const r=await env.DB.prepare(`INSERT INTO users(name,email,password_hash,password_salt,role,is_active,account_type,email_verified,recovery_code_hash) VALUES(?,?,?,?,?,?,?,?,?)`)
+        .bind(name,email,p.hash,p.salt,'employee',1,accountType,1,rh).run();
+      return json({ok:true,recoveryCode,message:'Account created. Save the recovery code now; it will not be shown again.'},201,C);
+    }
 
-    if(u.pathname==='/api/bootstrap'&&req.method==='POST'){
-      const c=await env.DB.prepare('SELECT COUNT(*) c FROM users').first();
-      if(+c.c>0)return json({error:'Bootstrap already completed'},409,C);
-      const b=await req.json();
-      if(!b.name||!b.email||!b.password||b.password.length<10)return json({error:'Strong password required'},400,C);
-      const p=await mkpass(b.password);
-      await env.DB.prepare(`INSERT INTO users(name,email,password_hash,password_salt,role,is_active) VALUES(?,?,?,?,?,1)`).bind(b.name,b.email.toLowerCase(),p.hash,p.salt,'super_admin').run();
-      return json({ok:true},201,C);
+    if(u.pathname==='/api/reset-password-recovery'&&req.method==='POST'){
+      const b=await req.json(),email=emailNorm(b.email),password=String(b.password||''),rh=await recoveryHash(b.recovery_code);
+      if(!strongPassword(password))return json({error:'Password must be at least 10 characters and include letters and numbers'},400,C);
+      const x=await env.DB.prepare(`SELECT id FROM users WHERE email=? AND recovery_code_hash=? AND is_active=1`).bind(email,rh).first();
+      if(!x)return json({error:'Email or recovery code is incorrect'},400,C);
+      const p=await mkpass(password);
+      await env.DB.prepare(`UPDATE users SET password_hash=?,password_salt=? WHERE id=?`).bind(p.hash,p.salt,x.id).run();
+      await env.DB.prepare(`DELETE FROM sessions WHERE user_id=?`).bind(x.id).run();
+      return json({ok:true,message:'Password reset completed'},200,C);
     }
 
     if(u.pathname==='/api/login'&&req.method==='POST'){
@@ -41,7 +60,7 @@ export default{async fetch(req,env){
       await env.DB.prepare('DELETE FROM sessions WHERE expires_at<=CURRENT_TIMESTAMP').run();
       const raw=b64(crypto.getRandomValues(new Uint8Array(32))),h=await sha(raw),exp=new Date(Date.now()+604800000).toISOString();
       await env.DB.prepare('INSERT INTO sessions(user_id,token_hash,expires_at) VALUES(?,?,?)').bind(x.id,h,exp).run();
-      return json({user:{id:x.id,employee_id:x.employee_id,name:x.name,email:x.email,role:x.role}},200,{...C,'Set-Cookie':`du_session=${encodeURIComponent(raw)}; Path=/; HttpOnly; Secure; SameSite=None; Max-Age=604800`});
+      return json({user:{id:x.id,employee_id:x.employee_id,name:x.name,email:x.email,role:x.role,account_type:x.account_type||'employee',email_verified:+x.email_verified===1}},200,{...C,'Set-Cookie':`du_session=${encodeURIComponent(raw)}; Path=/; HttpOnly; Secure; SameSite=None; Max-Age=604800`});
     }
 
     if(u.pathname==='/api/logout'&&req.method==='POST'){
@@ -51,6 +70,20 @@ export default{async fetch(req,env){
 
     const user=await me(req,env);
     if(u.pathname==='/api/me'){if(!user)return json({error:'Unauthenticated'},401,C);return json({user},200,C)}
+
+    if(u.pathname==='/api/change-password'&&req.method==='POST'){
+      if(!user)return json({error:'Unauthenticated'},401,C);
+      const b=await req.json(),current=String(b.current_password||''),next=String(b.new_password||'');
+      if(!strongPassword(next))return json({error:'New password must be at least 10 characters and include letters and numbers'},400,C);
+      const x=await env.DB.prepare(`SELECT password_hash,password_salt FROM users WHERE id=?`).bind(user.id).first();
+      if(!x||!(await ver(current,x.password_salt,x.password_hash)))return json({error:'Current password is incorrect'},401,C);
+      const p=await mkpass(next);
+      await env.DB.prepare(`UPDATE users SET password_hash=?,password_salt=? WHERE id=?`).bind(p.hash,p.salt,user.id).run();
+      const t=cookies(req).du_session;
+      if(t)await env.DB.prepare(`DELETE FROM sessions WHERE user_id=? AND token_hash<>?`).bind(user.id,await sha(t)).run();
+      await audit(env,user,'password_change','user',user.id,{});
+      return json({ok:true,message:'Password changed successfully'},200,C);
+    }
 
     if(u.pathname==='/api/departments'&&req.method==='GET'){
       if(!user)return json({error:'Unauthenticated'},401,C);
@@ -188,6 +221,17 @@ export default{async fetch(req,env){
       const x=await env.DB.prepare(`SELECT id,title_bn,title_en,summary_bn,summary_en,category,reference_no,effective_date,publish_date,file_url,pinned,created_at
         FROM policies WHERE is_public=1 AND is_active=1 ORDER BY pinned DESC,COALESCE(publish_date,effective_date,created_at) DESC,id DESC LIMIT ?`).bind(lim).all();
       return json({policies:x.results||[]},200,C);
+    }
+
+    if(u.pathname==='/api/recovery-code/regenerate'&&req.method==='POST'){
+      if(!user)return json({error:'Unauthenticated'},401,C);
+      const b=await req.json(),current=String(b.current_password||'');
+      const x=await env.DB.prepare(`SELECT password_hash,password_salt FROM users WHERE id=?`).bind(user.id).first();
+      if(!x||!(await ver(current,x.password_salt,x.password_hash)))return json({error:'Current password is incorrect'},401,C);
+      const recoveryCode=makeRecoveryCode(),rh=await recoveryHash(recoveryCode);
+      await env.DB.prepare(`UPDATE users SET recovery_code_hash=? WHERE id=?`).bind(rh,user.id).run();
+      await audit(env,user,'recovery_code_regenerate','user',user.id,{});
+      return json({ok:true,recoveryCode,message:'New recovery code created. Save it now.'},200,C);
     }
 
     if(u.pathname==='/api/notices'&&req.method==='GET'){
