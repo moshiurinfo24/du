@@ -19,6 +19,7 @@ import './salary-history-phase12.css';
 import './promotion-timeline-phase13.css';
 import './leave-phase14.css';
 import {KnowledgeCenter,PersonalCareerReports,PrivacyControlCenter,FinalReleaseStatus} from './final-core-phase16-19.jsx';
+import PremiumPersonalDashboard from './premium-dashboard-v16-1.jsx';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import {
   PAY2015,PAY2026,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
@@ -581,7 +582,7 @@ function AdminAnalyticsDashboard({user,onPage,lang='bn'}){
 }
 function DashboardHome({user,onPage,lang='bn'}){
   const admin=['super_admin','admin','department_admin'].includes(user.role);
-  return admin?<AdminAnalyticsDashboard user={user} onPage={onPage} lang={lang}/>:<PersonalCareerDashboard user={user} onPage={onPage} lang={lang}/>;
+  return admin?<AdminAnalyticsDashboard user={user} onPage={onPage} lang={lang}/>:<PremiumPersonalDashboard user={user} onPage={onPage} lang={lang}/>;
 }
 
 function PersonalCareerDashboard({user,onPage,lang='bn'}){
@@ -1714,7 +1715,7 @@ function App(){
   if(!user)return showLogin?<AuthPortal onLogin={u=>{setUser(u);window.history.replaceState({},'',window.location.pathname)}} onBack={()=>{setShowLogin(false);setAuthMode('login');setAuthToken('');window.history.replaceState({},'',window.location.pathname)}} lang={lang} setLang={setLang} initialMode={authMode} initialToken={authToken}/>:<PublicHome onLogin={()=>{setAuthMode('login');setShowLogin(true)}} lang={lang} setLang={setLang}/>;
   const admin=['super_admin','admin','department_admin'].includes(user.role);
   return <div className="app"><aside className="side">
-    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v16.0 Final':'স্বাধীন প্ল্যাটফর্ম · v16.0 Final'}</small></div></div>
+    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v16.1 Premium':'স্বাধীন প্ল্যাটফর্ম · v16.1 Premium'}</small></div></div>
     <nav>
       <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}><LayoutDashboard size={18}/>{lang==='en'?'My Dashboard':'আমার ড্যাশবোর্ড'}</button>
       <button className={page==='career'?'active':''} onClick={()=>setPage('career')}><BookUser size={18}/>{lang==='en'?'My Career':'আমার চাকরি'}</button>
