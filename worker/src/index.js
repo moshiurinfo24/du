@@ -35,7 +35,7 @@ export default{async fetch(req,env){
   if(req.method==='OPTIONS')return new Response(null,{status:204,headers:C});
   const u=new URL(req.url);
   try{
-    if(u.pathname==='/api/health')return json({ok:true,service:'Employee Service ERP API',phase:'11.1.3'},200,C);
+    if(u.pathname==='/api/health')return json({ok:true,service:'Employee Service ERP API',phase:'11.2'},200,C);
 
     // Phase 8 FREE: self-service registration and recovery code password reset
     if(u.pathname==='/api/register'&&req.method==='POST'){
@@ -64,10 +64,14 @@ export default{async fetch(req,env){
     if(u.pathname==='/api/login'&&req.method==='POST'){
       const b=await req.json();
       const x=await env.DB.prepare('SELECT * FROM users WHERE email=? AND is_active=1').bind(String(b.email||'').toLowerCase()).first();
-      if(!x||!(await ver(String(b.password||''),x.password_salt,x.password_hash)))return json({error:'ইমেইল বা পাসওয়ার্ড সঠিক নয়'},401,C);
+      if(!x||!(await ver(String(b.password||''),x.password_salt,x.password_hash))){
+        try{await env.DB.prepare(`INSERT INTO login_events(user_id,email,success) VALUES(?,?,0)`).bind(x?.id||null,emailNorm(b.email)).run()}catch{}
+        return json({error:'ইমেইল বা পাসওয়ার্ড সঠিক নয়'},401,C);
+      }
       await env.DB.prepare('DELETE FROM sessions WHERE expires_at<=CURRENT_TIMESTAMP').run();
       const raw=b64(crypto.getRandomValues(new Uint8Array(32))),h=await sha(raw),exp=new Date(Date.now()+604800000).toISOString();
       await env.DB.prepare('INSERT INTO sessions(user_id,token_hash,expires_at) VALUES(?,?,?)').bind(x.id,h,exp).run();
+      try{await env.DB.prepare(`INSERT INTO login_events(user_id,email,success) VALUES(?,?,1)`).bind(x.id,x.email).run()}catch{}
       return json({user:{id:x.id,employee_id:x.employee_id,name:x.name,email:x.email,role:x.role,account_type:x.account_type||'employee',email_verified:+x.email_verified===1}},200,{...C,'Set-Cookie':`du_session=${encodeURIComponent(raw)}; Path=/; HttpOnly; Secure; SameSite=None; Max-Age=604800`});
     }
 
@@ -161,9 +165,12 @@ export default{async fetch(req,env){
       for(let i=6;i>=0;i--){const d=new Date(now);d.setDate(d.getDate()-i);days.push(d.toISOString().slice(0,10))}
       async function count(sql,fallback=0){try{const x=await env.DB.prepare(sql).first();return +(x?.c||0)}catch{return fallback}}
       async function rows(sql){try{const x=await env.DB.prepare(sql).all();return x.results||[]}catch{return[]}}
+
       const [
         totalUsers,activeUsers,officers,employees,profiles,deps,desigs,notices,policies,
-        activeSessions,expiredSessions,inactiveUsers,recoveryUsers
+        activeSessions,expiredSessions,inactiveUsers,recoveryUsers,
+        todayViews,todayUnique,todayCalculatorViews,returningToday,
+        todayLoginSuccess,todayLoginFailed,todayLoginUnique,todayLoginAttempts
       ]=await Promise.all([
         count(`SELECT COUNT(*) c FROM users`),
         count(`SELECT COUNT(*) c FROM users WHERE is_active=1`),
@@ -177,27 +184,49 @@ export default{async fetch(req,env){
         count(`SELECT COUNT(*) c FROM sessions WHERE expires_at>CURRENT_TIMESTAMP`),
         count(`SELECT COUNT(*) c FROM sessions WHERE expires_at<=CURRENT_TIMESTAMP`),
         count(`SELECT COUNT(*) c FROM users WHERE is_active=0`),
-        count(`SELECT COUNT(*) c FROM users WHERE recovery_code_hash IS NOT NULL AND recovery_code_hash<>''`)
+        count(`SELECT COUNT(*) c FROM users WHERE recovery_code_hash IS NOT NULL AND recovery_code_hash<>''`),
+        count(`SELECT COUNT(*) c FROM public_events WHERE date(created_at,'localtime')=date('now','localtime')`),
+        count(`SELECT COUNT(DISTINCT visitor_hash) c FROM public_events WHERE date(created_at,'localtime')=date('now','localtime')`),
+        count(`SELECT COUNT(*) c FROM public_events WHERE date(created_at,'localtime')=date('now','localtime') AND section IN ('promotion_calculator','pay_scale_calculator')`),
+        count(`SELECT COUNT(DISTINCT p.visitor_hash) c FROM public_events p WHERE date(p.created_at,'localtime')=date('now','localtime') AND EXISTS (SELECT 1 FROM public_events old WHERE old.visitor_hash=p.visitor_hash AND date(old.created_at,'localtime')<date('now','localtime'))`),
+        count(`SELECT COUNT(*) c FROM login_events WHERE success=1 AND date(created_at,'localtime')=date('now','localtime')`),
+        count(`SELECT COUNT(*) c FROM login_events WHERE success=0 AND date(created_at,'localtime')=date('now','localtime')`),
+        count(`SELECT COUNT(DISTINCT user_id) c FROM login_events WHERE success=1 AND user_id IS NOT NULL AND date(created_at,'localtime')=date('now','localtime')`),
+        count(`SELECT COUNT(*) c FROM login_events WHERE date(created_at,'localtime')=date('now','localtime')`)
       ]);
-      const [usage,recentUsers,recentAudit,activity]=await Promise.all([
+
+      const [usage,recentUsers,recentAudit,activity,hourlyRows,loginDaily,recentLogins]=await Promise.all([
         rows(`SELECT module,COUNT(*) c FROM usage_events GROUP BY module ORDER BY c DESC LIMIT 7`),
         rows(`SELECT id,name,email,role,is_active,COALESCE(account_type,'employee') account_type FROM users ORDER BY id DESC LIMIT 6`),
         rows(`SELECT a.id,a.action,a.created_at,u.name user_name FROM audit_logs a LEFT JOIN users u ON u.id=a.user_id ORDER BY a.id DESC LIMIT 6`),
-        rows(`SELECT substr(created_at,1,10) day,COUNT(*) c FROM usage_events WHERE created_at>=datetime('now','-7 days') GROUP BY substr(created_at,1,10)`)
+        rows(`SELECT substr(created_at,1,10) day,COUNT(*) c FROM usage_events WHERE created_at>=datetime('now','-7 days') GROUP BY substr(created_at,1,10)`),
+        rows(`SELECT CAST(strftime('%H',created_at,'localtime') AS INTEGER) hour,COUNT(*) c FROM public_events WHERE date(created_at,'localtime')=date('now','localtime') GROUP BY hour ORDER BY hour`),
+        rows(`SELECT date(created_at,'localtime') day,COUNT(*) c FROM login_events WHERE success=1 AND created_at>=datetime('now','-7 days') GROUP BY date(created_at,'localtime')`),
+        rows(`SELECT l.id,l.email,l.success,l.created_at,u.name user_name FROM login_events l LEFT JOIN users u ON u.id=l.user_id ORDER BY l.id DESC LIMIT 10`)
       ]);
+
       const amap=Object.fromEntries(activity.map(r=>[r.day,+r.c]));
+      const lmap=Object.fromEntries(loginDaily.map(r=>[r.day,+r.c]));
+      const hmap=Object.fromEntries(hourlyRows.map(r=>[+r.hour,+r.c]));
+      const maxHour=Math.max(1,...Object.values(hmap));
+
       return json({
         kpis:{total_users:totalUsers,active_users:activeUsers,officers,employees,career_profiles:profiles,departments:deps,designations:desigs,notices,policies},
         health:{ok:true,active_sessions:activeSessions,expired_sessions:expiredSessions,inactive_users:inactiveUsers,recovery_ready_users:recoveryUsers},
         usage:usage.map(r=>({label:r.module,value:+r.c})),
         activity_trend:days.map(d=>({label:d.slice(5),value:amap[d]||0})),
         recent_users:recentUsers,
-        recent_audit:recentAudit
+        recent_audit:recentAudit,
+        traffic:{today_views:todayViews,today_unique:todayUnique,today_calculator_views:todayCalculatorViews,returning_today:returningToday},
+        login:{today_success:todayLoginSuccess,today_failed:todayLoginFailed,today_unique_users:todayLoginUnique,today_attempts:todayLoginAttempts},
+        hourly_traffic:Array.from({length:24},(_,hour)=>({hour,views:hmap[hour]||0,percent:Math.round(((hmap[hour]||0)/maxHour)*100)})),
+        login_trend:days.map(d=>({label:d.slice(5),value:lmap[d]||0})),
+        recent_logins:recentLogins
       },200,C);
     }
 
     if(u.pathname==='/api/phase-status'&&req.method==='GET'){
-      return json({ok:true,phase:'11.1.3',routes:{my_career:true,admin_analytics:true,usage:true,recovery:true}},200,C);
+      return json({ok:true,phase:'11.2',routes:{my_career:true,admin_analytics:true,usage:true,recovery:true,login_analytics:true,public_traffic:true}},200,C);
     }
 
     if(u.pathname==='/api/departments'&&req.method==='GET'){
