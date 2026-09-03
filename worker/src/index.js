@@ -35,7 +35,7 @@ export default{async fetch(req,env){
   if(req.method==='OPTIONS')return new Response(null,{status:204,headers:C});
   const u=new URL(req.url);
   try{
-    if(u.pathname==='/api/health')return json({ok:true,service:'Employee Service ERP API',phase:'12'},200,C);
+    if(u.pathname==='/api/health')return json({ok:true,service:'Employee Service ERP API',phase:'14'},200,C);
 
     // Phase 8 FREE: self-service registration and recovery code password reset
     if(u.pathname==='/api/register'&&req.method==='POST'){
@@ -226,7 +226,7 @@ export default{async fetch(req,env){
     }
 
     if(u.pathname==='/api/phase-status'&&req.method==='GET'){
-      return json({ok:true,phase:'12',routes:{my_career:true,admin_analytics:true,usage:true,recovery:true,login_analytics:true,public_traffic:true,salary_history:true}},200,C);
+      return json({ok:true,phase:'14',routes:{my_career:true,admin_analytics:true,usage:true,recovery:true,login_analytics:true,public_traffic:true,salary_history:true,personal_leave_record:true}},200,C);
     }
 
     // Phase 12: Personal Salary & Pay History
@@ -251,6 +251,46 @@ export default{async fetch(req,env){
       const id=Number(sh[1]);
       await env.DB.prepare(`DELETE FROM salary_history WHERE id=? AND user_id=?`).bind(id,user.id).run();
       await audit(env,user,'salary_history_delete','salary_history',id,{});
+      return json({ok:true},200,C);
+    }
+
+    // Phase 14: Personal Leave Record
+    if(u.pathname==='/api/my-leave-records'&&req.method==='GET'){
+      if(!user)return json({error:'Unauthenticated'},401,C);
+      const x=await env.DB.prepare(`SELECT * FROM personal_leave_records WHERE user_id=? ORDER BY start_date DESC,id DESC`).bind(user.id).all();
+      return json({items:x.results||[]},200,C);
+    }
+    if(u.pathname==='/api/my-leave-records'&&req.method==='POST'){
+      if(!user)return json({error:'Unauthenticated'},401,C);
+      const b=await req.json();
+      const allowed=['casual','earned','medical','maternity','paternity','study','special','other'];
+      if(!allowed.includes(String(b.leave_type||'')))return json({error:'Invalid leave type'},400,C);
+      if(!b.start_date||!b.end_date)return json({error:'Start and end dates are required'},400,C);
+      const total=Number(b.total_days||0);
+      if(!(total>0))return json({error:'Total days must be greater than zero'},400,C);
+      const r=await env.DB.prepare(`INSERT INTO personal_leave_records(user_id,leave_type,start_date,end_date,day_mode,total_days,notes) VALUES(?,?,?,?,?,?,?)`)
+        .bind(user.id,b.leave_type,b.start_date,b.end_date,b.day_mode==='half'?'half':'full',total,b.notes||null).run();
+      await audit(env,user,'leave_record_create','personal_leave_record',r.meta?.last_row_id,{});
+      return json({ok:true,id:r.meta?.last_row_id||null},201,C);
+    }
+    const lr=u.pathname.match(/^\/api\/my-leave-records\/(\d+)$/);
+    if(lr&&req.method==='PUT'){
+      if(!user)return json({error:'Unauthenticated'},401,C);
+      const id=Number(lr[1]),b=await req.json();
+      const allowed=['casual','earned','medical','maternity','paternity','study','special','other'];
+      if(!allowed.includes(String(b.leave_type||'')))return json({error:'Invalid leave type'},400,C);
+      const total=Number(b.total_days||0);
+      if(!b.start_date||!b.end_date||!(total>0))return json({error:'Invalid leave record'},400,C);
+      await env.DB.prepare(`UPDATE personal_leave_records SET leave_type=?,start_date=?,end_date=?,day_mode=?,total_days=?,notes=?,updated_at=CURRENT_TIMESTAMP WHERE id=? AND user_id=?`)
+        .bind(b.leave_type,b.start_date,b.end_date,b.day_mode==='half'?'half':'full',total,b.notes||null,id,user.id).run();
+      await audit(env,user,'leave_record_update','personal_leave_record',id,{});
+      return json({ok:true},200,C);
+    }
+    if(lr&&req.method==='DELETE'){
+      if(!user)return json({error:'Unauthenticated'},401,C);
+      const id=Number(lr[1]);
+      await env.DB.prepare(`DELETE FROM personal_leave_records WHERE id=? AND user_id=?`).bind(id,user.id).run();
+      await audit(env,user,'leave_record_delete','personal_leave_record',id,{});
       return json({ok:true},200,C);
     }
 
