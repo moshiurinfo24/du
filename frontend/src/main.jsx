@@ -5,7 +5,7 @@ import {
   LayoutDashboard,TrendingUp,WalletCards,Users,ShieldCheck,LogOut,Plus,Search,
   UserRound,Building2,IdCard,Activity,ChevronRight,X,Save,Trash2,RefreshCw,
   Settings,Database,LockKeyhole,Home,BookOpen,Calculator,HelpCircle,Phone,
-  Bell,ArrowRight,CalendarDays,CheckCircle2,AlertTriangle,Landmark,FileText,Camera,Briefcase,MapPin,Mail,PhoneCall,MessageCircle,Edit3,UserCircle2,History,ArrowRightLeft,GraduationCap,BadgeDollarSign,Clock3,FileClock,ServerCog,Gauge,UserCog,ScrollText,SlidersHorizontal,ShieldAlert,Link2,Eye,Power,BookUser,NotebookTabs,Milestone,Award,BarChart3,PieChart,LineChart,MonitorCheck,Sparkles,UserCheck,UserX,Boxes,Command,DatabaseZap,ShieldEllipsis,Radio,TrendingDown,ReceiptText,ChartNoAxesCombined,Route,Flag,Target,PalmTree,CalendarCheck
+  Bell,ArrowRight,CalendarDays,CheckCircle2,AlertTriangle,Landmark,FileText,Camera,Briefcase,MapPin,Mail,PhoneCall,MessageCircle,Edit3,UserCircle2,History,ArrowRightLeft,GraduationCap,BadgeDollarSign,Clock3,FileClock,ServerCog,Gauge,UserCog,ScrollText,SlidersHorizontal,ShieldAlert,Link2,Eye,Power,BookUser,NotebookTabs,Milestone,Award,BarChart3,PieChart,LineChart,MonitorCheck,Sparkles,UserCheck,UserX,Boxes,Command,DatabaseZap,ShieldEllipsis,Radio,TrendingDown,ReceiptText,ChartNoAxesCombined,Route,Flag,Target
 } from 'lucide-react';
 import './styles.css';
 import './auth-phase8.css';
@@ -666,7 +666,7 @@ function PersonalCareerDashboard({user,onPage,lang='bn'}){
           <button onClick={()=>onPage('calculators')}><Clock3/><div><b>{en?'Service Length':'চাকরিকাল'}</b><small>{en?'Years, months, days':'বছর, মাস, দিন'}</small></div><ChevronRight/></button>
           <button onClick={()=>onPage('promotion')}><TrendingUp/><div><b>{en?'Promotion':'পদোন্নতি'}</b><small>{en?'Eligibility & roadmap':'যোগ্যতা ও রোডম্যাপ'}</small></div><ChevronRight/></button>
           <button onClick={()=>onPage('salary')}><WalletCards/><div><b>{en?'Pay Scale':'পে-স্কেল'}</b><small>{en?'Gross, deductions, net':'মোট, কর্তন, নিট'}</small></div><ChevronRight/></button>
-          <button onClick={()=>onPage('leave')}><PalmTree/><div><b>{en?'Leave Record':'ছুটির হিসাব'}</b><small>{en?`${leaveSummary.days} day(s) this year`:`চলতি বছরে ${numLang(leaveSummary.days,lang,1)} দিন`}</small></div><ChevronRight/></button>
+          <button onClick={()=>onPage('leave')}><CalendarDays/><div><b>{en?'Leave Record':'ছুটির হিসাব'}</b><small>{en?`${leaveSummary.days} day(s) this year`:`চলতি বছরে ${numLang(leaveSummary.days,lang,1)} দিন`}</small></div><ChevronRight/></button>
         </div>
       </article>
     </section>
@@ -1064,11 +1064,11 @@ function PersonalLeaveRecord({lang='bn'}){
   return <div className="leave-page">
     <section className="leave-hero">
       <div><span>{en?'PERSONAL LEAVE RECORD':'ব্যক্তিগত ছুটির হিসাব'}</span><h2>{en?'My Leave Record':'আমার ছুটির হিসাব'}</h2><p>{en?'Keep your own leave history for personal planning. This is not an official leave approval or HR record.':'নিজের পরিকল্পনার জন্য ছুটির ইতিহাস সংরক্ষণ করুন। এটি অফিসিয়াল ছুটি অনুমোদন বা HR রেকর্ড নয়।'}</p></div>
-      <div className="leave-chip"><PalmTree size={17}/>{en?'Self-service only':'শুধু ব্যক্তিগত ব্যবহারের জন্য'}</div>
+      <div className="leave-chip"><CalendarDays size={17}/>{en?'Self-service only':'শুধু ব্যক্তিগত ব্যবহারের জন্য'}</div>
     </section>
 
     <section className="leave-summary-grid">
-      <article><CalendarCheck/><div><small>{en?'This Year Records':'চলতি বছরের রেকর্ড'}</small><b>{numLang(yearItems.length,lang,0)}</b><span>{thisYear}</span></div></article>
+      <article><CalendarDays/><div><small>{en?'This Year Records':'চলতি বছরের রেকর্ড'}</small><b>{numLang(yearItems.length,lang,0)}</b><span>{thisYear}</span></div></article>
       <article><Clock3/><div><small>{en?'Recorded Leave Days':'রেকর্ডকৃত ছুটির দিন'}</small><b>{numLang(yearDays,lang,1)}</b><span>{en?'Personal total':'ব্যক্তিগত মোট'}</span></div></article>
       <article><PieChart/><div><small>{en?'Leave Types Used':'ব্যবহৃত ছুটির ধরন'}</small><b>{numLang(typeTotals.length,lang,0)}</b><span>{en?'This year':'চলতি বছর'}</span></div></article>
     </section>
@@ -1100,7 +1100,7 @@ function PersonalLeaveRecord({lang='bn'}){
         <div className="leave-head"><div><History/><div><h3>{en?'Leave History':'ছুটির ইতিহাস'}</h3><p>{en?'Newest record first.':'সর্বশেষ রেকর্ড আগে।'}</p></div></div></div>
         {items.length===0?<div className="empty">{en?'No leave record yet.':'এখনো কোনো ছুটির রেকর্ড নেই।'}</div>:<div className="leave-history">
           {items.map(x=><div className="leave-history-row" key={x.id}>
-            <div className="leave-history-icon"><PalmTree/></div>
+            <div className="leave-history-icon"><CalendarDays/></div>
             <div><small>{fmtDateLang(x.start_date,lang)} → {fmtDateLang(x.end_date,lang)}</small><b>{labels[x.leave_type]||x.leave_type}</b><span>{numLang(x.total_days,lang,1)} {en?'day(s)':'দিন'}{x.notes?` · ${x.notes}`:''}</span></div>
             <div className="leave-actions"><button className="icon-btn" onClick={()=>edit(x)}><Edit3 size={15}/></button><button className="icon-btn danger" onClick={()=>remove(x.id)}><Trash2 size={15}/></button></div>
           </div>)}
@@ -1707,7 +1707,7 @@ function App(){
   if(!user)return showLogin?<AuthPortal onLogin={u=>{setUser(u);window.history.replaceState({},'',window.location.pathname)}} onBack={()=>{setShowLogin(false);setAuthMode('login');setAuthToken('');window.history.replaceState({},'',window.location.pathname)}} lang={lang} setLang={setLang} initialMode={authMode} initialToken={authToken}/>:<PublicHome onLogin={()=>{setAuthMode('login');setShowLogin(true)}} lang={lang} setLang={setLang}/>;
   const admin=['super_admin','admin','department_admin'].includes(user.role);
   return <div className="app"><aside className="side">
-    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v14':'স্বাধীন প্ল্যাটফর্ম · v14'}</small></div></div>
+    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v14.2':'স্বাধীন প্ল্যাটফর্ম · v14.2'}</small></div></div>
     <nav>
       <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}><LayoutDashboard size={18}/>{lang==='en'?'My Dashboard':'আমার ড্যাশবোর্ড'}</button>
       <button className={page==='career'?'active':''} onClick={()=>setPage('career')}><BookUser size={18}/>{lang==='en'?'My Career':'আমার চাকরি'}</button>
@@ -1715,7 +1715,7 @@ function App(){
       <button className={page==='promotion-timeline'?'active':''} onClick={()=>setPage('promotion-timeline')}><Route size={18}/>{lang==='en'?'Career Roadmap':'ক্যারিয়ার রোডম্যাপ'}</button>
       <button className={page==='salary'?'active':''} onClick={()=>setPage('salary')}><WalletCards size={18}/>{lang==='en'?'Salary & Pay Scale':'বেতন ও পে-স্কেল'}</button>
       <button className={page==='salary-history'?'active':''} onClick={()=>setPage('salary-history')}><ReceiptText size={18}/>{lang==='en'?'My Salary History':'আমার বেতন ইতিহাস'}</button>
-      <button className={page==='leave'?'active':''} onClick={()=>setPage('leave')}><PalmTree size={18}/>{lang==='en'?'My Leave Record':'আমার ছুটির হিসাব'}</button>
+      <button className={page==='leave'?'active':''} onClick={()=>setPage('leave')}><CalendarDays size={18}/>{lang==='en'?'My Leave Record':'আমার ছুটির হিসাব'}</button>
       <button className={page==='calculators'?'active':''} onClick={()=>setPage('calculators')}><Calculator size={18}/>{lang==='en'?'Calculator Center':'ক্যালকুলেটর সেন্টার'}</button>
       <button className={page==='library'?'active':''} onClick={()=>setPage('library')}><BookOpen size={18}/>{lang==='en'?'Notices & Policies':'নোটিশ ও নীতিমালা'}</button>
       <button className={page==='account'?'active':''} onClick={()=>setPage('account')}><LockKeyhole size={18}/>{lang==='en'?'Account & Security':'অ্যাকাউন্ট ও নিরাপত্তা'}</button>
