@@ -12,6 +12,7 @@ import './auth-phase8.css';
 import './admin-premium.css';
 import './career-phase9.css';
 import './career-dashboard-phase10.css';
+import './calculator-phase11.css';
 import {
   PAY2015,PAY2026,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
   annualPromotionCycle,futureRoadmap,serviceExperiencePoints,fixed2026,implementationRate,houseRent2015
@@ -801,11 +802,22 @@ function MasterDirectory(){
 function CalculatorCenter({lang='bn',onPage}){
   const en=lang==='en';
   const [tool,setTool]=useState('service');
+  const [career,setCareer]=useState({profile:null,education:[],events:[]});
   const [service,setService]=useState({start:'',end:todayLocalIso()});
   const [age,setAge]=useState({dob:'',asOf:todayLocalIso()});
   const [gap,setGap]=useState({from:'',to:''});
   const [retire,setRetire]=useState({dob:'',age:'60'});
+  const [basicProj,setBasicProj]=useState({grade:'13',stage:'0',date:'2027-07-01'});
   const [result,setResult]=useState(null);
+
+  useEffect(()=>{
+    api('/api/my-career').then(x=>{
+      setCareer({profile:x.profile||null,education:x.education||[],events:x.events||[]});
+      const p=x.profile||{};
+      if(p.first_joining_date)setService(v=>({...v,start:p.first_joining_date}));
+      if(p.retirement_age)setRetire(v=>({...v,age:String(p.retirement_age)}));
+    }).catch(()=>{});
+  },[]);
 
   const validDate=v=>!!v&&!isNaN(new Date(v+'T00:00:00'));
   const dateObj=v=>new Date(v+'T00:00:00');
@@ -840,20 +852,36 @@ function CalculatorCenter({lang='bn',onPage}){
     const remaining=dateObj(retirement)>=dateObj(today)?cleanDuration(today,retirement):null;
     setResult({type:'retire',dob:retire.dob,years,retirement,remaining,passed:dateObj(retirement)<dateObj(today)});
   }
+  function calcBasicProjection(){
+    const grade=Number(basicProj.grade),stages=PAY2015[String(grade)]||[],idx=Math.min(Math.max(0,Number(basicProj.stage||0)),Math.max(0,stages.length-1));
+    const current=stages[idx]||0,fixed=fixed2026(grade,current),rate=implementationRate(grade,basicProj.date),increase=Math.max(0,fixed-current),payable=Math.round(current+increase*rate);
+    setResult({type:'basicProjection',grade,stage:idx+1,current,fixed,rate,payable,date:basicProj.date});
+  }
   const showDur=d=>en?`${numLang(d.y,lang,0)} years ${numLang(d.m,lang,0)} months ${numLang(d.d,lang,0)} days`:durationBn(d);
   const tools=[
     ['service',Clock3,en?'Service Length':'চাকরিকাল'],
-    ['age',UserRound,en?'Age Calculator':'বয়স হিসাব'],
+    ['age',UserRound,en?'Age':'বয়স'],
     ['gap',CalendarDays,en?'Date Difference':'তারিখের ব্যবধান'],
-    ['retire',FileClock,en?'Retirement Estimate':'অবসর তারিখ']
+    ['retire',FileClock,en?'Retirement Estimate':'অবসর তারিখ'],
+    ['basic',BadgeDollarSign,en?'Basic Pay Projection':'মূল বেতন প্রক্ষেপণ']
   ];
-  return <div className="calculator-center">
-    <div className="page-head"><div><h2>{en?'Calculator Center':'ক্যালকুলেটর সেন্টার'}</h2><p>{en?'Simple service and date calculators. Policy-specific formulas are kept only in their verified modules.':'চাকরি ও তারিখভিত্তিক সহজ হিসাব। নীতিমালানির্ভর হিসাব শুধু যাচাইকৃত নিজস্ব মডিউলেই রাখা হয়েছে।'}</p></div></div>
+  const stages=PAY2015[basicProj.grade]||[];
+
+  return <div className="calculator-center advanced-calculator-center">
+    <section className="advanced-calc-hero">
+      <div><span>{en?'ADVANCED CALCULATOR CENTER':'উন্নত ক্যালকুলেটর সেন্টার'}</span><h2>{en?'Smart calculations from your own data':'নিজের তথ্য থেকে স্মার্ট হিসাব'}</h2><p>{en?'Verified policy calculators stay separate, while safe date/service tools can reuse your personal career record.':'যাচাইকৃত নীতিমালার ক্যালকুলেটর আলাদা থাকবে; নিরাপদ তারিখ/চাকরিকালভিত্তিক টুল আপনার ব্যক্তিগত চাকরি তথ্য ব্যবহার করতে পারবে।'}</p></div>
+      <div className="advanced-calc-chip"><ShieldCheck size={16}/>{en?'No unverified formula':'যাচাইহীন সূত্র নেই'}</div>
+    </section>
 
     <div className="calc-hub-grid">
       <button className="calc-hub-card promotion" onClick={()=>onPage?.('promotion')}><TrendingUp/><div><b>{en?'Promotion Calculator':'পদোন্নতি হিসাব'}</b><small>{en?'Verified promotion rules and roadmap':'যাচাইকৃত পদোন্নতি নীতিমালা ও রোডম্যাপ'}</small></div><ChevronRight/></button>
       <button className="calc-hub-card salary" onClick={()=>onPage?.('salary')}><WalletCards/><div><b>{en?'Pay Scale Calculator':'পে-স্কেল হিসাব'}</b><small>{en?'Fixation, gross, deductions and payslip':'ফিক্সেশন, মোট বেতন, কর্তন ও পে-স্লিপ'}</small></div><ChevronRight/></button>
     </div>
+
+    {career.profile&&<section className="calc-personal-data-strip">
+      <div><BookUser/><div><small>{en?'Personal data detected':'ব্যক্তিগত তথ্য পাওয়া গেছে'}</small><b>{career.profile.current_post||'—'} · {career.profile.current_grade?`${en?'Grade':'গ্রেড'} ${career.profile.current_grade}`:'—'}</b></div></div>
+      <button onClick={()=>onPage?.('career')}>{en?'Update My Career':'আমার চাকরি আপডেট'}<ChevronRight size={14}/></button>
+    </section>}
 
     <div className="calculator-tabs">
       {tools.map(([k,I,l])=><button key={k} className={tool===k?'active':''} onClick={()=>{setTool(k);setResult(null)}}><I size={17}/>{l}</button>)}
@@ -861,7 +889,7 @@ function CalculatorCenter({lang='bn',onPage}){
 
     <section className="calc-card calculator-tool-card">
       {tool==='service'&&<>
-        <div className="tool-head"><Clock3/><div><h3>{en?'Service Length Calculator':'চাকরিকাল হিসাব'}</h3><p>{en?'Calculation date is taken automatically as today.':'হিসাবের তারিখ স্বয়ংক্রিয়ভাবে আজকের তারিখ নেওয়া হবে।'}</p></div></div>
+        <div className="tool-head"><Clock3/><div><h3>{en?'Service Length Calculator':'চাকরিকাল হিসাব'}</h3><p>{en?'Your first joining date is auto-filled from My Career when available.':'আমার চাকরি থেকে প্রথম যোগদানের তারিখ থাকলে স্বয়ংক্রিয়ভাবে বসবে।'}</p></div></div>
         <div className="form-grid"><DMY label={en?'Joining / start date':'যোগদান / শুরুর তারিখ'} value={service.start} onChange={v=>setService({...service,start:v})}/></div>
         <div className="notice"><b>{en?'As of:':'হিসাব পর্যন্ত:'}</b> {fmtDateLang(todayLocalIso(),lang)}</div>
         <button className="primary wide" onClick={calcService}>{en?'Calculate Service Length':'চাকরিকাল হিসাব করুন'}</button>
@@ -869,7 +897,6 @@ function CalculatorCenter({lang='bn',onPage}){
       {tool==='age'&&<>
         <div className="tool-head"><UserRound/><div><h3>{en?'Age Calculator':'বয়স হিসাব'}</h3><p>{en?'Exact age in years, months and days as of today.':'আজকের তারিখ অনুযায়ী বছর, মাস ও দিনে সঠিক বয়স।'}</p></div></div>
         <div className="form-grid"><DMY label={en?'Date of birth':'জন্মতারিখ'} value={age.dob} onChange={v=>setAge({...age,dob:v})}/></div>
-        <div className="notice"><b>{en?'As of:':'হিসাব পর্যন্ত:'}</b> {fmtDateLang(todayLocalIso(),lang)}</div>
         <button className="primary wide" onClick={calcAge}>{en?'Calculate Age':'বয়স হিসাব করুন'}</button>
       </>}
       {tool==='gap'&&<>
@@ -878,9 +905,18 @@ function CalculatorCenter({lang='bn',onPage}){
         <button className="primary wide" onClick={calcGap}>{en?'Calculate Difference':'ব্যবধান হিসাব করুন'}</button>
       </>}
       {tool==='retire'&&<>
-        <div className="tool-head"><FileClock/><div><h3>{en?'Retirement Date Estimate':'অবসর তারিখ অনুমান'}</h3><p>{en?'Enter the retirement age applicable to you; the system does not assume a policy age.':'আপনার ক্ষেত্রে প্রযোজ্য অবসরের বয়স নিজে দিন; সিস্টেম কোনো নীতিগত বয়স অনুমান করবে না।'}</p></div></div>
+        <div className="tool-head"><FileClock/><div><h3>{en?'Retirement Date Estimate':'অবসর তারিখ অনুমান'}</h3><p>{en?'Enter your applicable retirement age. No policy age is assumed by the system.':'আপনার ক্ষেত্রে প্রযোজ্য অবসরের বয়স দিন। সিস্টেম কোনো নীতিগত বয়স অনুমান করে না।'}</p></div></div>
         <div className="form-grid"><DMY label={en?'Date of birth':'জন্মতারিখ'} value={retire.dob} onChange={v=>setRetire({...retire,dob:v})}/><label>{en?'Applicable retirement age':'প্রযোজ্য অবসরের বয়স'}<input type="number" min="1" max="100" value={retire.age} onChange={e=>setRetire({...retire,age:e.target.value})}/></label></div>
         <button className="primary wide" onClick={calcRetire}>{en?'Estimate Retirement Date':'অবসর তারিখ হিসাব করুন'}</button>
+      </>}
+      {tool==='basic'&&<>
+        <div className="tool-head"><BadgeDollarSign/><div><h3>{en?'Basic Pay Projection':'মূল বেতন প্রক্ষেপণ'}</h3><p>{en?'Projects basic pay only using the already verified 2015→2026 fixation and implementation schedule. No future allowance rate is assumed.':'শুধু যাচাইকৃত ২০১৫→২০২৬ ফিক্সেশন ও বাস্তবায়ন সূচি ব্যবহার করে মূল বেতন দেখায়। ভবিষ্যৎ ভাতার হার অনুমান করা হয় না।'}</p></div></div>
+        <div className="form-grid">
+          <label>{en?'Grade':'গ্রেড'}<select value={basicProj.grade} onChange={e=>setBasicProj({...basicProj,grade:e.target.value,stage:'0'})}>{Array.from({length:20},(_,i)=>i+1).map(g=><option key={g} value={g}>{en?`Grade ${g}`:`গ্রেড ${g.toLocaleString('bn-BD')}`}</option>)}</select></label>
+          <label>{en?'Current 2015 pay stage':'বর্তমান ২০১৫ বেতন ধাপ'}<select value={basicProj.stage} onChange={e=>setBasicProj({...basicProj,stage:e.target.value})}>{stages.map((v,i)=><option value={i} key={i}>{en?`Stage ${i+1} — Tk ${moneyLang(v,'en')}`:`ধাপ ${(i+1).toLocaleString('bn-BD')} — ৳${moneyLang(v,'bn')}`}</option>)}</select></label>
+          <label>{en?'Projection date':'প্রক্ষেপণের তারিখ'}<input type="date" value={basicProj.date} onChange={e=>setBasicProj({...basicProj,date:e.target.value})}/></label>
+        </div>
+        <button className="primary wide" onClick={calcBasicProjection}>{en?'Project Basic Pay':'মূল বেতন প্রক্ষেপণ করুন'}</button>
       </>}
     </section>
 
@@ -889,118 +925,11 @@ function CalculatorCenter({lang='bn',onPage}){
       result.type==='service'?<><CheckCircle2/><div><small>{en?'Total service length':'মোট চাকরিকাল'}</small><h3>{showDur(result.d)}</h3><p>{fmtDateLang(result.start,lang)} → {fmtDateLang(result.end,lang)}</p></div></>:
       result.type==='age'?<><CheckCircle2/><div><small>{en?'Current age':'বর্তমান বয়স'}</small><h3>{showDur(result.d)}</h3><p>{en?'Date of birth':'জন্মতারিখ'}: {fmtDateLang(result.dob,lang)}</p></div></>:
       result.type==='gap'?<><CheckCircle2/><div><small>{en?'Exact difference':'সঠিক ব্যবধান'}</small><h3>{showDur(result.d)}</h3><p>{fmtDateLang(result.from,lang)} → {fmtDateLang(result.to,lang)}</p></div></>:
-      <><FileClock/><div><small>{en?'Estimated retirement date':'সম্ভাব্য অবসর তারিখ'}</small><h3>{fmtDateLang(result.retirement,lang)}</h3><p>{en?`Based on the retirement age you entered: ${numLang(result.years,lang,0)} years.`:`আপনার দেওয়া অবসরের বয়স ${numLang(result.years,lang,0)} বছর ধরে হিসাব করা হয়েছে।`}</p>{result.passed?<p className="calc-status-note">{en?'This calculated date has already passed.':'হিসাবকৃত তারিখটি ইতোমধ্যে অতিক্রান্ত হয়েছে।'}</p>:result.remaining&&<p className="calc-status-note">{en?'Time remaining: ':'বাকি সময়: '}{showDur(result.remaining)}</p>}</div></>}
+      result.type==='retire'?<><FileClock/><div><small>{en?'Estimated retirement date':'সম্ভাব্য অবসর তারিখ'}</small><h3>{fmtDateLang(result.retirement,lang)}</h3><p>{en?`Based on the retirement age you entered: ${numLang(result.years,lang,0)} years.`:`আপনার দেওয়া অবসরের বয়স ${numLang(result.years,lang,0)} বছর ধরে হিসাব করা হয়েছে।`}</p></div></>:
+      <><BadgeDollarSign/><div><small>{en?'Projected payable basic':'প্রক্ষেপিত প্রাপ্য মূল বেতন'}</small><h3>{en?'Tk':'৳'} {moneyLang(result.payable,lang)}</h3><p>{en?`2015 basic Tk ${moneyLang(result.current,'en')} · Full fixed 2026 Tk ${moneyLang(result.fixed,'en')} · Implementation ${numLang(result.rate*100,lang,0)}%`:`২০১৫ মূল বেতন ৳${moneyLang(result.current,'bn')} · ২০২৬ পূর্ণ নির্ধারিত ৳${moneyLang(result.fixed,'bn')} · বাস্তবায়ন ${numLang(result.rate*100,lang,0)}%`}</p></div></>}
     </section>}
 
-    <section className="calculator-safety-note"><ShieldCheck/><div><b>{en?'Policy-safe design':'নীতিমালা-নিরাপদ নকশা'}</b><p>{en?'No unverified pension, gratuity, leave, increment or retirement formula has been added. Those calculators can be activated after their governing rules are verified.':'যাচাই ছাড়া পেনশন, গ্র্যাচুইটি, ছুটি, ইনক্রিমেন্ট বা অবসরের কোনো সূত্র যোগ করা হয়নি। সংশ্লিষ্ট নীতিমালা যাচাই হলে সেগুলো সক্রিয় করা যাবে।'}</p></div></section>
-  </div>
-}
-
-
-function MyCareer({lang='bn'}){
-  const en=lang==='en';
-  const blankProfile={first_joining_date:'',current_post:'',current_grade:'',current_post_joining_date:'',employment_type:'',office_name:'',department_name:'',employee_reference:'',retirement_age:'',notes:''};
-  const [profile,setProfile]=useState(blankProfile),[education,setEducation]=useState([]),[events,setEvents]=useState([]),
-    [loading,setLoading]=useState(true),[saving,setSaving]=useState(false),[err,setErr]=useState(''),[msg,setMsg]=useState('');
-  const [eduForm,setEduForm]=useState({level:'',institution:'',subject:'',passing_year:'',result:'',notes:''});
-  const [eventForm,setEventForm]=useState({event_type:'promotion',event_date:'',title:'',post_name:'',grade:'',office_name:'',reference_no:'',notes:''});
-
-  async function load(){
-    setLoading(true);setErr('');
-    try{
-      const x=await api('/api/my-career');
-      setProfile({...blankProfile,...(x.profile||{})});
-      setEducation(x.education||[]);
-      setEvents(x.events||[]);
-    }catch(e){setErr(e.message)}finally{setLoading(false)}
-  }
-  useEffect(()=>{load()},[]);
-
-  async function saveProfile(e){
-    e.preventDefault();setSaving(true);setErr('');setMsg('');
-    try{
-      await api('/api/my-career/profile',{method:'PUT',body:JSON.stringify(profile)});
-      setMsg(en?'Career profile saved.':'চাকরি প্রোফাইল সংরক্ষণ হয়েছে।');await load();
-    }catch(e){setErr(e.message)}finally{setSaving(false)}
-  }
-  async function addEducation(e){
-    e.preventDefault();setErr('');setMsg('');
-    try{
-      await api('/api/my-career/education',{method:'POST',body:JSON.stringify(eduForm)});
-      setEduForm({level:'',institution:'',subject:'',passing_year:'',result:'',notes:''});await load();
-    }catch(e){setErr(e.message)}
-  }
-  async function delEducation(id){
-    if(!confirm(en?'Delete this education record?':'এই শিক্ষাগত রেকর্ড মুছে ফেলবেন?'))return;
-    try{await api(`/api/my-career/education/${id}`,{method:'DELETE'});await load()}catch(e){alert(e.message)}
-  }
-  async function addEvent(e){
-    e.preventDefault();setErr('');setMsg('');
-    try{
-      await api('/api/my-career/events',{method:'POST',body:JSON.stringify(eventForm)});
-      setEventForm({event_type:'promotion',event_date:'',title:'',post_name:'',grade:'',office_name:'',reference_no:'',notes:''});await load();
-    }catch(e){setErr(e.message)}
-  }
-  async function delEvent(id){
-    if(!confirm(en?'Delete this career record?':'এই চাকরি রেকর্ড মুছে ফেলবেন?'))return;
-    try{await api(`/api/my-career/events/${id}`,{method:'DELETE'});await load()}catch(e){alert(e.message)}
-  }
-
-  if(loading)return <div className="loading">{en?'Loading...':'লোড হচ্ছে...'}</div>;
-  const c=(k,v)=>setProfile(x=>({...x,[k]:v}));
-  const eventLabels=en?{appointment:'Appointment/Joining',promotion:'Promotion',transfer:'Transfer/Posting',increment:'Increment',training:'Training',grade_change:'Grade Change',other:'Other'}:{appointment:'নিয়োগ/যোগদান',promotion:'পদোন্নতি',transfer:'বদলি/পোস্টিং',increment:'ইনক্রিমেন্ট',training:'প্রশিক্ষণ',grade_change:'গ্রেড পরিবর্তন',other:'অন্যান্য'};
-  return <div className="my-career-page">
-    <section className="career-hero">
-      <div><span>{en?'PERSONAL DIGITAL SERVICE BOOK':'ব্যক্তিগত ডিজিটাল সার্ভিস বুক'}</span><h2>{en?'My Career':'আমার চাকরি'}</h2><p>{en?'Maintain your own career information, education and service timeline. This is a personal record, not an official service book or administrative order.':'নিজের চাকরি, শিক্ষা ও সার্ভিস টাইমলাইন নিজে সংরক্ষণ করুন। এটি ব্যক্তিগত রেকর্ড; অফিসিয়াল সার্ভিস বুক বা প্রশাসনিক আদেশ নয়।'}</p></div>
-      <div className="career-lock"><ShieldCheck size={16}/>{en?'Private self-service record':'ব্যক্তিগত স্ব-পরিচালিত রেকর্ড'}</div>
-    </section>
-
-    {err&&<div className="error">{err}</div>}{msg&&<div className="auth-success">{msg}</div>}
-
-    <section className="career-card">
-      <div className="career-section-head"><div><BookUser/><div><h3>{en?'Career Profile':'চাকরি প্রোফাইল'}</h3><p>{en?'Core employment information used by your personal dashboard and future calculators.':'ব্যক্তিগত ড্যাশবোর্ড ও ভবিষ্যৎ হিসাবের জন্য মূল চাকরি তথ্য।'}</p></div></div></div>
-      <form className="form-grid" onSubmit={saveProfile}>
-        <DMY label={en?'First joining date':'প্রথম যোগদানের তারিখ'} value={profile.first_joining_date||''} onChange={v=>c('first_joining_date',v)}/>
-        <label>{en?'Current post':'বর্তমান পদ'}<input value={profile.current_post||''} onChange={e=>c('current_post',e.target.value)}/></label>
-        <label>{en?'Current grade':'বর্তমান গ্রেড'}<select value={profile.current_grade||''} onChange={e=>c('current_grade',e.target.value)}><option value="">{en?'Select':'নির্বাচন'}</option>{Array.from({length:20},(_,i)=>i+1).map(g=><option key={g} value={g}>{en?`Grade ${g}`:`গ্রেড ${g.toLocaleString('bn-BD')}`}</option>)}</select></label>
-        <DMY label={en?'Current post joining date':'বর্তমান পদে যোগদানের তারিখ'} value={profile.current_post_joining_date||''} onChange={v=>c('current_post_joining_date',v)}/>
-        <label>{en?'Employment type':'চাকরির ধরন'}<select value={profile.employment_type||''} onChange={e=>c('employment_type',e.target.value)}><option value="">{en?'Select':'নির্বাচন'}</option><option value="permanent">{en?'Permanent':'স্থায়ী'}</option><option value="temporary">{en?'Temporary':'অস্থায়ী'}</option><option value="contract">{en?'Contract':'চুক্তিভিত্তিক'}</option></select></label>
-        <label>{en?'Office / Unit':'অফিস / ইউনিট'}<input value={profile.office_name||''} onChange={e=>c('office_name',e.target.value)}/></label>
-        <label>{en?'Department / Section':'বিভাগ / শাখা'}<input value={profile.department_name||''} onChange={e=>c('department_name',e.target.value)}/></label>
-        <label>{en?'Employee / Reference ID':'কর্মী / রেফারেন্স নম্বর'}<input value={profile.employee_reference||''} onChange={e=>c('employee_reference',e.target.value)}/></label>
-        <label>{en?'Applicable retirement age':'প্রযোজ্য অবসরের বয়স'}<input type="number" min="1" max="100" value={profile.retirement_age||''} onChange={e=>c('retirement_age',e.target.value)}/></label>
-        <label className="span-2">{en?'Personal notes':'ব্যক্তিগত নোট'}<textarea rows="3" value={profile.notes||''} onChange={e=>c('notes',e.target.value)}/></label>
-        <div className="span-2"><button className="primary" disabled={saving}><Save size={16}/>{saving?(en?'Saving...':'সংরক্ষণ হচ্ছে...'):(en?'Save Career Profile':'চাকরি প্রোফাইল সংরক্ষণ')}</button></div>
-      </form>
-    </section>
-
-    <section className="career-split">
-      <article className="career-card">
-        <div className="career-section-head"><div><GraduationCap/><div><h3>{en?'Education':'শিক্ষাগত যোগ্যতা'}</h3><p>{en?'Add your own education history.':'নিজের শিক্ষাগত ইতিহাস যোগ করুন।'}</p></div></div></div>
-        <form className="career-inline-form" onSubmit={addEducation}>
-          <input required placeholder={en?'Level / degree':'স্তর / ডিগ্রি'} value={eduForm.level} onChange={e=>setEduForm({...eduForm,level:e.target.value})}/>
-          <input placeholder={en?'Institution':'প্রতিষ্ঠান'} value={eduForm.institution} onChange={e=>setEduForm({...eduForm,institution:e.target.value})}/>
-          <input placeholder={en?'Subject':'বিষয়'} value={eduForm.subject} onChange={e=>setEduForm({...eduForm,subject:e.target.value})}/>
-          <input type="number" placeholder={en?'Year':'সন'} value={eduForm.passing_year} onChange={e=>setEduForm({...eduForm,passing_year:e.target.value})}/>
-          <button className="primary"><Plus size={15}/>{en?'Add':'যোগ করুন'}</button>
-        </form>
-        <div className="career-list">{education.length===0?<div className="empty">{en?'No education record yet.':'এখনো শিক্ষাগত রেকর্ড নেই।'}</div>:education.map(x=><div className="career-list-row" key={x.id}><div><b>{x.level}</b><small>{[x.subject,x.institution,x.passing_year].filter(Boolean).join(' · ')||'—'}</small></div><button className="icon-btn danger" onClick={()=>delEducation(x.id)}><Trash2 size={15}/></button></div>)}</div>
-      </article>
-
-      <article className="career-card">
-        <div className="career-section-head"><div><Milestone/><div><h3>{en?'Career Timeline':'চাকরি টাইমলাইন'}</h3><p>{en?'Promotion, posting, increment, training and other milestones.':'পদোন্নতি, পোস্টিং, ইনক্রিমেন্ট, প্রশিক্ষণ ও অন্যান্য ধাপ।'}</p></div></div></div>
-        <form className="career-inline-form" onSubmit={addEvent}>
-          <select value={eventForm.event_type} onChange={e=>setEventForm({...eventForm,event_type:e.target.value})}>{Object.entries(eventLabels).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select>
-          <input type="date" required value={eventForm.event_date} onChange={e=>setEventForm({...eventForm,event_date:e.target.value})}/>
-          <input required placeholder={en?'Title':'শিরোনাম'} value={eventForm.title} onChange={e=>setEventForm({...eventForm,title:e.target.value})}/>
-          <input placeholder={en?'Post / grade':'পদ / গ্রেড'} value={eventForm.post_name} onChange={e=>setEventForm({...eventForm,post_name:e.target.value})}/>
-          <button className="primary"><Plus size={15}/>{en?'Add':'যোগ করুন'}</button>
-        </form>
-        <div className="career-timeline">{events.length===0?<div className="empty">{en?'No career event yet.':'এখনো চাকরি ইভেন্ট নেই।'}</div>:events.map(x=><div className="career-timeline-row" key={x.id}><div className="career-timeline-dot"></div><div><small>{x.event_date} · {eventLabels[x.event_type]||x.event_type}</small><b>{x.title}</b><p>{[x.post_name,x.grade?`${en?'Grade':'গ্রেড'} ${x.grade}`:'',x.office_name].filter(Boolean).join(' · ')}</p></div><button className="icon-btn danger" onClick={()=>delEvent(x.id)}><Trash2 size={15}/></button></div>)}</div>
-      </article>
-    </section>
-
-    <section className="calculator-safety-note"><ShieldCheck/><div><b>{en?'Personal record only':'শুধু ব্যক্তিগত রেকর্ড'}</b><p>{en?'This module does not approve promotions, salary fixation, leave or any administrative decision.':'এই মডিউল পদোন্নতি, বেতন নির্ধারণ, ছুটি বা কোনো প্রশাসনিক সিদ্ধান্ত অনুমোদন করে না।'}</p></div></section>
+    <section className="calculator-safety-note"><ShieldCheck/><div><b>{en?'Verified-only expansion':'শুধু যাচাইকৃত হিসাব'}</b><p>{en?'No pension, gratuity, leave, tax, increment or future allowance formula has been added without a verified governing rule.':'যাচাইকৃত নীতিমালা ছাড়া পেনশন, গ্র্যাচুইটি, ছুটি, কর, ইনক্রিমেন্ট বা ভবিষ্যৎ ভাতার কোনো সূত্র যোগ করা হয়নি।'}</p></div></section>
   </div>
 }
 
