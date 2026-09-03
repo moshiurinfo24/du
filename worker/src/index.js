@@ -35,7 +35,7 @@ export default{async fetch(req,env){
   if(req.method==='OPTIONS')return new Response(null,{status:204,headers:C});
   const u=new URL(req.url);
   try{
-    if(u.pathname==='/api/health')return json({ok:true,service:'Employee Service ERP API',phase:'14.1'},200,C);
+    if(u.pathname==='/api/health')return json({ok:true,service:'Employee Service ERP API',phase:'15'},200,C);
 
     // Phase 8 FREE: self-service registration and recovery code password reset
     if(u.pathname==='/api/register'&&req.method==='POST'){
@@ -226,7 +226,7 @@ export default{async fetch(req,env){
     }
 
     if(u.pathname==='/api/phase-status'&&req.method==='GET'){
-      return json({ok:true,phase:'14.1',routes:{my_career:true,admin_analytics:true,usage:true,recovery:true,login_analytics:true,public_traffic:true,salary_history:true,personal_leave_record:true}},200,C);
+      return json({ok:true,phase:'15',routes:{my_career:true,admin_analytics:true,usage:true,recovery:true,login_analytics:true,public_traffic:true,salary_history:true,personal_leave_record:true}},200,C);
     }
 
     // Phase 12: Personal Salary & Pay History
@@ -549,6 +549,45 @@ export default{async fetch(req,env){
         }
       }
       await audit(env,user,'system_settings_update','system_settings','global',{keys:allowed.filter(k=>Object.prototype.hasOwnProperty.call(b,k))});
+      return json({ok:true},200,C);
+    }
+
+
+    // Phase 15: Fiscal Office Calendar (July 1 -> June 30)
+    // Friday + Saturday are weekly holidays. Only stored OFFICE holidays are additionally closed.
+    if(u.pathname==='/api/public/office-calendar'&&req.method==='GET'){
+      const fy=String(u.searchParams.get('fy')||'2026-2027').trim(),m=fy.match(/^(\d{4})-(\d{4})$/);
+      if(!m||Number(m[2])!==Number(m[1])+1)return json({error:'Invalid fiscal year'},400,C);
+      const start=`${m[1]}-07-01`,end=`${m[2]}-06-30`;
+      const x=await env.DB.prepare(`SELECT id,holiday_date,title_bn,title_en,notes_bn,notes_en,source_url FROM office_calendar_holidays WHERE fiscal_year=? AND is_active=1 AND holiday_date BETWEEN ? AND ? ORDER BY holiday_date,id`).bind(fy,start,end).all();
+      return json({fiscal_year:fy,start_date:start,end_date:end,weekend_days:[5,6],source_url:'https://www.du.ac.bd/du_post_details/notice/27726',unofficial_reference:true,holidays:x.results||[]},200,C);
+    }
+    if(u.pathname==='/api/admin/office-calendar'&&req.method==='GET'){
+      if(!canManage(user))return json({error:'Forbidden'},403,C);
+      const fy=String(u.searchParams.get('fy')||'2026-2027').trim();
+      const x=await env.DB.prepare(`SELECT * FROM office_calendar_holidays WHERE fiscal_year=? ORDER BY holiday_date,id`).bind(fy).all();
+      return json({fiscal_year:fy,holidays:x.results||[]},200,C);
+    }
+    if(u.pathname==='/api/admin/office-calendar'&&req.method==='POST'){
+      if(!user||!['super_admin','admin'].includes(user.role))return json({error:'Forbidden'},403,C);
+      const b=await req.json(),fy=String(b.fiscal_year||'2026-2027').trim(),date=String(b.holiday_date||'').trim();
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!/^\d{4}-\d{4}$/.test(fy))return json({error:'Fiscal year and holiday date are required'},400,C);
+      if(!String(b.title_bn||'').trim())return json({error:'Bangla holiday title is required'},400,C);
+      const r=await env.DB.prepare(`INSERT INTO office_calendar_holidays(fiscal_year,holiday_date,title_bn,title_en,notes_bn,notes_en,source_url,is_active,created_by) VALUES(?,?,?,?,?,?,?,?,?)`).bind(fy,date,String(b.title_bn).trim(),b.title_en||null,b.notes_bn||null,b.notes_en||null,b.source_url||'https://www.du.ac.bd/du_post_details/notice/27726',b.is_active===false?0:1,user.id).run();
+      await audit(env,user,'office_calendar_create','office_calendar',r.meta?.last_row_id,{fiscal_year:fy,holiday_date:date});
+      return json({ok:true,id:r.meta?.last_row_id||null},201,C);
+    }
+    const officeCalendarMatch=u.pathname.match(/^\/api\/admin\/office-calendar\/(\d+)$/);
+    if(officeCalendarMatch&&req.method==='PUT'){
+      if(!user||!['super_admin','admin'].includes(user.role))return json({error:'Forbidden'},403,C);
+      const id=Number(officeCalendarMatch[1]),b=await req.json();
+      if(!String(b.title_bn||'').trim()||!/^\d{4}-\d{2}-\d{2}$/.test(String(b.holiday_date||'')))return json({error:'Holiday date and Bangla title are required'},400,C);
+      await env.DB.prepare(`UPDATE office_calendar_holidays SET fiscal_year=?,holiday_date=?,title_bn=?,title_en=?,notes_bn=?,notes_en=?,source_url=?,is_active=?,updated_at=CURRENT_TIMESTAMP WHERE id=?`).bind(String(b.fiscal_year||'2026-2027'),String(b.holiday_date),String(b.title_bn).trim(),b.title_en||null,b.notes_bn||null,b.notes_en||null,b.source_url||'https://www.du.ac.bd/du_post_details/notice/27726',b.is_active===false?0:1,id).run();
+      return json({ok:true},200,C);
+    }
+    if(officeCalendarMatch&&req.method==='DELETE'){
+      if(!user||!['super_admin','admin'].includes(user.role))return json({error:'Forbidden'},403,C);
+      await env.DB.prepare(`DELETE FROM office_calendar_holidays WHERE id=?`).bind(Number(officeCalendarMatch[1])).run();
       return json({ok:true},200,C);
     }
 
