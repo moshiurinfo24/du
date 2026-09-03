@@ -1589,7 +1589,7 @@ function App(){
   if(!user)return showLogin?<AuthPortal onLogin={u=>{setUser(u);window.history.replaceState({},'',window.location.pathname)}} onBack={()=>{setShowLogin(false);setAuthMode('login');setAuthToken('');window.history.replaceState({},'',window.location.pathname)}} lang={lang} setLang={setLang} initialMode={authMode} initialToken={authToken}/>:<PublicHome onLogin={()=>{setAuthMode('login');setShowLogin(true)}} lang={lang} setLang={setLang}/>;
   const admin=['super_admin','admin','department_admin'].includes(user.role);
   return <div className="app"><aside className="side">
-    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform':'স্বাধীন প্ল্যাটফর্ম'}</small></div></div>
+    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v13.1':'স্বাধীন প্ল্যাটফর্ম · v13.1'}</small></div></div>
     <nav>
       <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}><LayoutDashboard size={18}/>{lang==='en'?'My Dashboard':'আমার ড্যাশবোর্ড'}</button>
       <button className={page==='career'?'active':''} onClick={()=>setPage('career')}><BookUser size={18}/>{lang==='en'?'My Career':'আমার চাকরি'}</button>
@@ -1606,6 +1606,7 @@ function App(){
       {page==='dashboard'&&<DashboardHome user={user} onPage={setPage} lang={lang}/>} 
       {page==='career'&&<MyCareer lang={lang}/>}
       {page==='promotion'&&<PromotionCenter lang={lang}/>}
+      {page==='promotion-timeline'&&<PromotionCareerTimeline lang={lang} onPage={setPage}/>}
       {page==='salary'&&<SalaryCalculator lang={lang}/>} 
       {page==='salary-history'&&<SalaryHistory lang={lang}/>}
       {page==='calculators'&&<CalculatorCenter lang={lang} onPage={setPage}/>}
