@@ -515,9 +515,9 @@ function AdminPanel(){
 function App(){
   const[user,setUser]=useState(null),[loading,setLoading]=useState(true),[page,setPage]=useState('dashboard'),[showLogin,setShowLogin]=useState(false),[lang,setLang]=useState(()=>localStorage.getItem('app_lang')||'bn');
   useEffect(()=>{api('/api/me').then(x=>setUser(x.user)).catch(()=>{}).finally(()=>setLoading(false))},[]);
+  useEffect(()=>{localStorage.setItem('app_lang',lang)},[lang]);
   async function logout(){try{await api('/api/logout',{method:'POST'})}catch{}setUser(null);setShowLogin(false);setPage('dashboard')}
   if(loading)return <div className="loading">Loading...</div>;
-  useEffect(()=>{localStorage.setItem('app_lang',lang)},[lang]);
   if(!user)return showLogin?<Login onLogin={setUser} onBack={()=>setShowLogin(false)} lang={lang} setLang={setLang}/>:<PublicHome onLogin={()=>setShowLogin(true)} lang={lang} setLang={setLang}/>;
   const admin=['super_admin','admin','department_admin'].includes(user.role);
   return <div className="app"><aside className="side">
