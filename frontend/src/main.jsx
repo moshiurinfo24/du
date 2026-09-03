@@ -5,7 +5,7 @@ import {
   LayoutDashboard,TrendingUp,WalletCards,Users,ShieldCheck,LogOut,Plus,Search,
   UserRound,Building2,IdCard,Activity,ChevronRight,X,Save,Trash2,RefreshCw,
   Settings,Database,LockKeyhole,Home,BookOpen,Calculator,HelpCircle,Phone,
-  Bell,ArrowRight,CalendarDays,CheckCircle2,AlertTriangle,Landmark,FileText,Camera,Briefcase,MapPin,Mail,PhoneCall,MessageCircle,Edit3,UserCircle2,History,ArrowRightLeft,GraduationCap,BadgeDollarSign,Clock3,FileClock,ServerCog,Gauge,UserCog,ScrollText,SlidersHorizontal,ShieldAlert,Link2,Eye,Power,BookUser,NotebookTabs,Milestone,Award,BarChart3,PieChart,LineChart,MonitorCheck,Sparkles,UserCheck,UserX,Boxes,Command,DatabaseZap,ShieldEllipsis,Radio,TrendingDown
+  Bell,ArrowRight,CalendarDays,CheckCircle2,AlertTriangle,Landmark,FileText,Camera,Briefcase,MapPin,Mail,PhoneCall,MessageCircle,Edit3,UserCircle2,History,ArrowRightLeft,GraduationCap,BadgeDollarSign,Clock3,FileClock,ServerCog,Gauge,UserCog,ScrollText,SlidersHorizontal,ShieldAlert,Link2,Eye,Power,BookUser,NotebookTabs,Milestone,Award,BarChart3,PieChart,LineChart,MonitorCheck,Sparkles,UserCheck,UserX,Boxes,Command,DatabaseZap,ShieldEllipsis,Radio,TrendingDown,ReceiptText,ChartNoAxesCombined
 } from 'lucide-react';
 import './styles.css';
 import './auth-phase8.css';
@@ -15,6 +15,7 @@ import './career-dashboard-phase10.css';
 import './calculator-phase11.css';
 import './dashboard-phase11-1.css';
 import './traffic-analytics-phase11-2.css';
+import './salary-history-phase12.css';
 import {
   PAY2015,PAY2026,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
   annualPromotionCycle,futureRoadmap,serviceExperiencePoints,fixed2026,implementationRate,houseRent2015
@@ -990,6 +991,82 @@ function MasterDirectory(){
 
 
 
+
+function SalaryHistory({lang='bn'}){
+  const en=lang==='en';
+  const blank={effective_date:'',grade:'13',stage_2015:'0',basic_2015:'',fixed_2026:'',payable_basic:'',gross_salary:'',total_deduction:'',net_salary:'',source:'manual',notes:''};
+  const [items,setItems]=useState([]),[form,setForm]=useState(blank),[busy,setBusy]=useState(false),[err,setErr]=useState(''),[msg,setMsg]=useState('');
+  const stages=PAY2015[form.grade]||[];
+  useEffect(()=>{load()},[]);
+  async function load(){setBusy(true);setErr('');try{const x=await api('/api/my-salary-history');setItems(x.items||[])}catch(e){setErr(e.message)}finally{setBusy(false)}}
+  useEffect(()=>{
+    const current=stages[Math.min(Math.max(0,Number(form.stage_2015||0)),Math.max(0,stages.length-1))]||0;
+    const fixed=fixed2026(Number(form.grade),current);
+    setForm(x=>({...x,basic_2015:String(current||''),fixed_2026:String(fixed||'')}));
+  },[form.grade,form.stage_2015]);
+
+  async function save(e){
+    e.preventDefault();setErr('');setMsg('');
+    if(!form.effective_date)return setErr(en?'Effective date is required.':'কার্যকর তারিখ প্রয়োজন।');
+    setBusy(true);
+    try{
+      await api('/api/my-salary-history',{method:'POST',body:JSON.stringify({
+        ...form,
+        grade:Number(form.grade),
+        stage_2015:Number(form.stage_2015),
+        basic_2015:Number(form.basic_2015||0),
+        fixed_2026:Number(form.fixed_2026||0),
+        payable_basic:Number(form.payable_basic||0),
+        gross_salary:Number(form.gross_salary||0),
+        total_deduction:Number(form.total_deduction||0),
+        net_salary:Number(form.net_salary||0)
+      })});
+      setForm(blank);setMsg(en?'Salary history saved.':'বেতন ইতিহাস সংরক্ষণ হয়েছে।');await load();
+    }catch(e){setErr(e.message)}finally{setBusy(false)}
+  }
+  async function remove(id){
+    if(!confirm(en?'Delete this salary history record?':'এই বেতন ইতিহাস মুছে ফেলবেন?'))return;
+    try{await api('/api/my-salary-history/'+id,{method:'DELETE'});await load()}catch(e){alert(e.message)}
+  }
+  const amt=v=>`${en?'Tk':'৳'} ${moneyLang(v,lang)}`;
+  return <div className="salary-history-page">
+    <section className="salary-history-hero">
+      <div><span>{en?'PERSONAL SALARY & PAY HISTORY':'ব্যক্তিগত বেতন ও পে-ইতিহাস'}</span><h2>{en?'My Salary History':'আমার বেতন ইতিহাস'}</h2><p>{en?'Keep your own historical salary snapshots and compare them with the verified pay-scale calculator. This is not an official fixation order.':'নিজের বেতন ইতিহাস সংরক্ষণ করুন এবং যাচাইকৃত পে-স্কেল হিসাবের সঙ্গে তুলনা করুন। এটি কোনো অফিসিয়াল ফিক্সেশন আদেশ নয়।'}</p></div>
+      <div className="salary-history-chip"><ReceiptText size={17}/>{en?'Personal record':'ব্যক্তিগত রেকর্ড'}</div>
+    </section>
+
+    {err&&<div className="error">{err}</div>}{msg&&<div className="auth-success">{msg}</div>}
+
+    <section className="salary-history-card">
+      <div className="salary-history-head"><div><WalletCards/><div><h3>{en?'Add salary snapshot':'বেতন স্ন্যাপশট যোগ করুন'}</h3><p>{en?'Store a point-in-time salary record for your own reference.':'নিজের রেফারেন্সের জন্য একটি নির্দিষ্ট সময়ের বেতন রেকর্ড সংরক্ষণ করুন।'}</p></div></div></div>
+      <form className="form-grid" onSubmit={save}>
+        <label>{en?'Effective date':'কার্যকর তারিখ'}<input type="date" value={form.effective_date} onChange={e=>setForm({...form,effective_date:e.target.value})} required/></label>
+        <label>{en?'Grade':'গ্রেড'}<select value={form.grade} onChange={e=>setForm({...form,grade:e.target.value,stage_2015:'0'})}>{Array.from({length:20},(_,i)=>i+1).map(g=><option key={g} value={g}>{en?`Grade ${g}`:`গ্রেড ${g.toLocaleString('bn-BD')}`}</option>)}</select></label>
+        <label>{en?'2015 pay stage':'২০১৫ বেতন ধাপ'}<select value={form.stage_2015} onChange={e=>setForm({...form,stage_2015:e.target.value})}>{stages.map((v,i)=><option key={i} value={i}>{en?`Stage ${i+1} — Tk ${moneyLang(v,'en')}`:`ধাপ ${(i+1).toLocaleString('bn-BD')} — ৳${moneyLang(v,'bn')}`}</option>)}</select></label>
+        <label>{en?'2015 basic':'২০১৫ মূল বেতন'}<input type="number" value={form.basic_2015} readOnly/></label>
+        <label>{en?'2026 full fixed basic':'২০২৬ পূর্ণ নির্ধারিত মূল বেতন'}<input type="number" value={form.fixed_2026} readOnly/></label>
+        <label>{en?'Payable basic':'প্রাপ্য মূল বেতন'}<input type="number" min="0" value={form.payable_basic} onChange={e=>setForm({...form,payable_basic:e.target.value})}/></label>
+        <label>{en?'Gross salary':'মোট প্রাপ্য'}<input type="number" min="0" value={form.gross_salary} onChange={e=>setForm({...form,gross_salary:e.target.value})}/></label>
+        <label>{en?'Total deduction':'মোট কর্তন'}<input type="number" min="0" value={form.total_deduction} onChange={e=>setForm({...form,total_deduction:e.target.value})}/></label>
+        <label>{en?'Net salary':'নিট বেতন'}<input type="number" min="0" value={form.net_salary} onChange={e=>setForm({...form,net_salary:e.target.value})}/></label>
+        <label className="span-2">{en?'Personal notes':'ব্যক্তিগত নোট'}<textarea rows="3" value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})}/></label>
+        <div className="span-2"><button className="primary" disabled={busy}><Save size={16}/>{busy?(en?'Saving...':'সংরক্ষণ হচ্ছে...'):(en?'Save Salary Snapshot':'বেতন স্ন্যাপশট সংরক্ষণ')}</button></div>
+      </form>
+    </section>
+
+    <section className="salary-history-card">
+      <div className="salary-history-head"><div><ChartNoAxesCombined/><div><h3>{en?'Salary Timeline':'বেতন টাইমলাইন'}</h3><p>{en?'Your saved salary records, newest first.':'আপনার সংরক্ষিত বেতন রেকর্ড, সর্বশেষটি আগে।'}</p></div></div></div>
+      {items.length===0?<div className="empty">{en?'No salary history yet.':'এখনো বেতন ইতিহাস নেই।'}</div>:<div className="salary-history-list">{items.map(x=><article key={x.id} className="salary-history-row">
+        <div className="salary-history-date"><CalendarDays/><div><b>{fmtDateLang(x.effective_date,lang)}</b><small>{en?`Grade ${x.grade} · Stage ${Number(x.stage_2015)+1}`:`গ্রেড ${numLang(x.grade,lang,0)} · ধাপ ${numLang(Number(x.stage_2015)+1,lang,0)}`}</small></div></div>
+        <div className="salary-history-amounts"><span><small>{en?'Payable basic':'প্রাপ্য মূল বেতন'}</small><b>{amt(x.payable_basic)}</b></span><span><small>{en?'Gross':'মোট'}</small><b>{amt(x.gross_salary)}</b></span><span><small>{en?'Net':'নিট'}</small><b>{amt(x.net_salary)}</b></span></div>
+        <button className="icon-btn danger" onClick={()=>remove(x.id)}><Trash2 size={15}/></button>
+      </article>)}</div>}
+    </section>
+
+    <section className="calculator-safety-note"><ShieldCheck/><div><b>{en?'Personal salary record':'ব্যক্তিগত বেতন রেকর্ড'}</b><p>{en?'This module stores your own salary snapshots. It does not issue an official salary fixation order or modify verified calculator rules.':'এই মডিউল আপনার নিজের বেতন স্ন্যাপশট সংরক্ষণ করে। এটি অফিসিয়াল বেতন নির্ধারণ আদেশ দেয় না এবং যাচাইকৃত হিসাবের নিয়ম পরিবর্তন করে না।'}</p></div></section>
+  </div>
+}
+
 function CalculatorCenter({lang='bn',onPage}){
   const en=lang==='en';
   const [tool,setTool]=useState('service');
@@ -1455,6 +1532,7 @@ function App(){
       <button className={page==='career'?'active':''} onClick={()=>setPage('career')}><BookUser size={18}/>{lang==='en'?'My Career':'আমার চাকরি'}</button>
       <button className={page==='promotion'?'active':''} onClick={()=>setPage('promotion')}><TrendingUp size={18}/>{lang==='en'?'Promotion':'পদোন্নতি'}</button>
       <button className={page==='salary'?'active':''} onClick={()=>setPage('salary')}><WalletCards size={18}/>{lang==='en'?'Salary & Pay Scale':'বেতন ও পে-স্কেল'}</button>
+      <button className={page==='salary-history'?'active':''} onClick={()=>setPage('salary-history')}><ReceiptText size={18}/>{lang==='en'?'My Salary History':'আমার বেতন ইতিহাস'}</button>
       <button className={page==='calculators'?'active':''} onClick={()=>setPage('calculators')}><Calculator size={18}/>{lang==='en'?'Calculator Center':'ক্যালকুলেটর সেন্টার'}</button>
       <button className={page==='library'?'active':''} onClick={()=>setPage('library')}><BookOpen size={18}/>{lang==='en'?'Notices & Policies':'নোটিশ ও নীতিমালা'}</button>
       <button className={page==='account'?'active':''} onClick={()=>setPage('account')}><LockKeyhole size={18}/>{lang==='en'?'Account & Security':'অ্যাকাউন্ট ও নিরাপত্তা'}</button>
@@ -1464,7 +1542,8 @@ function App(){
       {page==='dashboard'&&<DashboardHome user={user} onPage={setPage} lang={lang}/>} 
       {page==='career'&&<MyCareer lang={lang}/>}
       {page==='promotion'&&<PromotionCenter lang={lang}/>}
-      {page==='salary'&&<SalaryCalculator lang={lang}/>}
+      {page==='salary'&&<SalaryCalculator lang={lang}/>} 
+      {page==='salary-history'&&<SalaryHistory lang={lang}/>}
       {page==='calculators'&&<CalculatorCenter lang={lang} onPage={setPage}/>}
       {page==='library'&&<NoticePolicyCenter lang={lang} canManage={admin}/>} 
       {page==='account'&&<AccountSecurity lang={lang}/>}
