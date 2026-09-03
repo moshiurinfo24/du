@@ -58,6 +58,77 @@ const I18N={
 function LangToggle({lang,setLang}){return <button className="lang-btn" onClick={()=>setLang(lang==='bn'?'en':'bn')}>{I18N[lang].language}</button>}
 
 
+function escapeHtml(v){return String(v??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#039;'}[c]))}
+let html2pdfLoader=null;
+function loadHtml2Pdf(){
+  if(window.html2pdf)return Promise.resolve(window.html2pdf);
+  if(html2pdfLoader)return html2pdfLoader;
+  html2pdfLoader=new Promise((resolve,reject)=>{
+    const sc=document.createElement('script');
+    sc.src='https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+    sc.onload=()=>window.html2pdf?resolve(window.html2pdf):reject(new Error('PDF library load failed'));
+    sc.onerror=()=>reject(new Error('PDF library load failed'));
+    document.head.appendChild(sc);
+  });
+  return html2pdfLoader;
+}
+const eduBn={masters:'মাস্টার্স',bachelor:'স্নাতক',hsc:'এইচএসসি',diploma:'ডিপ্লোমা',bsceng:'বিএসসি ইঞ্জিনিয়ারিং',mbbs:'এমবিবিএস'};
+const categoryBn={officer:'কর্মকর্তা',class3:'তৃতীয় শ্রেণি',class4:'চতুর্থ শ্রেণি'};
+function reportShell(title,subtitle,body){
+  return `<div style="width:194mm;box-sizing:border-box;font-family:'Noto Sans Bengali','Hind Siliguri',Arial,sans-serif;color:#172033;background:#fff;padding:10mm 10mm 12mm;line-height:1.55;font-size:11.5px">
+    <div style="border:1px solid #d9dfeb;border-radius:14px;overflow:hidden">
+      <div style="background:linear-gradient(135deg,#111936,#263f74);color:#fff;padding:18px 22px">
+        <div style="font-size:10px;letter-spacing:.7px;opacity:.8">কর্মকর্তা-কর্মচারী ডিজিটাল সেবা</div>
+        <div style="font-size:22px;font-weight:800;margin-top:4px">${escapeHtml(title)}</div>
+        <div style="font-size:10.5px;opacity:.86;margin-top:4px">${escapeHtml(subtitle)}</div>
+      </div>
+      <div style="padding:18px 22px">${body}</div>
+      <div style="border-top:1px solid #e3e7ef;padding:12px 22px;color:#667085;font-size:9.5px;background:#f8fafc">
+        এটি একটি স্বাধীন ও অনানুষ্ঠানিক ডিজিটাল সেবা প্ল্যাটফর্ম। চূড়ান্ত প্রশাসনিক/আর্থিক সিদ্ধান্তের জন্য প্রযোজ্য সরকারি/প্রাতিষ্ঠানিক বিধি ও আদেশ যাচাই করুন।<br>
+        প্রতিবেদন তৈরি: ${new Date().toLocaleString('bn-BD')}
+      </div>
+    </div>
+  </div>`;
+}
+function kv(label,value){return `<div style="display:flex;justify-content:space-between;gap:16px;padding:7px 0;border-bottom:1px dashed #dfe4ec"><span style="color:#667085">${escapeHtml(label)}</span><b style="text-align:right;color:#182230">${escapeHtml(value)}</b></div>`}
+function section(title,content){return `<div style="margin:14px 0 0;page-break-inside:avoid"><div style="font-size:13px;font-weight:800;color:#1d3263;margin-bottom:5px">${escapeHtml(title)}</div><div style="border:1px solid #e1e6ef;border-radius:10px;padding:9px 12px;background:#fff">${content}</div></div>`}
+async function saveA4Pdf(html,filename){
+  let node=document.createElement('div');
+  node.style.position='fixed';node.style.left='-100000px';node.style.top='0';node.style.background='#fff';
+  node.innerHTML=html;document.body.appendChild(node);
+  try{
+    const html2pdf=await loadHtml2Pdf();
+    await html2pdf().set({
+      margin:[8,8,8,8],filename,
+      image:{type:'jpeg',quality:.98},
+      html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false},
+      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+      pagebreak:{mode:['css','legacy']}
+    }).from(node.firstElementChild).save();
+  }finally{node.remove()}
+}
+function promotionReportHtml(r){
+  const f=r.input||{};
+  let overview=kv('বর্তমান গ্রেড',`গ্রেড ${f.grade||'—'}`)+kv('শিক্ষাগত যোগ্যতা',eduBn[f.edu]||f.edu||'—')+kv('বর্তমান পদে যোগদান',f.currentDate?fmtDate(new Date(f.currentDate)):'—')+kv('প্রথম যোগদান',f.duDate?fmtDate(new Date(f.duDate)):'—')+kv('কম্পিউটার দক্ষতা/প্রশিক্ষণ',f.computer==='yes'?'আছে':'নেই')+kv('ACR শর্ত',f.acr==='yes'?'সন্তোষজনক':'অসম্পূর্ণ/না');
+  let result='';
+  if(r.stop) result=kv('ফলাফল',r.rule.target)+kv('রেফারেন্স',r.rule.ref||r.rule.page||'—');
+  else result=kv('সম্ভাব্য পরবর্তী পদ/ধাপ',`${r.rule.target} - গ্রেড ${r.rule.targetGrade}`)+kv('নীতিগত যোগ্যতার তারিখ',fmtDate(r.eligible))+kv('আবেদন/সার্কুলার সময়সীমা',fmtDate(r.cycle.circularDeadline))+kv('প্রক্রিয়া সম্পন্নের সম্ভাব্য সর্বশেষ সময়',fmtDate(r.cycle.completionDeadline))+kv('প্রয়োজনীয় অভিজ্ঞতা',`${r.req} বছর`)+kv('বর্তমান পদে চাকরি',durationBn(r.elapsed))+kv('অবশিষ্ট সময়',r.remaining.y||r.remaining.m||r.remaining.d?durationBn(r.remaining):'সময় পূর্ণ')+kv('Experience Point',r.points.toLocaleString('bn-BD',{maximumFractionDigits:2}))+kv('প্রাথমিক শর্তের অবস্থা',r.prelim?'যোগ্যতার মূল শর্ত পূর্ণ':'এক বা একাধিক শর্ত অসম্পূর্ণ');
+  let roadmap='';
+  if(!r.stop&&r.roadmap?.length) roadmap=r.roadmap.map((x,i)=>x.stop?kv(`${i+1}. গ্রেড ${x.fromGrade} এর পর`,x.label):kv(`${i+1}. গ্রেড ${x.fromGrade} → ${x.toGrade}`,`${x.title} | ${x.years} বছর | সম্ভাব্য সম্পন্ন: ${fmtDate(x.completionDeadline)}`)).join('');
+  const body=section('প্রদত্ত তথ্য',overview)+section('হিসাবের বিস্তারিত ফলাফল',result)+(roadmap?section('ভবিষ্যৎ সম্ভাব্য পদোন্নতি রোডম্যাপ',roadmap):'')+`<div style="margin-top:14px;padding:10px 12px;border-left:4px solid #d59b35;background:#fff8e8;border-radius:8px;font-size:10.5px"><b>গুরুত্বপূর্ণ:</b> যোগ্যতার তারিখ ও পদোন্নতি প্রক্রিয়া সম্পন্নের তারিখ এক নয়। বার্ষিক চক্র অনুযায়ী প্রদর্শিত ৩০ জুন একটি conservative projected completion deadline, নিশ্চিত পদোন্নতির তারিখ নয়। Simplified দুই-তারিখ model ব্যবহৃত হয়েছে; একাধিক পূর্ববর্তী পদ বা বিশেষ technical/medical stream থাকলে মূল নীতিমালা যাচাই প্রয়োজন।</div>`;
+  return reportShell('পদোন্নতি হিসাবের বিস্তারিত প্রতিবেদন','A4 PDF · যোগ্যতা, অভিজ্ঞতা পয়েন্ট, বার্ষিক চক্র ও ভবিষ্যৎ রোডম্যাপ',body);
+}
+function salaryReportHtml(r){
+  const f=r.input||{};
+  const inputs=kv('গ্রেড',`গ্রেড ${r.grade}`)+kv('Fixation/Joining Stage',`ধাপ ${Number(f.fixStage||0)+1}`)+kv('Post-2015 Annual Increment',`${Number(f.postInc||0)} টি`)+kv('বর্তমান ২০১৫ ধাপ',`ধাপ ${r.currentIndex+1}`)+kv('হিসাবের তারিখ',f.date||'—')+kv('কর্মচারী শ্রেণি',categoryBn[f.category]||f.category||'—')+kv('বাসা সুবিধা',f.housing==='yes'?'হ্যাঁ':'না')+kv('শিক্ষা ভাতার সন্তান',`${f.children||0} জন`)+kv('টিফিন ভাতা',f.tiffin==='yes'?'প্রযোজ্য':'প্রযোজ্য নয়')+kv('কর্মস্থল',f.zone==='dhaka'?'ঢাকা সিটি':'অন্যান্য');
+  const fixation=kv('২০১৫ বর্তমান Basic',`৳${money(r.currentBasic)}`)+kv('২০২৬ Full Fixed Basic',`৳${money(r.fixed)}`)+kv('Basic Increase',`৳${money(r.increase)}`)+kv('বাস্তবায়ন হার',`${(r.rate*100).toLocaleString('bn-BD')}%`)+kv('Implemented Increase',`৳${money(r.implemented)}`)+kv('প্রাপ্য Basic',`৳${money(r.payable)}`);
+  const allowances=kv('বাড়ি ভাড়া',`৳${money(r.house)}`)+kv('চিকিৎসা ভাতা',`৳${money(r.medical)}`)+kv('শিক্ষা ভাতা',`৳${money(r.education)}`)+kv('টিফিন ভাতা',`৳${money(r.tiffin)}`)+kv('যাতায়াত ভাতা',`৳${money(r.conveyance)}`)+kv('Gross Salary',`৳${money(r.gross)}`);
+  const deductions=kv('PF Subscription 10%',`৳${money(r.pf)}`)+kv('Benevolent',`৳${money(r.bene)}`)+kv('Health Insurance',`৳${money(r.health)}`)+kv('Group Insurance',`৳${money(r.group)}`)+kv('Revenue Stamp',`৳${money(r.stamp)}`)+kv('Association',`৳${money(r.association)}`)+kv('Tax',`৳${money(r.tax)}`)+kv('Loan',`৳${money(r.loan)}`)+kv('Other',`৳${money(r.other)}`)+kv('মোট কর্তন',`৳${money(r.deductions)}`)+kv('Net Salary',`৳${money(r.net)}`);
+  const body=section('হিসাবের ইনপুট',inputs)+section('পে-স্কেল ফিক্সেশন ও বাস্তবায়ন',fixation)+section('ভাতা ও মোট বেতন',allowances)+section('কর্তন ও নেট বেতন',deductions)+`<div style="margin-top:14px;padding:10px 12px;border-left:4px solid #2d6a5f;background:#eef9f6;border-radius:8px;font-size:10.5px"><b>হিসাবের নিয়ম:</b> Special Benefit সম্পূর্ণ বাদ। ৩১ ডিসেম্বর ২০২৭ পর্যন্ত house rent, medical, education, tiffin ও conveyance ২০১৫ Current Basic এবং ২০১৫ rule layer ধরে হিসাব করা হয়েছে। PF Subscription প্রাপ্য Basic-এর ১০%। PF Advance Installment default deduction-এ নেই। ২০২৮-এর নতুন allowance rate অনুমান করা হয়নি।</div>`;
+  return reportShell('পে-স্কেল ও বেতন হিসাবের বিস্তারিত প্রতিবেদন','A4 PDF · fixation, implementation, allowances, deductions, gross এবং net salary',body);
+}
+
+
 
 function Login({onLogin,onBack,lang,setLang}){
   const[email,setEmail]=useState(''),[password,setPassword]=useState(''),[err,setErr]=useState(''),[busy,setBusy]=useState(false);
@@ -188,11 +259,11 @@ function PromotionCenter(){
   const [f,setF]=useState({grade:'13',edu:'bachelor',currentDate:'',duDate:'',computer:'yes',acr:'yes'}),[result,setResult]=useState(null);
   function calc(){
     const rule=PROMO_RULES[f.grade];
-    if(!f.currentDate||!f.duDate)return setResult({error:'দুইটি যোগদানের তারিখ নির্বাচন করুন।'});
+    if(!f.currentDate||!f.duDate)return setResult({error:'দুইটি যোগদানের তারিখ নির্বাচন করুন।',input:{...f}});
     const current=new Date(f.currentDate),du=new Date(f.duDate),today=new Date();today.setHours(0,0,0,0);
-    if(du>current)return setResult({error:'প্রথম যোগদানের তারিখ বর্তমান পদে যোগদানের তারিখের পরে হতে পারে না।'});
-    if(!rule)return setResult({error:'এই গ্রেডের rule map পাওয়া যায়নি।'});
-    if(rule.noPromotion||rule.top)return setResult({stop:true,rule});
+    if(du>current)return setResult({error:'প্রথম যোগদানের তারিখ বর্তমান পদে যোগদানের তারিখের পরে হতে পারে না।',input:{...f}});
+    if(!rule)return setResult({error:'এই গ্রেডের rule map পাওয়া যায়নি।',input:{...f}});
+    if(rule.noPromotion||rule.top)return setResult({stop:true,rule,input:{...f}});
     const req=(rule.years&&rule.years[f.edu])||4;
     const eligible=addYears(current,req),cycle=annualPromotionCycle(eligible);
     const currentYears=Math.max(0,(today-current)/(365.2425*86400000));
@@ -200,7 +271,7 @@ function PromotionCenter(){
     const points=currentYears+(pastYears/3);
     const elapsed=diffYMD(current,today),remaining=today>=eligible?{y:0,m:0,d:0}:diffYMD(today,eligible);
     const prelim=today>=eligible&&f.computer==='yes'&&f.acr==='yes';
-    setResult({rule,req,eligible,cycle,points,elapsed,remaining,prelim,roadmap:futureRoadmap(f.grade,current,f.edu,6)});
+    setResult({rule,req,eligible,cycle,points,elapsed,remaining,prelim,roadmap:futureRoadmap(f.grade,current,f.edu,6),input:{...f}});
   }
   return <div>
     <div className="page-head"><div><h2>পদোন্নতি কেন্দ্র</h2><p>দুইটি তারিখ থেকে service, point, eligibility এবং annual promotion cycle স্বয়ংক্রিয়ভাবে হিসাব হবে।</p></div></div>
@@ -221,7 +292,7 @@ function PromotionCenter(){
 
 function PromotionResult({r}){
   if(r.error)return <div className="error">{r.error}</div>;
-  if(r.stop)return <section className="result-panel warn"><h3>{r.rule.target}</h3><p>রেফারেন্স: {r.rule.ref}</p></section>;
+  if(r.stop)return <div className="result-stack"><section className="result-panel warn"><h3>{r.rule.target}</h3><p>রেফারেন্স: {r.rule.ref||r.rule.page||'—'}</p></section><button className="primary wide" onClick={()=>saveA4Pdf(promotionReportHtml(r),`promotion-report-${Date.now()}.pdf`).catch(e=>alert('PDF তৈরি করা যায়নি: '+e.message))}><FileText size={17}/> বিস্তারিত A4 PDF ডাউনলোড</button></div>;
   return <div className="result-stack">
     <section className={'result-panel '+(r.prelim?'ok':'')}><small>সম্ভাব্য পরবর্তী পদোন্নতি</small><h3>{r.rule.target} — গ্রেড {r.rule.targetGrade}</h3><div className="big-date">{fmtDate(r.cycle.completionDeadline)}</div><p>Projected promotion-process completion deadline · নীতিগত যোগ্যতা পূর্ণ: {fmtDate(r.eligible)}</p></section>
     <section className="metric-grid">
@@ -230,6 +301,7 @@ function PromotionResult({r}){
     <section className="cycle-card"><h3>বার্ষিক পদোন্নতি প্রক্রিয়া</h3><div className="cycle-flow"><div><small>যোগ্যতা পূর্ণ</small><b>{fmtDate(r.eligible)}</b></div><span>→</span><div><small>আবেদন/সার্কুলার</small><b>{fmtDate(r.cycle.circularDeadline)}</b></div><span>→</span><div><small>Projected completion</small><b>{fmtDate(r.cycle.completionDeadline)}</b></div></div><p>নীতিমালায় প্রতি বছর ১ বার, ৩১ ডিসেম্বরের মধ্যে দরখাস্ত আহ্বান এবং জুন মাসের মধ্যে কার্যক্রম সম্পন্ন করার কথা বলা হয়েছে।</p></section>
     <section className="roadmap-card"><h3>ভবিষ্যৎ সম্ভাব্য Promotion Roadmap</h3>{r.roadmap.map((x,i)=>x.stop?<div className="roadmap-row stop" key={i}><b>{x.fromGrade} গ্রেডের পর</b><span>{x.label}</span></div>:<div className="roadmap-row" key={i}><div><b>{x.fromGrade} → {x.toGrade} · {x.title}</b><small>{x.years} বছর · {x.ref}</small></div><div><b>{fmtDate(x.completionDeadline)}</b><small>Projected completion</small></div></div>)}</section>
     <div className="notice"><b>সতর্কতা:</b> এটি simplified দুই-তারিখ model। একাধিক পূর্ববর্তী পদ বা technical/medical stream-এর বিশেষ শর্ত থাকলে অফিসিয়াল নীতিমালা যাচাই প্রয়োজন।</div>
+    <button className="primary wide" onClick={()=>saveA4Pdf(promotionReportHtml(r),`promotion-report-${Date.now()}.pdf`).catch(e=>alert('PDF তৈরি করা যায়নি: '+e.message))}><FileText size={17}/> বিস্তারিত A4 PDF ডাউনলোড</button>
   </div>
 }
 
@@ -247,7 +319,7 @@ function SalaryCalculator(){
     const pf=Math.round(payable*.10*100)/100,beneRate=f.category==='officer'?.05:f.category==='class4'?.0275:.04,bene=Math.round(payable*beneRate*100)/100;
     const health=Number(f.health||0),group=Number(f.group||0),stamp=Number(f.stamp||0),association=Number(f.association||0),tax=Number(f.tax||0),loan=Number(f.loan||0),other=Number(f.other||0);
     const deductions=pf+bene+health+group+stamp+association+tax+loan+other;
-    setR({grade,currentIndex,currentBasic,fixed,rate,increase,implemented,payable,house,medical,education,tiffin,conveyance,gross,pf,bene,health,group,stamp,association,tax,loan,other,deductions,net:gross-deductions});
+    setR({grade,currentIndex,currentBasic,fixed,rate,increase,implemented,payable,house,medical,education,tiffin,conveyance,gross,pf,bene,health,group,stamp,association,tax,loan,other,deductions,net:gross-deductions,input:{...f}});
   }
   useEffect(()=>{setF(x=>({...x,fixStage:'0',postInc:'0'}));setR(null)},[f.grade]);
   return <div>
@@ -283,6 +355,7 @@ function SalaryResult({r}){
       <section className="breakdown-card"><h3>Deduction</h3>{[['PF Subscription 10%',r.pf],['Benevolent',r.bene],['Health Insurance',r.health],['Group Insurance',r.group],['Revenue Stamp',r.stamp],['Association',r.association],['Tax',r.tax],['Loan',r.loan],['Other',r.other]].map(([l,v])=><div className="money-row" key={l}><span>{l}</span><b>৳{money(v)}</b></div>)}</section>
     </div>
     <div className="notice"><b>নিয়ম:</b> Special Benefit সম্পূর্ণ বাদ। ৩১ ডিসেম্বর ২০২৭ পর্যন্ত house rent/medical/education/tiffin/conveyance ২০১৫ current basic ও ২০১৫ rule layer ধরে হিসাব করা হয়েছে। PF Advance Installment default deduction-এ নেই। ২০২৮-এর নতুন allowance rate এখানে অনুমান করা হয়নি।</div>
+    <button className="primary wide" onClick={()=>saveA4Pdf(salaryReportHtml(r),`pay-scale-report-${Date.now()}.pdf`).catch(e=>alert('PDF তৈরি করা যায়নি: '+e.message))}><FileText size={17}/> বিস্তারিত A4 PDF ডাউনলোড</button>
   </div>
 }
 
