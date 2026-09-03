@@ -22,7 +22,7 @@ export default{async fetch(req,env){
   const C=cors(req);if(req.method==='OPTIONS')return new Response(null,{status:204,headers:C});
   const u=new URL(req.url);
   try{
-    if(u.pathname==='/api/health')return json({ok:true,service:'Employee Service ERP API',phase:4},200,C);
+    if(u.pathname==='/api/health')return json({ok:true,service:'Employee Service ERP API',phase:6},200,C);
 
     if(u.pathname==='/api/bootstrap'&&req.method==='POST'){
       const c=await env.DB.prepare('SELECT COUNT(*) c FROM users').first();
@@ -172,6 +172,79 @@ export default{async fetch(req,env){
       const id=Number(sh[1]);
       await env.DB.prepare('DELETE FROM service_history WHERE id=?').bind(id).run();
       await audit(env,user,'service_history_delete','service_history',id,{});
+      return json({ok:true},200,C);
+    }
+
+
+    // Phase 6: public Notice Board + Policy Library
+    if(u.pathname==='/api/public/notices'&&req.method==='GET'){
+      const lim=Math.min(Math.max(Number(u.searchParams.get('limit')||6),1),50);
+      const x=await env.DB.prepare(`SELECT id,title_bn,title_en,summary_bn,summary_en,category,publish_date,file_url,pinned,created_at
+        FROM notices WHERE is_public=1 AND is_active=1 ORDER BY pinned DESC,COALESCE(publish_date,created_at) DESC,id DESC LIMIT ?`).bind(lim).all();
+      return json({notices:x.results||[]},200,C);
+    }
+    if(u.pathname==='/api/public/policies'&&req.method==='GET'){
+      const lim=Math.min(Math.max(Number(u.searchParams.get('limit')||6),1),50);
+      const x=await env.DB.prepare(`SELECT id,title_bn,title_en,summary_bn,summary_en,category,reference_no,effective_date,publish_date,file_url,pinned,created_at
+        FROM policies WHERE is_public=1 AND is_active=1 ORDER BY pinned DESC,COALESCE(publish_date,effective_date,created_at) DESC,id DESC LIMIT ?`).bind(lim).all();
+      return json({policies:x.results||[]},200,C);
+    }
+
+    if(u.pathname==='/api/notices'&&req.method==='GET'){
+      if(!user)return json({error:'Unauthenticated'},401,C);
+      const x=await env.DB.prepare(`SELECT * FROM notices ORDER BY pinned DESC,COALESCE(publish_date,created_at) DESC,id DESC`).all();
+      return json({notices:x.results||[]},200,C);
+    }
+    if(u.pathname==='/api/notices'&&req.method==='POST'){
+      if(!canManage(user))return json({error:'Forbidden'},403,C);
+      const b=await req.json(); if(!String(b.title_bn||'').trim())return json({error:'Bangla title required'},400,C);
+      const r=await env.DB.prepare(`INSERT INTO notices(title_bn,title_en,summary_bn,summary_en,category,publish_date,file_url,is_public,is_active,pinned,created_by)
+        VALUES(?,?,?,?,?,?,?,?,?,?,?)`).bind(b.title_bn.trim(),b.title_en||null,b.summary_bn||null,b.summary_en||null,b.category||'general',b.publish_date||null,b.file_url||null,b.is_public?1:0,b.is_active===false?0:1,b.pinned?1:0,user.id).run();
+      await audit(env,user,'notice_create','notice',r.meta?.last_row_id,{title_bn:b.title_bn});
+      return json({ok:true,id:r.meta?.last_row_id||null},201,C);
+    }
+    const notice=u.pathname.match(/^\/api\/notices\/(\d+)$/);
+    if(notice&&req.method==='PUT'){
+      if(!canManage(user))return json({error:'Forbidden'},403,C);
+      const id=Number(notice[1]),b=await req.json(); if(!String(b.title_bn||'').trim())return json({error:'Bangla title required'},400,C);
+      await env.DB.prepare(`UPDATE notices SET title_bn=?,title_en=?,summary_bn=?,summary_en=?,category=?,publish_date=?,file_url=?,is_public=?,is_active=?,pinned=?,updated_at=CURRENT_TIMESTAMP WHERE id=?`)
+        .bind(b.title_bn.trim(),b.title_en||null,b.summary_bn||null,b.summary_en||null,b.category||'general',b.publish_date||null,b.file_url||null,b.is_public?1:0,b.is_active===false?0:1,b.pinned?1:0,id).run();
+      await audit(env,user,'notice_update','notice',id,{});
+      return json({ok:true},200,C);
+    }
+    if(notice&&req.method==='DELETE'){
+      if(!canDelete(user))return json({error:'Forbidden'},403,C);
+      const id=Number(notice[1]); await env.DB.prepare('DELETE FROM notices WHERE id=?').bind(id).run();
+      await audit(env,user,'notice_delete','notice',id,{});
+      return json({ok:true},200,C);
+    }
+
+    if(u.pathname==='/api/policies'&&req.method==='GET'){
+      if(!user)return json({error:'Unauthenticated'},401,C);
+      const x=await env.DB.prepare(`SELECT * FROM policies ORDER BY pinned DESC,COALESCE(publish_date,effective_date,created_at) DESC,id DESC`).all();
+      return json({policies:x.results||[]},200,C);
+    }
+    if(u.pathname==='/api/policies'&&req.method==='POST'){
+      if(!canManage(user))return json({error:'Forbidden'},403,C);
+      const b=await req.json(); if(!String(b.title_bn||'').trim())return json({error:'Bangla title required'},400,C);
+      const r=await env.DB.prepare(`INSERT INTO policies(title_bn,title_en,summary_bn,summary_en,category,reference_no,effective_date,publish_date,file_url,is_public,is_active,pinned,created_by)
+        VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`).bind(b.title_bn.trim(),b.title_en||null,b.summary_bn||null,b.summary_en||null,b.category||'general',b.reference_no||null,b.effective_date||null,b.publish_date||null,b.file_url||null,b.is_public?1:0,b.is_active===false?0:1,b.pinned?1:0,user.id).run();
+      await audit(env,user,'policy_create','policy',r.meta?.last_row_id,{title_bn:b.title_bn});
+      return json({ok:true,id:r.meta?.last_row_id||null},201,C);
+    }
+    const policy=u.pathname.match(/^\/api\/policies\/(\d+)$/);
+    if(policy&&req.method==='PUT'){
+      if(!canManage(user))return json({error:'Forbidden'},403,C);
+      const id=Number(policy[1]),b=await req.json(); if(!String(b.title_bn||'').trim())return json({error:'Bangla title required'},400,C);
+      await env.DB.prepare(`UPDATE policies SET title_bn=?,title_en=?,summary_bn=?,summary_en=?,category=?,reference_no=?,effective_date=?,publish_date=?,file_url=?,is_public=?,is_active=?,pinned=?,updated_at=CURRENT_TIMESTAMP WHERE id=?`)
+        .bind(b.title_bn.trim(),b.title_en||null,b.summary_bn||null,b.summary_en||null,b.category||'general',b.reference_no||null,b.effective_date||null,b.publish_date||null,b.file_url||null,b.is_public?1:0,b.is_active===false?0:1,b.pinned?1:0,id).run();
+      await audit(env,user,'policy_update','policy',id,{});
+      return json({ok:true},200,C);
+    }
+    if(policy&&req.method==='DELETE'){
+      if(!canDelete(user))return json({error:'Forbidden'},403,C);
+      const id=Number(policy[1]); await env.DB.prepare('DELETE FROM policies WHERE id=?').bind(id).run();
+      await audit(env,user,'policy_delete','policy',id,{});
       return json({ok:true},200,C);
     }
 

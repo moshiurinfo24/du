@@ -205,6 +205,14 @@ function Login({onLogin,onBack,lang,setLang}){
 function PublicHome({onLogin,lang,setLang}){
   const t=I18N[lang], en=lang==='en';
   const [publicTool,setPublicTool]=useState('promotion');
+  const [publicNotices,setPublicNotices]=useState([]);
+  const [publicPolicies,setPublicPolicies]=useState([]);
+  useEffect(()=>{
+    Promise.all([
+      api('/api/public/notices?limit=6').catch(()=>({notices:[]})),
+      api('/api/public/policies?limit=6').catch(()=>({policies:[]}))
+    ]).then(([n,p])=>{setPublicNotices(n.notices||[]);setPublicPolicies(p.policies||[])});
+  },[]);
   const scrollTo=(id)=>requestAnimationFrame(()=>document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'}));
   const openTool=(tool)=>{setPublicTool(tool);scrollTo('public-calculator');};
   const copy=en?{
@@ -278,14 +286,29 @@ function PublicHome({onLogin,lang,setLang}){
 
     <section id="policies" className="public-section info-stage">
       <div className="section-title centered"><span>{en?'REFERENCE':'তথ্য সহায়িকা'}</span><h2>{copy.policyTitle}</h2><p>{copy.policySub}</p></div>
-      <div className="info-grid three-col">
+      {publicPolicies.length>0?<div className="library-grid">
+        {publicPolicies.map(p=><article className="library-card" key={p.id}>
+          <div className="library-top"><span className="library-type"><BookOpen size={15}/>{en?'Policy':'নীতিমালা'}</span>{p.category&&<small>{p.category}</small>}</div>
+          <h3>{en?(p.title_en||p.title_bn):(p.title_bn||p.title_en)}</h3>
+          <p>{en?(p.summary_en||p.summary_bn||''):(p.summary_bn||p.summary_en||'')}</p>
+          <div className="library-meta"><span><CalendarDays size={14}/>{p.effective_date||p.publish_date||'—'}</span>{p.reference_no&&<span><FileText size={14}/>{p.reference_no}</span>}</div>
+          {p.file_url&&<a className="library-link" href={p.file_url} target="_blank" rel="noreferrer">{en?'Open document':'ডকুমেন্ট খুলুন'}<ArrowRight size={14}/></a>}
+        </article>)}
+      </div>:<div className="info-grid three-col">
         {[[BookOpen,copy.policy1,copy.policy1d],[WalletCards,copy.policy2,copy.policy2d],[ShieldCheck,copy.policy3,copy.policy3d]].map(([I,h,d])=><article className="info-card" key={h}><div className="info-icon"><I/></div><h3>{h}</h3><p>{d}</p></article>)}
-      </div>
+      </div>}
     </section>
 
     <section id="notices" className="public-section soft-stage">
       <div className="section-title centered"><span>{en?'UPDATES':'আপডেট'}</span><h2>{copy.noticeTitle}</h2><p>{copy.noticeSub}</p></div>
-      <div className="empty-premium"><div className="empty-icon"><Bell/></div><div><h3>{copy.noticeEmpty}</h3><p>{copy.noticeHint}</p></div></div>
+      {publicNotices.length>0?<div className="notice-list-public">
+        {publicNotices.map(n=><article className="notice-public-card" key={n.id}>
+          <div className="notice-date"><CalendarDays size={16}/><span>{n.publish_date||n.created_at?.slice?.(0,10)||'—'}</span></div>
+          <div><div className="notice-tags">{n.pinned?<span>{en?'Important':'গুরুত্বপূর্ণ'}</span>:null}{n.category?<small>{n.category}</small>:null}</div>
+          <h3>{en?(n.title_en||n.title_bn):(n.title_bn||n.title_en)}</h3><p>{en?(n.summary_en||n.summary_bn||''):(n.summary_bn||n.summary_en||'')}</p>
+          {n.file_url&&<a className="library-link" href={n.file_url} target="_blank" rel="noreferrer">{en?'View notice':'নোটিশ দেখুন'}<ArrowRight size={14}/></a>}</div>
+        </article>)}
+      </div>:<div className="empty-premium"><div className="empty-icon"><Bell/></div><div><h3>{copy.noticeEmpty}</h3><p>{copy.noticeHint}</p></div></div>}
     </section>
 
     <section id="forms" className="public-section info-stage">
@@ -641,6 +664,72 @@ function MasterDirectory(){
   </div>
 }
 
+
+function NoticePolicyCenter({lang='bn',canManage=false}){
+  const en=lang==='en';
+  const [tab,setTab]=useState('notices'),[notices,setNotices]=useState([]),[policies,setPolicies]=useState([]),[busy,setBusy]=useState(false),[err,setErr]=useState('');
+  const blankNotice={title_bn:'',title_en:'',summary_bn:'',summary_en:'',category:'general',publish_date:todayLocalIso(),file_url:'',is_public:true,is_active:true,pinned:false};
+  const blankPolicy={title_bn:'',title_en:'',summary_bn:'',summary_en:'',category:'general',reference_no:'',effective_date:'',publish_date:todayLocalIso(),file_url:'',is_public:true,is_active:true,pinned:false};
+  const [form,setForm]=useState(blankNotice),[editing,setEditing]=useState(null);
+  async function load(){
+    setBusy(true);setErr('');
+    try{
+      const [n,p]=await Promise.all([api('/api/notices'),api('/api/policies')]);
+      setNotices(n.notices||[]);setPolicies(p.policies||[]);
+    }catch(e){setErr(e.message)}finally{setBusy(false)}
+  }
+  useEffect(()=>{load()},[]);
+  function switchTab(v){setTab(v);setEditing(null);setForm(v==='notices'?blankNotice:blankPolicy)}
+  function edit(item){setEditing(item);setForm({...item,is_public:!!item.is_public,is_active:!!item.is_active,pinned:!!item.pinned});window.scrollTo({top:0,behavior:'smooth'})}
+  async function save(e){
+    e.preventDefault(); if(!canManage)return;
+    setBusy(true);setErr('');
+    try{
+      const endpoint=tab==='notices'?'/api/notices':'/api/policies';
+      const method=editing?'PUT':'POST'; const path=editing?`${endpoint}/${editing.id}`:endpoint;
+      await api(path,{method,body:JSON.stringify(form)});
+      setEditing(null);setForm(tab==='notices'?blankNotice:blankPolicy);await load();
+    }catch(e){setErr(e.message)}finally{setBusy(false)}
+  }
+  async function remove(item){
+    if(!canManage)return;
+    if(!confirm(en?'Delete this item?':'এই আইটেমটি মুছে ফেলবেন?'))return;
+    try{await api(`/${'api'}/${tab}/${item.id}`,{method:'DELETE'});load()}catch(e){alert(e.message)}
+  }
+  const list=tab==='notices'?notices:policies;
+  const titleOf=x=>en?(x.title_en||x.title_bn):(x.title_bn||x.title_en);
+  const summaryOf=x=>en?(x.summary_en||x.summary_bn):(x.summary_bn||x.summary_en);
+  return <div className="content-library">
+    <div className="page-head"><div><h2>{en?'Notice Board & Policy Library':'নোটিশ বোর্ড ও নীতিমালা লাইব্রেরি'}</h2><p>{en?'Publish verified notices and maintain a searchable policy/reference library.':'যাচাইকৃত নোটিশ প্রকাশ এবং নীতিমালা/রেফারেন্স লাইব্রেরি পরিচালনা করুন।'}</p></div></div>
+    <div className="library-tabs"><button className={tab==='notices'?'active':''} onClick={()=>switchTab('notices')}><Bell size={16}/>{en?'Notices':'নোটিশ'}</button><button className={tab==='policies'?'active':''} onClick={()=>switchTab('policies')}><BookOpen size={16}/>{en?'Policies & Rules':'নীতিমালা ও বিধি'}</button></div>
+    {err&&<div className="error">{err}</div>}
+    {canManage&&<form className="library-editor" onSubmit={save}>
+      <div className="library-editor-head"><div><b>{editing?(en?'Edit item':'আইটেম সম্পাদনা'):(en?'Add new item':'নতুন আইটেম যোগ করুন')}</b><small>{en?'Bangla and English content are stored separately.':'বাংলা ও ইংরেজি কনটেন্ট আলাদাভাবে সংরক্ষিত হবে।'}</small></div>{editing&&<button type="button" className="secondary" onClick={()=>{setEditing(null);setForm(tab==='notices'?blankNotice:blankPolicy)}}>{en?'Cancel edit':'সম্পাদনা বাতিল'}</button>}</div>
+      <div className="form-grid">
+        <label>{en?'Bangla title':'বাংলা শিরোনাম'}<input required value={form.title_bn||''} onChange={e=>setForm({...form,title_bn:e.target.value})}/></label>
+        <label>{en?'English title':'ইংরেজি শিরোনাম'}<input value={form.title_en||''} onChange={e=>setForm({...form,title_en:e.target.value})}/></label>
+        <label className="span-2">{en?'Bangla summary':'বাংলা সারাংশ'}<textarea rows="3" value={form.summary_bn||''} onChange={e=>setForm({...form,summary_bn:e.target.value})}/></label>
+        <label className="span-2">{en?'English summary':'ইংরেজি সারাংশ'}<textarea rows="3" value={form.summary_en||''} onChange={e=>setForm({...form,summary_en:e.target.value})}/></label>
+        <label>{en?'Category':'ক্যাটাগরি'}<input value={form.category||''} onChange={e=>setForm({...form,category:e.target.value})}/></label>
+        <label>{en?'Publish date':'প্রকাশের তারিখ'}<input type="date" value={form.publish_date||''} onChange={e=>setForm({...form,publish_date:e.target.value})}/></label>
+        {tab==='policies'&&<><label>{en?'Reference / order no.':'রেফারেন্স / আদেশ নং'}<input value={form.reference_no||''} onChange={e=>setForm({...form,reference_no:e.target.value})}/></label><label>{en?'Effective date':'কার্যকর তারিখ'}<input type="date" value={form.effective_date||''} onChange={e=>setForm({...form,effective_date:e.target.value})}/></label></>}
+        <label className="span-2">{en?'Document URL (PDF/Drive/public link)':'ডকুমেন্ট URL (PDF/Drive/public link)'}<input type="url" value={form.file_url||''} onChange={e=>setForm({...form,file_url:e.target.value})} placeholder="https://..."/></label>
+        <label className="check-line"><input type="checkbox" checked={!!form.is_public} onChange={e=>setForm({...form,is_public:e.target.checked})}/>{en?'Show publicly':'পাবলিকভাবে দেখান'}</label>
+        <label className="check-line"><input type="checkbox" checked={!!form.pinned} onChange={e=>setForm({...form,pinned:e.target.checked})}/>{en?'Mark important':'গুরুত্বপূর্ণ হিসেবে রাখুন'}</label>
+        <label className="check-line"><input type="checkbox" checked={!!form.is_active} onChange={e=>setForm({...form,is_active:e.target.checked})}/>{en?'Active':'সক্রিয়'}</label>
+        <div className="span-2"><button className="primary" disabled={busy}><Save size={16}/>{busy?(en?'Saving...':'সংরক্ষণ হচ্ছে...'):(editing?(en?'Update':'আপডেট করুন'):(en?'Publish':'প্রকাশ করুন'))}</button></div>
+      </div>
+    </form>}
+    <div className="library-admin-list">
+      {busy&&list.length===0?<div className="empty">{en?'Loading...':'লোড হচ্ছে...'}</div>:list.length===0?<div className="empty">{en?'No records yet.':'এখনো কোনো রেকর্ড নেই।'}</div>:list.map(x=><article className="library-admin-card" key={x.id}>
+        <div className="library-admin-icon">{tab==='notices'?<Bell/>:<BookOpen/>}</div><div className="library-admin-body"><div className="library-admin-title"><div><h3>{titleOf(x)}</h3><p>{summaryOf(x)||'—'}</p></div><div className="status-stack">{x.pinned&&<span className="badge active">{en?'Important':'গুরুত্বপূর্ণ'}</span>}<span className={'badge '+(x.is_public?'active':'')}>{x.is_public?(en?'Public':'পাবলিক'):(en?'Private':'প্রাইভেট')}</span></div></div>
+        <div className="library-admin-meta"><span><CalendarDays size={14}/>{x.publish_date||'—'}</span>{x.category&&<span>{x.category}</span>}{x.reference_no&&<span><FileText size={14}/>{x.reference_no}</span>}{x.file_url&&<a href={x.file_url} target="_blank" rel="noreferrer">{en?'Open document':'ডকুমেন্ট খুলুন'}</a>}</div></div>
+        {canManage&&<div className="library-admin-actions"><button className="icon-btn" onClick={()=>edit(x)}><Edit3 size={16}/></button><button className="icon-btn danger" onClick={()=>remove(x)}><Trash2 size={16}/></button></div>}
+      </article>)}
+    </div>
+  </div>
+}
+
 function AdminPanel(){
   const[stats,setStats]=useState(null),[err,setErr]=useState('');
   useEffect(()=>{api('/api/admin/stats').then(setStats).catch(e=>setErr(e.message))},[]);
@@ -661,6 +750,7 @@ function App(){
       <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}><LayoutDashboard size={18}/>{lang==='en'?'My Dashboard':'আমার ড্যাশবোর্ড'}</button>
       <button className={page==='promotion'?'active':''} onClick={()=>setPage('promotion')}><TrendingUp size={18}/>{lang==='en'?'Promotion':'পদোন্নতি'}</button>
       <button className={page==='salary'?'active':''} onClick={()=>setPage('salary')}><WalletCards size={18}/>{lang==='en'?'Salary & Pay Scale':'বেতন ও পে-স্কেল'}</button>
+      <button className={page==='library'?'active':''} onClick={()=>setPage('library')}><BookOpen size={18}/>{lang==='en'?'Notices & Policies':'নোটিশ ও নীতিমালা'}</button>
       {admin&&<button className={page==='employees'?'active':''} onClick={()=>setPage('employees')}><Users size={18}/>{lang==='en'?'Employee Management':'কর্মকর্তা-কর্মচারী ব্যবস্থাপনা'}</button>}
       {admin&&<button className={page==='directory'?'active':''} onClick={()=>setPage('directory')}><Building2 size={18}/>{lang==='en'?'Department & Designation':'বিভাগ ও পদবি'}</button>}
       {admin&&<button className={page==='admin'?'active':''} onClick={()=>setPage('admin')}><ShieldCheck size={18}/>{lang==='en'?'Admin Panel':'অ্যাডমিন প্যানেল'}</button>}
@@ -669,6 +759,7 @@ function App(){
       {page==='dashboard'&&<DashboardHome user={user} onPage={setPage} lang={lang}/>}
       {page==='promotion'&&<PromotionCenter lang={lang}/>}
       {page==='salary'&&<SalaryCalculator lang={lang}/>}
+      {page==='library'&&<NoticePolicyCenter lang={lang} canManage={admin}/>}
       {page==='employees'&&admin&&<EmployeeManagement lang={lang}/>}
       {page==='directory'&&admin&&<MasterDirectory lang={lang}/>}
       {page==='admin'&&admin&&<AdminPanel lang={lang}/>}
