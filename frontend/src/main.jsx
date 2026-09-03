@@ -405,12 +405,39 @@ function TrendLine({data=[]}){
 function AdminAnalyticsDashboard({user,onPage,lang='bn'}){
   const en=lang==='en';
   const [d,setD]=useState(null),[busy,setBusy]=useState(true),[err,setErr]=useState('');
-  async function load(){setBusy(true);setErr('');try{setD(await api('/api/admin/dashboard-analytics'))}catch(e){setErr(e.message)}finally{setBusy(false)}}
+  async function load(){
+    setBusy(true);setErr('');
+    try{
+      setD(await api('/api/admin/dashboard-analytics'));
+    }catch(e){
+      try{
+        const [s,h]=await Promise.all([
+          api('/api/admin/stats'),
+          api('/api/admin/system-health').catch(()=>({ok:true,active_sessions:0,expired_sessions:0,inactive_users:0,recovery_ready_users:0}))
+        ]);
+        setD({
+          kpis:{
+            total_users:s.users||0,active_users:s.users||0,officers:0,employees:s.users||0,
+            career_profiles:0,departments:s.departments||0,designations:s.designations||0,
+            notices:0,policies:0
+          },
+          health:h||{ok:true},
+          usage:[],activity_trend:[
+            {label:'-6',value:0},{label:'-5',value:0},{label:'-4',value:0},{label:'-3',value:0},
+            {label:'-2',value:0},{label:'-1',value:0},{label:'Today',value:0}
+          ],
+          recent_users:[],recent_audit:[]
+        });
+        setErr(en?'Analytics API is not active yet; basic system statistics are shown.':'অ্যানালিটিক্স API এখনো সক্রিয় হয়নি; আপাতত মৌলিক সিস্টেম পরিসংখ্যান দেখানো হচ্ছে।');
+      }catch(e2){setErr(e2.message)}
+    }finally{setBusy(false)}
+  }
   useEffect(()=>{load()},[]);
   if(busy)return <div className="loading">{en?'Loading dashboard...':'ড্যাশবোর্ড লোড হচ্ছে...'}</div>;
-  if(err)return <div className="error">{err}</div>;
+  if(!d&&err)return <div className="error">{err}</div>;
   const k=d?.kpis||{},health=d?.health||{},usage=d?.usage||[],activity=d?.activity_trend||[],recent=d?.recent_users||[],audit=d?.recent_audit||[];
   return <div className="admin-analytics-dashboard">
+    {err&&<div className="notice"><b>{en?'Dashboard notice:':'ড্যাশবোর্ড নোটিশ:'}</b> {err}</div>}
     <section className="analytics-hero">
       <div><span>{en?'PREMIUM SYSTEM COMMAND CENTER':'প্রিমিয়াম সিস্টেম কমান্ড সেন্টার'}</span><h1>{en?'System Administrator Dashboard':'সিস্টেম ব্যবস্থাপক ড্যাশবোর্ড'}</h1><p>{en?'Live platform overview, user analytics, security health, content activity and system controls in one workspace.':'প্ল্যাটফর্ম সারসংক্ষেপ, ব্যবহারকারী বিশ্লেষণ, নিরাপত্তা, কনটেন্ট কার্যক্রম ও সিস্টেম কন্ট্রোল এক জায়গায়।'}</p></div>
       <div className="hero-command-panel"><div><MonitorCheck/><span>{en?'System status':'সিস্টেম অবস্থা'}</span><b>{health.ok?(en?'Healthy':'সচল'):(en?'Attention':'যাচাই প্রয়োজন')}</b></div><button onClick={()=>onPage('admin')}><Command/>{en?'Open System Control':'সিস্টেম কন্ট্রোল খুলুন'}</button></div>
@@ -1031,6 +1058,114 @@ function CalculatorCenter({lang='bn',onPage}){
     <section className="calculator-safety-note"><ShieldCheck/><div><b>{en?'Verified-only expansion':'শুধু যাচাইকৃত হিসাব'}</b><p>{en?'No pension, gratuity, leave, tax, increment or future allowance formula has been added without a verified governing rule.':'যাচাইকৃত নীতিমালা ছাড়া পেনশন, গ্র্যাচুইটি, ছুটি, কর, ইনক্রিমেন্ট বা ভবিষ্যৎ ভাতার কোনো সূত্র যোগ করা হয়নি।'}</p></div></section>
   </div>
 }
+
+function MyCareer({lang='bn'}){
+  const en=lang==='en';
+  const blankProfile={first_joining_date:'',current_post:'',current_grade:'',current_post_joining_date:'',employment_type:'',office_name:'',department_name:'',employee_reference:'',retirement_age:'',notes:''};
+  const [profile,setProfile]=useState(blankProfile),[education,setEducation]=useState([]),[events,setEvents]=useState([]),
+    [loading,setLoading]=useState(true),[saving,setSaving]=useState(false),[err,setErr]=useState(''),[msg,setMsg]=useState('');
+  const [eduForm,setEduForm]=useState({level:'',institution:'',subject:'',passing_year:'',result:'',notes:''});
+  const [eventForm,setEventForm]=useState({event_type:'promotion',event_date:'',title:'',post_name:'',grade:'',office_name:'',reference_no:'',notes:''});
+
+  async function load(){
+    setLoading(true);setErr('');
+    try{
+      const x=await api('/api/my-career');
+      setProfile({...blankProfile,...(x.profile||{})});
+      setEducation(x.education||[]);
+      setEvents(x.events||[]);
+    }catch(e){setErr(e.message)}finally{setLoading(false)}
+  }
+  useEffect(()=>{load()},[]);
+
+  async function saveProfile(e){
+    e.preventDefault();setSaving(true);setErr('');setMsg('');
+    try{
+      await api('/api/my-career/profile',{method:'PUT',body:JSON.stringify(profile)});
+      setMsg(en?'Career profile saved.':'চাকরি প্রোফাইল সংরক্ষণ হয়েছে।');await load();
+    }catch(e){setErr(e.message)}finally{setSaving(false)}
+  }
+  async function addEducation(e){
+    e.preventDefault();setErr('');setMsg('');
+    try{
+      await api('/api/my-career/education',{method:'POST',body:JSON.stringify(eduForm)});
+      setEduForm({level:'',institution:'',subject:'',passing_year:'',result:'',notes:''});await load();
+    }catch(e){setErr(e.message)}
+  }
+  async function delEducation(id){
+    if(!confirm(en?'Delete this education record?':'এই শিক্ষাগত রেকর্ড মুছে ফেলবেন?'))return;
+    try{await api(`/api/my-career/education/${id}`,{method:'DELETE'});await load()}catch(e){alert(e.message)}
+  }
+  async function addEvent(e){
+    e.preventDefault();setErr('');setMsg('');
+    try{
+      await api('/api/my-career/events',{method:'POST',body:JSON.stringify(eventForm)});
+      setEventForm({event_type:'promotion',event_date:'',title:'',post_name:'',grade:'',office_name:'',reference_no:'',notes:''});await load();
+    }catch(e){setErr(e.message)}
+  }
+  async function delEvent(id){
+    if(!confirm(en?'Delete this career record?':'এই চাকরি রেকর্ড মুছে ফেলবেন?'))return;
+    try{await api(`/api/my-career/events/${id}`,{method:'DELETE'});await load()}catch(e){alert(e.message)}
+  }
+
+  if(loading)return <div className="loading">{en?'Loading...':'লোড হচ্ছে...'}</div>;
+  const c=(k,v)=>setProfile(x=>({...x,[k]:v}));
+  const eventLabels=en?{appointment:'Appointment/Joining',promotion:'Promotion',transfer:'Transfer/Posting',increment:'Increment',training:'Training',grade_change:'Grade Change',other:'Other'}:{appointment:'নিয়োগ/যোগদান',promotion:'পদোন্নতি',transfer:'বদলি/পোস্টিং',increment:'ইনক্রিমেন্ট',training:'প্রশিক্ষণ',grade_change:'গ্রেড পরিবর্তন',other:'অন্যান্য'};
+  return <div className="my-career-page">
+    <section className="career-hero">
+      <div><span>{en?'PERSONAL DIGITAL SERVICE BOOK':'ব্যক্তিগত ডিজিটাল সার্ভিস বুক'}</span><h2>{en?'My Career':'আমার চাকরি'}</h2><p>{en?'Maintain your own career information, education and service timeline. This is a personal record, not an official service book or administrative order.':'নিজের চাকরি, শিক্ষা ও সার্ভিস টাইমলাইন নিজে সংরক্ষণ করুন। এটি ব্যক্তিগত রেকর্ড; অফিসিয়াল সার্ভিস বুক বা প্রশাসনিক আদেশ নয়।'}</p></div>
+      <div className="career-lock"><ShieldCheck size={16}/>{en?'Private self-service record':'ব্যক্তিগত স্ব-পরিচালিত রেকর্ড'}</div>
+    </section>
+
+    {err&&<div className="error">{err}</div>}{msg&&<div className="auth-success">{msg}</div>}
+
+    <section className="career-card">
+      <div className="career-section-head"><div><BookUser/><div><h3>{en?'Career Profile':'চাকরি প্রোফাইল'}</h3><p>{en?'Core employment information used by your personal dashboard and future calculators.':'ব্যক্তিগত ড্যাশবোর্ড ও ভবিষ্যৎ হিসাবের জন্য মূল চাকরি তথ্য।'}</p></div></div></div>
+      <form className="form-grid" onSubmit={saveProfile}>
+        <DMY label={en?'First joining date':'প্রথম যোগদানের তারিখ'} value={profile.first_joining_date||''} onChange={v=>c('first_joining_date',v)}/>
+        <label>{en?'Current post':'বর্তমান পদ'}<input value={profile.current_post||''} onChange={e=>c('current_post',e.target.value)}/></label>
+        <label>{en?'Current grade':'বর্তমান গ্রেড'}<select value={profile.current_grade||''} onChange={e=>c('current_grade',e.target.value)}><option value="">{en?'Select':'নির্বাচন'}</option>{Array.from({length:20},(_,i)=>i+1).map(g=><option key={g} value={g}>{en?`Grade ${g}`:`গ্রেড ${g.toLocaleString('bn-BD')}`}</option>)}</select></label>
+        <DMY label={en?'Current post joining date':'বর্তমান পদে যোগদানের তারিখ'} value={profile.current_post_joining_date||''} onChange={v=>c('current_post_joining_date',v)}/>
+        <label>{en?'Employment type':'চাকরির ধরন'}<select value={profile.employment_type||''} onChange={e=>c('employment_type',e.target.value)}><option value="">{en?'Select':'নির্বাচন'}</option><option value="permanent">{en?'Permanent':'স্থায়ী'}</option><option value="temporary">{en?'Temporary':'অস্থায়ী'}</option><option value="contract">{en?'Contract':'চুক্তিভিত্তিক'}</option></select></label>
+        <label>{en?'Office / Unit':'অফিস / ইউনিট'}<input value={profile.office_name||''} onChange={e=>c('office_name',e.target.value)}/></label>
+        <label>{en?'Department / Section':'বিভাগ / শাখা'}<input value={profile.department_name||''} onChange={e=>c('department_name',e.target.value)}/></label>
+        <label>{en?'Employee / Reference ID':'কর্মী / রেফারেন্স নম্বর'}<input value={profile.employee_reference||''} onChange={e=>c('employee_reference',e.target.value)}/></label>
+        <label>{en?'Applicable retirement age':'প্রযোজ্য অবসরের বয়স'}<input type="number" min="1" max="100" value={profile.retirement_age||''} onChange={e=>c('retirement_age',e.target.value)}/></label>
+        <label className="span-2">{en?'Personal notes':'ব্যক্তিগত নোট'}<textarea rows="3" value={profile.notes||''} onChange={e=>c('notes',e.target.value)}/></label>
+        <div className="span-2"><button className="primary" disabled={saving}><Save size={16}/>{saving?(en?'Saving...':'সংরক্ষণ হচ্ছে...'):(en?'Save Career Profile':'চাকরি প্রোফাইল সংরক্ষণ')}</button></div>
+      </form>
+    </section>
+
+    <section className="career-split">
+      <article className="career-card">
+        <div className="career-section-head"><div><GraduationCap/><div><h3>{en?'Education':'শিক্ষাগত যোগ্যতা'}</h3><p>{en?'Add your own education history.':'নিজের শিক্ষাগত ইতিহাস যোগ করুন।'}</p></div></div></div>
+        <form className="career-inline-form" onSubmit={addEducation}>
+          <input required placeholder={en?'Level / degree':'স্তর / ডিগ্রি'} value={eduForm.level} onChange={e=>setEduForm({...eduForm,level:e.target.value})}/>
+          <input placeholder={en?'Institution':'প্রতিষ্ঠান'} value={eduForm.institution} onChange={e=>setEduForm({...eduForm,institution:e.target.value})}/>
+          <input placeholder={en?'Subject':'বিষয়'} value={eduForm.subject} onChange={e=>setEduForm({...eduForm,subject:e.target.value})}/>
+          <input type="number" placeholder={en?'Year':'সন'} value={eduForm.passing_year} onChange={e=>setEduForm({...eduForm,passing_year:e.target.value})}/>
+          <button className="primary"><Plus size={15}/>{en?'Add':'যোগ করুন'}</button>
+        </form>
+        <div className="career-list">{education.length===0?<div className="empty">{en?'No education record yet.':'এখনো শিক্ষাগত রেকর্ড নেই।'}</div>:education.map(x=><div className="career-list-row" key={x.id}><div><b>{x.level}</b><small>{[x.subject,x.institution,x.passing_year].filter(Boolean).join(' · ')||'—'}</small></div><button className="icon-btn danger" onClick={()=>delEducation(x.id)}><Trash2 size={15}/></button></div>)}</div>
+      </article>
+
+      <article className="career-card">
+        <div className="career-section-head"><div><Milestone/><div><h3>{en?'Career Timeline':'চাকরি টাইমলাইন'}</h3><p>{en?'Promotion, posting, increment, training and other milestones.':'পদোন্নতি, পোস্টিং, ইনক্রিমেন্ট, প্রশিক্ষণ ও অন্যান্য ধাপ।'}</p></div></div></div>
+        <form className="career-inline-form" onSubmit={addEvent}>
+          <select value={eventForm.event_type} onChange={e=>setEventForm({...eventForm,event_type:e.target.value})}>{Object.entries(eventLabels).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select>
+          <input type="date" required value={eventForm.event_date} onChange={e=>setEventForm({...eventForm,event_date:e.target.value})}/>
+          <input required placeholder={en?'Title':'শিরোনাম'} value={eventForm.title} onChange={e=>setEventForm({...eventForm,title:e.target.value})}/>
+          <input placeholder={en?'Post / grade':'পদ / গ্রেড'} value={eventForm.post_name} onChange={e=>setEventForm({...eventForm,post_name:e.target.value})}/>
+          <button className="primary"><Plus size={15}/>{en?'Add':'যোগ করুন'}</button>
+        </form>
+        <div className="career-timeline">{events.length===0?<div className="empty">{en?'No career event yet.':'এখনো চাকরি ইভেন্ট নেই।'}</div>:events.map(x=><div className="career-timeline-row" key={x.id}><div className="career-timeline-dot"></div><div><small>{x.event_date} · {eventLabels[x.event_type]||x.event_type}</small><b>{x.title}</b><p>{[x.post_name,x.grade?`${en?'Grade':'গ্রেড'} ${x.grade}`:'',x.office_name].filter(Boolean).join(' · ')}</p></div><button className="icon-btn danger" onClick={()=>delEvent(x.id)}><Trash2 size={15}/></button></div>)}</div>
+      </article>
+    </section>
+
+    <section className="calculator-safety-note"><ShieldCheck/><div><b>{en?'Personal record only':'শুধু ব্যক্তিগত রেকর্ড'}</b><p>{en?'This module does not approve promotions, salary fixation, leave or any administrative decision.':'এই মডিউল পদোন্নতি, বেতন নির্ধারণ, ছুটি বা কোনো প্রশাসনিক সিদ্ধান্ত অনুমোদন করে না।'}</p></div></section>
+  </div>
+}
+
 
 function NoticePolicyCenter({lang='bn',canManage=false}){
   const en=lang==='en';
