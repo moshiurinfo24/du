@@ -35,7 +35,7 @@ export default{async fetch(req,env){
   if(req.method==='OPTIONS')return new Response(null,{status:204,headers:C});
   const u=new URL(req.url);
   try{
-    if(u.pathname==='/api/health')return json({ok:true,service:'Employee Service ERP API',phase:'14'},200,C);
+    if(u.pathname==='/api/health')return json({ok:true,service:'Employee Service ERP API',phase:'14.1'},200,C);
 
     // Phase 8 FREE: self-service registration and recovery code password reset
     if(u.pathname==='/api/register'&&req.method==='POST'){
@@ -226,7 +226,7 @@ export default{async fetch(req,env){
     }
 
     if(u.pathname==='/api/phase-status'&&req.method==='GET'){
-      return json({ok:true,phase:'14',routes:{my_career:true,admin_analytics:true,usage:true,recovery:true,login_analytics:true,public_traffic:true,salary_history:true,personal_leave_record:true}},200,C);
+      return json({ok:true,phase:'14.1',routes:{my_career:true,admin_analytics:true,usage:true,recovery:true,login_analytics:true,public_traffic:true,salary_history:true,personal_leave_record:true}},200,C);
     }
 
     // Phase 12: Personal Salary & Pay History
@@ -245,10 +245,10 @@ export default{async fetch(req,env){
       await audit(env,user,'salary_history_create','salary_history',r.meta?.last_row_id,{});
       return json({ok:true,id:r.meta?.last_row_id||null},201,C);
     }
-    const sh=u.pathname.match(/^\/api\/my-salary-history\/(\d+)$/);
-    if(sh&&req.method==='DELETE'){
+    const salaryHistoryMatch=u.pathname.match(/^\/api\/my-salary-history\/(\d+)$/);
+    if(salaryHistoryMatch&&req.method==='DELETE'){
       if(!user)return json({error:'Unauthenticated'},401,C);
-      const id=Number(sh[1]);
+      const id=Number(salaryHistoryMatch[1]);
       await env.DB.prepare(`DELETE FROM salary_history WHERE id=? AND user_id=?`).bind(id,user.id).run();
       await audit(env,user,'salary_history_delete','salary_history',id,{});
       return json({ok:true},200,C);
