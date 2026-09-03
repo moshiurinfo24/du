@@ -51,7 +51,7 @@ async function derive(p,s){
         name:'PBKDF2',
         hash:'SHA-256',
         salt:s,
-        iterations:150000
+        iterations:100000
       },
       k,
       256
