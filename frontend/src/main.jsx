@@ -13,7 +13,7 @@ import {
   annualPromotionCycle,futureRoadmap,serviceExperiencePoints,fixed2026,implementationRate,houseRent2015
 } from './rules';
 
-const API=import.meta.env.VITE_API_BASE||'';
+const API=import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE||'';
 async function api(path,opts={}){
   const r=await fetch(API+path,{credentials:'include',headers:{'Content-Type':'application/json',...(opts.headers||{})},...opts});
   const d=await r.json().catch(()=>({}));
@@ -57,6 +57,10 @@ const I18N={
 };
 function LangToggle({lang,setLang}){return <button className="lang-btn" onClick={()=>setLang(lang==='bn'?'en':'bn')}>{I18N[lang].language}</button>}
 
+function todayLocalIso(){const d=new Date();const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,'0');const day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`}
+function fmtDateLang(d,lang='bn'){if(!d||isNaN(new Date(d)))return '—';return new Intl.DateTimeFormat(lang==='en'?'en-GB':'bn-BD',{day:'2-digit',month:'long',year:'numeric'}).format(new Date(d))}
+function numLang(v,lang='bn',digits=2){return Number(v||0).toLocaleString(lang==='en'?'en-US':'bn-BD',{maximumFractionDigits:digits})}
+
 
 function escapeHtml(v){return String(v??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#039;'}[c]))}
 let html2pdfLoader=null;
@@ -74,18 +78,19 @@ function loadHtml2Pdf(){
 }
 const eduBn={masters:'মাস্টার্স',bachelor:'স্নাতক',hsc:'এইচএসসি',diploma:'ডিপ্লোমা',bsceng:'বিএসসি ইঞ্জিনিয়ারিং',mbbs:'এমবিবিএস'};
 const categoryBn={officer:'কর্মকর্তা',class3:'তৃতীয় শ্রেণি',class4:'চতুর্থ শ্রেণি'};
-function reportShell(title,subtitle,body){
+function reportShell(title,subtitle,body,lang='bn'){
+  const en=lang==='en';
   return `<div style="width:194mm;box-sizing:border-box;font-family:'Noto Sans Bengali','Hind Siliguri',Arial,sans-serif;color:#172033;background:#fff;padding:10mm 10mm 12mm;line-height:1.55;font-size:11.5px">
     <div style="border:1px solid #d9dfeb;border-radius:14px;overflow:hidden">
       <div style="background:linear-gradient(135deg,#111936,#263f74);color:#fff;padding:18px 22px">
-        <div style="font-size:10px;letter-spacing:.7px;opacity:.8">কর্মকর্তা-কর্মচারী ডিজিটাল সেবা</div>
+        <div style="font-size:10px;letter-spacing:.7px;opacity:.8">${en?'Employee Digital Service Platform':'কর্মকর্তা-কর্মচারী ডিজিটাল সেবা'}</div>
         <div style="font-size:22px;font-weight:800;margin-top:4px">${escapeHtml(title)}</div>
         <div style="font-size:10.5px;opacity:.86;margin-top:4px">${escapeHtml(subtitle)}</div>
       </div>
       <div style="padding:18px 22px">${body}</div>
       <div style="border-top:1px solid #e3e7ef;padding:12px 22px;color:#667085;font-size:9.5px;background:#f8fafc">
-        এটি একটি স্বাধীন ও অনানুষ্ঠানিক ডিজিটাল সেবা প্ল্যাটফর্ম। চূড়ান্ত প্রশাসনিক/আর্থিক সিদ্ধান্তের জন্য প্রযোজ্য সরকারি/প্রাতিষ্ঠানিক বিধি ও আদেশ যাচাই করুন।<br>
-        প্রতিবেদন তৈরি: ${new Date().toLocaleString('bn-BD')}
+        ${en?'This is an independent and unofficial digital service platform. Verify the applicable rules/orders before any final administrative or financial decision.':'এটি একটি স্বাধীন ও অনানুষ্ঠানিক ডিজিটাল সেবা প্ল্যাটফর্ম। চূড়ান্ত প্রশাসনিক/আর্থিক সিদ্ধান্তের জন্য প্রযোজ্য বিধি ও আদেশ যাচাই করুন।'}<br>
+        ${en?'Report generated':'প্রতিবেদন তৈরি'}: ${new Date().toLocaleString(en?'en-GB':'bn-BD')}
       </div>
     </div>
   </div>`;
@@ -93,71 +98,54 @@ function reportShell(title,subtitle,body){
 function kv(label,value){return `<div style="display:flex;justify-content:space-between;gap:16px;padding:7px 0;border-bottom:1px dashed #dfe4ec"><span style="color:#667085">${escapeHtml(label)}</span><b style="text-align:right;color:#182230">${escapeHtml(value)}</b></div>`}
 function section(title,content){return `<div style="margin:14px 0 0;page-break-inside:avoid"><div style="font-size:13px;font-weight:800;color:#1d3263;margin-bottom:5px">${escapeHtml(title)}</div><div style="border:1px solid #e1e6ef;border-radius:10px;padding:9px 12px;background:#fff">${content}</div></div>`}
 async function saveA4Pdf(element,filename){
-  if(!element)throw new Error('PDF preview পাওয়া যায়নি');
+  if(!element)throw new Error('PDF preview is not available');
   const html2pdf=await loadHtml2Pdf();
   await document.fonts?.ready?.catch?.(()=>{});
   await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
   await html2pdf().set({
-    margin:[8,8,8,8],filename,
+    margin:[6,6,6,6],filename,
     image:{type:'jpeg',quality:.98},
     html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false,scrollX:0,scrollY:0},
     jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
-    pagebreak:{mode:['css','legacy']}
+    pagebreak:{mode:['css','legacy'],avoid:['.pdf-keep']}
   }).from(element).save();
 }
-function PdfPreviewModal({html,filename,onClose}){
-  const reportRef=useRef(null);
-  const[busy,setBusy]=useState(false);
-  async function download(){
-    try{
-      setBusy(true);
-      await saveA4Pdf(reportRef.current,filename);
-    }catch(e){alert('PDF তৈরি করা যায়নি: '+e.message)}
-    finally{setBusy(false)}
-  }
-  useEffect(()=>{
-    const onKey=e=>{if(e.key==='Escape')onClose?.()};
-    document.addEventListener('keydown',onKey);
-    const prev=document.body.style.overflow;document.body.style.overflow='hidden';
-    return()=>{document.removeEventListener('keydown',onKey);document.body.style.overflow=prev};
-  },[onClose]);
+function PdfPreviewModal({html,filename,onClose,lang='bn'}){
+  const reportRef=useRef(null); const[busy,setBusy]=useState(false); const en=lang==='en';
+  async function download(){try{setBusy(true);await saveA4Pdf(reportRef.current,filename)}catch(e){alert((en?'PDF could not be created: ':'PDF তৈরি করা যায়নি: ')+e.message)}finally{setBusy(false)}}
+  useEffect(()=>{const onKey=e=>{if(e.key==='Escape')onClose?.()};document.addEventListener('keydown',onKey);const prev=document.body.style.overflow;document.body.style.overflow='hidden';return()=>{document.removeEventListener('keydown',onKey);document.body.style.overflow=prev}},[onClose]);
   return <div style={{position:'fixed',inset:0,zIndex:99999,background:'rgba(7,12,28,.78)',backdropFilter:'blur(8px)',display:'flex',flexDirection:'column'}}>
     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,padding:'12px 18px',background:'#101936',color:'#fff',boxShadow:'0 8px 28px rgba(0,0,0,.24)'}}>
-      <div><b style={{fontSize:16}}>A4 PDF প্রিভিউ</b><div style={{fontSize:12,opacity:.78}}>তথ্য ঠিক আছে কিনা দেখে তারপর PDF ডাউনলোড করুন</div></div>
+      <div><b style={{fontSize:16}}>{en?'A4 PDF Preview':'A4 PDF প্রিভিউ'}</b><div style={{fontSize:12,opacity:.78}}>{en?'Check the information first, then download the PDF.':'তথ্য যাচাই করে তারপর PDF ডাউনলোড করুন।'}</div></div>
       <div style={{display:'flex',gap:10,flexWrap:'wrap',justifyContent:'flex-end'}}>
-        <button onClick={onClose} style={{border:'1px solid rgba(255,255,255,.28)',background:'transparent',color:'#fff',padding:'9px 14px',borderRadius:10,cursor:'pointer'}}>বন্ধ করুন</button>
-        <button onClick={download} disabled={busy} style={{border:0,background:'linear-gradient(135deg,#d7a84f,#f0c86e)',color:'#17120a',fontWeight:800,padding:'9px 15px',borderRadius:10,cursor:busy?'wait':'pointer',opacity:busy?.7:1}}>{busy?'PDF তৈরি হচ্ছে...':'PDF ডাউনলোড'}</button>
+        <button onClick={onClose} style={{border:'1px solid rgba(255,255,255,.28)',background:'transparent',color:'#fff',padding:'9px 14px',borderRadius:10,cursor:'pointer'}}>{en?'Close':'বন্ধ করুন'}</button>
+        <button onClick={download} disabled={busy} style={{border:0,background:'linear-gradient(135deg,#d7a84f,#f0c86e)',color:'#17120a',fontWeight:800,padding:'9px 15px',borderRadius:10,cursor:busy?'wait':'pointer',opacity:busy?.7:1}}>{busy?(en?'Creating PDF...':'PDF তৈরি হচ্ছে...'):(en?'Download PDF':'PDF ডাউনলোড')}</button>
       </div>
     </div>
-    <div style={{flex:1,overflow:'auto',padding:'24px 12px 40px'}}>
-      <div style={{width:'210mm',minHeight:'297mm',margin:'0 auto',background:'#fff',boxShadow:'0 18px 60px rgba(0,0,0,.34)',padding:'8mm',boxSizing:'border-box'}}>
-        <div ref={reportRef} style={{background:'#fff'}} dangerouslySetInnerHTML={{__html:html}}/>
-      </div>
-    </div>
+    <div style={{flex:1,overflow:'auto',padding:'24px 12px 40px'}}><div style={{width:'210mm',minHeight:'297mm',margin:'0 auto',background:'#fff',boxShadow:'0 18px 60px rgba(0,0,0,.34)',padding:'8mm',boxSizing:'border-box'}}><div ref={reportRef} style={{background:'#fff'}} dangerouslySetInnerHTML={{__html:html}}/></div></div>
   </div>
 }
-function promotionReportHtml(r){
-  const f=r.input||{};
-  let overview=kv('বর্তমান গ্রেড',`গ্রেড ${f.grade||'—'}`)+kv('শিক্ষাগত যোগ্যতা',eduBn[f.edu]||f.edu||'—')+kv('বর্তমান পদে যোগদান',f.currentDate?fmtDate(new Date(f.currentDate)):'—')+kv('প্রথম যোগদান',f.firstJoinDate?fmtDate(new Date(f.firstJoinDate)):'—')+kv('হিসাবের তারিখ',f.calcDate?fmtDate(new Date(f.calcDate)):'—')+kv('কম্পিউটার দক্ষতা/প্রশিক্ষণ',f.computer==='yes'?'আছে':'নেই')+kv('ACR শর্ত',f.acr==='yes'?'সন্তোষজনক':'অসম্পূর্ণ/না');
+function promotionReportHtml(r,lang='bn'){
+  const en=lang==='en', f=r.input||{};
+  const edu=en?{masters:'Masters',bachelor:"Bachelor's",hsc:'HSC',diploma:'Diploma',bsceng:'BSc Engineering',mbbs:'MBBS'}:eduBn;
+  let overview=kv(en?'Current grade':'বর্তমান গ্রেড',`${en?'Grade':'গ্রেড'} ${f.grade||'—'}`)+kv(en?'Education':'শিক্ষাগত যোগ্যতা',edu[f.edu]||f.edu||'—')+kv(en?'Current post joining date':'বর্তমান পদে যোগদান',f.currentDate?fmtDateLang(f.currentDate,lang):'—')+kv(en?'First joining date':'প্রথম যোগদান',f.firstJoinDate?fmtDateLang(f.firstJoinDate,lang):'—')+kv(en?'Calculation date':'হিসাবের তারিখ',fmtDateLang(f.calcDate||todayLocalIso(),lang))+kv(en?'Computer skill/training':'কম্পিউটার দক্ষতা/প্রশিক্ষণ',f.computer==='yes'?(en?'Yes':'আছে'):(en?'No':'নেই'))+kv(en?'ACR condition':'ACR শর্ত',f.acr==='yes'?(en?'Satisfactory':'সন্তোষজনক'):(en?'Incomplete / No':'অসম্পূর্ণ/না'));
   let result='';
-  if(r.stop) result=kv('ফলাফল',r.rule.target)+kv('রেফারেন্স',r.rule.ref||r.rule.page||'—');
-  else result=kv('সম্ভাব্য পরবর্তী পদ/ধাপ',`${r.rule.target} - গ্রেড ${r.rule.targetGrade}`)+kv('নীতিগত যোগ্যতার তারিখ',fmtDate(r.eligible))+kv('আবেদন/সার্কুলার সময়সীমা',fmtDate(r.cycle.circularDeadline))+kv('প্রক্রিয়া সম্পন্নের সম্ভাব্য সর্বশেষ সময়',fmtDate(r.cycle.completionDeadline))+kv('প্রয়োজনীয় অভিজ্ঞতা',`${r.req} বছর`)+kv('বর্তমান পদে চাকরি',durationBn(r.elapsed))+kv('অবশিষ্ট সময়',r.remaining.y||r.remaining.m||r.remaining.d?durationBn(r.remaining):'সময় পূর্ণ')+kv('মোট সার্ভিস পয়েন্ট',r.points.toLocaleString('bn-BD',{maximumFractionDigits:2}))+kv('বর্তমান পদের পয়েন্ট',(r.exp?.currentPoints||0).toLocaleString('bn-BD',{maximumFractionDigits:2}))+kv('পূর্ববর্তী মোট চাকরিকালের পয়েন্ট',(r.exp?.priorServicePoints||0).toLocaleString('bn-BD',{maximumFractionDigits:2}))+kv('প্রাথমিক শর্তের অবস্থা',r.prelim?'যোগ্যতার মূল শর্ত পূর্ণ':'এক বা একাধিক শর্ত অসম্পূর্ণ');
-  let roadmap='';
-  if(!r.stop&&r.roadmap?.length) roadmap=r.roadmap.map((x,i)=>x.stop?kv(`${i+1}. গ্রেড ${x.fromGrade} এর পর`,x.label):kv(`${i+1}. গ্রেড ${x.fromGrade} → ${x.toGrade}`,`${x.title} | ${x.years} বছর | সম্ভাব্য সম্পন্ন: ${fmtDate(x.completionDeadline)}`)).join('');
-  const body=section('প্রদত্ত তথ্য',overview)+section('হিসাবের বিস্তারিত ফলাফল',result)+(roadmap?section('ভবিষ্যৎ সম্ভাব্য পদোন্নতি রোডম্যাপ',roadmap):'')+`<div style="margin-top:14px;padding:10px 12px;border-left:4px solid #d59b35;background:#fff8e8;border-radius:8px;font-size:10.5px"><b>গুরুত্বপূর্ণ:</b> যোগ্যতার তারিখ ও পদোন্নতি প্রক্রিয়া সম্পন্নের তারিখ এক নয়। বার্ষিক চক্র অনুযায়ী প্রদর্শিত ৩০ জুন একটি conservative projected completion deadline, নিশ্চিত পদোন্নতির তারিখ নয়। সার্ভিস পয়েন্টে বর্তমান পদে প্রতি ১ বছরে ১ পয়েন্ট এবং প্রথম যোগদান থেকে বর্তমান পদে যোগদানের আগের মোট চাকরিকালে প্রতি ৩ বছরে ১ পয়েন্ট স্বয়ংক্রিয়ভাবে গণনা করা হয়েছে। শিক্ষাগত যোগ্যতা আলাদা সার্ভিস পয়েন্ট নয়; এটি পদোন্নতির জন্য প্রয়োজনীয় চাকরিকাল নির্ধারণ করে—যেমন মাস্টার্সে ৩ বছর, স্নাতকে ৪ বছর; অন্যান্য যোগ্যতায় সংশ্লিষ্ট rule map অনুসরণ করা হয়েছে। বিশেষ টেকনিক্যাল/মেডিকেল stream-এর অতিরিক্ত শর্ত থাকলে সংশ্লিষ্ট পদধারা যাচাই প্রয়োজন।</div>`;
-  return reportShell('পদোন্নতি হিসাবের বিস্তারিত প্রতিবেদন','A4 PDF · যোগ্যতা, অভিজ্ঞতা পয়েন্ট, বার্ষিক চক্র ও ভবিষ্যৎ রোডম্যাপ',body);
+  if(r.stop) result=kv(en?'Result':'ফলাফল',r.rule.target)+kv(en?'Reference':'রেফারেন্স',r.rule.ref||r.rule.page||'—');
+  else result=kv(en?'Next promotion level':'সম্ভাব্য পরবর্তী পদ/ধাপ',`${r.rule.target} - ${en?'Grade':'গ্রেড'} ${r.rule.targetGrade}`)+kv(en?'Eligibility date':'নীতিগত যোগ্যতার তারিখ',fmtDateLang(r.eligible,lang))+kv(en?'Application/circular deadline':'আবেদন/সার্কুলার সময়সীমা',fmtDateLang(r.cycle.circularDeadline,lang))+kv(en?'Projected completion deadline':'প্রক্রিয়া সম্পন্নের সম্ভাব্য সর্বশেষ সময়',fmtDateLang(r.cycle.completionDeadline,lang))+kv(en?'Required service':'প্রয়োজনীয় অভিজ্ঞতা',`${numLang(r.req,lang,0)} ${en?'years':'বছর'}`)+kv(en?'Service in current post':'বর্তমান পদে চাকরি',en?`${r.elapsed.y} years ${r.elapsed.m} months ${r.elapsed.d} days`:durationBn(r.elapsed))+kv(en?'Remaining time':'অবশিষ্ট সময়',(r.remaining.y||r.remaining.m||r.remaining.d)?(en?`${r.remaining.y} years ${r.remaining.m} months ${r.remaining.d} days`:durationBn(r.remaining)):(en?'Completed':'সময় পূর্ণ'))+kv(en?'Total service points':'মোট সার্ভিস পয়েন্ট',numLang(r.points,lang))+kv(en?'Current post points':'বর্তমান পদের পয়েন্ট',numLang(r.exp?.currentPoints||0,lang))+kv(en?'Previous service points':'পূর্ববর্তী মোট চাকরিকালের পয়েন্ট',numLang(r.exp?.priorServicePoints||0,lang))+kv(en?'Primary conditions':'প্রাথমিক শর্তের অবস্থা',r.prelim?(en?'Satisfied':'যোগ্যতার মূল শর্ত পূর্ণ'):(en?'One or more conditions incomplete':'এক বা একাধিক শর্ত অসম্পূর্ণ'));
+  let roadmap=''; if(!r.stop&&r.roadmap?.length) roadmap=r.roadmap.map((x,i)=>x.stop?kv(`${i+1}. ${en?'After grade':'গ্রেড'} ${x.fromGrade}`,x.label):kv(`${i+1}. ${en?'Grade':'গ্রেড'} ${x.fromGrade} → ${x.toGrade}`,`${x.title} | ${x.years} ${en?'years':'বছর'} | ${en?'Projected completion':'সম্ভাব্য সম্পন্ন'}: ${fmtDateLang(x.completionDeadline,lang)}`)).join('');
+  const body=section(en?'Input information':'প্রদত্ত তথ্য',overview)+section(en?'Detailed calculation':'হিসাবের বিস্তারিত ফলাফল',result)+(roadmap?section(en?'Future promotion roadmap':'ভবিষ্যৎ সম্ভাব্য পদোন্নতি রোডম্যাপ',roadmap):'')+`<div style="margin-top:14px;padding:10px 12px;border-left:4px solid #d59b35;background:#fff8e8;border-radius:8px;font-size:10.5px"><b>${en?'Important:':'গুরুত্বপূর্ণ:'}</b> ${en?'Eligibility date and process completion date are different. The displayed 30 June is a conservative projected completion deadline, not a guaranteed promotion date.':'যোগ্যতার তারিখ ও পদোন্নতি প্রক্রিয়া সম্পন্নের তারিখ এক নয়। প্রদর্শিত ৩০ জুন একটি সম্ভাব্য সর্বশেষ সময়, নিশ্চিত পদোন্নতির তারিখ নয়।'}</div>`;
+  return reportShell(en?'Detailed Promotion Calculation Report':'পদোন্নতি হিসাবের বিস্তারিত প্রতিবেদন',en?'A4 PDF · eligibility, service points, annual cycle and future roadmap':'A4 PDF · যোগ্যতা, অভিজ্ঞতা পয়েন্ট, বার্ষিক চক্র ও ভবিষ্যৎ রোডম্যাপ',body,lang);
 }
-function salaryReportHtml(r){
-  const f=r.input||{};
-  const inputs=kv('গ্রেড',`গ্রেড ${r.grade}`)+kv('Fixation/Joining Stage',`ধাপ ${Number(f.fixStage||0)+1}`)+kv('Post-2015 Annual Increment',`${Number(f.postInc||0)} টি`)+kv('বর্তমান ২০১৫ ধাপ',`ধাপ ${r.currentIndex+1}`)+kv('হিসাবের তারিখ',f.date||'—')+kv('কর্মচারী শ্রেণি',categoryBn[f.category]||f.category||'—')+kv('বাসা সুবিধা',f.housing==='yes'?'হ্যাঁ':'না')+kv('শিক্ষা ভাতার সন্তান',`${f.children||0} জন`)+kv('টিফিন ভাতা',f.tiffin==='yes'?'প্রযোজ্য':'প্রযোজ্য নয়')+kv('কর্মস্থল',f.zone==='dhaka'?'ঢাকা সিটি':'অন্যান্য');
-  const fixation=kv('২০১৫ বর্তমান Basic',`৳${money(r.currentBasic)}`)+kv('২০২৬ Full Fixed Basic',`৳${money(r.fixed)}`)+kv('Basic Increase',`৳${money(r.increase)}`)+kv('বাস্তবায়ন হার',`${(r.rate*100).toLocaleString('bn-BD')}%`)+kv('Implemented Increase',`৳${money(r.implemented)}`)+kv('প্রাপ্য Basic',`৳${money(r.payable)}`);
-  const allowances=kv('বাড়ি ভাড়া',`৳${money(r.house)}`)+kv('চিকিৎসা ভাতা',`৳${money(r.medical)}`)+kv('শিক্ষা ভাতা',`৳${money(r.education)}`)+kv('টিফিন ভাতা',`৳${money(r.tiffin)}`)+kv('যাতায়াত ভাতা',`৳${money(r.conveyance)}`)+kv('Gross Salary',`৳${money(r.gross)}`);
-  const deductions=kv('PF Subscription 10%',`৳${money(r.pf)}`)+kv('Benevolent',`৳${money(r.bene)}`)+kv('Health Insurance',`৳${money(r.health)}`)+kv('Group Insurance',`৳${money(r.group)}`)+kv('Revenue Stamp',`৳${money(r.stamp)}`)+kv('Association',`৳${money(r.association)}`)+kv('Tax',`৳${money(r.tax)}`)+kv('Loan',`৳${money(r.loan)}`)+kv('Other',`৳${money(r.other)}`)+kv('মোট কর্তন',`৳${money(r.deductions)}`)+kv('Net Salary',`৳${money(r.net)}`);
-  const body=section('হিসাবের ইনপুট',inputs)+section('পে-স্কেল ফিক্সেশন ও বাস্তবায়ন',fixation)+section('ভাতা ও মোট বেতন',allowances)+section('কর্তন ও নেট বেতন',deductions)+`<div style="margin-top:14px;padding:10px 12px;border-left:4px solid #2d6a5f;background:#eef9f6;border-radius:8px;font-size:10.5px"><b>হিসাবের নিয়ম:</b> Special Benefit সম্পূর্ণ বাদ। ৩১ ডিসেম্বর ২০২৭ পর্যন্ত house rent, medical, education, tiffin ও conveyance ২০১৫ Current Basic এবং ২০১৫ rule layer ধরে হিসাব করা হয়েছে। PF Subscription প্রাপ্য Basic-এর ১০%। PF Advance Installment default deduction-এ নেই। ২০২৮-এর নতুন allowance rate অনুমান করা হয়নি।</div>`;
-  return reportShell('পে-স্কেল ও বেতন হিসাবের বিস্তারিত প্রতিবেদন','A4 PDF · fixation, implementation, allowances, deductions, gross এবং net salary',body);
+function salaryReportHtml(r,lang='bn'){
+  const en=lang==='en',f=r.input||{};
+  const cat=en?{officer:'Officer',class3:'Class III',class4:'Class IV'}:categoryBn;
+  const inputs=kv(en?'Grade':'গ্রেড',`${en?'Grade':'গ্রেড'} ${r.grade}`)+kv(en?'Fixation / joining stage':'ফিক্সেশন / যোগদান ধাপ',`${en?'Stage':'ধাপ'} ${Number(f.fixStage||0)+1}`)+kv(en?'Annual increments after 2015':'২০১৫ পরবর্তী বার্ষিক ইনক্রিমেন্ট',`${numLang(Number(f.postInc||0),lang,0)}`)+kv(en?'Current 2015 stage':'বর্তমান ২০১৫ ধাপ',`${en?'Stage':'ধাপ'} ${r.currentIndex+1}`)+kv(en?'Calculation date':'হিসাবের তারিখ',fmtDateLang(f.date||todayLocalIso(),lang))+kv(en?'Employee category':'কর্মচারী শ্রেণি',cat[f.category]||f.category||'—')+kv(en?'Housing facility':'বাসা সুবিধা',f.housing==='yes'?(en?'Yes':'হ্যাঁ'):(en?'No':'না'))+kv(en?'Children for education allowance':'শিক্ষা ভাতার সন্তান',`${numLang(f.children||0,lang,0)}`)+kv(en?'Tiffin allowance':'টিফিন ভাতা',f.tiffin==='yes'?(en?'Applicable':'প্রযোজ্য'):(en?'Not applicable':'প্রযোজ্য নয়'))+kv(en?'Work location':'কর্মস্থল',f.zone==='dhaka'?(en?'Dhaka City':'ঢাকা সিটি'):(en?'Other':'অন্যান্য'));
+  const fixation=kv(en?'2015 current basic':'২০১৫ বর্তমান বেসিক',`৳${money(r.currentBasic)}`)+kv(en?'2026 full fixed basic':'২০২৬ পূর্ণ ফিক্সড বেসিক',`৳${money(r.fixed)}`)+kv(en?'Basic increase':'বেসিক বৃদ্ধি',`৳${money(r.increase)}`)+kv(en?'Implementation rate':'বাস্তবায়ন হার',`${numLang(r.rate*100,lang,0)}%`)+kv(en?'Implemented increase':'বাস্তবায়িত বৃদ্ধি',`৳${money(r.implemented)}`)+kv(en?'Payable basic':'প্রাপ্য বেসিক',`৳${money(r.payable)}`);
+  const allowances=kv(en?'House rent':'বাড়িভাড়া',`৳${money(r.house)}`)+kv(en?'Medical allowance':'চিকিৎসা ভাতা',`৳${money(r.medical)}`)+kv(en?'Education allowance':'শিক্ষা ভাতা',`৳${money(r.education)}`)+kv(en?'Tiffin allowance':'টিফিন ভাতা',`৳${money(r.tiffin)}`)+kv(en?'Conveyance allowance':'যাতায়াত ভাতা',`৳${money(r.conveyance)}`)+kv(en?'Gross salary':'মোট বেতন',`৳${money(r.gross)}`);
+  const deductions=kv(en?'PF subscription (10%)':'পিএফ সাবস্ক্রিপশন (১০%)',`৳${money(r.pf)}`)+kv(en?'Benevolent fund':'কল্যাণ তহবিল',`৳${money(r.bene)}`)+kv(en?'Health insurance':'স্বাস্থ্য বীমা',`৳${money(r.health)}`)+kv(en?'Group insurance':'গ্রুপ বীমা',`৳${money(r.group)}`)+kv(en?'Revenue stamp':'রাজস্ব স্ট্যাম্প',`৳${money(r.stamp)}`)+kv(en?'Association':'অ্যাসোসিয়েশন',`৳${money(r.association)}`)+kv(en?'Income tax':'আয়কর',`৳${money(r.tax)}`)+kv(en?'Loan':'ঋণ',`৳${money(r.loan)}`)+kv(en?'Other':'অন্যান্য',`৳${money(r.other)}`)+kv(en?'Total deductions':'মোট কর্তন',`৳${money(r.deductions)}`)+kv(en?'Net salary':'নিট বেতন',`৳${money(r.net)}`);
+  const body=section(en?'Input information':'প্রদত্ত তথ্য',inputs)+section(en?'Pay fixation':'বেতন নির্ধারণ',fixation)+section(en?'Allowances':'ভাতা',allowances)+section(en?'Deductions and net salary':'কর্তন ও নিট বেতন',deductions)+`<div style="margin-top:14px;padding:10px 12px;border-left:4px solid #d59b35;background:#fff8e8;border-radius:8px;font-size:10.5px"><b>${en?'Rule note:':'নিয়ম:'}</b> ${en?'Special Benefit is excluded. PF advance installment is not included in default deductions. No new allowance rate for 2028 has been assumed.':'বিশেষ সুবিধা সম্পূর্ণ বাদ। PF Advance Installment ডিফল্ট কর্তনে নেই। ২০২৮ সালের নতুন ভাতার হার অনুমান করা হয়নি।'}</div>`;
+  return reportShell(en?'Detailed Pay Scale & Salary Report':'পে-স্কেল ও বেতন হিসাবের বিস্তারিত প্রতিবেদন',en?'A4 PDF · fixation, implementation, allowances, deductions, gross and net salary':'A4 PDF · ফিক্সেশন, বাস্তবায়ন, ভাতা, কর্তন, মোট ও নিট বেতন',body,lang);
 }
-
-
 
 function Login({onLogin,onBack,lang,setLang}){
   const[email,setEmail]=useState(''),[password,setPassword]=useState(''),[err,setErr]=useState(''),[busy,setBusy]=useState(false);
@@ -273,139 +261,75 @@ function DashboardHome({user,onPage,lang='bn'}){
   </>
 }
 function DMY({label,value,onChange}){
-  const d=value?new Date(value):null;
-  const day=d&&!isNaN(d)?d.getDate():'',month=d&&!isNaN(d)?d.getMonth()+1:'',year=d&&!isNaN(d)?d.getFullYear():'';
-  const days=Array.from({length:31},(_,i)=>i+1), months=Array.from({length:12},(_,i)=>i+1), years=Array.from({length:80},(_,i)=>new Date().getFullYear()-i);
-  function set(part,v){let dd=day||1,mm=month||1,yy=year||new Date().getFullYear();if(part==='d')dd=Number(v);if(part==='m')mm=Number(v);if(part==='y')yy=Number(v);if(!v){onChange('');return}const x=new Date(yy,mm-1,dd);onChange(`${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`)}
-  return <label className="dmy-label">{label}<div className="dmy">
-    <select value={day} onChange={e=>set('d',e.target.value)}><option value="">দিন</option>{days.map(x=><option key={x}>{x}</option>)}</select>
-    <select value={month} onChange={e=>set('m',e.target.value)}><option value="">মাস</option>{months.map(x=><option key={x}>{x}</option>)}</select>
-    <select value={year} onChange={e=>set('y',e.target.value)}><option value="">বছর</option>{years.map(x=><option key={x}>{x}</option>)}</select>
-  </div></label>
+  const en=/[A-Za-z]/.test(label||''); const d=value?new Date(value+'T00:00:00'):null; const year=d&&!isNaN(d)?d.getFullYear():''; const month=d&&!isNaN(d)?d.getMonth()+1:''; const day=d&&!isNaN(d)?d.getDate():'';
+  const years=Array.from({length:70},(_,i)=>new Date().getFullYear()-i),months=Array.from({length:12},(_,i)=>i+1),days=Array.from({length:31},(_,i)=>i+1);
+  function setPart(part,v){let y=year||new Date().getFullYear(),m=month||1,dd=day||1;if(part==='y')y=Number(v);if(part==='m')m=Number(v);if(part==='d')dd=Number(v);const max=new Date(y,m,0).getDate();dd=Math.min(dd,max);onChange(`${y}-${String(m).padStart(2,'0')}-${String(dd).padStart(2,'0')}`)}
+  return <label>{label}<div className="dmy"><select value={day} onChange={e=>setPart('d',e.target.value)}><option value="">{en?'Day':'দিন'}</option>{days.map(x=><option key={x}>{x}</option>)}</select><select value={month} onChange={e=>setPart('m',e.target.value)}><option value="">{en?'Month':'মাস'}</option>{months.map(x=><option key={x} value={x}>{en?new Intl.DateTimeFormat('en',{month:'short'}).format(new Date(2020,x-1,1)):new Intl.DateTimeFormat('bn-BD',{month:'long'}).format(new Date(2020,x-1,1))}</option>)}</select><select value={year} onChange={e=>setPart('y',e.target.value)}><option value="">{en?'Year':'বছর'}</option>{years.map(x=><option key={x}>{x}</option>)}</select></div></label>
 }
 
-function PromotionCenter(){
-  const todayIso=useMemo(()=>{const d=new Date();d.setHours(0,0,0,0);return d.toISOString().slice(0,10)},[]);
-  const [f,setF]=useState({grade:'13',edu:'bachelor',currentDate:'',firstJoinDate:'',calcDate:todayIso,computer:'yes',acr:'yes'}),[result,setResult]=useState(null);
+function PromotionCenter({lang='bn'}){
+  const en=lang==='en', today=todayLocalIso();
+  const [f,setF]=useState({grade:'13',edu:'bachelor',currentDate:'',firstJoinDate:'',calcDate:today,computer:'yes',acr:'yes'}),[result,setResult]=useState(null);
+  useEffect(()=>{setF(x=>({...x,calcDate:todayLocalIso()}))},[]);
   function calc(){
-    const rule=PROMO_RULES[f.grade];
-    if(!f.currentDate||!f.firstJoinDate)return setResult({error:'বর্তমান পদে যোগদানের তারিখ এবং প্রথম যোগদানের তারিখ নির্বাচন করুন।',input:{...f}});
-    const current=new Date(f.currentDate),first=new Date(f.firstJoinDate),asOf=new Date(f.calcDate||todayIso);
-    if(first>current)return setResult({error:'প্রথম যোগদানের তারিখ বর্তমান পদে যোগদানের তারিখের পরে হতে পারে না।',input:{...f}});
-    if(current>asOf)return setResult({error:'হিসাবের তারিখ বর্তমান পদে যোগদানের তারিখের আগে হতে পারে না।',input:{...f}});
-    if(!rule)return setResult({error:'এই গ্রেডের rule map পাওয়া যায়নি।',input:{...f}});
-    if(rule.noPromotion||rule.top)return setResult({stop:true,rule,input:{...f}});
-    const req=(rule.years&&rule.years[f.edu])||4;
-    const eligible=addYears(current,req),cycle=annualPromotionCycle(eligible);
-    const exp=serviceExperiencePoints({currentPostStart:f.currentDate,firstJoin:f.firstJoinDate,asOf:f.calcDate||todayIso});
-    if(!exp.valid)return setResult({error:exp.error,input:{...f}});
-    const elapsed=diffYMD(current,asOf),remaining=asOf>=eligible?{y:0,m:0,d:0}:diffYMD(asOf,eligible);
-    const prelim=asOf>=eligible&&f.computer==='yes'&&f.acr==='yes';
-    setResult({rule,req,eligible,cycle,points:exp.points,exp,elapsed,remaining,prelim,roadmap:futureRoadmap(f.grade,current,f.edu,6),input:{...f}});
+    const asOf=todayLocalIso(); const next={...f,calcDate:asOf}; setF(next);
+    const rule=PROMO_RULES[next.grade]; if(!rule)return setResult({error:en?'No rule was found for this grade.':'এই গ্রেডের নিয়ম পাওয়া যায়নি।',input:next});
+    if(rule.noPromotion||rule.top)return setResult({stop:true,rule,input:next});
+    if(!next.currentDate||!next.firstJoinDate)return setResult({error:en?'Enter the first joining date and the current post joining date.':'প্রথম যোগদানের তারিখ ও বর্তমান পদে যোগদানের তারিখ দিন।',input:next});
+    const current=new Date(next.currentDate),first=new Date(next.firstJoinDate),calcDate=new Date(asOf);
+    if(first>current)return setResult({error:en?'The first joining date cannot be later than the current post joining date.':'প্রথম যোগদানের তারিখ বর্তমান পদে যোগদানের তারিখের পরে হতে পারে না।',input:next});
+    if(current>calcDate)return setResult({error:en?'The current post joining date cannot be later than today.':'বর্তমান পদে যোগদানের তারিখ আজকের তারিখের পরে হতে পারে না।',input:next});
+    const req=rule.years?.[next.edu]??4, eligible=addYears(next.currentDate,req), elapsed=diffYMD(next.currentDate,asOf), remaining=eligible>calcDate?diffYMD(calcDate,eligible):{y:0,m:0,d:0};
+    const exp=serviceExperiencePoints({currentPostStart:next.currentDate,firstJoin:next.firstJoinDate,asOf});
+    const prelim=calcDate>=eligible&&next.computer==='yes'&&next.acr==='yes'; const cycle=annualPromotionCycle(eligible); const roadmap=futureRoadmap(next.grade,next.currentDate,next.edu,6);
+    setResult({rule,req,eligible,elapsed,remaining,exp,points:exp.valid?exp.points:0,prelim,cycle,roadmap,input:next});
   }
+  const eduOptions=en?[['masters','Masters'],['bachelor',"Bachelor's"],['hsc','HSC'],['diploma','Diploma'],['bsceng','BSc Engineering'],['mbbs','MBBS']]:[['masters','মাস্টার্স'],['bachelor','স্নাতক'],['hsc','এইচএসসি'],['diploma','ডিপ্লোমা'],['bsceng','বিএসসি ইঞ্জিনিয়ারিং'],['mbbs','এমবিবিএস']];
   return <div>
-    <div className="page-head"><div><h2>পদোন্নতি কেন্দ্র</h2><p>নীতিমালার অভিজ্ঞতার বছর, সার্ভিস পয়েন্ট এবং বার্ষিক পদোন্নতি চক্র অনুযায়ী হিসাব।</p></div></div>
-    <section className="calc-card">
-      <div className="form-grid promo-form">
-        <label>বর্তমান গ্রেড<select value={f.grade} onChange={e=>setF({...f,grade:e.target.value})}>{['16','17','15','14','13','12','11','10','9','6','4'].map(g=><option key={g} value={g}>গ্রেড {g}</option>)}</select></label>
-        <label>শিক্ষাগত যোগ্যতা<select value={f.edu} onChange={e=>setF({...f,edu:e.target.value})}><option value="masters">মাস্টার্স</option><option value="bachelor">স্নাতক</option><option value="hsc">এইচএসসি</option><option value="diploma">ডিপ্লোমা</option><option value="bsceng">বিএসসি ইঞ্জিনিয়ারিং</option><option value="mbbs">এমবিবিএস</option></select></label>
-        <DMY label="বর্তমান পদে যোগদানের তারিখ" value={f.currentDate} onChange={v=>setF({...f,currentDate:v})}/>
-        <DMY label="প্রথম যোগদানের তারিখ" value={f.firstJoinDate} onChange={v=>setF({...f,firstJoinDate:v})}/>
-        <DMY label="হিসাবের তারিখ" value={f.calcDate} onChange={v=>setF({...f,calcDate:v})}/>
-        <label>কম্পিউটার দক্ষতা/প্রশিক্ষণ<select value={f.computer} onChange={e=>setF({...f,computer:e.target.value})}><option value="yes">আছে</option><option value="no">নেই</option></select></label>
-        <label>বার্ষিক গোপনীয় প্রতিবেদন<select value={f.acr} onChange={e=>setF({...f,acr:e.target.value})}><option value="yes">সন্তোষজনক</option><option value="no">অসম্পূর্ণ/না</option></select></label>
-      </div>
-      <div className="notice" style={{marginTop:12}}><b>শিক্ষাগত যোগ্যতার সময়:</b> মাস্টার্স হলে ৩ বছর, স্নাতক হলে ৪ বছর; এইচএসসি/ডিপ্লোমা/ইঞ্জিনিয়ারিং/মেডিকেল যোগ্যতার ক্ষেত্রে সংশ্লিষ্ট গ্রেডের নীতিমালার নির্ধারিত সময় স্বয়ংক্রিয়ভাবে নেওয়া হবে।</div>
-      <div className="notice" style={{marginTop:12}}><b>পয়েন্টের নিয়ম:</b> বর্তমান পদে প্রতি ১ বছর = ১ পয়েন্ট। প্রথম যোগদানের তারিখ থেকে বর্তমান পদে যোগদানের আগের মোট চাকরিকাল স্বয়ংক্রিয়ভাবে পূর্ববর্তী চাকরিকাল হিসেবে গণনা হবে এবং প্রতি ৩ বছরে = ১ পয়েন্ট হবে। আলাদা পূর্বের পদের তারিখ দিতে হবে না।</div>
-      <button className="primary wide" onClick={calc}>পদোন্নতি হিসাব করুন</button>
-    </section>
-    {result&&<PromotionResult r={result}/>}
-  </div>
-}
-
-function PromotionResult({r}){
-  const[preview,setPreview]=useState(false);
-  const filename=`promotion-report-${Date.now()}.pdf`;
-  if(r.error)return <div className="error">{r.error}</div>;
-  const report=promotionReportHtml(r);
-  if(r.stop)return <div className="result-stack"><section className="result-panel warn"><h3>{r.rule.target}</h3><p>রেফারেন্স: {r.rule.ref||r.rule.page||'—'}</p></section><button className="primary wide" onClick={()=>setPreview(true)}><FileText size={17}/> বিস্তারিত A4 PDF প্রিভিউ</button>{preview&&<PdfPreviewModal html={report} filename={filename} onClose={()=>setPreview(false)}/>}</div>;
-  const e=r.exp||{};
-  return <div className="result-stack">
-    <section className={'result-panel '+(r.prelim?'ok':'')}><small>সম্ভাব্য পরবর্তী পদোন্নতি</small><h3>{r.rule.target} — গ্রেড {r.rule.targetGrade}</h3><div className="big-date">{fmtDate(r.cycle.completionDeadline)}</div><p>প্রক্রিয়া সম্পন্নের সম্ভাব্য সর্বশেষ সময় · নীতিগত যোগ্যতা পূর্ণ: {fmtDate(r.eligible)}</p></section>
-    <section className="metric-grid">
-      <Stat label="বর্তমান পদে চাকরি" value={durationBn(r.elapsed)} icon={CalendarDays}/><Stat label="শিক্ষাগত যোগ্যতা অনুযায়ী প্রয়োজনীয় অভিজ্ঞতা" value={`${r.req} বছর`} icon={GraduationCap}/><Stat label="যোগ্য হতে অবশিষ্ট" value={r.remaining.y||r.remaining.m||r.remaining.d?durationBn(r.remaining):'সময় পূর্ণ'} icon={Activity}/><Stat label="মোট সার্ভিস পয়েন্ট" value={r.points.toLocaleString('bn-BD',{maximumFractionDigits:2})} icon={TrendingUp}/>
-    </section>
-    <section className="breakdown-card"><h3>সার্ভিস পয়েন্টের বিস্তারিত</h3>
-      <div className="money-row"><span>বর্তমান পদ: {Number(e.currentYears||0).toLocaleString('bn-BD',{maximumFractionDigits:2})} বছর × ১</span><b>{Number(e.currentPoints||0).toLocaleString('bn-BD',{maximumFractionDigits:2})}</b></div>
-      <div className="money-row"><span>পূর্ববর্তী মোট চাকরিকাল (অটো): {Number(e.priorServiceYears||0).toLocaleString('bn-BD',{maximumFractionDigits:2})} বছর ÷ ৩</span><b>{Number(e.priorServicePoints||0).toLocaleString('bn-BD',{maximumFractionDigits:2})}</b></div>
-      <div className="money-row"><span>শিক্ষাগত যোগ্যতার ভূমিকা</span><b>আলাদা পয়েন্ট নয়; প্রয়োজনীয় চাকরিকাল নির্ধারণ করে</b></div>
-    </section>
-    <section className="cycle-card"><h3>বার্ষিক পদোন্নতি প্রক্রিয়া</h3><div className="cycle-flow"><div><small>যোগ্যতা পূর্ণ</small><b>{fmtDate(r.eligible)}</b></div><span>→</span><div><small>দরখাস্ত আহ্বানের সময়সীমা</small><b>{fmtDate(r.cycle.circularDeadline)}</b></div><span>→</span><div><small>সম্ভাব্য সম্পন্ন</small><b>{fmtDate(r.cycle.completionDeadline)}</b></div></div><p>নীতিমালা অনুযায়ী পদোন্নতির জন্য প্রতি বছর একবার, ৩১ ডিসেম্বরের মধ্যে দরখাস্ত আহ্বান এবং জুন মাসের মধ্যে পদোন্নতির কার্যক্রম সম্পন্ন করা বাঞ্ছনীয়। ৩০ জুনকে এখানে সম্ভাব্য সর্বশেষ সময় হিসেবে দেখানো হয়েছে, নিশ্চিত পদোন্নতির তারিখ হিসেবে নয়।</p></section>
-    <section className="roadmap-card"><h3>পরবর্তী পদোন্নতির সম্ভাব্য রোডম্যাপ</h3>{r.roadmap.map((x,i)=>x.stop?<div className="roadmap-row stop" key={i}><b>{x.fromGrade} গ্রেডের পর</b><span>{x.label}</span></div>:<div className="roadmap-row" key={i}><div><b>{x.fromGrade} → {x.toGrade} · {x.title}</b><small>{x.years} বছর · {x.ref}</small></div><div><b>{fmtDate(x.completionDeadline)}</b><small>সম্ভাব্য প্রক্রিয়া সম্পন্ন</small></div></div>)}</section>
-    <div className="notice"><b>নীতিমালা ভিত্তি:</b> শিক্ষাগত যোগ্যতা অনুযায়ী প্রয়োজনীয় চাকরিকাল গ্রেডভেদে rule map থেকে নেওয়া হয়েছে। বিশেষ টেকনিক্যাল/মেডিকেল পদে আলাদা যোগ্যতা বা অতিরিক্ত চাকরিকালের শর্ত থাকলে সংশ্লিষ্ট পদধারার শর্ত প্রাধান্য পাবে।</div>
-    <button className="primary wide" onClick={()=>setPreview(true)}><FileText size={17}/> বিস্তারিত A4 PDF প্রিভিউ</button>
-    {preview&&<PdfPreviewModal html={report} filename={filename} onClose={()=>setPreview(false)}/>}
-  </div>
-}
-
-function SalaryCalculator(){
-  const today='2026-09-03';
-  const [f,setF]=useState({grade:'13',fixStage:'0',postInc:'0',date:today,housing:'no',children:'0',tiffin:'yes',zone:'dhaka',category:'class3',health:'149.34',group:'192.50',stamp:'10',association:'10',tax:'0',loan:'0',other:'0'});
-  const [r,setR]=useState(null);
-  const stages=PAY2015[f.grade]||[];
-  const currentIndex=Math.min(Number(f.fixStage||0)+Math.max(0,Number(f.postInc||0)),Math.max(0,stages.length-1));
-  function calc(){
-    const grade=Number(f.grade),currentBasic=stages[currentIndex]||0,fixed=fixed2026(grade,currentBasic),rate=implementationRate(grade,f.date);
-    const increase=Math.max(0,fixed-currentBasic),implemented=Math.round(increase*rate),payable=Math.round(currentBasic+implemented);
-    const house=Math.round(houseRent2015(currentBasic,f.housing)),medical=1500,education=Math.min(Number(f.children||0),2)*500,tiffin=f.tiffin==='yes'&&grade>=11?200:0,conveyance=f.zone==='dhaka'&&grade>=11?300:0;
-    const gross=payable+house+medical+education+tiffin+conveyance;
-    const pf=Math.round(payable*.10*100)/100,beneRate=f.category==='officer'?.05:f.category==='class4'?.0275:.04,bene=Math.round(payable*beneRate*100)/100;
-    const health=Number(f.health||0),group=Number(f.group||0),stamp=Number(f.stamp||0),association=Number(f.association||0),tax=Number(f.tax||0),loan=Number(f.loan||0),other=Number(f.other||0);
-    const deductions=pf+bene+health+group+stamp+association+tax+loan+other;
-    setR({grade,currentIndex,currentBasic,fixed,rate,increase,implemented,payable,house,medical,education,tiffin,conveyance,gross,pf,bene,health,group,stamp,association,tax,loan,other,deductions,net:gross-deductions,input:{...f}});
-  }
-  useEffect(()=>{setF(x=>({...x,fixStage:'0',postInc:'0'}));setR(null)},[f.grade]);
-  return <div>
-    <div className="page-head"><div><h2>বেতন ও পে-স্কেল ERP</h2><p>২০১৫ বর্তমান basic → ২০২৬ full fixation → grade-based implementation → gross/net.</p></div></div>
+    <div className="page-head"><div><h2>{en?'Promotion Calculator':'পদোন্নতি হিসাব'}</h2><p>{en?'The calculation date is automatically taken as today.':'হিসাবের তারিখ আজকের তারিখ থেকে স্বয়ংক্রিয়ভাবে নেওয়া হবে।'}</p></div></div>
     <section className="calc-card"><div className="form-grid">
-      <label>গ্রেড<select value={f.grade} onChange={e=>setF({...f,grade:e.target.value})}>{Array.from({length:20},(_,i)=>i+1).map(g=><option key={g}>{g}</option>)}</select></label>
-      <label>Fixation/Joining Stage<select value={f.fixStage} onChange={e=>setF({...f,fixStage:e.target.value})}>{stages.map((v,i)=><option value={i} key={i}>ধাপ {i+1} — ৳{money(v)}</option>)}</select></label>
-      <label>Post-2015 Annual Increment<input type="number" min="0" value={f.postInc} onChange={e=>setF({...f,postInc:e.target.value})}/></label>
-      <label>বর্তমান ২০১৫ ধাপ<input readOnly value={`ধাপ ${currentIndex+1} — ৳${money(stages[currentIndex]||0)}`}/></label>
-      <label>হিসাবের তারিখ<input type="date" value={f.date} onChange={e=>setF({...f,date:e.target.value})}/></label>
-      <label>Employee Category<select value={f.category} onChange={e=>setF({...f,category:e.target.value})}><option value="officer">কর্মকর্তা</option><option value="class3">Class III</option><option value="class4">Class IV</option></select></label>
-      <label>সরকারি/বিশ্ববিদ্যালয় বাসা<select value={f.housing} onChange={e=>setF({...f,housing:e.target.value})}><option value="no">না</option><option value="yes">হ্যাঁ</option></select></label>
-      <label>শিক্ষা ভাতা সন্তানের সংখ্যা<select value={f.children} onChange={e=>setF({...f,children:e.target.value})}><option>0</option><option>1</option><option>2</option></select></label>
-      <label>টিফিন ভাতা প্রযোজ্য<select value={f.tiffin} onChange={e=>setF({...f,tiffin:e.target.value})}><option value="yes">হ্যাঁ</option><option value="no">না</option></select></label>
-      <label>কর্মস্থল<select value={f.zone} onChange={e=>setF({...f,zone:e.target.value})}><option value="dhaka">Dhaka City</option><option value="other">অন্যান্য</option></select></label>
-    </div>
-    <details className="deduction-box"><summary>নিয়মিত Deduction সম্পাদনা</summary><div className="form-grid compact">
-      {[['health','Health Insurance'],['group','Group Insurance'],['stamp','Revenue Stamp'],['association','Association'],['tax','Tax'],['loan','Loan'],['other','Other']].map(([k,l])=><label key={k}>{l}<input type="number" step="0.01" value={f[k]} onChange={e=>setF({...f,[k]:e.target.value})}/></label>)}
-    </div></details>
-    <button className="primary wide" onClick={calc}>বেতন হিসাব করুন</button></section>
-    {r&&<SalaryResult r={r}/>}
-  </div>
+      <label>{en?'Current grade':'বর্তমান গ্রেড'}<select value={f.grade} onChange={e=>setF({...f,grade:e.target.value})}>{['17','16','15','14','13','12','11','10','9','6','4'].map(g=><option key={g} value={g}>{en?'Grade':'গ্রেড'} {g}</option>)}</select></label>
+      <label>{en?'Education':'শিক্ষাগত যোগ্যতা'}<select value={f.edu} onChange={e=>setF({...f,edu:e.target.value})}>{eduOptions.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
+      <DMY label={en?'First joining date':'প্রথম যোগদানের তারিখ'} value={f.firstJoinDate} onChange={v=>setF({...f,firstJoinDate:v})}/>
+      <DMY label={en?'Current post joining date':'বর্তমান পদে যোগদানের তারিখ'} value={f.currentDate} onChange={v=>setF({...f,currentDate:v})}/>
+      <label>{en?'Computer skill / training':'কম্পিউটার দক্ষতা/প্রশিক্ষণ'}<select value={f.computer} onChange={e=>setF({...f,computer:e.target.value})}><option value="yes">{en?'Yes':'আছে'}</option><option value="no">{en?'No':'নেই'}</option></select></label>
+      <label>{en?'ACR condition':'ACR শর্ত'}<select value={f.acr} onChange={e=>setF({...f,acr:e.target.value})}><option value="yes">{en?'Satisfactory':'সন্তোষজনক'}</option><option value="no">{en?'Incomplete / No':'অসম্পূর্ণ/না'}</option></select></label>
+    </div><div className="notice"><b>{en?'Calculation date:':'হিসাবের তারিখ:'}</b> {fmtDateLang(today,lang)} — {en?'automatic; no input is required.':'স্বয়ংক্রিয়, আলাদা ঘর পূরণ করতে হবে না।'}</div><button className="primary wide" onClick={calc}>{en?'Calculate Promotion':'পদোন্নতি হিসাব করুন'}</button></section>
+    {result&&<PromotionResult r={result} lang={lang}/>} </div>
 }
-
-function SalaryResult({r}){
-  const[preview,setPreview]=useState(false);
-  const report=salaryReportHtml(r);
-  const filename=`pay-scale-report-${Date.now()}.pdf`;
-  return <div className="result-stack">
-    <section className="result-panel ok"><small>প্রাপ্য Basic</small><h3>৳{money(r.payable)}</h3><p>২০১৫ বর্তমান basic ৳{money(r.currentBasic)} · ২০২৬ full fixed basic ৳{money(r.fixed)} · বাস্তবায়ন {(r.rate*100).toLocaleString('bn-BD')}%</p></section>
-    <section className="salary-summary">
-      <article><small>Basic Increase</small><b>৳{money(r.increase)}</b></article><article><small>Implemented Increase</small><b>৳{money(r.implemented)}</b></article><article><small>Gross Salary</small><b>৳{money(r.gross)}</b></article><article><small>Total Deduction</small><b>৳{money(r.deductions)}</b></article><article className="net"><small>Net Salary</small><b>৳{money(r.net)}</b></article>
-    </section>
-    <div className="split-grid">
-      <section className="breakdown-card"><h3>ভাতা</h3>{[['House Rent',r.house],['Medical',r.medical],['Education',r.education],['Tiffin',r.tiffin],['Conveyance',r.conveyance]].map(([l,v])=><div className="money-row" key={l}><span>{l}</span><b>৳{money(v)}</b></div>)}</section>
-      <section className="breakdown-card"><h3>Deduction</h3>{[['PF Subscription 10%',r.pf],['Benevolent',r.bene],['Health Insurance',r.health],['Group Insurance',r.group],['Revenue Stamp',r.stamp],['Association',r.association],['Tax',r.tax],['Loan',r.loan],['Other',r.other]].map(([l,v])=><div className="money-row" key={l}><span>{l}</span><b>৳{money(v)}</b></div>)}</section>
-    </div>
-    <div className="notice"><b>নিয়ম:</b> Special Benefit সম্পূর্ণ বাদ। ৩১ ডিসেম্বর ২০২৭ পর্যন্ত house rent/medical/education/tiffin/conveyance ২০১৫ current basic ও ২০১৫ rule layer ধরে হিসাব করা হয়েছে। PF Advance Installment default deduction-এ নেই। ২০২৮-এর নতুন allowance rate এখানে অনুমান করা হয়নি।</div>
-    <button className="primary wide" onClick={()=>setPreview(true)}><FileText size={17}/> বিস্তারিত A4 PDF প্রিভিউ</button>
-    {preview&&<PdfPreviewModal html={report} filename={filename} onClose={()=>setPreview(false)}/>}
-  </div>
+function PromotionResult({r,lang='bn'}){
+  const en=lang==='en',[preview,setPreview]=useState(false); if(r.error)return <section className="result-panel warn"><h3>{en?'Unable to calculate':'হিসাব করা যায়নি'}</h3><p>{r.error}</p></section>;
+  const report=promotionReportHtml(r,lang),filename=`promotion-report-${Date.now()}.pdf`;
+  if(r.stop)return <div className="result-stack"><section className="result-panel warn"><h3>{r.rule.target}</h3><p>{en?'Reference':'রেফারেন্স'}: {r.rule.ref||r.rule.page||'—'}</p></section><button className="primary wide" onClick={()=>setPreview(true)}><FileText size={17}/> {en?'A4 PDF Preview':'বিস্তারিত A4 PDF প্রিভিউ'}</button>{preview&&<PdfPreviewModal html={report} filename={filename} onClose={()=>setPreview(false)} lang={lang}/>}</div>;
+  const e=r.exp||{}; const dur=x=>en?`${x.y} years ${x.m} months ${x.d} days`:durationBn(x);
+  return <div className="result-stack"><section className={`result-panel ${r.prelim?'ok':'warn'}`}><small>{en?'Next promotion level':'সম্ভাব্য পরবর্তী পদ/ধাপ'}</small><h3>{r.rule.target} · {en?'Grade':'গ্রেড'} {r.rule.targetGrade}</h3><p>{en?'Required service based on education':'শিক্ষাগত যোগ্যতা অনুযায়ী প্রয়োজনীয় চাকরিকাল'}: <b>{numLang(r.req,lang,0)} {en?'years':'বছর'}</b></p></section>
+    <section className="stats-grid"><Stat label={en?'Eligibility date':'যোগ্যতার তারিখ'} value={fmtDateLang(r.eligible,lang)} icon={CalendarDays}/><Stat label={en?'Current post service':'বর্তমান পদে চাকরি'} value={dur(r.elapsed)} icon={Clock3}/><Stat label={en?'Remaining time':'আর কত সময় লাগবে'} value={(r.remaining.y||r.remaining.m||r.remaining.d)?dur(r.remaining):(en?'Completed':'সময় পূর্ণ')} icon={Activity}/><Stat label={en?'Total service points':'মোট সার্ভিস পয়েন্ট'} value={numLang(r.points,lang)} icon={TrendingUp}/></section>
+    <section className="breakdown-card"><h3>{en?'Service point breakdown':'সার্ভিস পয়েন্টের বিস্তারিত'}</h3><div className="money-row"><span>{en?'Current post':'বর্তমান পদ'}: {numLang(e.currentYears||0,lang)} {en?'years × 1':'বছর × ১'}</span><b>{numLang(e.currentPoints||0,lang)}</b></div><div className="money-row"><span>{en?'Previous total service (auto)':'পূর্ববর্তী মোট চাকরিকাল (অটো)'}: {numLang(e.priorServiceYears||0,lang)} {en?'years ÷ 3':'বছর ÷ ৩'}</span><b>{numLang(e.priorServicePoints||0,lang)}</b></div><div className="money-row"><span>{en?'Education rule':'শিক্ষাগত যোগ্যতার নিয়ম'}</span><b>{en?`Requires ${r.req} years for this grade; no separate point is added.`:`এই গ্রেডে ${r.req} বছর প্রয়োজন; আলাদা পয়েন্ট যোগ হয় না।`}</b></div></section>
+    <section className="cycle-card"><h3>{en?'Annual promotion process':'বার্ষিক পদোন্নতি প্রক্রিয়া'}</h3><div className="cycle-flow"><div><small>{en?'Eligible':'যোগ্যতা পূর্ণ'}</small><b>{fmtDateLang(r.eligible,lang)}</b></div><span>→</span><div><small>{en?'Application/circular deadline':'দরখাস্ত আহ্বানের সময়সীমা'}</small><b>{fmtDateLang(r.cycle.circularDeadline,lang)}</b></div><span>→</span><div><small>{en?'Projected completion':'সম্ভাব্য সম্পন্ন'}</small><b>{fmtDateLang(r.cycle.completionDeadline,lang)}</b></div></div><p>{en?'The displayed 30 June is a projected completion deadline, not a guaranteed promotion date.':'প্রদর্শিত ৩০ জুন সম্ভাব্য প্রক্রিয়া সম্পন্নের সময়সীমা; নিশ্চিত পদোন্নতির তারিখ নয়।'}</p></section>
+    <section className="roadmap-card"><h3>{en?'Future promotion roadmap':'পরবর্তী পদোন্নতির সম্ভাব্য রোডম্যাপ'}</h3>{r.roadmap.map((x,i)=>x.stop?<div className="roadmap-row stop" key={i}><b>{en?'After grade':'গ্রেড'} {x.fromGrade}</b><span>{x.label}</span></div>:<div className="roadmap-row" key={i}><div><b>{x.fromGrade} → {x.toGrade} · {x.title}</b><small>{x.years} {en?'years':'বছর'}</small></div><div><b>{fmtDateLang(x.completionDeadline,lang)}</b><small>{en?'Projected completion':'সম্ভাব্য প্রক্রিয়া সম্পন্ন'}</small></div></div>)}</section>
+    <button className="primary wide" onClick={()=>setPreview(true)}><FileText size={17}/> {en?'A4 PDF Preview':'বিস্তারিত A4 PDF প্রিভিউ'}</button>{preview&&<PdfPreviewModal html={report} filename={filename} onClose={()=>setPreview(false)} lang={lang}/>} </div>
 }
-
+function SalaryCalculator({lang='bn'}){
+  const en=lang==='en',today=todayLocalIso(); const [f,setF]=useState({grade:'13',fixStage:'0',postInc:'0',date:today,housing:'no',children:'0',tiffin:'yes',zone:'dhaka',category:'class3',health:'149.34',group:'192.50',stamp:'10',association:'10',tax:'0',loan:'0',other:'0'}); const [r,setR]=useState(null); const stages=PAY2015[f.grade]||[]; const currentIndex=Math.min(Number(f.fixStage||0)+Math.max(0,Number(f.postInc||0)),Math.max(0,stages.length-1));
+  function calc(){const date=todayLocalIso();const next={...f,date};setF(next);const grade=Number(next.grade),currentBasic=stages[currentIndex]||0,fixed=fixed2026(grade,currentBasic),rate=implementationRate(grade,date);const increase=Math.max(0,fixed-currentBasic),implemented=Math.round(increase*rate),payable=Math.round(currentBasic+implemented);const house=Math.round(houseRent2015(currentBasic,next.housing)),medical=1500,education=Math.min(Number(next.children||0),2)*500,tiffin=next.tiffin==='yes'&&grade>=11?200:0,conveyance=next.zone==='dhaka'&&grade>=11?300:0;const gross=payable+house+medical+education+tiffin+conveyance;const pf=Math.round(payable*.10*100)/100,beneRate=next.category==='officer'?.05:next.category==='class4'?.0275:.04,bene=Math.round(payable*beneRate*100)/100;const health=Number(next.health||0),group=Number(next.group||0),stamp=Number(next.stamp||0),association=Number(next.association||0),tax=Number(next.tax||0),loan=Number(next.loan||0),other=Number(next.other||0);const deductions=pf+bene+health+group+stamp+association+tax+loan+other;setR({grade,currentIndex,currentBasic,fixed,rate,increase,implemented,payable,house,medical,education,tiffin,conveyance,gross,pf,bene,health,group,stamp,association,tax,loan,other,deductions,net:gross-deductions,input:next})}
+  useEffect(()=>{setF(x=>({...x,fixStage:'0',postInc:'0'}));setR(null)},[f.grade]);
+  const catOpts=en?[['officer','Officer'],['class3','Class III'],['class4','Class IV']]:[['officer','কর্মকর্তা'],['class3','তৃতীয় শ্রেণি'],['class4','চতুর্থ শ্রেণি']];
+  return <div><div className="page-head"><div><h2>{en?'Salary & Pay Scale Calculator':'বেতন ও পে-স্কেল হিসাব'}</h2><p>{en?'Calculation date is automatically taken as today.':'হিসাবের তারিখ আজকের তারিখ থেকে স্বয়ংক্রিয়ভাবে নেওয়া হবে।'}</p></div></div><section className="calc-card"><div className="form-grid">
+    <label>{en?'Grade':'গ্রেড'}<select value={f.grade} onChange={e=>setF({...f,grade:e.target.value})}>{Array.from({length:20},(_,i)=>i+1).map(g=><option key={g}>{g}</option>)}</select></label>
+    <label>{en?'Fixation / joining stage':'ফিক্সেশন / যোগদান ধাপ'}<select value={f.fixStage} onChange={e=>setF({...f,fixStage:e.target.value})}>{stages.map((v,i)=><option value={i} key={i}>{en?'Stage':'ধাপ'} {i+1} — ৳{money(v)}</option>)}</select></label>
+    <label>{en?'Annual increments after 2015':'২০১৫ পরবর্তী বার্ষিক ইনক্রিমেন্ট'}<input type="number" min="0" value={f.postInc} onChange={e=>setF({...f,postInc:e.target.value})}/></label>
+    <label>{en?'Current 2015 stage':'বর্তমান ২০১৫ ধাপ'}<input readOnly value={`${en?'Stage':'ধাপ'} ${currentIndex+1} — ৳${money(stages[currentIndex]||0)}`}/></label>
+    <label>{en?'Employee category':'কর্মচারী শ্রেণি'}<select value={f.category} onChange={e=>setF({...f,category:e.target.value})}>{catOpts.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
+    <label>{en?'Housing facility':'বাসা সুবিধা'}<select value={f.housing} onChange={e=>setF({...f,housing:e.target.value})}><option value="no">{en?'No':'না'}</option><option value="yes">{en?'Yes':'হ্যাঁ'}</option></select></label>
+    <label>{en?'Children for education allowance':'শিক্ষা ভাতার সন্তানের সংখ্যা'}<select value={f.children} onChange={e=>setF({...f,children:e.target.value})}><option>0</option><option>1</option><option>2</option></select></label>
+    <label>{en?'Tiffin allowance':'টিফিন ভাতা'}<select value={f.tiffin} onChange={e=>setF({...f,tiffin:e.target.value})}><option value="yes">{en?'Applicable':'প্রযোজ্য'}</option><option value="no">{en?'Not applicable':'প্রযোজ্য নয়'}</option></select></label>
+    <label>{en?'Work location':'কর্মস্থল'}<select value={f.zone} onChange={e=>setF({...f,zone:e.target.value})}><option value="dhaka">{en?'Dhaka City':'ঢাকা সিটি'}</option><option value="other">{en?'Other':'অন্যান্য'}</option></select></label>
+  </div><div className="notice"><b>{en?'Calculation date:':'হিসাবের তারিখ:'}</b> {fmtDateLang(today,lang)} — {en?'automatic; no date field needs to be filled.':'স্বয়ংক্রিয়, আলাদা তারিখের ঘর পূরণ করতে হবে না।'}</div><details className="deduction-box"><summary>{en?'Edit regular deductions':'নিয়মিত কর্তন সম্পাদনা'}</summary><div className="form-grid compact">{(en?[['health','Health insurance'],['group','Group insurance'],['stamp','Revenue stamp'],['association','Association'],['tax','Income tax'],['loan','Loan'],['other','Other']]:[['health','স্বাস্থ্য বীমা'],['group','গ্রুপ বীমা'],['stamp','রাজস্ব স্ট্যাম্প'],['association','অ্যাসোসিয়েশন'],['tax','আয়কর'],['loan','ঋণ'],['other','অন্যান্য']]).map(([k,l])=><label key={k}>{l}<input type="number" step="0.01" value={f[k]} onChange={e=>setF({...f,[k]:e.target.value})}/></label>)}</div></details><button className="primary wide" onClick={calc}>{en?'Calculate Salary':'বেতন হিসাব করুন'}</button></section>{r&&<SalaryResult r={r} lang={lang}/>}</div>
+}
+function SalaryResult({r,lang='bn'}){
+  const en=lang==='en',[preview,setPreview]=useState(false); const report=salaryReportHtml(r,lang); const filename=`pay-scale-report-${Date.now()}.pdf`; const allowances=en?[['House rent',r.house],['Medical',r.medical],['Education',r.education],['Tiffin',r.tiffin],['Conveyance',r.conveyance]]:[['বাড়িভাড়া',r.house],['চিকিৎসা ভাতা',r.medical],['শিক্ষা ভাতা',r.education],['টিফিন ভাতা',r.tiffin],['যাতায়াত ভাতা',r.conveyance]]; const deds=en?[['PF subscription 10%',r.pf],['Benevolent fund',r.bene],['Health insurance',r.health],['Group insurance',r.group],['Revenue stamp',r.stamp],['Association',r.association],['Income tax',r.tax],['Loan',r.loan],['Other',r.other]]:[['পিএফ সাবস্ক্রিপশন ১০%',r.pf],['কল্যাণ তহবিল',r.bene],['স্বাস্থ্য বীমা',r.health],['গ্রুপ বীমা',r.group],['রাজস্ব স্ট্যাম্প',r.stamp],['অ্যাসোসিয়েশন',r.association],['আয়কর',r.tax],['ঋণ',r.loan],['অন্যান্য',r.other]];
+  return <div className="result-stack"><section className="result-panel ok"><small>{en?'Payable basic':'প্রাপ্য বেসিক'}</small><h3>৳{money(r.payable)}</h3><p>{en?'2015 current basic':'২০১৫ বর্তমান বেসিক'} ৳{money(r.currentBasic)} · {en?'2026 full fixed basic':'২০২৬ পূর্ণ ফিক্সড বেসিক'} ৳{money(r.fixed)} · {en?'Implementation':'বাস্তবায়ন'} {numLang(r.rate*100,lang,0)}%</p></section><section className="salary-summary"><article><small>{en?'Basic increase':'বেসিক বৃদ্ধি'}</small><b>৳{money(r.increase)}</b></article><article><small>{en?'Implemented increase':'বাস্তবায়িত বৃদ্ধি'}</small><b>৳{money(r.implemented)}</b></article><article><small>{en?'Gross salary':'মোট বেতন'}</small><b>৳{money(r.gross)}</b></article><article><small>{en?'Total deduction':'মোট কর্তন'}</small><b>৳{money(r.deductions)}</b></article><article className="net"><small>{en?'Net salary':'নিট বেতন'}</small><b>৳{money(r.net)}</b></article></section><div className="split-grid"><section className="breakdown-card"><h3>{en?'Allowances':'ভাতা'}</h3>{allowances.map(([l,v])=><div className="money-row" key={l}><span>{l}</span><b>৳{money(v)}</b></div>)}</section><section className="breakdown-card"><h3>{en?'Deductions':'কর্তন'}</h3>{deds.map(([l,v])=><div className="money-row" key={l}><span>{l}</span><b>৳{money(v)}</b></div>)}</section></div><div className="notice"><b>{en?'Rule note:':'নিয়ম:'}</b> {en?'Special Benefit is excluded. PF advance installment is not included in default deductions. No new 2028 allowance rate has been assumed.':'বিশেষ সুবিধা সম্পূর্ণ বাদ। PF Advance Installment ডিফল্ট কর্তনে নেই। ২০২৮ সালের নতুন ভাতার হার অনুমান করা হয়নি।'}</div><button className="primary wide" onClick={()=>setPreview(true)}><FileText size={17}/> {en?'A4 PDF Preview':'বিস্তারিত A4 PDF প্রিভিউ'}</button>{preview&&<PdfPreviewModal html={report} filename={filename} onClose={()=>setPreview(false)} lang={lang}/>}</div>
+}
 
 function ImagePicker({value,onChange}){
   const[preview,setPreview]=useState(value||''),[msg,setMsg]=useState('');
@@ -682,7 +606,7 @@ function App(){
       {admin&&<button className={page==='directory'?'active':''} onClick={()=>setPage('directory')}><Building2 size={18}/>{lang==='en'?'Department & Designation':'বিভাগ ও পদবি'}</button>}
       {admin&&<button className={page==='admin'?'active':''} onClick={()=>setPage('admin')}><ShieldCheck size={18}/>{lang==='en'?'Admin Panel':'অ্যাডমিন প্যানেল'}</button>}
     </nav></aside>
-    <main><header><div><h2>{lang==='en'?`Welcome, ${user.name}`:`স্বাগতম, ${user.name}`}</h2><p>{roleLabel[user.role]||user.role}</p></div><div className="header-actions"><LangToggle lang={lang} setLang={setLang}/><button className="logout" onClick={logout}><LogOut size={16}/>{lang==='en'?'Logout':'লগআউট'}</button></div></header>
+    <main><header><div><h2>{lang==='en'?`Welcome, ${user.name}`:`স্বাগতম, ${user.name}`}</h2><p>{lang==='en'?(roleLabel[user.role]||user.role):({super_admin:'সুপার অ্যাডমিন',admin:'অ্যাডমিন',department_admin:'বিভাগীয় অ্যাডমিন',editor:'সম্পাদক',employee:'কর্মকর্তা-কর্মচারী'}[user.role]||user.role)}</p></div><div className="header-actions"><LangToggle lang={lang} setLang={setLang}/><button className="logout" onClick={logout}><LogOut size={16}/>{lang==='en'?'Logout':'লগআউট'}</button></div></header>
       {page==='dashboard'&&<DashboardHome user={user} onPage={setPage} lang={lang}/>}
       {page==='promotion'&&<PromotionCenter lang={lang}/>}
       {page==='salary'&&<SalaryCalculator lang={lang}/>}
