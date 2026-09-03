@@ -5,7 +5,7 @@ import {
   LayoutDashboard,TrendingUp,WalletCards,Users,ShieldCheck,LogOut,Plus,Search,
   UserRound,Building2,IdCard,Activity,ChevronRight,X,Save,Trash2,RefreshCw,
   Settings,Database,LockKeyhole,Home,BookOpen,Calculator,HelpCircle,Phone,
-  Bell,ArrowRight,CalendarDays,CheckCircle2,AlertTriangle,Landmark,FileText
+  Bell,ArrowRight,CalendarDays,CheckCircle2,AlertTriangle,Landmark,FileText,Camera,Briefcase,MapPin,Mail,PhoneCall,Edit3,UserCircle2
 } from 'lucide-react';
 import './styles.css';
 import {
@@ -208,29 +208,188 @@ function SalaryResult({r}){
   </div>
 }
 
-function EmployeeModal({open,onClose,onSaved,editing}){
-  const [form,setForm]=useState({employee_id:'',name_bn:'',name_en:'',mobile:'',email:'',designation:'',department_id:'',grade:'',basic_salary:'',joining_date:'',current_position:'',current_position_joining_date:'',service_status:'active',employment_type:''});
-  const[busy,setBusy]=useState(false),[err,setErr]=useState('');
-  useEffect(()=>{if(editing)setForm({employee_id:editing.employee_id||'',name_bn:editing.name_bn||'',name_en:editing.name_en||'',mobile:editing.mobile||'',email:editing.email||'',designation:editing.designation||'',department_id:editing.department_id||'',grade:editing.grade||'',basic_salary:editing.basic_salary||'',joining_date:editing.joining_date||'',current_position:editing.current_position||'',current_position_joining_date:editing.current_position_joining_date||'',service_status:editing.service_status||'active',employment_type:editing.employment_type||''})},[editing]);
-  if(!open)return null;
-  function change(k,v){setForm(f=>({...f,[k]:v}))}
-  async function save(e){e.preventDefault();setBusy(true);setErr('');try{const payload={...form,grade:form.grade?Number(form.grade):null,basic_salary:form.basic_salary?Number(form.basic_salary):null,department_id:form.department_id?Number(form.department_id):null};if(editing)await api('/api/employees/'+editing.id,{method:'PUT',body:JSON.stringify(payload)});else await api('/api/employees',{method:'POST',body:JSON.stringify(payload)});onSaved();onClose()}catch(e){setErr(e.message)}finally{setBusy(false)}}
-  return <div className="modal-backdrop"><div className="modal-card"><div className="modal-head"><div><h3>{editing?'Employee Edit':'নতুন Employee'}</h3><p>প্রয়োজনীয় চাকরি ও যোগাযোগের তথ্য দিন।</p></div><button className="icon-btn" onClick={onClose}><X/></button></div><form onSubmit={save} className="form-grid">
-    <label>Employee ID<input required value={form.employee_id} onChange={e=>change('employee_id',e.target.value)}/></label><label>নাম (বাংলা)<input required value={form.name_bn} onChange={e=>change('name_bn',e.target.value)}/></label><label>নাম (English)<input value={form.name_en} onChange={e=>change('name_en',e.target.value)}/></label><label>মোবাইল<input value={form.mobile} onChange={e=>change('mobile',e.target.value)}/></label><label>ইমেইল<input type="email" value={form.email} onChange={e=>change('email',e.target.value)}/></label><label>পদবি<input value={form.designation} onChange={e=>change('designation',e.target.value)}/></label>
-    <label>গ্রেড<select value={form.grade} onChange={e=>change('grade',e.target.value)}><option value="">নির্বাচন</option>{Array.from({length:20},(_,i)=>i+1).map(g=><option key={g}>{g}</option>)}</select></label><label>বেসিক বেতন<input type="number" min="0" value={form.basic_salary} onChange={e=>change('basic_salary',e.target.value)}/></label>
-    <DMY label="প্রথম যোগদানের তারিখ" value={form.joining_date} onChange={v=>change('joining_date',v)}/><label>বর্তমান পদ<input value={form.current_position} onChange={e=>change('current_position',e.target.value)}/></label><DMY label="বর্তমান পদে যোগদানের তারিখ" value={form.current_position_joining_date} onChange={v=>change('current_position_joining_date',v)}/>
-    <label>Employment Type<select value={form.employment_type} onChange={e=>change('employment_type',e.target.value)}><option value="">নির্বাচন</option><option value="permanent">স্থায়ী</option><option value="temporary">অস্থায়ী</option><option value="contract">চুক্তিভিত্তিক</option></select></label><label>Service Status<select value={form.service_status} onChange={e=>change('service_status',e.target.value)}><option value="active">Active</option><option value="retired">Retired</option><option value="on_leave">On Leave</option><option value="inactive">Inactive</option></select></label>
-    {err&&<div className="error span-2">{err}</div>}<div className="modal-actions span-2"><button type="button" className="secondary" onClick={onClose}>বাতিল</button><button disabled={busy}><Save size={16}/>{busy?'সংরক্ষণ হচ্ছে...':'সংরক্ষণ'}</button></div>
-  </form></div></div>
+
+function ImagePicker({value,onChange}){
+  const[preview,setPreview]=useState(value||''),[msg,setMsg]=useState('');
+  useEffect(()=>setPreview(value||''),[value]);
+
+  async function pick(e){
+    const file=e.target.files?.[0];
+    if(!file)return;
+    if(!file.type.startsWith('image/')){setMsg('শুধু ছবি নির্বাচন করুন।');return}
+    const img=new Image();
+    const url=URL.createObjectURL(file);
+    img.onload=()=>{
+      const max=420,scale=Math.min(1,max/Math.max(img.width,img.height));
+      const c=document.createElement('canvas');
+      c.width=Math.max(1,Math.round(img.width*scale));
+      c.height=Math.max(1,Math.round(img.height*scale));
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      let q=.82,blob=null;
+      const tryEncode=()=>new Promise(res=>c.toBlob(res,'image/webp',q));
+      (async()=>{
+        do{blob=await tryEncode();q-=.08}while(blob&&blob.size>50*1024&&q>=.30);
+        URL.revokeObjectURL(url);
+        if(!blob||blob.size>50*1024){setMsg('ছবিটি 50 KB-এর মধ্যে compress করা যায়নি। অন্য ছবি দিন।');return}
+        const reader=new FileReader();
+        reader.onload=()=>{setPreview(reader.result);onChange(reader.result);setMsg(`${Math.ceil(blob.size/1024)} KB · WebP`)};
+        reader.readAsDataURL(blob);
+      })();
+    };
+    img.src=url;
+  }
+
+  return <div className="photo-picker">
+    <div className="photo-preview">{preview?<img src={preview}/>:<UserCircle2 size={42}/>}</div>
+    <div><label className="photo-btn"><Camera size={15}/> Profile Photo<input type="file" accept="image/*" onChange={pick}/></label><small>{msg||'সর্বোচ্চ 50 KB · auto resize/compress'}</small></div>
+  </div>
 }
 
+function EmployeeModal({open,onClose,onSaved,editing,departments,designations}){
+  const blank={employee_id:'',name_bn:'',name_en:'',father_name:'',mother_name:'',date_of_birth:'',nid_masked:'',mobile:'',email:'',blood_group:'',designation:'',designation_id:'',department_id:'',office_name:'',grade:'',basic_salary:'',joining_date:'',current_position:'',current_position_joining_date:'',service_status:'active',employment_type:'',photo_data:''};
+  const [form,setForm]=useState(blank),[busy,setBusy]=useState(false),[err,setErr]=useState('');
+
+  useEffect(()=>{
+    if(open){
+      if(editing)setForm({...blank,...editing,department_id:editing.department_id||'',designation_id:editing.designation_id||'',photo_data:editing.photo_data||''});
+      else setForm(blank);
+      setErr('');
+    }
+  },[open,editing]);
+
+  if(!open)return null;
+  function change(k,v){setForm(f=>({...f,[k]:v}))}
+
+  async function save(e){
+    e.preventDefault();setBusy(true);setErr('');
+    try{
+      const payload={...form,
+        grade:form.grade?Number(form.grade):null,
+        basic_salary:form.basic_salary?Number(form.basic_salary):null,
+        department_id:form.department_id?Number(form.department_id):null,
+        designation_id:form.designation_id?Number(form.designation_id):null
+      };
+      if(editing)await api('/api/employees/'+editing.id,{method:'PUT',body:JSON.stringify(payload)});
+      else await api('/api/employees',{method:'POST',body:JSON.stringify(payload)});
+      onSaved();onClose();
+    }catch(e){setErr(e.message)}finally{setBusy(false)}
+  }
+
+  return <div className="modal-backdrop"><div className="modal-card wide-modal">
+    <div className="modal-head"><div><h3>{editing?'Employee Profile Edit':'নতুন Employee Profile'}</h3><p>ব্যক্তিগত, চাকরি ও বর্তমান পোস্টিং তথ্য দিন।</p></div><button className="icon-btn" onClick={onClose}><X/></button></div>
+
+    <ImagePicker value={form.photo_data} onChange={v=>change('photo_data',v)}/>
+
+    <form onSubmit={save} className="form-grid">
+      <div className="form-section span-2">পরিচয় ও যোগাযোগ</div>
+      <label>Employee ID<input required value={form.employee_id} onChange={e=>change('employee_id',e.target.value)}/></label>
+      <label>নাম (বাংলা)<input required value={form.name_bn} onChange={e=>change('name_bn',e.target.value)}/></label>
+      <label>নাম (English)<input value={form.name_en} onChange={e=>change('name_en',e.target.value)}/></label>
+      <label>পিতার নাম<input value={form.father_name} onChange={e=>change('father_name',e.target.value)}/></label>
+      <label>মাতার নাম<input value={form.mother_name} onChange={e=>change('mother_name',e.target.value)}/></label>
+      <DMY label="জন্মতারিখ" value={form.date_of_birth} onChange={v=>change('date_of_birth',v)}/>
+      <label>NID (Masked/limited)<input placeholder="যেমন ******1234" value={form.nid_masked} onChange={e=>change('nid_masked',e.target.value)}/></label>
+      <label>মোবাইল<input value={form.mobile} onChange={e=>change('mobile',e.target.value)}/></label>
+      <label>ইমেইল<input type="email" value={form.email} onChange={e=>change('email',e.target.value)}/></label>
+      <label>Blood Group<select value={form.blood_group} onChange={e=>change('blood_group',e.target.value)}><option value="">নির্বাচন</option>{['A+','A-','B+','B-','AB+','AB-','O+','O-'].map(x=><option key={x}>{x}</option>)}</select></label>
+
+      <div className="form-section span-2">চাকরির তথ্য</div>
+      <label>Department / Office<select value={form.department_id} onChange={e=>change('department_id',e.target.value)}><option value="">নির্বাচন</option>{departments.map(d=><option value={d.id} key={d.id}>{d.name_bn||d.name_en}</option>)}</select></label>
+      <label>Designation<select value={form.designation_id} onChange={e=>change('designation_id',e.target.value)}><option value="">নির্বাচন</option>{designations.map(d=><option value={d.id} key={d.id}>{d.name_bn||d.name_en}</option>)}</select></label>
+      <label>পদবি (Custom/legacy)<input value={form.designation||''} onChange={e=>change('designation',e.target.value)}/></label>
+      <label>Office / Unit<input value={form.office_name} onChange={e=>change('office_name',e.target.value)}/></label>
+      <label>গ্রেড<select value={form.grade} onChange={e=>change('grade',e.target.value)}><option value="">নির্বাচন</option>{Array.from({length:20},(_,i)=>i+1).map(g=><option key={g}>{g}</option>)}</select></label>
+      <label>বেসিক বেতন<input type="number" min="0" value={form.basic_salary} onChange={e=>change('basic_salary',e.target.value)}/></label>
+      <DMY label="ঢাকা বিশ্ববিদ্যালয়ে প্রথম যোগদানের তারিখ" value={form.joining_date} onChange={v=>change('joining_date',v)}/>
+      <label>বর্তমান পদ<input value={form.current_position} onChange={e=>change('current_position',e.target.value)}/></label>
+      <DMY label="বর্তমান পদে যোগদানের তারিখ" value={form.current_position_joining_date} onChange={v=>change('current_position_joining_date',v)}/>
+      <label>Employment Type<select value={form.employment_type} onChange={e=>change('employment_type',e.target.value)}><option value="">নির্বাচন</option><option value="permanent">স্থায়ী</option><option value="temporary">অস্থায়ী</option><option value="contract">চুক্তিভিত্তিক</option></select></label>
+      <label>Service Status<select value={form.service_status} onChange={e=>change('service_status',e.target.value)}><option value="active">Active</option><option value="retired">Retired</option><option value="on_leave">On Leave</option><option value="inactive">Inactive</option></select></label>
+
+      {err&&<div className="error span-2">{err}</div>}
+      <div className="modal-actions span-2"><button type="button" className="secondary" onClick={onClose}>বাতিল</button><button disabled={busy}><Save size={16}/>{busy?'সংরক্ষণ হচ্ছে...':'Profile সংরক্ষণ'}</button></div>
+    </form>
+  </div></div>
+}
+
+function EmployeeProfile({emp,onEdit,onBack}){
+  if(!emp)return null;
+  return <div>
+    <div className="page-head"><div><button className="back-text" onClick={onBack}>← Employee list</button><h2>Employee Profile</h2></div><button onClick={onEdit}><Edit3 size={16}/> Edit Profile</button></div>
+    <section className="profile-hero">
+      <div className="profile-avatar">{emp.photo_data?<img src={emp.photo_data}/>:<UserCircle2 size={70}/>}</div>
+      <div className="profile-main"><span className="badge active">{emp.service_status||'active'}</span><h2>{emp.name_bn||emp.name_en||'—'}</h2><p>{emp.designation_name_bn||emp.designation||emp.current_position||'পদবি নেই'}</p>
+        <div className="profile-meta"><span><IdCard/> {emp.employee_id}</span><span><Building2/> {emp.department_name_bn||'Department নেই'}</span><span><ShieldCheck/> Grade {emp.grade||'—'}</span></div>
+      </div>
+    </section>
+    <section className="profile-grid">
+      <article><h3>ব্যক্তিগত তথ্য</h3><div className="info-row"><span>English Name</span><b>{emp.name_en||'—'}</b></div><div className="info-row"><span>পিতার নাম</span><b>{emp.father_name||'—'}</b></div><div className="info-row"><span>মাতার নাম</span><b>{emp.mother_name||'—'}</b></div><div className="info-row"><span>জন্মতারিখ</span><b>{emp.date_of_birth||'—'}</b></div><div className="info-row"><span>Blood Group</span><b>{emp.blood_group||'—'}</b></div><div className="info-row"><span>NID</span><b>{emp.nid_masked||'—'}</b></div></article>
+      <article><h3>যোগাযোগ</h3><div className="info-row"><span>মোবাইল</span><b>{emp.mobile||'—'}</b></div><div className="info-row"><span>ইমেইল</span><b>{emp.email||'—'}</b></div><div className="info-row"><span>Office / Unit</span><b>{emp.office_name||'—'}</b></div></article>
+      <article><h3>চাকরির তথ্য</h3><div className="info-row"><span>বর্তমান পদ</span><b>{emp.current_position||emp.designation_name_bn||emp.designation||'—'}</b></div><div className="info-row"><span>বর্তমান গ্রেড</span><b>{emp.grade||'—'}</b></div><div className="info-row"><span>Basic Salary</span><b>{emp.basic_salary?`৳${money(emp.basic_salary)}`:'—'}</b></div><div className="info-row"><span>প্রথম যোগদান</span><b>{emp.joining_date||'—'}</b></div><div className="info-row"><span>বর্তমান পদে যোগদান</span><b>{emp.current_position_joining_date||'—'}</b></div><div className="info-row"><span>Employment Type</span><b>{emp.employment_type||'—'}</b></div></article>
+    </section>
+  </div>
+}
+
+
 function EmployeeManagement(){
-  const[list,setList]=useState([]),[loading,setLoading]=useState(true),[q,setQ]=useState(''),[modal,setModal]=useState(false),[editing,setEditing]=useState(null),[err,setErr]=useState('');
-  async function load(){setLoading(true);setErr('');try{const x=await api('/api/employees');setList(x.employees||[])}catch(e){setErr(e.message)}finally{setLoading(false)}}
+  const[list,setList]=useState([]),[departments,setDepartments]=useState([]),[designations,setDesignations]=useState([]),
+    [loading,setLoading]=useState(true),[q,setQ]=useState(''),[modal,setModal]=useState(false),[editing,setEditing]=useState(null),
+    [selected,setSelected]=useState(null),[err,setErr]=useState('');
+
+  async function load(){
+    setLoading(true);setErr('');
+    try{
+      const [x,d,g]=await Promise.all([api('/api/employees'),api('/api/departments'),api('/api/designations')]);
+      setList(x.employees||[]);setDepartments(d.departments||[]);setDesignations(g.designations||[]);
+      if(selected){
+        const refreshed=(x.employees||[]).find(e=>e.id===selected.id);
+        if(refreshed)setSelected(refreshed);
+      }
+    }catch(e){setErr(e.message)}finally{setLoading(false)}
+  }
   useEffect(()=>{load()},[]);
-  const filtered=useMemo(()=>{const s=q.trim().toLowerCase();if(!s)return list;return list.filter(x=>[x.employee_id,x.name_bn,x.name_en,x.designation,x.email,x.mobile].some(v=>String(v||'').toLowerCase().includes(s)))},[q,list]);
-  async function remove(emp){if(!confirm(`${emp.name_bn||emp.employee_id} মুছে ফেলবেন?`))return;try{await api('/api/employees/'+emp.id,{method:'DELETE'});load()}catch(e){alert(e.message)}}
-  return <><div className="page-head"><div><h2>Employee Management</h2><p>কর্মকর্তা-কর্মচারীর মূল profile ও service information পরিচালনা করুন।</p></div><button onClick={()=>{setEditing(null);setModal(true)}}><Plus size={17}/> নতুন Employee</button></div><div className="toolbar"><div className="search"><Search size={17}/><input placeholder="Employee ID, নাম, পদবি..." value={q} onChange={e=>setQ(e.target.value)}/></div><button className="secondary" onClick={load}><RefreshCw size={16}/> Refresh</button></div>{err&&<div className="error">{err}</div>}<div className="table-card">{loading?<div className="empty">Loading...</div>:filtered.length===0?<div className="empty">কোনো Employee record পাওয়া যায়নি।</div>:<div className="table-wrap"><table><thead><tr><th>Employee</th><th>পদবি</th><th>গ্রেড</th><th>যোগদান</th><th>Status</th><th></th></tr></thead><tbody>{filtered.map(emp=><tr key={emp.id}><td><b>{emp.name_bn||'—'}</b><small>{emp.employee_id} · {emp.email||'ইমেইল নেই'}</small></td><td>{emp.designation||emp.current_position||'—'}</td><td>{emp.grade||'—'}</td><td>{emp.joining_date||'—'}</td><td><span className={'badge '+(emp.service_status||'active')}>{emp.service_status||'active'}</span></td><td className="actions"><button className="icon-btn" onClick={()=>{setEditing(emp);setModal(true)}}><Settings size={16}/></button><button className="icon-btn danger" onClick={()=>remove(emp)}><Trash2 size={16}/></button></td></tr>)}</tbody></table></div>}</div><EmployeeModal open={modal} editing={editing} onClose={()=>setModal(false)} onSaved={load}/></>
+
+  const filtered=useMemo(()=>{
+    const s=q.trim().toLowerCase();if(!s)return list;
+    return list.filter(x=>[x.employee_id,x.name_bn,x.name_en,x.designation,x.designation_name_bn,x.department_name_bn,x.email,x.mobile].some(v=>String(v||'').toLowerCase().includes(s)))
+  },[q,list]);
+
+  async function remove(emp){
+    if(!confirm(`${emp.name_bn||emp.employee_id} মুছে ফেলবেন?`))return;
+    try{await api('/api/employees/'+emp.id,{method:'DELETE'});if(selected?.id===emp.id)setSelected(null);load()}catch(e){alert(e.message)}
+  }
+
+  if(selected)return <><EmployeeProfile emp={selected} onBack={()=>setSelected(null)} onEdit={()=>{setEditing(selected);setModal(true)}}/>
+    <EmployeeModal open={modal} editing={editing} departments={departments} designations={designations} onClose={()=>setModal(false)} onSaved={load}/></>;
+
+  return <>
+    <div className="page-head"><div><h2>Employee Management</h2><p>Profile, Department, Designation, Grade, joining information ও service status পরিচালনা করুন।</p></div><button onClick={()=>{setEditing(null);setModal(true)}}><Plus size={17}/> নতুন Employee</button></div>
+    <div className="toolbar"><div className="search"><Search size={17}/><input placeholder="Employee ID, নাম, বিভাগ, পদবি..." value={q} onChange={e=>setQ(e.target.value)}/></div><button className="secondary" onClick={load}><RefreshCw size={16}/> Refresh</button></div>
+    {err&&<div className="error">{err}</div>}
+    <div className="table-card">{loading?<div className="empty">Loading...</div>:filtered.length===0?<div className="empty">কোনো Employee record পাওয়া যায়নি।</div>:<div className="table-wrap"><table>
+      <thead><tr><th>Employee</th><th>Department</th><th>পদবি</th><th>গ্রেড</th><th>Status</th><th></th></tr></thead>
+      <tbody>{filtered.map(emp=><tr key={emp.id}>
+        <td className="employee-cell" onClick={()=>setSelected(emp)}><div className="mini-avatar">{emp.photo_data?<img src={emp.photo_data}/>:<UserRound size={18}/>}</div><div><b>{emp.name_bn||'—'}</b><small>{emp.employee_id} · {emp.email||'ইমেইল নেই'}</small></div></td>
+        <td>{emp.department_name_bn||emp.department_name_en||'—'}</td><td>{emp.designation_name_bn||emp.designation||emp.current_position||'—'}</td><td>{emp.grade||'—'}</td>
+        <td><span className={'badge '+(emp.service_status||'active')}>{emp.service_status||'active'}</span></td>
+        <td className="actions"><button className="icon-btn" onClick={()=>{setEditing(emp);setModal(true)}}><Settings size={16}/></button><button className="icon-btn danger" onClick={()=>remove(emp)}><Trash2 size={16}/></button></td>
+      </tr>)}</tbody>
+    </table></div>}</div>
+    <EmployeeModal open={modal} editing={editing} departments={departments} designations={designations} onClose={()=>setModal(false)} onSaved={load}/>
+  </>
+}
+
+
+function MasterDirectory(){
+  const[departments,setDepartments]=useState([]),[designations,setDesignations]=useState([]),[depName,setDepName]=useState(''),[desName,setDesName]=useState(''),[err,setErr]=useState('');
+  async function load(){try{const[d,g]=await Promise.all([api('/api/departments'),api('/api/designations')]);setDepartments(d.departments||[]);setDesignations(g.designations||[])}catch(e){setErr(e.message)}}
+  useEffect(()=>{load()},[]);
+  async function addDepartment(){if(!depName.trim())return;try{await api('/api/departments',{method:'POST',body:JSON.stringify({name_bn:depName.trim(),type:'department'})});setDepName('');load()}catch(e){setErr(e.message)}}
+  async function addDesignation(){if(!desName.trim())return;try{await api('/api/designations',{method:'POST',body:JSON.stringify({name_bn:desName.trim()})});setDesName('');load()}catch(e){setErr(e.message)}}
+  return <div><div className="page-head"><div><h2>Department & Designation</h2><p>Employee profile-এর জন্য master directory পরিচালনা করুন।</p></div></div>{err&&<div className="error">{err}</div>}
+    <div className="split-grid"><section className="breakdown-card"><h3>Departments / Offices</h3><div className="inline-add"><input placeholder="নতুন Department/Office" value={depName} onChange={e=>setDepName(e.target.value)}/><button className="primary" onClick={addDepartment}><Plus size={15}/> Add</button></div>{departments.map(x=><div className="directory-row" key={x.id}><Building2 size={16}/><span>{x.name_bn||x.name_en}</span><small>{x.type||'department'}</small></div>)}</section>
+    <section className="breakdown-card"><h3>Designations</h3><div className="inline-add"><input placeholder="নতুন Designation" value={desName} onChange={e=>setDesName(e.target.value)}/><button className="primary" onClick={addDesignation}><Plus size={15}/> Add</button></div>{designations.map(x=><div className="directory-row" key={x.id}><Briefcase size={16}/><span>{x.name_bn||x.name_en}</span><small>{x.grade?`Grade ${x.grade}`:'—'}</small></div>)}</section></div>
+  </div>
 }
 
 function AdminPanel(){
@@ -251,13 +410,13 @@ function App(){
     <button className={page==='promotion'?'active':''} onClick={()=>setPage('promotion')}><TrendingUp size={18}/> পদোন্নতি</button>
     <button className={page==='salary'?'active':''} onClick={()=>setPage('salary')}><WalletCards size={18}/> বেতন ও পে-স্কেল</button>
     {admin&&<button className={page==='employees'?'active':''} onClick={()=>setPage('employees')}><Users size={18}/> Employee Management</button>}
-    {admin&&<button className={page==='admin'?'active':''} onClick={()=>setPage('admin')}><ShieldCheck size={18}/> Admin Panel</button>}
+    {admin&&<button className={page==='directory'?'active':''} onClick={()=>setPage('directory')}><Building2 size={18}/> Department & Designation</button>}{admin&&<button className={page==='admin'?'active':''} onClick={()=>setPage('admin')}><ShieldCheck size={18}/> Admin Panel</button>}
   </nav></aside><main><header><div><h2>স্বাগতম, {user.name}</h2><p>{roleLabel[user.role]||user.role}</p></div><button className="logout" onClick={logout}><LogOut size={16}/> লগআউট</button></header>
     {page==='dashboard'&&<DashboardHome user={user} onPage={setPage}/>}
     {page==='promotion'&&<PromotionCenter/>}
     {page==='salary'&&<SalaryCalculator/>}
     {page==='employees'&&admin&&<EmployeeManagement/>}
-    {page==='admin'&&admin&&<AdminPanel/>}
+    {page==='directory'&&admin&&<MasterDirectory/>}{page==='admin'&&admin&&<AdminPanel/>}
   </main></div>
 }
 createRoot(document.getElementById('root')).render(<App/>);
