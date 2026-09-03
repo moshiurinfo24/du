@@ -140,6 +140,85 @@ export default{
       }
 
       // =========================
+      // ONE-TIME ADMIN SETUP
+      // REMOVE AFTER SUCCESS
+      // =========================
+      if(
+        u.pathname==='/api/setup-admin-once' &&
+        req.method==='GET'
+      ){
+
+        const email='admin@dhakau.local';
+        const password='ChangeMe12345';
+
+        const p=await mkpass(password);
+
+        const existing=await env.DB
+          .prepare(`
+            SELECT id
+            FROM users
+            WHERE email=?
+          `)
+          .bind(email)
+          .first();
+
+        if(existing){
+
+          const result=await env.DB.prepare(`
+            UPDATE users
+            SET
+              name=?,
+              password_hash=?,
+              password_salt=?,
+              role='super_admin',
+              is_active=1
+            WHERE email=?
+          `)
+          .bind(
+            'Super Admin',
+            p.hash,
+            p.salt,
+            email
+          )
+          .run();
+
+          return json({
+            ok:true,
+            message:'Admin password reset completed',
+            changed:result.meta?.changes ?? 0,
+            email
+          },200,C);
+        }
+
+        const result=await env.DB.prepare(`
+          INSERT INTO users(
+            name,
+            email,
+            password_hash,
+            password_salt,
+            role,
+            is_active
+          )
+          VALUES(?,?,?,?,?,1)
+        `)
+        .bind(
+          'Super Admin',
+          email,
+          p.hash,
+          p.salt,
+          'super_admin'
+        )
+        .run();
+
+        return json({
+          ok:true,
+          message:'Admin created',
+          id:result.meta?.last_row_id ?? null,
+          email
+        },201,C);
+      }
+
+      // =========================
       // BOOTSTRAP SUPER ADMIN
       // =========================
       if(
