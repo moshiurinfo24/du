@@ -5,10 +5,11 @@ import {
   LayoutDashboard,TrendingUp,WalletCards,Users,ShieldCheck,LogOut,Plus,Search,
   UserRound,Building2,IdCard,Activity,ChevronRight,X,Save,Trash2,RefreshCw,
   Settings,Database,LockKeyhole,Home,BookOpen,Calculator,HelpCircle,Phone,
-  Bell,ArrowRight,CalendarDays,CheckCircle2,AlertTriangle,Landmark,FileText,Camera,Briefcase,MapPin,Mail,PhoneCall,MessageCircle,Edit3,UserCircle2,History,ArrowRightLeft,GraduationCap,BadgeDollarSign,Clock3,FileClock
+  Bell,ArrowRight,CalendarDays,CheckCircle2,AlertTriangle,Landmark,FileText,Camera,Briefcase,MapPin,Mail,PhoneCall,MessageCircle,Edit3,UserCircle2,History,ArrowRightLeft,GraduationCap,BadgeDollarSign,Clock3,FileClock,ServerCog,Gauge,UserCog,ScrollText,SlidersHorizontal,ShieldAlert,Link2,Eye,Power
 } from 'lucide-react';
 import './styles.css';
 import './auth-phase8.css';
+import './admin-premium.css';
 import {
   PAY2015,PAY2026,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
   annualPromotionCycle,futureRoadmap,serviceExperiencePoints,fixed2026,implementationRate,houseRent2015
@@ -21,7 +22,7 @@ async function api(path,opts={}){
   if(!r.ok) throw new Error(d.error||d.detail||'Request failed');
   return d;
 }
-const roleLabel={super_admin:'Super Admin',admin:'Admin',department_admin:'Department Admin',editor:'Editor',employee:'Employee'};
+const roleLabel={super_admin:'System Administrator',admin:'Admin',department_admin:'Department Admin',editor:'Editor',employee:'Employee'};
 const I18N={
   bn:{
     appName:'কর্মকর্তা-কর্মচারী ডিজিটাল সেবা',
@@ -887,11 +888,142 @@ function NoticePolicyCenter({lang='bn',canManage=false}){
   </div>
 }
 
-function AdminPanel(){
-  const[stats,setStats]=useState(null),[err,setErr]=useState('');
-  useEffect(()=>{api('/api/admin/stats').then(setStats).catch(e=>setErr(e.message))},[]);
-  return <><div className="page-head"><div><h2>Admin Panel</h2><p>System health, database status এবং account overview.</p></div></div>{err&&<div className="error">{err}</div>}<section className="stats-grid"><Stat label="Total Employees" value={stats?.employees??'—'} icon={Users}/><Stat label="Active Employees" value={stats?.active_employees??'—'} icon={Activity}/><Stat label="Total Users" value={stats?.users??'—'} icon={UserRound}/><Stat label="Departments" value={stats?.departments??'—'} icon={Building2}/></section><section className="admin-grid"><article className="admin-card"><Database/><div><h3>D1 Database</h3><p>Connected এবং operational.</p></div></article><article className="admin-card"><ShieldCheck/><div><h3>Role Security</h3><p>Admin-only API routes protected.</p></div></article><article className="admin-card"><LockKeyhole/><div><h3>Session Security</h3><p>HttpOnly secure cookie session enabled.</p></div></article></section></>
+
+function AdminMetric({label,value,icon:Icon,sub}){
+  return <article className="admin-metric-card"><div className="admin-metric-icon"><Icon size={20}/></div><div><small>{label}</small><b>{value??'—'}</b>{sub&&<span>{sub}</span>}</div></article>
 }
+function SuperAdminControlCenter({lang='bn',onPage}){
+  const en=lang==='en';
+  const[stats,setStats]=useState(null),[users,setUsers]=useState([]),[auditRows,setAuditRows]=useState([]),[health,setHealth]=useState(null),
+    [tab,setTab]=useState('overview'),[busy,setBusy]=useState(false),[err,setErr]=useState(''),[settings,setSettings]=useState({
+      support_phone:'01759084692',whatsapp:'01759084692',calendar_enabled:'0',calendar_source_url:'',maintenance_mode:'0'
+    });
+  async function load(){
+    setBusy(true);setErr('');
+    try{
+      const [s,u,a,h,st]=await Promise.all([
+        api('/api/admin/stats'),
+        api('/api/admin/users'),
+        api('/api/admin/audit?limit=80'),
+        api('/api/admin/system-health'),
+        api('/api/admin/settings')
+      ]);
+      setStats(s);setUsers(u.users||[]);setAuditRows(a.logs||[]);setHealth(h);setSettings(x=>({...x,...(st.settings||{})}));
+    }catch(e){setErr(e.message)}finally{setBusy(false)}
+  }
+  useEffect(()=>{load()},[]);
+  async function toggleUser(x){
+    if(!confirm(en?`${x.is_active?'Deactivate':'Activate'} this account?`:`এই অ্যাকাউন্ট ${x.is_active?'নিষ্ক্রিয়':'সক্রিয়'} করবেন?`))return;
+    try{await api(`/api/admin/users/${x.id}/status`,{method:'PUT',body:JSON.stringify({is_active:!x.is_active})});await load()}catch(e){alert(e.message)}
+  }
+  async function saveSettings(){
+    setBusy(true);setErr('');
+    try{await api('/api/admin/settings',{method:'PUT',body:JSON.stringify(settings)});await load()}
+    catch(e){setErr(e.message)}finally{setBusy(false)}
+  }
+  const roleText=r=>en?({super_admin:'System Administrator',admin:'Admin',department_admin:'Department Admin',editor:'Editor',employee:'Employee'}[r]||r):({super_admin:'সিস্টেম ব্যবস্থাপক',admin:'অ্যাডমিন',department_admin:'বিভাগীয় অ্যাডমিন',editor:'সম্পাদক',employee:'কর্মকর্তা-কর্মচারী'}[r]||r);
+  const tabs=[
+    ['overview',Gauge,en?'Overview':'সারসংক্ষেপ'],
+    ['users',UserCog,en?'Users':'ব্যবহারকারী'],
+    ['content',BookOpen,en?'Content':'কনটেন্ট'],
+    ['rules',Calculator,en?'Calculator Rules':'ক্যালকুলেটর রুলস'],
+    ['calendar',CalendarDays,en?'Calendar':'ক্যালেন্ডার'],
+    ['security',ShieldAlert,en?'Security':'নিরাপত্তা'],
+    ['audit',ScrollText,en?'Audit Logs':'অডিট লগ'],
+    ['settings',SlidersHorizontal,en?'System Settings':'সিস্টেম সেটিংস']
+  ];
+  return <div className="super-admin-center">
+    <section className="admin-control-hero">
+      <div><span>{en?'SYSTEM CONTROL CENTER':'সিস্টেম কন্ট্রোল সেন্টার'}</span><h2>{en?'System Administrator':'সিস্টেম ব্যবস্থাপক'}</h2><p>{en?'Technical operations, content, security and platform configuration — without making official employment decisions.':'প্রযুক্তিগত পরিচালনা, কনটেন্ট, নিরাপত্তা ও প্ল্যাটফর্ম কনফিগারেশন—কোনো অফিসিয়াল চাকরি-সংক্রান্ত সিদ্ধান্ত ছাড়াই।'}</p></div>
+      <div className="admin-health-chip"><Activity size={16}/>{health?.ok?(en?'System Healthy':'সিস্টেম সচল'):(en?'Check Required':'যাচাই প্রয়োজন')}</div>
+    </section>
+
+    <div className="admin-control-tabs">{tabs.map(([k,I,l])=><button key={k} className={tab===k?'active':''} onClick={()=>setTab(k)}><I size={16}/>{l}</button>)}</div>
+    {err&&<div className="error">{err}</div>}
+
+    {tab==='overview'&&<>
+      <section className="admin-metrics-grid">
+        <AdminMetric label={en?'Total Users':'মোট ব্যবহারকারী'} value={stats?.users} icon={Users}/>
+        <AdminMetric label={en?'Active Employees':'সক্রিয় কর্মকর্তা-কর্মচারী'} value={stats?.active_employees} icon={Activity}/>
+        <AdminMetric label={en?'Departments':'বিভাগ/অফিস'} value={stats?.departments} icon={Building2}/>
+        <AdminMetric label={en?'Designations':'পদবি'} value={stats?.designations} icon={Briefcase}/>
+        <AdminMetric label={en?'Active Sessions':'সক্রিয় সেশন'} value={health?.active_sessions} icon={LockKeyhole}/>
+        <AdminMetric label={en?'Audit Events':'অডিট ইভেন্ট'} value={health?.audit_events} icon={ScrollText}/>
+      </section>
+      <section className="admin-action-grid">
+        <button onClick={()=>onPage?.('employees')}><Users/><div><b>{en?'Employee Records':'কর্মকর্তা-কর্মচারী রেকর্ড'}</b><small>{en?'Structured profiles and service history':'স্ট্রাকচার্ড প্রোফাইল ও চাকরি ইতিহাস'}</small></div><ChevronRight/></button>
+        <button onClick={()=>onPage?.('directory')}><Building2/><div><b>{en?'Directory':'বিভাগ ও পদবি'}</b><small>{en?'Manage master data':'মাস্টার ডাটা পরিচালনা'}</small></div><ChevronRight/></button>
+        <button onClick={()=>onPage?.('library')}><BookOpen/><div><b>{en?'Notices & Policies':'নোটিশ ও নীতিমালা'}</b><small>{en?'Publish reference content':'রেফারেন্স কনটেন্ট প্রকাশ'}</small></div><ChevronRight/></button>
+        <button onClick={()=>setTab('security')}><ShieldCheck/><div><b>{en?'Security Center':'নিরাপত্তা কেন্দ্র'}</b><small>{en?'Sessions and account status':'সেশন ও অ্যাকাউন্ট অবস্থা'}</small></div><ChevronRight/></button>
+      </section>
+    </>}
+
+    {tab==='users'&&<section className="admin-panel-card">
+      <div className="admin-panel-head"><div><h3>{en?'User Management':'ব্যবহারকারী ব্যবস্থাপনা'}</h3><p>{en?'Technical account control only. No employment approval workflow.':'শুধু প্রযুক্তিগত অ্যাকাউন্ট নিয়ন্ত্রণ। চাকরি-সংক্রান্ত কোনো অনুমোদন নয়।'}</p></div><button className="secondary" onClick={load}><RefreshCw size={15}/>{en?'Refresh':'রিফ্রেশ'}</button></div>
+      <div className="table-wrap"><table><thead><tr><th>{en?'User':'ব্যবহারকারী'}</th><th>{en?'Role':'ভূমিকা'}</th><th>{en?'Type':'ধরন'}</th><th>{en?'Status':'অবস্থা'}</th><th></th></tr></thead><tbody>
+        {users.map(x=><tr key={x.id}><td><b>{x.name}</b><small style={{display:'block'}}>{x.email}</small></td><td>{roleText(x.role)}</td><td>{x.account_type||'employee'}</td><td><span className={'badge '+(x.is_active?'active':'')}>{x.is_active?(en?'Active':'সক্রিয়'):(en?'Inactive':'নিষ্ক্রিয়')}</span></td><td><button className="icon-btn" title={en?'Toggle status':'অবস্থা পরিবর্তন'} onClick={()=>toggleUser(x)}><Power size={15}/></button></td></tr>)}
+      </tbody></table></div>
+    </section>}
+
+    {tab==='content'&&<section className="admin-panel-card">
+      <div className="admin-panel-head"><div><h3>{en?'System Content Management':'সিস্টেম কনটেন্ট ব্যবস্থাপনা'}</h3><p>{en?'Public references, notices, policies, forms and help content.':'পাবলিক রেফারেন্স, নোটিশ, নীতিমালা, ফরম ও সহায়তা কনটেন্ট।'}</p></div></div>
+      <div className="admin-action-grid compact-actions">
+        <button onClick={()=>onPage?.('library')}><Bell/><div><b>{en?'Notices':'নোটিশ'}</b><small>{en?'Publish and pin verified updates':'যাচাইকৃত আপডেট প্রকাশ/পিন'}</small></div><ChevronRight/></button>
+        <button onClick={()=>onPage?.('library')}><BookOpen/><div><b>{en?'Policies & Rules':'নীতিমালা ও বিধি'}</b><small>{en?'Reference library':'রেফারেন্স লাইব্রেরি'}</small></div><ChevronRight/></button>
+        <button><FileText/><div><b>{en?'Forms & Links':'ফরম ও লিংক'}</b><small>{en?'Reference links only; no file storage':'শুধু রেফারেন্স লিংক; ফাইল স্টোরেজ নয়'}</small></div><ChevronRight/></button>
+        <button><HelpCircle/><div><b>{en?'Help & FAQ':'সহায়তা ও প্রশ্নোত্তর'}</b><small>{en?'Support guidance':'ব্যবহার সহায়িকা'}</small></div><ChevronRight/></button>
+      </div>
+    </section>}
+
+    {tab==='rules'&&<section className="admin-panel-card">
+      <div className="admin-panel-head"><div><h3>{en?'Calculator Rules Registry':'ক্যালকুলেটর রুলস রেজিস্ট্রি'}</h3><p>{en?'Verified formulas remain code-controlled to prevent accidental calculation errors.':'হিসাবের ভুল এড়াতে যাচাইকৃত সূত্রগুলো কোড-নিয়ন্ত্রিত থাকবে।'}</p></div></div>
+      <div className="rules-registry">
+        <article><TrendingUp/><div><b>{en?'Promotion Rules':'পদোন্নতি নীতিমালা'}</b><p>{en?'Education-based service requirement, service points and one-year process.':'শিক্ষাগত যোগ্যতাভিত্তিক চাকরিকাল, সার্ভিস পয়েন্ট ও ১ বছরের প্রক্রিয়া।'}</p></div><span>{en?'Verified':'যাচাইকৃত'}</span></article>
+        <article><WalletCards/><div><b>{en?'Pay Scale Rules':'পে-স্কেল নিয়ম'}</b><p>{en?'2015 stage, 2026 fixation, implementation rate, allowances and deductions.':'২০১৫ ধাপ, ২০২৬ ফিক্সেশন, বাস্তবায়ন হার, ভাতা ও কর্তন।'}</p></div><span>{en?'Verified':'যাচাইকৃত'}</span></article>
+        <article><Calculator/><div><b>{en?'General Calculators':'সাধারণ ক্যালকুলেটর'}</b><p>{en?'Service length, age, date difference and retirement estimate.':'চাকরিকাল, বয়স, তারিখের ব্যবধান ও অবসর তারিখ অনুমান।'}</p></div><span>{en?'Active':'সক্রিয়'}</span></article>
+      </div>
+      <div className="notice"><b>{en?'Safety rule:':'নিরাপত্তা নীতি:'}</b> {en?'Calculator formulas are not editable from the admin UI. Changes should only be deployed after source verification and testing.':'অ্যাডমিন UI থেকে ক্যালকুলেটর সূত্র সম্পাদনা করা যাবে না। উৎস যাচাই ও টেস্টের পরই কোড ডেপ্লয় করে পরিবর্তন করতে হবে।'}</div>
+    </section>}
+
+    {tab==='calendar'&&<section className="admin-panel-card">
+      <div className="admin-panel-head"><div><h3>{en?'Calendar Reference Management':'ক্যালেন্ডার রেফারেন্স ব্যবস্থাপনা'}</h3><p>{en?'Configure the published calendar source as an independent reference service.':'প্রকাশিত ক্যালেন্ডার উৎসকে স্বাধীন রেফারেন্স সেবা হিসেবে কনফিগার করুন।'}</p></div></div>
+      <div className="form-grid">
+        <label>{en?'Calendar reference enabled':'ক্যালেন্ডার রেফারেন্স চালু'}<select value={settings.calendar_enabled||'0'} onChange={e=>setSettings({...settings,calendar_enabled:e.target.value})}><option value="0">{en?'No':'না'}</option><option value="1">{en?'Yes':'হ্যাঁ'}</option></select></label>
+        <label>{en?'Published source URL':'প্রকাশিত উৎসের URL'}<input value={settings.calendar_source_url||''} onChange={e=>setSettings({...settings,calendar_source_url:e.target.value})} placeholder="https://..."/></label>
+      </div>
+      <div className="notice"><b>{en?'Branding safeguard:':'ব্র্যান্ডিং সুরক্ষা:'}</b> {en?'The platform remains independent and unofficial; the calendar appears only as a sourced reference.':'প্ল্যাটফর্ম স্বাধীন ও অনানুষ্ঠানিক থাকবে; ক্যালেন্ডার শুধুমাত্র উৎস-উল্লেখসহ রেফারেন্স হিসেবে দেখানো হবে।'}</div>
+      <button className="primary" onClick={saveSettings}><Save size={16}/>{en?'Save Calendar Settings':'ক্যালেন্ডার সেটিংস সংরক্ষণ'}</button>
+    </section>}
+
+    {tab==='security'&&<section className="admin-panel-card">
+      <div className="admin-panel-head"><div><h3>{en?'Security Center':'নিরাপত্তা কেন্দ্র'}</h3><p>{en?'Session state, user status and authentication health.':'সেশন অবস্থা, ব্যবহারকারী স্ট্যাটাস ও অথেনটিকেশন স্বাস্থ্য।'}</p></div></div>
+      <section className="admin-metrics-grid small">
+        <AdminMetric label={en?'Active Sessions':'সক্রিয় সেশন'} value={health?.active_sessions} icon={LockKeyhole}/>
+        <AdminMetric label={en?'Expired Sessions':'মেয়াদোত্তীর্ণ সেশন'} value={health?.expired_sessions} icon={Clock3}/>
+        <AdminMetric label={en?'Inactive Users':'নিষ্ক্রিয় ব্যবহারকারী'} value={health?.inactive_users} icon={ShieldAlert}/>
+        <AdminMetric label={en?'Recovery-ready Users':'রিকভারি প্রস্তুত ব্যবহারকারী'} value={health?.recovery_ready_users} icon={ShieldCheck}/>
+      </section>
+      <div className="notice"><b>{en?'Recovery model:':'রিকভারি মডেল:'}</b> {en?'Recovery codes are stored as hashes only; no email/SMS/domain dependency.':'রিকভারি কোড শুধু হ্যাশ হিসেবে সংরক্ষিত; কোনো ইমেইল/এসএমএস/ডোমেইন নির্ভরতা নেই।'}</div>
+    </section>}
+
+    {tab==='audit'&&<section className="admin-panel-card">
+      <div className="admin-panel-head"><div><h3>{en?'Audit Logs':'অডিট লগ'}</h3><p>{en?'Recent system-level changes and actions.':'সাম্প্রতিক সিস্টেম পরিবর্তন ও কার্যক্রম।'}</p></div></div>
+      <div className="audit-list">{auditRows.length===0?<div className="empty">{en?'No audit entries found.':'কোনো অডিট রেকর্ড পাওয়া যায়নি।'}</div>:auditRows.map(x=><article key={x.id}><div className="audit-icon"><History size={15}/></div><div><b>{x.action}</b><p>{x.user_name||'System'} · {x.entity_type||'—'} {x.entity_id?`#${x.entity_id}`:''}</p></div><time>{x.created_at||'—'}</time></article>)}</div>
+    </section>}
+
+    {tab==='settings'&&<section className="admin-panel-card">
+      <div className="admin-panel-head"><div><h3>{en?'System Settings':'সিস্টেম সেটিংস'}</h3><p>{en?'Safe platform-level configuration.':'নিরাপদ প্ল্যাটফর্ম-স্তরের কনফিগারেশন।'}</p></div></div>
+      <div className="form-grid">
+        <label>{en?'Support phone':'সহায়তা ফোন'}<input value={settings.support_phone||''} onChange={e=>setSettings({...settings,support_phone:e.target.value})}/></label>
+        <label>{en?'WhatsApp':'হোয়াটসঅ্যাপ'}<input value={settings.whatsapp||''} onChange={e=>setSettings({...settings,whatsapp:e.target.value})}/></label>
+        <label>{en?'Maintenance mode':'রক্ষণাবেক্ষণ মোড'}<select value={settings.maintenance_mode||'0'} onChange={e=>setSettings({...settings,maintenance_mode:e.target.value})}><option value="0">{en?'Off':'বন্ধ'}</option><option value="1">{en?'On':'চালু'}</option></select></label>
+      </div>
+      <button className="primary" onClick={saveSettings}><Save size={16}/>{en?'Save Settings':'সেটিংস সংরক্ষণ'}</button>
+    </section>}
+  </div>
+}
+
+function AdminPanel({lang='bn',onPage}){return <SuperAdminControlCenter lang={lang} onPage={onPage}/>}
 
 function App(){
   const params=new URLSearchParams(window.location.search);
@@ -917,9 +1049,9 @@ function App(){
       <button className={page==='account'?'active':''} onClick={()=>setPage('account')}><LockKeyhole size={18}/>{lang==='en'?'Account & Security':'অ্যাকাউন্ট ও নিরাপত্তা'}</button>
       {admin&&<button className={page==='employees'?'active':''} onClick={()=>setPage('employees')}><Users size={18}/>{lang==='en'?'Employee Management':'কর্মকর্তা-কর্মচারী ব্যবস্থাপনা'}</button>}
       {admin&&<button className={page==='directory'?'active':''} onClick={()=>setPage('directory')}><Building2 size={18}/>{lang==='en'?'Department & Designation':'বিভাগ ও পদবি'}</button>}
-      {admin&&<button className={page==='admin'?'active':''} onClick={()=>setPage('admin')}><ShieldCheck size={18}/>{lang==='en'?'Admin Panel':'অ্যাডমিন প্যানেল'}</button>}
+      {admin&&<button className={page==='admin'?'active':''} onClick={()=>setPage('admin')}><ShieldCheck size={18}/>{lang==='en'?'System Control':'সিস্টেম কন্ট্রোল'}</button>}
     </nav></aside>
-    <main><header><div><h2>{lang==='en'?`Welcome, ${user.name}`:`স্বাগতম, ${user.name}`}</h2><p>{lang==='en'?(roleLabel[user.role]||user.role):({super_admin:'সুপার অ্যাডমিন',admin:'অ্যাডমিন',department_admin:'বিভাগীয় অ্যাডমিন',editor:'সম্পাদক',employee:'কর্মকর্তা-কর্মচারী'}[user.role]||user.role)}</p></div><div className="header-actions"><LangToggle lang={lang} setLang={setLang}/><button className="logout" onClick={logout}><LogOut size={16}/>{lang==='en'?'Logout':'লগআউট'}</button></div></header>
+    <main><header><div><h2>{lang==='en'?`Welcome, ${user.name}`:`স্বাগতম, ${user.name}`}</h2><p>{lang==='en'?(roleLabel[user.role]||user.role):({super_admin:'সিস্টেম ব্যবস্থাপক',admin:'অ্যাডমিন',department_admin:'বিভাগীয় অ্যাডমিন',editor:'সম্পাদক',employee:'কর্মকর্তা-কর্মচারী'}[user.role]||user.role)}</p></div><div className="header-actions"><LangToggle lang={lang} setLang={setLang}/><button className="logout" onClick={logout}><LogOut size={16}/>{lang==='en'?'Logout':'লগআউট'}</button></div></header>
       {page==='dashboard'&&<DashboardHome user={user} onPage={setPage} lang={lang}/>}
       {page==='promotion'&&<PromotionCenter lang={lang}/>}
       {page==='salary'&&<SalaryCalculator lang={lang}/>}
@@ -928,7 +1060,7 @@ function App(){
       {page==='account'&&<AccountSecurity lang={lang}/>}
       {page==='employees'&&admin&&<EmployeeManagement lang={lang}/>}
       {page==='directory'&&admin&&<MasterDirectory lang={lang}/>}
-      {page==='admin'&&admin&&<AdminPanel lang={lang}/>}
+      {page==='admin'&&admin&&<AdminPanel lang={lang} onPage={setPage}/>}
     </main></div>
 }
 createRoot(document.getElementById('root')).render(<App/>);
