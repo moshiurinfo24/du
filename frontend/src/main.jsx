@@ -18,7 +18,7 @@ import './traffic-analytics-phase11-2.css';
 import './salary-history-phase12.css';
 import './promotion-timeline-phase13.css';
 import './leave-phase14.css';
-import FiscalOfficeCalendar from './calendar-phase15.jsx';
+import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget} from './calendar-phase15.jsx';
 import {
   PAY2015,PAY2026,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
   annualPromotionCycle,futureRoadmap,serviceExperiencePoints,fixed2026,implementationRate,houseRent2015
@@ -635,6 +635,8 @@ function PersonalCareerDashboard({user,onPage,lang='bn'}){
       <article><div className="career-metric-icon"><Milestone/></div><div><small>{en?'Current Post Tenure':'বর্তমান পদে চাকরিকাল'}</small><b>{serviceText(postTenure)}</b><span>{p.current_post_joining_date?fmtDateLang(p.current_post_joining_date,lang):'—'}</span></div></article>
       <article><div className="career-metric-icon"><GraduationCap/></div><div><small>{en?'Education Records':'শিক্ষাগত রেকর্ড'}</small><b>{numLang(career.education?.length||0,lang,0)}</b><span>{en?'Saved qualifications':'সংরক্ষিত যোগ্যতা'}</span></div></article>
     </section>
+
+    <CalendarDashboardWidget lang={lang} onOpen={()=>onPage('calendar')}/>
 
     <section className="career-dashboard-grid">
       <article className="career-dashboard-card milestone-card">
@@ -1710,7 +1712,7 @@ function App(){
   if(!user)return showLogin?<AuthPortal onLogin={u=>{setUser(u);window.history.replaceState({},'',window.location.pathname)}} onBack={()=>{setShowLogin(false);setAuthMode('login');setAuthToken('');window.history.replaceState({},'',window.location.pathname)}} lang={lang} setLang={setLang} initialMode={authMode} initialToken={authToken}/>:<PublicHome onLogin={()=>{setAuthMode('login');setShowLogin(true)}} lang={lang} setLang={setLang}/>;
   const admin=['super_admin','admin','department_admin'].includes(user.role);
   return <div className="app"><aside className="side">
-    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v14.2':'স্বাধীন প্ল্যাটফর্ম · v14.2'}</small></div></div>
+    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v15.1':'স্বাধীন প্ল্যাটফর্ম · v15.1'}</small></div></div>
     <nav>
       <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}><LayoutDashboard size={18}/>{lang==='en'?'My Dashboard':'আমার ড্যাশবোর্ড'}</button>
       <button className={page==='career'?'active':''} onClick={()=>setPage('career')}><BookUser size={18}/>{lang==='en'?'My Career':'আমার চাকরি'}</button>
@@ -1719,6 +1721,7 @@ function App(){
       <button className={page==='salary'?'active':''} onClick={()=>setPage('salary')}><WalletCards size={18}/>{lang==='en'?'Salary & Pay Scale':'বেতন ও পে-স্কেল'}</button>
       <button className={page==='salary-history'?'active':''} onClick={()=>setPage('salary-history')}><ReceiptText size={18}/>{lang==='en'?'My Salary History':'আমার বেতন ইতিহাস'}</button>
       <button className={page==='leave'?'active':''} onClick={()=>setPage('leave')}><CalendarDays size={18}/>{lang==='en'?'My Leave Record':'আমার ছুটির হিসাব'}</button>
+      <button className={page==='calendar'?'active':''} onClick={()=>setPage('calendar')}><CalendarDays size={18}/>{lang==='en'?'My Calendar':'আমার ক্যালেন্ডার'}</button>
       <button className={page==='calculators'?'active':''} onClick={()=>setPage('calculators')}><Calculator size={18}/>{lang==='en'?'Calculator Center':'ক্যালকুলেটর সেন্টার'}</button>
       <button className={page==='library'?'active':''} onClick={()=>setPage('library')}><BookOpen size={18}/>{lang==='en'?'Notices & Policies':'নোটিশ ও নীতিমালা'}</button>
       <button className={page==='account'?'active':''} onClick={()=>setPage('account')}><LockKeyhole size={18}/>{lang==='en'?'Account & Security':'অ্যাকাউন্ট ও নিরাপত্তা'}</button>
@@ -1731,7 +1734,8 @@ function App(){
       {page==='promotion-timeline'&&<PromotionCareerTimeline lang={lang} onPage={setPage}/>}
       {page==='salary'&&<SalaryCalculator lang={lang}/>} 
       {page==='salary-history'&&<SalaryHistory lang={lang}/>}
-      {page==='leave'&&<PersonalLeaveRecord lang={lang}/>}
+      {page==='leave'&&<PersonalLeaveRecord lang={lang}/>} 
+      {page==='calendar'&&<LoggedInOfficeCalendar lang={lang}/>} 
       {page==='calculators'&&<CalculatorCenter lang={lang} onPage={setPage}/>}
       {page==='library'&&<NoticePolicyCenter lang={lang} canManage={admin}/>} 
       {page==='account'&&<AccountSecurity lang={lang}/>}
