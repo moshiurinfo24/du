@@ -29,6 +29,14 @@ function makeRecoveryCode(){
 }
 function normalizeRecoveryCode(v){return String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'')}
 async function recoveryHash(code){return sha(normalizeRecoveryCode(code))}
+
+export default{async fetch(req,env){
+  const C=cors(req);
+  if(req.method==='OPTIONS')return new Response(null,{status:204,headers:C});
+  const u=new URL(req.url);
+  try{
+    if(u.pathname==='/api/health')return json({ok:true,service:'Employee Service ERP API',phase:'11.1.3'},200,C);
+
     // Phase 8 FREE: self-service registration and recovery code password reset
     if(u.pathname==='/api/register'&&req.method==='POST'){
       const b=await req.json(),name=safeName(b.name),email=emailNorm(b.email),password=String(b.password||''),accountType=['officer','employee'].includes(b.account_type)?b.account_type:'employee';
@@ -189,7 +197,7 @@ async function recoveryHash(code){return sha(normalizeRecoveryCode(code))}
     }
 
     if(u.pathname==='/api/phase-status'&&req.method==='GET'){
-      return json({ok:true,phase:'11.1.2',routes:{my_career:true,admin_analytics:true,usage:true,recovery:true}},200,C);
+      return json({ok:true,phase:'11.1.3',routes:{my_career:true,admin_analytics:true,usage:true,recovery:true}},200,C);
     }
 
     if(u.pathname==='/api/departments'&&req.method==='GET'){
