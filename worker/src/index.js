@@ -10,6 +10,7 @@ const enc=new TextEncoder();
 
 function cors(req){
   const o=req.headers.get('Origin')||'*';
+
   return{
     'Access-Control-Allow-Origin':o,
     'Access-Control-Allow-Credentials':'true',
@@ -20,11 +21,18 @@ function cors(req){
 }
 
 function b64(b){
-  return btoa(String.fromCharCode(...new Uint8Array(b)));
+  return btoa(
+    String.fromCharCode(
+      ...new Uint8Array(b)
+    )
+  );
 }
 
 function ub64(s){
-  return Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+  return Uint8Array.from(
+    atob(s),
+    c=>c.charCodeAt(0)
+  );
 }
 
 async function sha(s){
@@ -60,7 +68,9 @@ async function derive(p,s){
 }
 
 async function mkpass(p){
-  const s=crypto.getRandomValues(new Uint8Array(16));
+  const s=crypto.getRandomValues(
+    new Uint8Array(16)
+  );
 
   return{
     salt:b64(s),
@@ -69,7 +79,12 @@ async function mkpass(p){
 }
 
 async function ver(p,s,h){
-  return(await derive(p,ub64(s)))===h;
+  return(
+    await derive(
+      p,
+      ub64(s)
+    )
+  )===h;
 }
 
 function cookies(req){
@@ -80,18 +95,24 @@ function cookies(req){
       .filter(Boolean)
       .map(x=>{
         const i=x.indexOf('=');
+
         return[
           x.slice(0,i),
-          decodeURIComponent(x.slice(i+1))
+          decodeURIComponent(
+            x.slice(i+1)
+          )
         ];
       })
   );
 }
 
 async function me(req,env){
+
   const t=cookies(req).du_session;
 
-  if(!t)return null;
+  if(!t){
+    return null;
+  }
 
   const h=await sha(t);
 
@@ -103,7 +124,8 @@ async function me(req,env){
       u.email,
       u.role
     FROM sessions s
-    JOIN users u ON u.id=s.user_id
+    JOIN users u
+      ON u.id=s.user_id
     WHERE
       s.token_hash=?
       AND s.expires_at>CURRENT_TIMESTAMP
@@ -114,15 +136,20 @@ async function me(req,env){
 }
 
 export default{
+
   async fetch(req,env){
 
     const C=cors(req);
 
     if(req.method==='OPTIONS'){
-      return new Response(null,{
-        status:204,
-        headers:C
-      });
+
+      return new Response(
+        null,
+        {
+          status:204,
+          headers:C
+        }
+      );
     }
 
     const u=new URL(req.url);
@@ -133,6 +160,7 @@ export default{
       // HEALTH CHECK
       // =========================
       if(u.pathname==='/api/health'){
+
         return json({
           ok:true,
           service:'DU Employee ERP API'
@@ -140,86 +168,8 @@ export default{
       }
 
       // =========================
-      // ONE-TIME ADMIN SETUP
-      // REMOVE AFTER SUCCESS
-      // =========================
-      if(
-        u.pathname==='/api/setup-admin-once' &&
-        req.method==='GET'
-      ){
-
-        const email='admin@dhakau.local';
-        const password='ChangeMe12345';
-
-        const p=await mkpass(password);
-
-        const existing=await env.DB
-          .prepare(`
-            SELECT id
-            FROM users
-            WHERE email=?
-          `)
-          .bind(email)
-          .first();
-
-        if(existing){
-
-          const result=await env.DB.prepare(`
-            UPDATE users
-            SET
-              name=?,
-              password_hash=?,
-              password_salt=?,
-              role='super_admin',
-              is_active=1
-            WHERE email=?
-          `)
-          .bind(
-            'Super Admin',
-            p.hash,
-            p.salt,
-            email
-          )
-          .run();
-
-          return json({
-            ok:true,
-            message:'Admin password reset completed',
-            changed:result.meta?.changes ?? 0,
-            email
-          },200,C);
-        }
-
-        const result=await env.DB.prepare(`
-          INSERT INTO users(
-            name,
-            email,
-            password_hash,
-            password_salt,
-            role,
-            is_active
-          )
-          VALUES(?,?,?,?,?,1)
-        `)
-        .bind(
-          'Super Admin',
-          email,
-          p.hash,
-          p.salt,
-          'super_admin'
-        )
-        .run();
-
-        return json({
-          ok:true,
-          message:'Admin created',
-          id:result.meta?.last_row_id ?? null,
-          email
-        },201,C);
-      }
-
-      // =========================
       // BOOTSTRAP SUPER ADMIN
+      // Works only when users table is empty
       // =========================
       if(
         u.pathname==='/api/bootstrap' &&
@@ -227,10 +177,14 @@ export default{
       ){
 
         const c=await env.DB
-          .prepare('SELECT COUNT(*) c FROM users')
+          .prepare(`
+            SELECT COUNT(*) c
+            FROM users
+          `)
           .first();
 
         if(+c.c>0){
+
           return json({
             error:'Bootstrap already completed'
           },409,C);
@@ -244,12 +198,15 @@ export default{
           !b.password ||
           b.password.length<10
         ){
+
           return json({
             error:'Strong password required'
           },400,C);
         }
 
-        const p=await mkpass(b.password);
+        const p=await mkpass(
+          b.password
+        );
 
         await env.DB.prepare(`
           INSERT INTO users(
@@ -257,9 +214,13 @@ export default{
             email,
             password_hash,
             password_salt,
-            role
+            role,
+            is_active
           )
-          VALUES(?,?,?,?,?)
+          VALUES(
+            ?,?,?,?,?,
+            1
+          )
         `)
         .bind(
           b.name,
@@ -288,26 +249,42 @@ export default{
         const x=await env.DB.prepare(`
           SELECT *
           FROM users
-          WHERE email=?
-          AND is_active=1
+          WHERE
+            email=?
+            AND is_active=1
         `)
         .bind(
-          String(b.email||'').toLowerCase()
+          String(
+            b.email||''
+          ).toLowerCase()
         )
         .first();
 
         if(
           !x ||
-          !(await ver(
-            String(b.password||''),
-            x.password_salt,
-            x.password_hash
-          ))
+          !(
+            await ver(
+              String(
+                b.password||''
+              ),
+              x.password_salt,
+              x.password_hash
+            )
+          )
         ){
+
           return json({
-            error:'ইমেইল বা পাসওয়ার্ড সঠিক নয়'
+            error:
+              'ইমেইল বা পাসওয়ার্ড সঠিক নয়'
           },401,C);
         }
+
+        // Remove expired sessions
+        await env.DB.prepare(`
+          DELETE FROM sessions
+          WHERE expires_at<=CURRENT_TIMESTAMP
+        `)
+        .run();
 
         const raw=b64(
           crypto.getRandomValues(
@@ -318,7 +295,8 @@ export default{
         const h=await sha(raw);
 
         const exp=new Date(
-          Date.now()+604800000
+          Date.now()+
+          1000*60*60*24*7
         ).toISOString();
 
         await env.DB.prepare(`
@@ -339,7 +317,8 @@ export default{
         return json({
           user:{
             id:x.id,
-            employee_id:x.employee_id,
+            employee_id:
+              x.employee_id,
             name:x.name,
             email:x.email,
             role:x.role
@@ -359,9 +338,11 @@ export default{
         req.method==='POST'
       ){
 
-        const t=cookies(req).du_session;
+        const t=
+          cookies(req).du_session;
 
         if(t){
+
           await env.DB.prepare(`
             DELETE FROM sessions
             WHERE token_hash=?
@@ -384,11 +365,15 @@ export default{
       // =========================
       // CURRENT USER
       // =========================
-      const user=await me(req,env);
+      const user=
+        await me(req,env);
 
-      if(u.pathname==='/api/me'){
+      if(
+        u.pathname==='/api/me'
+      ){
 
         if(!user){
+
           return json({
             error:'Unauthenticated'
           },401,C);
@@ -410,7 +395,9 @@ export default{
 
       return json({
         error:'Server error',
-        detail:String(e.message||e)
+        detail:String(
+          e.message||e
+        )
       },500,C);
     }
   }
