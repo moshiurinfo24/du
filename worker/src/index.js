@@ -66,7 +66,7 @@ export default{async fetch(req,env){
   if(req.method==='OPTIONS')return new Response(null,{status:204,headers:C});
   const u=new URL(req.url);
   try{
-    if(u.pathname==='/api/health')return json({ok:true,service:'Employee Service ERP API',phase:'16.3.4-stable-admin-api'},200,C);
+    if(u.pathname==='/api/health')return json({ok:true,service:'Employee Service ERP API',phase:'16.3.5-dual-recovery-super-admin'},200,C);
 
     // Phase 8 FREE: self-service registration and recovery code password reset
     if(u.pathname==='/api/register'&&req.method==='POST'){
@@ -534,12 +534,104 @@ export default{async fetch(req,env){
 
     if(u.pathname==='/api/admin/users'&&req.method==='GET'){
       if(!canManage(user))return json({error:'Forbidden'},403,C);
-      const rows=await safeRows(env,`SELECT id,employee_id,name,email,role,is_active,COALESCE(account_type,'employee') account_type,COALESCE(email_verified,1) email_verified FROM users ORDER BY id DESC LIMIT 1000`);
+      const rows=await safeRows(env,`SELECT id,employee_id,name,email,role,is_active,COALESCE(account_type,'employee') account_type,COALESCE(email_verified,1) email_verified,CASE WHEN recovery_code_hash IS NOT NULL AND recovery_code_hash<>'' THEN 1 ELSE 0 END recovery_ready,registered_at FROM users ORDER BY id DESC LIMIT 1000`);
       return json({users:rows},200,C);
+    }
+    // v16.3.5: Dual recovery + Super Admin user control
+    // Existing self-service recovery remains unchanged above.
+    // Passwords/recovery codes are never readable; Super Admin can replace them securely.
+    const adminUserDetail=u.pathname.match(/^\/api\/admin\/users\/(\d+)$/);
+    if(adminUserDetail&&req.method==='GET'){
+      if(!user||user.role!=='super_admin')return json({error:'Forbidden'},403,C);
+      const id=Number(adminUserDetail[1]);
+      const account=await d1First(env,`SELECT id,employee_id,name,email,role,is_active,COALESCE(account_type,'employee') account_type,COALESCE(email_verified,1) email_verified,CASE WHEN recovery_code_hash IS NOT NULL AND recovery_code_hash<>'' THEN 1 ELSE 0 END recovery_ready,registered_at FROM users WHERE id=?`,[id]);
+      if(!account)return json({error:'User not found'},404,C);
+      const profile=await d1First(env,`SELECT * FROM career_profiles WHERE user_id=?`,[id]).catch(()=>null);
+      const counts={
+        education:await safeCount(env,`SELECT COUNT(*) c FROM career_education WHERE user_id=?`,[id]),
+        career_events:await safeCount(env,`SELECT COUNT(*) c FROM career_events WHERE user_id=?`,[id]),
+        salary_history:await safeCount(env,`SELECT COUNT(*) c FROM salary_history WHERE user_id=?`,[id]),
+        leave_records:await safeCount(env,`SELECT COUNT(*) c FROM personal_leave_records WHERE user_id=?`,[id]),
+        sessions:await safeCount(env,`SELECT COUNT(*) c FROM sessions WHERE user_id=? AND expires_at>CURRENT_TIMESTAMP`,[id])
+      };
+      return json({account,profile:profile||null,counts},200,C);
+    }
+    if(adminUserDetail&&req.method==='PUT'){
+      if(!user||user.role!=='super_admin')return json({error:'Forbidden'},403,C);
+      const id=Number(adminUserDetail[1]),b=await req.json();
+      const current=await d1First(env,`SELECT id,role,is_active,email FROM users WHERE id=?`,[id]);
+      if(!current)return json({error:'User not found'},404,C);
+      const name=safeName(b.name),email=emailNorm(b.email),employeeId=String(b.employee_id||'').trim().slice(0,80)||null;
+      const role=['super_admin','admin','department_admin','editor','employee'].includes(b.role)?b.role:'employee';
+      const accountType=['officer','employee'].includes(b.account_type)?b.account_type:'employee';
+      const active=b.is_active===false?0:1,emailVerified=b.email_verified===false?0:1;
+      if(!name||!email||!email.includes('@'))return json({error:'Valid name and email are required'},400,C);
+      const emailOwner=await d1First(env,`SELECT id FROM users WHERE email=? AND id<>?`,[email,id]);
+      if(emailOwner)return json({error:'Another account already uses this email'},409,C);
+      if(id===user.id&&(active!==1||role!=='super_admin'))return json({error:'You cannot deactivate or remove Super Admin access from your own account'},400,C);
+      if(current.role==='super_admin'&&(role!=='super_admin'||!active)){
+        const other=await safeCount(env,`SELECT COUNT(*) c FROM users WHERE role='super_admin' AND is_active=1 AND id<>?`,[id]);
+        if(other<1)return json({error:'At least one active Super Admin account must remain'},400,C);
+      }
+      await env.DB.prepare(`UPDATE users SET employee_id=?,name=?,email=?,role=?,is_active=?,account_type=?,email_verified=? WHERE id=?`)
+        .bind(employeeId,name,email,role,active,accountType,emailVerified,id).run();
+      if(!active)await env.DB.prepare(`DELETE FROM sessions WHERE user_id=?`).bind(id).run();
+      await audit(env,user,'super_admin_user_update','user',id,{employee_id:employeeId,email,role,is_active:active,account_type:accountType,email_verified:emailVerified});
+      return json({ok:true},200,C);
+    }
+    const adminUserPassword=u.pathname.match(/^\/api\/admin\/users\/(\d+)\/password$/);
+    if(adminUserPassword&&req.method==='PUT'){
+      if(!user||user.role!=='super_admin')return json({error:'Forbidden'},403,C);
+      const id=Number(adminUserPassword[1]),b=await req.json(),next=String(b.new_password||'');
+      if(!strongPassword(next))return json({error:'Password must be at least 10 characters and include letters and numbers'},400,C);
+      const exists=await d1First(env,`SELECT id FROM users WHERE id=?`,[id]);if(!exists)return json({error:'User not found'},404,C);
+      const p=await mkpass(next);
+      await env.DB.prepare(`UPDATE users SET password_hash=?,password_salt=? WHERE id=?`).bind(p.hash,p.salt,id).run();
+      await env.DB.prepare(`DELETE FROM sessions WHERE user_id=?`).bind(id).run();
+      await audit(env,user,'super_admin_password_reset','user',id,{sessions_revoked:true});
+      return json({ok:true,message:'Password replaced. Existing sessions were signed out.'},200,C);
+    }
+    const adminRecovery=u.pathname.match(/^\/api\/admin\/users\/(\d+)\/recovery-code$/);
+    if(adminRecovery&&req.method==='POST'){
+      if(!user||user.role!=='super_admin')return json({error:'Forbidden'},403,C);
+      const id=Number(adminRecovery[1]);
+      const exists=await d1First(env,`SELECT id FROM users WHERE id=?`,[id]);if(!exists)return json({error:'User not found'},404,C);
+      const recoveryCode=makeRecoveryCode(),rh=await recoveryHash(recoveryCode);
+      await env.DB.prepare(`UPDATE users SET recovery_code_hash=? WHERE id=?`).bind(rh,id).run();
+      await audit(env,user,'super_admin_recovery_code_rotate','user',id,{});
+      return json({ok:true,recoveryCode,message:'New recovery code generated. It will only be returned this time.'},200,C);
+    }
+    const adminLogoutAll=u.pathname.match(/^\/api\/admin\/users\/(\d+)\/logout-all$/);
+    if(adminLogoutAll&&req.method==='POST'){
+      if(!user||user.role!=='super_admin')return json({error:'Forbidden'},403,C);
+      const id=Number(adminLogoutAll[1]);
+      if(id===user.id)return json({error:'Use your own security page to manage your current session'},400,C);
+      await env.DB.prepare(`DELETE FROM sessions WHERE user_id=?`).bind(id).run();
+      await audit(env,user,'super_admin_logout_all','user',id,{});
+      return json({ok:true},200,C);
+    }
+    if(adminUserDetail&&req.method==='DELETE'){
+      if(!user||user.role!=='super_admin')return json({error:'Forbidden'},403,C);
+      const id=Number(adminUserDetail[1]);
+      if(id===user.id)return json({error:'You cannot delete your own Super Admin account'},400,C);
+      const target=await d1First(env,`SELECT id,role,name,email FROM users WHERE id=?`,[id]);if(!target)return json({error:'User not found'},404,C);
+      if(target.role==='super_admin'){
+        const other=await safeCount(env,`SELECT COUNT(*) c FROM users WHERE role='super_admin' AND is_active=1 AND id<>?`,[id]);
+        if(other<1)return json({error:'At least one active Super Admin account must remain'},400,C);
+      }
+      // Remove personal data first. These operations are intentionally explicit so the account is fully removed.
+      for(const table of ['sessions','career_education','career_events','career_profiles','salary_history','personal_leave_records','usage_events','login_events']){
+        try{await env.DB.prepare(`DELETE FROM ${table} WHERE user_id=?`).bind(id).run()}catch{}
+      }
+      try{await env.DB.prepare(`UPDATE audit_logs SET user_id=NULL WHERE user_id=?`).bind(id).run()}catch{}
+      try{await env.DB.prepare(`UPDATE system_settings SET updated_by=NULL WHERE updated_by=?`).bind(id).run()}catch{}
+      await audit(env,user,'super_admin_user_delete','user',id,{name:target.name,email:target.email});
+      await env.DB.prepare(`DELETE FROM users WHERE id=?`).bind(id).run();
+      return json({ok:true},200,C);
     }
     const adminUserStatus=u.pathname.match(/^\/api\/admin\/users\/(\d+)\/status$/);
     if(adminUserStatus&&req.method==='PUT'){
-      if(!user||!['super_admin','admin'].includes(user.role))return json({error:'Forbidden'},403,C);
+      if(!user||user.role!=='super_admin')return json({error:'Forbidden'},403,C);
       const id=Number(adminUserStatus[1]); if(id===user.id)return json({error:'You cannot deactivate your own active session account'},400,C);
       const b=await req.json(),active=b.is_active?1:0;
       await env.DB.prepare(`UPDATE users SET is_active=? WHERE id=?`).bind(active,id).run();
