@@ -31,6 +31,7 @@ import './house-allocation-points-v16-3-8.css';
 import './automatic-house-points-v16-3-9.css';
 import './clean-user-facing-v16-3-10.css';
 import './responsive-app-desktop-v16-4.css';
+import './smart-registration-v16-5.css';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import {
   PAY2015,PAY2026,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
@@ -232,21 +233,46 @@ function salaryReportHtml(r,lang='bn'){
 function AuthPortal({onLogin,onBack,lang,setLang,initialMode='login'}) {
   const en=lang==='en';
   const [mode,setMode]=useState(initialMode==='reset'?'forgot':initialMode);
-  const [form,setForm]=useState({name:'',email:'',password:'',confirm:'',account_type:'employee',recovery_code:''});
+  const [step,setStep]=useState(0);
+  const [form,setForm]=useState({
+    name:'',email:'',password:'',confirm:'',account_type:'employee',recovery_code:'',
+    employee_reference:'',mobile:'',date_of_birth:'',gender:'male',marital_status:'unmarried',
+    employee_category:'third_general',current_post:'',current_grade:'',office_name:'',department_name:'',
+    first_joining_date:'',current_post_joining_date:'',third_class_start_date:'',fourth_class_start_date:'',
+    previous_promotions:'0',ssc_result:'',hsc_result:'',bachelor_type:'',bachelor_result:'',masters_result:'',
+    current_basic_salary:'',salary_effective_date:todayLocalIso(),
+    consent_read:false,consent_own:false,consent_advisory:false
+  });
   const [err,setErr]=useState(''),[msg,setMsg]=useState(''),[busy,setBusy]=useState(false),[recovery,setRecovery]=useState('');
-
   const change=(k,v)=>setForm(f=>({...f,[k]:v}));
-  const switchMode=m=>{setMode(m);setErr('');setMsg('');setRecovery('')};
+  const switchMode=m=>{setMode(m);setStep(0);setErr('');setMsg('');setRecovery('')};
+  const steps=en?['Important Notice','Account','Personal','Employment','Education','Salary','Review']:['গুরুত্বপূর্ণ ঘোষণা','অ্যাকাউন্ট','ব্যক্তিগত','চাকরি','শিক্ষা','বেতন','যাচাই'];
+
+  function validateStep(){
+    if(step===0&&!(form.consent_read&&form.consent_own&&form.consent_advisory))return en?'Please read and accept all three declarations.':'সবগুলো ঘোষণা পড়ে তিনটি সম্মতিতেই টিক দিন।';
+    if(step===1&&(!form.name||!form.email||!form.employee_reference||!form.password||form.password!==form.confirm))return en?'Complete the required account fields and make sure both passwords match.':'প্রয়োজনীয় অ্যাকাউন্ট তথ্য পূরণ করুন এবং দুইটি পাসওয়ার্ড মিলিয়ে দিন।';
+    if(step===2&&(!form.date_of_birth||!form.gender||!form.marital_status))return en?'Complete the required personal information.':'প্রয়োজনীয় ব্যক্তিগত তথ্য পূরণ করুন।';
+    if(step===3&&(!form.current_post||!form.current_grade||!form.first_joining_date||!form.current_post_joining_date))return en?'Complete the required employment information.':'প্রয়োজনীয় চাকরির তথ্য পূরণ করুন।';
+    if(step===5&&!form.current_basic_salary)return en?'Enter the current basic salary.':'বর্তমান মূল বেতন দিন।';
+    return '';
+  }
+  function nextStep(){
+    const x=validateStep();if(x){setErr(x);return}setErr('');setStep(v=>Math.min(6,v+1));
+  }
   async function submit(e){
-    e.preventDefault();setBusy(true);setErr('');setMsg('');
+    e.preventDefault();setErr('');setMsg('');
+    if(mode==='register'){
+      if(step<6){nextStep();return}
+      const x=validateStep();if(x){setErr(x);return}
+    }
+    setBusy(true);
     try{
       if(mode==='login'){
         const x=await api('/api/login',{method:'POST',body:JSON.stringify({email:form.email,password:form.password})});onLogin(x.user);return;
       }
       if(mode==='register'){
-        if(form.password!==form.confirm)throw new Error(en?'Passwords do not match':'পাসওয়ার্ড দুটি মিলছে না');
-        const x=await api('/api/register',{method:'POST',body:JSON.stringify({name:form.name,email:form.email,password:form.password,account_type:form.account_type})});
-        setRecovery(x.recoveryCode);setMsg(en?'Account created. Save this recovery code now. It will not be shown again.':'অ্যাকাউন্ট তৈরি হয়েছে। এই রিকভারি কোডটি এখনই সংরক্ষণ করুন। পরে আর দেখানো হবে না।');return;
+        const x=await api('/api/register-complete',{method:'POST',body:JSON.stringify(form)});
+        setRecovery(x.recoveryCode);setMsg(en?'Account created. Save this recovery code now.':'অ্যাকাউন্ট তৈরি হয়েছে। রিকভারি কোডটি এখনই নিরাপদে সংরক্ষণ করুন।');return;
       }
       if(mode==='forgot'){
         if(form.password!==form.confirm)throw new Error(en?'Passwords do not match':'পাসওয়ার্ড দুটি মিলছে না');
@@ -255,29 +281,110 @@ function AuthPortal({onLogin,onBack,lang,setLang,initialMode='login'}) {
       }
     }catch(e){setErr(e.message)}finally{setBusy(false)}
   }
-  const title=mode==='register'?(en?'Create your account':'নিজের অ্যাকাউন্ট তৈরি করুন'):mode==='forgot'?(en?'Recover your account':'অ্যাকাউন্ট পুনরুদ্ধার করুন'):(en?'Secure login':'নিরাপদ লগইন');
+
+  if(mode==='register')return <div className="smart-reg-shell">
+    <div className="smart-reg-card">
+      <div className="login-top"><button type="button" className="back-link" onClick={onBack}>{en?'← Back to Home':'← হোমে ফিরুন'}</button><LangToggle lang={lang} setLang={setLang}/></div>
+      <div className="smart-reg-title"><div className="auth-badge"><ShieldCheck size={15}/>{en?'SMART SELF-SERVICE SIGN UP':'স্মার্ট স্বয়ংক্রিয় সাইন আপ'}</div><h1>{en?'Create your personal service account':'আপনার ব্যক্তিগত সেবা অ্যাকাউন্ট তৈরি করুন'}</h1><p>{en?'Provide the necessary information once. Your dashboard and supported calculators can reuse it automatically.':'প্রয়োজনীয় তথ্য একবার দিন। পরে ড্যাশবোর্ড ও সমর্থিত ক্যালকুলেটরগুলো এই তথ্য স্বয়ংক্রিয়ভাবে ব্যবহার করবে।'}</p></div>
+      <div className="smart-reg-steps">{steps.map((x,i)=><div key={x} className={`${i===step?'active':''} ${i<step?'done':''}`}><span>{i<step?<CheckCircle2/>:numLang(i+1,lang,0)}</span><b>{x}</b></div>)}</div>
+
+      <form onSubmit={submit} className="smart-reg-form">
+        {step===0&&<section className="reg-policy">
+          <div className="reg-policy-hero"><ShieldCheck/><div><h2>{en?'Know before you sign up':'সাইন আপ করার আগে জেনে নিন'}</h2><p>{en?'Create an account only after reading and understanding the following conditions.':'নিচের বিষয়গুলো সম্পূর্ণ পড়ে ও বুঝে তারপর অ্যাকাউন্ট তৈরি করুন।'}</p></div></div>
+          <div className="reg-warning"><AlertTriangle/><div><b>{en?'Never enter banking secrets here':'কোনো গোপন ব্যাংকিং তথ্য এখানে দেবেন না'}</b><p>{en?'This platform does not ask for bank account numbers, card details, ATM PIN, OTP, mobile-banking PIN, internet-banking password or financial transaction credentials.':'এই প্ল্যাটফর্মে ব্যাংক অ্যাকাউন্ট নম্বর, কার্ডের তথ্য, ATM PIN, OTP, বিকাশ/নগদ/রকেট PIN, ইন্টারনেট ব্যাংকিং পাসওয়ার্ড বা আর্থিক লেনদেনের গোপন তথ্য চাওয়া হয় না।'}</p></div></div>
+          <div className="reg-policy-list">
+            <p><b>১.</b> {en?'This is an independently developed personal self-service platform. It is not an official government, autonomous, semi-government, university, office or institutional system, and is not controlled by any such authority.':'এটি ব্যক্তিগত উদ্যোগে তৈরি একটি Self-Service Digital Platform। এটি কোনো সরকারি, স্বায়ত্তশাসিত, আধা-সরকারি, বিশ্ববিদ্যালয়, অফিস, দপ্তর বা প্রতিষ্ঠানের অফিসিয়াল সফটওয়্যার নয় এবং কোনো এমন কর্তৃপক্ষের নিয়ন্ত্রণাধীন নয়।'}</p>
+            <p><b>২.</b> {en?'Only information necessary for supported personal calculations and career management is requested. Unnecessary personal or financial information is not required.':'শুধু স্বয়ংক্রিয় হিসাব ও ব্যক্তিগত Career Management-এর জন্য প্রয়োজনীয় তথ্য নেওয়া হয়। অপ্রয়োজনীয় ব্যক্তিগত বা আর্থিক তথ্যের প্রয়োজন নেই।'}</p>
+            <p><b>৩.</b> {en?'The platform is not designed to sell, publish or commercially provide your personal, employment or calculation information to other users, businesses or third parties.':'ব্যবহারকারীর ব্যক্তিগত, চাকরিসংক্রান্ত বা হিসাবের তথ্য অন্য ব্যবহারকারী, ব্যবসা বা তৃতীয় পক্ষের কাছে বিক্রি, প্রকাশ বা বাণিজ্যিকভাবে সরবরাহ করার জন্য এই প্ল্যাটফর্ম তৈরি করা হয়নি।'}</p>
+            <p><b>৪.</b> {en?'Your private dashboard, salary, leave, career and point records are intended for your own account use.':'ব্যক্তিগত Dashboard, Salary, Leave, Career ও Points তথ্য নিজের অ্যাকাউন্টের ব্যবহারের জন্য।'}</p>
+            <p><b>৫.</b> {en?'Calculations depend on the information you provide. Incorrect, incomplete or outdated information may produce incorrect results; keeping your data accurate is your responsibility.':'হিসাব আপনার দেওয়া তথ্যের ওপর নির্ভর করে। ভুল, অসম্পূর্ণ বা পুরোনো তথ্য দিলে ফলাফল ভুল হতে পারে; তথ্য সঠিক ও হালনাগাদ রাখার দায়িত্ব ব্যবহারকারীর।'}</p>
+            <p><b>৬.</b> {en?'Salary, promotion, service points, education points, house-allocation points, leave, retirement or career outputs are personal assistance calculations, not official orders, approvals or administrative decisions.':'বেতন, পদোন্নতি, সার্ভিস পয়েন্ট, শিক্ষাগত পয়েন্ট, বাসা বরাদ্দ পয়েন্ট, ছুটি, অবসর বা ক্যারিয়ার-সংক্রান্ত ফলাফল ব্যক্তিগত সহায়ক হিসাব; এগুলো কোনো অফিসিয়াল আদেশ, অনুমোদন বা প্রশাসনিক সিদ্ধান্ত নয়।'}</p>
+            <p><b>৭.</b> {en?'Before taking an official or financial decision, check the latest applicable rule, circular, office order and the relevant authority.':'কোনো অফিসিয়াল বা আর্থিক সিদ্ধান্ত নেওয়ার আগে সর্বশেষ প্রযোজ্য নীতিমালা, বিজ্ঞপ্তি, অফিস আদেশ ও সংশ্লিষ্ট কর্তৃপক্ষের তথ্য যাচাই করুন।'}</p>
+            <p><b>৮.</b> {en?'Use only your own identity and employment information. Do not create an account using another person’s identity, employee ID or records.':'শুধু নিজের পরিচয় ও চাকরিসংক্রান্ত তথ্য ব্যবহার করুন। অন্য ব্যক্তির পরিচয়, Employee ID বা রেকর্ড ব্যবহার করে অ্যাকাউন্ট তৈরি করবেন না।'}</p>
+            <p><b>৯.</b> {en?'Your password and recovery code are private. Keep them secure and never share them with another person.':'Password ও Recovery Code ব্যক্তিগত ও গোপনীয়। এগুলো নিরাপদে রাখুন এবং অন্য কাউকে দেবেন না।'}</p>
+            <p><b>১০.</b> {en?'Each user is responsible for the information they provide, how they use the platform, and decisions they make from the results. No other user assumes that responsibility.':'প্রত্যেক ব্যবহারকারী তার দেওয়া তথ্য, প্ল্যাটফর্ম ব্যবহারের ধরন এবং ফলাফলের ভিত্তিতে নেওয়া সিদ্ধান্তের জন্য নিজে দায়ী থাকবেন; অন্য কোনো ব্যবহারকারী সেই দায় বহন করবেন না।'}</p>
+          </div>
+          <div className="reg-consents">
+            <label><input type="checkbox" checked={form.consent_read} onChange={e=>change('consent_read',e.target.checked)}/><span>{en?'I have read and understood the declaration, privacy information and terms above.':'আমি উপরের ঘোষণা, গোপনীয়তা ও ব্যবহারের শর্তগুলো সম্পূর্ণ পড়েছি এবং বুঝেছি।'}</span></label>
+            <label><input type="checkbox" checked={form.consent_own} onChange={e=>change('consent_own',e.target.checked)}/><span>{en?'I confirm that I will provide my own information and I am responsible for its accuracy.':'আমি নিশ্চিত করছি যে নিজের তথ্য প্রদান করব এবং প্রদত্ত তথ্যের সঠিকতার দায়ভার আমার।'}</span></label>
+            <label><input type="checkbox" checked={form.consent_advisory} onChange={e=>change('consent_advisory',e.target.checked)}/><span>{en?'I understand that this platform does not issue official or government decisions; its calculations are personal assistance.':'আমি বুঝেছি যে এই প্ল্যাটফর্ম কোনো অফিসিয়াল বা সরকারি সিদ্ধান্ত প্রদান করে না; এখানে প্রদর্শিত হিসাব ব্যক্তিগত সহায়ক হিসাব।'}</span></label>
+          </div>
+        </section>}
+
+        {step===1&&<section className="reg-section"><div className="reg-section-head"><UserRound/><div><h2>{en?'Account Information':'অ্যাকাউন্ট তথ্য'}</h2><p>{en?'Information required to create and secure your account.':'অ্যাকাউন্ট তৈরি ও নিরাপদ রাখার জন্য প্রয়োজনীয় তথ্য।'}</p></div></div><div className="reg-grid">
+          <label>{en?'Full name *':'পূর্ণ নাম *'}<input value={form.name} onChange={e=>change('name',e.target.value)} /></label>
+          <label>{en?'Employee / Reference ID *':'কর্মচারী / রেফারেন্স আইডি *'}<input value={form.employee_reference} onChange={e=>change('employee_reference',e.target.value)}/></label>
+          <label>{en?'Email *':'ইমেইল *'}<input type="email" value={form.email} onChange={e=>change('email',e.target.value)}/></label>
+          <label>{en?'Account type *':'অ্যাকাউন্টের ধরন *'}<select value={form.account_type} onChange={e=>change('account_type',e.target.value)}><option value="employee">{en?'Employee':'কর্মচারী'}</option><option value="officer">{en?'Officer':'কর্মকর্তা'}</option></select></label>
+          <label>{en?'Password *':'পাসওয়ার্ড *'}<input type="password" minLength="10" value={form.password} onChange={e=>change('password',e.target.value)}/><small>{en?'At least 10 characters with letters and numbers':'কমপক্ষে ১০ অক্ষর, অক্ষর ও সংখ্যা ব্যবহার করুন'}</small></label>
+          <label>{en?'Confirm password *':'পাসওয়ার্ড নিশ্চিত করুন *'}<input type="password" minLength="10" value={form.confirm} onChange={e=>change('confirm',e.target.value)}/></label>
+        </div></section>}
+
+        {step===2&&<section className="reg-section"><div className="reg-section-head"><UserCircle2/><div><h2>{en?'Personal Information':'ব্যক্তিগত তথ্য'}</h2><p>{en?'Only information relevant to supported services is requested.':'সমর্থিত সেবার জন্য প্রয়োজনীয় তথ্যই এখানে নেওয়া হচ্ছে।'}</p></div></div><div className="reg-grid">
+          <DMY label={en?'Date of birth *':'জন্মতারিখ *'} value={form.date_of_birth} onChange={v=>change('date_of_birth',v)}/>
+          <label>{en?'Mobile number':'মোবাইল নম্বর'}<input value={form.mobile} onChange={e=>change('mobile',e.target.value)} inputMode="tel"/></label>
+          <label>{en?'Gender *':'লিঙ্গ *'}<select value={form.gender} onChange={e=>change('gender',e.target.value)}><option value="male">{en?'Male':'পুরুষ'}</option><option value="female">{en?'Female':'নারী'}</option></select></label>
+          <label>{en?'Marital status *':'বৈবাহিক অবস্থা *'}<select value={form.marital_status} onChange={e=>change('marital_status',e.target.value)}><option value="unmarried">{en?'Unmarried':'অবিবাহিত'}</option><option value="married">{en?'Married':'বিবাহিত'}</option></select></label>
+        </div></section>}
+
+        {step===3&&<section className="reg-section"><div className="reg-section-head"><Briefcase/><div><h2>{en?'Employment Information':'চাকরির তথ্য'}</h2><p>{en?'Used to prefill service, career, promotion and supported point calculations.':'চাকরিকাল, ক্যারিয়ার, পদোন্নতি ও সমর্থিত পয়েন্ট হিসাব স্বয়ংক্রিয়ভাবে পূরণে ব্যবহার হবে।'}</p></div></div><div className="reg-grid">
+          <label>{en?'Employee category *':'কর্মী শ্রেণি *'}<select value={form.employee_category} onChange={e=>change('employee_category',e.target.value)}><option value="third_general">{en?'3rd Class General Employee':'৩য় শ্রেণির সাধারণ কর্মচারী'}</option><option value="third_technical">{en?'3rd Class Technical Employee':'৩য় শ্রেণির কারিগরি কর্মচারী'}</option><option value="fourth_general">{en?'4th Class General Employee':'৪র্থ শ্রেণির সাধারণ কর্মচারী'}</option><option value="fourth_technical">{en?'4th Class Technical Employee':'৪র্থ শ্রেণির কারিগরি কর্মচারী'}</option><option value="officer">{en?'Officer':'কর্মকর্তা'}</option><option value="teacher">{en?'Teacher':'শিক্ষক'}</option></select></label>
+          <label>{en?'Current post / designation *':'বর্তমান পদ / পদবি *'}<input value={form.current_post} onChange={e=>change('current_post',e.target.value)}/></label>
+          <label>{en?'Current grade *':'বর্তমান গ্রেড *'}<select value={form.current_grade} onChange={e=>change('current_grade',e.target.value)}><option value="">{en?'Select grade':'গ্রেড নির্বাচন করুন'}</option>{Array.from({length:20},(_,i)=>i+1).map(g=><option key={g} value={g}>{en?'Grade':'গ্রেড'} {numLang(g,lang,0)}</option>)}</select></label>
+          <label>{en?'Department':'বিভাগ'}<input value={form.department_name} onChange={e=>change('department_name',e.target.value)}/></label>
+          <label>{en?'Office / Unit':'অফিস / ইউনিট'}<input value={form.office_name} onChange={e=>change('office_name',e.target.value)}/></label>
+          <DMY label={en?'First joining date *':'প্রথম যোগদানের তারিখ *'} value={form.first_joining_date} onChange={v=>change('first_joining_date',v)}/>
+          <DMY label={en?'Current post joining date *':'বর্তমান পদে যোগদানের তারিখ *'} value={form.current_post_joining_date} onChange={v=>change('current_post_joining_date',v)}/>
+          {(form.employee_category==='third_general'||form.employee_category==='third_technical')&&<DMY label={en?'Entered 3rd Class on':'৩য় শ্রেণিতে প্রবেশের তারিখ'} value={form.third_class_start_date} onChange={v=>change('third_class_start_date',v)}/>}
+          {(form.employee_category==='third_general'||form.employee_category==='third_technical'||form.employee_category==='fourth_general'||form.employee_category==='fourth_technical')&&<DMY label={en?'Entered 4th Class on':'৪র্থ শ্রেণিতে প্রবেশের তারিখ'} value={form.fourth_class_start_date} onChange={v=>change('fourth_class_start_date',v)}/>}
+          <label>{en?'Previous promotions received':'আগে পাওয়া পদোন্নতির সংখ্যা'}<input type="number" min="0" step="1" value={form.previous_promotions} onChange={e=>change('previous_promotions',e.target.value)}/></label>
+        </div></section>}
+
+        {step===4&&<section className="reg-section"><div className="reg-section-head"><GraduationCap/><div><h2>{en?'Educational Qualification':'শিক্ষাগত যোগ্যতা'}</h2><p>{en?'Select only the qualifications that apply to you.':'আপনার ক্ষেত্রে প্রযোজ্য শিক্ষাগত যোগ্যতাগুলো নির্বাচন করুন।'}</p></div></div><div className="reg-grid">
+          <label>{en?'SSC result':'SSC ফলাফল'}<select value={form.ssc_result} onChange={e=>change('ssc_result',e.target.value)}><option value="">{en?'Not added':'যোগ করব না'}</option><option value="first">{en?'First Class / Division':'১ম শ্রেণি / বিভাগ'}</option><option value="second">{en?'Second Class / Division':'২য় শ্রেণি / বিভাগ'}</option><option value="third">{en?'Third Class / Division':'৩য় শ্রেণি / বিভাগ'}</option></select></label>
+          <label>{en?'HSC result':'HSC ফলাফল'}<select value={form.hsc_result} onChange={e=>change('hsc_result',e.target.value)}><option value="">{en?'Not added':'যোগ করব না'}</option><option value="first">{en?'First Class / Division':'১ম শ্রেণি / বিভাগ'}</option><option value="second">{en?'Second Class / Division':'২য় শ্রেণি / বিভাগ'}</option><option value="third">{en?'Third Class / Division':'৩য় শ্রেণি / বিভাগ'}</option></select></label>
+          <label>{en?'Bachelor type':'স্নাতকের ধরন'}<select value={form.bachelor_type} onChange={e=>change('bachelor_type',e.target.value)}><option value="">{en?'Not added':'যোগ করব না'}</option><option value="pass">{en?'Bachelor Pass':'স্নাতক (পাস)'}</option><option value="honours">{en?'Bachelor Honours':'স্নাতক (সম্মান)'}</option></select></label>
+          {form.bachelor_type&&<label>{en?'Bachelor result':'স্নাতক ফলাফল'}<select value={form.bachelor_result} onChange={e=>change('bachelor_result',e.target.value)}><option value="">{en?'Select':'নির্বাচন করুন'}</option><option value="first">{en?'First Class':'১ম শ্রেণি'}</option><option value="second">{en?'Second Class':'২য় শ্রেণি'}</option><option value="third">{en?'Third Class':'৩য় শ্রেণি'}</option></select></label>}
+          <label>{en?'Masters result':'স্নাতকোত্তর ফলাফল'}<select value={form.masters_result} onChange={e=>change('masters_result',e.target.value)}><option value="">{en?'Not added':'যোগ করব না'}</option><option value="first">{en?'First Class':'১ম শ্রেণি'}</option><option value="second">{en?'Second Class':'২য় শ্রেণি'}</option><option value="third">{en?'Third Class':'৩য় শ্রেণি'}</option></select></label>
+        </div></section>}
+
+        {step===5&&<section className="reg-section"><div className="reg-section-head"><WalletCards/><div><h2>{en?'Current Salary Information':'বর্তমান বেতন তথ্য'}</h2><p>{en?'Only the current basic salary and its effective date are requested here. No bank information is required.':'এখানে শুধু বর্তমান মূল বেতন ও কার্যকর তারিখ নেওয়া হচ্ছে। কোনো ব্যাংক তথ্য প্রয়োজন নেই।'}</p></div></div>
+          <div className="reg-no-bank"><ShieldCheck/><span>{en?'No bank account, card, PIN, OTP or mobile-banking credential is collected.':'কোনো ব্যাংক অ্যাকাউন্ট, কার্ড, PIN, OTP বা মোবাইল ব্যাংকিংয়ের গোপন তথ্য নেওয়া হয় না।'}</span></div>
+          <div className="reg-grid"><label>{en?'Current basic salary *':'বর্তমান মূল বেতন *'}<input type="number" min="0" step="1" value={form.current_basic_salary} onChange={e=>change('current_basic_salary',e.target.value)}/></label><DMY label={en?'Salary effective date':'বেতন কার্যকর হওয়ার তারিখ'} value={form.salary_effective_date} onChange={v=>change('salary_effective_date',v)}/></div>
+        </section>}
+
+        {step===6&&<section className="reg-section reg-review"><div className="reg-section-head"><CheckCircle2/><div><h2>{en?'Review and Create Account':'তথ্য যাচাই করে অ্যাকাউন্ট তৈরি করুন'}</h2><p>{en?'Check the important information once before creating the account.':'অ্যাকাউন্ট তৈরির আগে গুরুত্বপূর্ণ তথ্যগুলো আরেকবার দেখে নিন।'}</p></div></div>
+          <div className="review-grid">
+            <div><small>{en?'Name':'নাম'}</small><b>{form.name||'—'}</b></div><div><small>{en?'Reference ID':'রেফারেন্স আইডি'}</small><b>{form.employee_reference||'—'}</b></div>
+            <div><small>{en?'Email':'ইমেইল'}</small><b>{form.email||'—'}</b></div><div><small>{en?'Current post':'বর্তমান পদ'}</small><b>{form.current_post||'—'}</b></div>
+            <div><small>{en?'Grade':'গ্রেড'}</small><b>{form.current_grade?numLang(form.current_grade,lang,0):'—'}</b></div><div><small>{en?'First joining':'প্রথম যোগদান'}</small><b>{form.first_joining_date?fmtDateLang(form.first_joining_date,lang):'—'}</b></div>
+            <div><small>{en?'Basic salary':'মূল বেতন'}</small><b>{form.current_basic_salary?`${en?'Tk':'৳'} ${moneyLang(form.current_basic_salary,lang)}`:'—'}</b></div><div><small>{en?'Employee category':'কর্মী শ্রেণি'}</small><b>{form.employee_category}</b></div>
+          </div>
+          <div className="reg-final-note"><ShieldCheck/><div><b>{en?'After account creation':'অ্যাকাউন্ট তৈরির পর'}</b><p>{en?'A one-time recovery code will be shown. Save it securely. Your saved profile information will be available to supported dashboard and calculator sections.':'একটি এককালীন Recovery Code দেখানো হবে। এটি নিরাপদে সংরক্ষণ করুন। সংরক্ষিত প্রোফাইল তথ্য সমর্থিত Dashboard ও Calculator অংশে স্বয়ংক্রিয়ভাবে পাওয়া যাবে।'}</p></div></div>
+        </section>}
+
+        {err&&<div className="error">{err}</div>}{msg&&<div className="auth-success">{msg}</div>}
+        {recovery&&<div className="recovery-box"><div>{en?'YOUR RECOVERY CODE':'আপনার রিকভারি কোড'}</div><strong>{recovery}</strong><button type="button" onClick={()=>navigator.clipboard?.writeText(recovery)}>{en?'Copy Code':'কোড কপি করুন'}</button><small>{en?'Keep this code private and safe. It will not be shown again.':'কোডটি গোপন ও নিরাপদ স্থানে রাখুন। এটি পরে আর দেখানো হবে না।'}</small></div>}
+
+        {!recovery&&<div className="reg-actions">{step>0&&<button type="button" className="reg-back" onClick={()=>{setErr('');setStep(v=>v-1)}}>{en?'Back':'পেছনে'}</button>}<button type="submit" disabled={busy}>{busy?(en?'Please wait...':'অপেক্ষা করুন...'):step===0?(en?'I Agree — Start Sign Up':'আমি সম্মত — সাইন আপ শুরু করুন'):step<6?(en?'Continue':'পরবর্তী ধাপ'):(en?'Create My Account':'আমার অ্যাকাউন্ট তৈরি করুন')}</button></div>}
+        {recovery&&<button type="button" className="reg-login-after" onClick={()=>switchMode('login')}>{en?'I saved it — Go to Login':'সংরক্ষণ করেছি — লগইনে যান'}</button>}
+      </form>
+      {!recovery&&<div className="reg-login-link">{en?'Already have an account?':'আগে থেকেই অ্যাকাউন্ট আছে?'} <button type="button" onClick={()=>switchMode('login')}>{en?'Login':'লগইন করুন'}</button></div>}
+    </div>
+  </div>;
+
+  const title=mode==='forgot'?(en?'Recover your account':'অ্যাকাউন্ট পুনরুদ্ধার করুন'):(en?'Secure login':'নিরাপদ লগইন');
   return <div className="login-shell phase8-auth"><form className="login-card phase8-card" onSubmit={submit}>
     <div className="login-top"><button type="button" className="back-link" onClick={onBack}>{en?'← Back to Home':'← হোমে ফিরুন'}</button><LangToggle lang={lang} setLang={setLang}/></div>
     <div className="auth-badge"><ShieldCheck size={15}/>{en?'FREE SELF-SERVICE ACCOUNT':'বিনামূল্যের স্বয়ংক্রিয় অ্যাকাউন্ট'}</div>
     <h1>{title}</h1><p>{en?'Employee Digital Service Platform':'কর্মকর্তা-কর্মচারী ডিজিটাল সেবা'}</p>
-    {mode==='register'&&<>
-      <label>{en?'Full name':'পূর্ণ নাম'}<input value={form.name} onChange={e=>change('name',e.target.value)} required/></label>
-      <label>{en?'Account type':'অ্যাকাউন্টের ধরন'}<select value={form.account_type} onChange={e=>change('account_type',e.target.value)}><option value="officer">{en?'Officer':'কর্মকর্তা'}</option><option value="employee">{en?'Employee':'কর্মচারী'}</option></select></label>
-    </>}
     <label>{en?'Email':'ইমেইল'}<input value={form.email} onChange={e=>change('email',e.target.value)} type="email" required/></label>
     {mode==='forgot'&&<label>{en?'Recovery code':'রিকভারি কোড'}<input value={form.recovery_code} onChange={e=>change('recovery_code',e.target.value)} placeholder="XXXX-XXXX-XXXX-XXXX" required/></label>}
     <label>{mode==='forgot'?(en?'New password':'নতুন পাসওয়ার্ড'):(en?'Password':'পাসওয়ার্ড')}<input value={form.password} onChange={e=>change('password',e.target.value)} type="password" minLength="10" required/></label>
-    {(mode==='register'||mode==='forgot')&&<label>{en?'Confirm password':'পাসওয়ার্ড নিশ্চিত করুন'}<input value={form.confirm} onChange={e=>change('confirm',e.target.value)} type="password" minLength="10" required/></label>}
-    {(mode==='register'||mode==='forgot')&&<small className="password-rule">{en?'Use at least 10 characters with letters and numbers.':'কমপক্ষে ১০ অক্ষর ব্যবহার করুন এবং অক্ষর ও সংখ্যা রাখুন।'}</small>}
-    {err&&<div className={(stats||users.length||auditRows.length||health)?'notice':'error'}>{err}</div>}{msg&&<div className="auth-success">{msg}</div>}
-    {recovery&&<div className="recovery-box"><div>{en?'YOUR RECOVERY CODE':'আপনার রিকভারি কোড'}</div><strong>{recovery}</strong><button type="button" onClick={()=>navigator.clipboard?.writeText(recovery)}>{en?'Copy Code':'কোড কপি করুন'}</button><small>{en?'Keep this code private and safe.':'কোডটি গোপন ও নিরাপদ স্থানে রাখুন।'}</small></div>}
-    {!recovery&&<button disabled={busy}>{busy?(en?'Please wait...':'অপেক্ষা করুন...'):mode==='register'?(en?'Create Account':'অ্যাকাউন্ট তৈরি করুন'):mode==='forgot'?(en?'Reset Password':'পাসওয়ার্ড পরিবর্তন করুন'):(en?'Login':'লগইন')}</button>}
-    {recovery&&<button type="button" onClick={()=>switchMode('login')}>{en?'I saved it — Go to Login':'সংরক্ষণ করেছি — লগইনে যান'}</button>}
-    <div className="auth-links">
-      {mode==='login'&&<><button type="button" onClick={()=>switchMode('forgot')}>{en?'Forgot password?':'পাসওয়ার্ড ভুলে গেছেন?'}</button><button type="button" onClick={()=>switchMode('register')}>{en?'Create new account':'নতুন অ্যাকাউন্ট তৈরি করুন'}</button></>}
-      {(mode==='register'||mode==='forgot')&&!recovery&&<button type="button" onClick={()=>switchMode('login')}>{en?'Back to login':'লগইনে ফিরুন'}</button>}
-    </div>
-    <small>{en?'':''}</small>
+    {mode==='forgot'&&<label>{en?'Confirm password':'পাসওয়ার্ড নিশ্চিত করুন'}<input value={form.confirm} onChange={e=>change('confirm',e.target.value)} type="password" minLength="10" required/></label>}
+    {err&&<div className="error">{err}</div>}{msg&&<div className="auth-success">{msg}</div>}
+    <button disabled={busy}>{busy?(en?'Please wait...':'অপেক্ষা করুন...'):mode==='forgot'?(en?'Reset Password':'পাসওয়ার্ড পরিবর্তন করুন'):(en?'Login':'লগইন')}</button>
+    <div className="auth-links">{mode==='login'&&<><button type="button" onClick={()=>switchMode('forgot')}>{en?'Forgot password?':'পাসওয়ার্ড ভুলে গেছেন?'}</button><button type="button" onClick={()=>switchMode('register')}>{en?'Create new account':'নতুন অ্যাকাউন্ট তৈরি করুন'}</button></>}{mode==='forgot'&&<button type="button" onClick={()=>switchMode('login')}>{en?'Back to login':'লগইনে ফিরুন'}</button>}</div>
   </form></div>
 }
 
@@ -340,7 +447,7 @@ function PublicHome({onLogin,lang,setLang}){
   };
   const navItems=[[copy.home,'top'],[copy.promotion,'public-calculator','promotion'],[copy.pay,'public-calculator','salary'],[copy.policies,'policies'],[copy.notices,'notices'],[copy.forms,'forms'],[copy.help,'help']];
   const goto=(id,tool)=>{setPublicMenu(false);if(tool)return openTool(tool);trackPublic('section_view',id);scrollTo(id);};
-  return <div id="top" data-public-version="v16.4.0" className={'public premium-public premium-home-v16-3 '+(en?'lang-en':'lang-bn')}>
+  return <div id="top" data-public-version="v16.5.0" className={'public premium-public premium-home-v16-3 '+(en?'lang-en':'lang-bn')}>
     <header className="public-nav luxury-nav premium-v16-nav">
       <div className="public-brand"><div className="brand-orb"><ShieldCheck size={19}/></div><div><b>{t.appName}</b><small>{t.appSub}</small></div></div>
       <button className="public-mobile-trigger" onClick={()=>setPublicMenu(v=>!v)} aria-label={en?(publicMenu?'Close menu':'Open menu'):(publicMenu?'মেনু বন্ধ করুন':'মেনু খুলুন')}><span></span><span></span><span></span></button>
@@ -1699,7 +1806,14 @@ function HouseAllocationPoints({lang='bn'}){
     api('/api/my-career').then(x=>{
       const p=x?.profile||{};
       const first=p.first_joining_date||p.first_join_date||'';
-      if(first)setForm(v=>({...v,firstJoin:v.firstJoin||first}));
+      setForm(v=>({...v,
+        firstJoin:v.firstJoin||first,
+        thirdClassStart:v.thirdClassStart||p.third_class_start_date||first,
+        basicSalary:v.basicSalary||p.current_basic_salary||'',
+        previousPromotions:String(p.previous_promotions??v.previousPromotions??0),
+        marital:p.marital_status||v.marital,
+        gender:p.gender||v.gender
+      }));
     }).catch(()=>{});
   },[]);
 
