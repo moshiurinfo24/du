@@ -33,6 +33,7 @@ import './clean-user-facing-v16-3-10.css';
 import './responsive-app-desktop-v16-4.css';
 import './smart-registration-v16-5.css';
 import './premium-home-navigation-v16-6.css';
+import './exact-mockup-v16-7.css';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import {
   PAY2015,PAY2026,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
@@ -419,6 +420,7 @@ function AccountSecurity({lang='bn'}){
 }
 function PublicHome({onLogin,onSignup,lang,setLang}){
   const en=lang==='en';
+  const [publicTool,setPublicTool]=useState('promotion');
   const [publicNotices,setPublicNotices]=useState([]);
   const [publicPolicies,setPublicPolicies]=useState([]);
   const [publicMenu,setPublicMenu]=useState(false);
@@ -426,198 +428,237 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
   useEffect(()=>{
     trackPublic('page_view','home');
     Promise.all([
-      api('/api/public/notices?limit=5').catch(()=>({notices:[]})),
+      api('/api/public/notices?limit=4').catch(()=>({notices:[]})),
       api('/api/public/policies?limit=4').catch(()=>({policies:[]}))
     ]).then(([n,p])=>{setPublicNotices(n.notices||[]);setPublicPolicies(p.policies||[])});
   },[]);
 
   const scrollTo=id=>{setPublicMenu(false);requestAnimationFrame(()=>document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'}))};
+  const openTool=tool=>{setPublicTool(tool);scrollTo('public-tools')};
 
-  const nav=[
-    [en?'Home':'হোম','top'],
-    [en?'Services':'সেবাসমূহ','services'],
-    [en?'Calculators':'ক্যালকুলেটর','calculators'],
-    [en?'Notices':'নোটিশ','notices'],
-    [en?'Policies':'নীতিমালা','policies'],
-    [en?'Support':'সহায়তা','support']
-  ];
-  const services=[
-    [TrendingUp,en?'Promotion':'পদোন্নতি',en?'Eligibility and career roadmap':'যোগ্যতা ও ক্যারিয়ার রোডম্যাপ','promotion'],
-    [Award,en?'Points Calculator':'পয়েন্ট ক্যালকুলেটর',en?'Service, education and house points':'সার্ভিস, শিক্ষা ও বাসা বরাদ্দ পয়েন্ট','points'],
-    [WalletCards,en?'Pay Scale & Salary':'পে-স্কেল ও বেতন',en?'Basic, gross, deduction and net':'মূল বেতন, মোট, কর্তন ও নিট','salary'],
-    [Briefcase,en?'Service Length':'চাকরিকাল হিসাব',en?'Service duration and date tools':'চাকরিকাল ও তারিখভিত্তিক হিসাব','calculators'],
-    [CalendarDays,en?'Leave & Calendar':'ছুটি ও ক্যালেন্ডার',en?'Personal leave and office dates':'ব্যক্তিগত ছুটি ও অফিস ক্যালেন্ডার','calendar'],
-    [BookOpen,en?'Policies & Knowledge':'নীতিমালা ও তথ্য',en?'Searchable reference center':'অনুসন্ধানযোগ্য তথ্য সহায়িকা','library'],
-    [FileText,en?'Personal Reports':'ব্যক্তিগত রিপোর্ট',en?'Career and service summaries':'ক্যারিয়ার ও চাকরির সারাংশ','reports'],
-    [LockKeyhole,en?'Account Security':'অ্যাকাউন্ট নিরাপত্তা',en?'Recovery and privacy controls':'রিকভারি ও গোপনীয়তা নিয়ন্ত্রণ','account']
-  ];
-  const features=[
-    [CheckCircle2,en?'Enter information once':'একবার তথ্য দিন',en?'Your saved profile can prefill supported calculations.':'সংরক্ষিত প্রোফাইল থেকে সমর্থিত হিসাব স্বয়ংক্রিয়ভাবে পূরণ হবে।'],
-    [Calculator,en?'Automatic calculations':'স্বয়ংক্রিয় হিসাব',en?'Career, salary and points tools work from the same profile.':'একই প্রোফাইল থেকে ক্যারিয়ার, বেতন ও পয়েন্ট হিসাব ব্যবহার করুন।'],
-    [UserRound,en?'Personal dashboard':'ব্যক্তিগত ড্যাশবোর্ড',en?'See your own career, salary, leave and timeline together.':'নিজের ক্যারিয়ার, বেতন, ছুটি ও টাইমলাইন একসঙ্গে দেখুন।'],
-    [ShieldCheck,en?'Private self-service':'নিরাপদ ব্যক্তিগত সেবা',en?'Only information required for supported services is requested.':'সমর্থিত সেবার জন্য প্রয়োজনীয় তথ্যই নেওয়া হয়।']
+  const quickServices=[
+    [TrendingUp,en?'Promotion':'পদোন্নতি',()=>openTool('promotion'),'green'],
+    [Award,en?'Points Calculator':'পয়েন্ট ক্যালকুলেটর',onLogin,'blue'],
+    [WalletCards,en?'Pay Scale & Salary':'পে-স্কেল ও বেতন',()=>openTool('salary'),'orange'],
+    [Briefcase,en?'Service Length':'চাকরিকাল হিসাব',onLogin,'cyan'],
+    [CalendarDays,en?'Leave Management':'ছুটি ব্যবস্থাপনা',onLogin,'pink'],
+    [CalendarDays,en?'Office Calendar':'ক্যালেন্ডার',()=>scrollTo('calendar'),'indigo'],
+    [BookOpen,en?'Policies':'নীতিমালা',()=>scrollTo('policies'),'violet'],
+    [FileText,en?'Reports':'রিপোর্ট',onLogin,'slate']
   ];
 
-  return <div id="top" className="premium-public-home">
-    <header className="ph-header">
-      <button className="ph-brand" onClick={()=>scrollTo('top')}>
-        <span className="ph-brand-mark"><Landmark/></span>
+  const loginBenefits=[
+    [LayoutDashboard,en?'Personal Dashboard':'ব্যক্তিগত ড্যাশবোর্ড',en?'Career, salary, leave and points in one view.':'ক্যারিয়ার, বেতন, ছুটি ও পয়েন্ট এক নজরে।'],
+    [UserRound,en?'Career Profile':'চাকরি ও ক্যারিয়ার প্রোফাইল',en?'Keep your own employment information organized.':'নিজের চাকরির তথ্য গুছিয়ে রাখুন।'],
+    [TrendingUp,en?'Promotion Forecast':'পদোন্নতি Forecast',en?'Eligibility, remaining time and roadmap.':'যোগ্যতা, বাকি সময় ও রোডম্যাপ।'],
+    [Award,en?'Points Calculator':'পয়েন্ট ক্যালকুলেটর',en?'Service, education and supported house points.':'সার্ভিস, শিক্ষা ও সমর্থিত বাসা বরাদ্দ পয়েন্ট।'],
+    [WalletCards,en?'Salary & Pay Scale':'বেতন ও পে-স্কেল',en?'Basic, gross, deductions and net salary.':'মূল, মোট, কর্তন ও নিট বেতন।'],
+    [ReceiptText,en?'Salary History':'বেতন ইতিহাস',en?'Keep and review your own salary records.':'নিজের বেতন রেকর্ড সংরক্ষণ ও পর্যালোচনা।'],
+    [CalendarDays,en?'Leave & Calendar':'ছুটি ও ক্যালেন্ডার',en?'Personal leave records and office dates.':'ব্যক্তিগত ছুটি ও অফিসের দিন-তারিখ।'],
+    [FileText,en?'Career Reports':'ক্যারিয়ার রিপোর্ট',en?'Personal career, salary and leave summaries.':'ক্যারিয়ার, বেতন ও ছুটির ব্যক্তিগত সারাংশ।'],
+    [BookOpen,en?'Knowledge Center':'নলেজ সেন্টার',en?'Notices, policies and useful references.':'নোটিশ, নীতিমালা ও প্রয়োজনীয় রেফারেন্স।'],
+    [LockKeyhole,en?'Account & Security':'অ্যাকাউন্ট ও নিরাপত্তা',en?'Password, recovery and privacy controls.':'Password, Recovery ও Privacy নিয়ন্ত্রণ।']
+  ];
+
+  return <div id="top" className="mx-home">
+    <header className="mx-header">
+      <button className="mx-brand" onClick={()=>scrollTo('top')}>
+        <span className="mx-brand-icon"><Landmark/></span>
         <span><b>{en?'Employee Digital Service Platform':'কর্মকর্তা-কর্মচারী ডিজিটাল সেবা'}</b><small>{en?'Personal Career & Service Management':'ব্যক্তিগত ক্যারিয়ার ও সেবা ব্যবস্থাপনা'}</small></span>
       </button>
-      <nav className={`ph-nav ${publicMenu?'open':''}`}>
-        <div className="ph-mobile-menu-head"><b>{en?'Service Menu':'সেবা মেনু'}</b><button onClick={()=>setPublicMenu(false)}><X/></button></div>
-        {nav.map(([label,id])=><button key={id} onClick={()=>scrollTo(id)}>{label}</button>)}
+
+      <nav className={`mx-main-nav ${publicMenu?'open':''}`}>
+        <div className="mx-menu-head"><b>{en?'Menu':'মেনু'}</b><button onClick={()=>setPublicMenu(false)}><X/></button></div>
+        <button onClick={()=>scrollTo('top')}>{en?'Home':'হোম'}</button>
+        <button onClick={()=>scrollTo('services')}>{en?'Services':'সেবাসমূহ'}</button>
+        <button onClick={()=>scrollTo('benefits')}>{en?'Benefits':'সুবিধাসমূহ'}</button>
+        <button onClick={()=>scrollTo('points')}>{en?'Points':'পয়েন্ট'}</button>
+        <button onClick={()=>scrollTo('calendar')}>{en?'Calendar':'ক্যালেন্ডার'}</button>
+        <button onClick={()=>scrollTo('notices')}>{en?'Notices':'নোটিশ'}</button>
+        <button onClick={()=>scrollTo('policies')}>{en?'Policies':'নীতিমালা'}</button>
       </nav>
-      <div className="ph-header-actions">
+
+      <div className="mx-head-actions">
         <LangToggle lang={lang} setLang={setLang}/>
-        <button className="ph-login" onClick={onLogin}>{en?'Sign in':'সাইন ইন'}</button>
-        <button className="ph-signup" onClick={onSignup}>{en?'Create Account':'নতুন অ্যাকাউন্ট'}</button>
-        <button className="ph-menu-toggle" onClick={()=>setPublicMenu(v=>!v)} aria-label={en?'Open menu':'মেনু খুলুন'}><Boxes/></button>
+        <button className="mx-signin" onClick={onLogin}>{en?'Sign in':'সাইন ইন'}</button>
+        <button className="mx-signup" onClick={onSignup}>{en?'New Account':'নতুন অ্যাকাউন্ট'}</button>
+        <button className="mx-menu-btn" onClick={()=>setPublicMenu(v=>!v)}><Boxes/></button>
       </div>
     </header>
-    <button className={`ph-menu-backdrop ${publicMenu?'show':''}`} onClick={()=>setPublicMenu(false)}></button>
+    <button className={`mx-backdrop ${publicMenu?'show':''}`} onClick={()=>setPublicMenu(false)}></button>
 
-    <section className="ph-hero">
-      <div className="ph-hero-copy">
-        <span className="ph-eyebrow"><Sparkles/>{en?'PERSONAL · SIMPLE · AUTOMATIC':'ব্যক্তিগত · সহজ · স্বয়ংক্রিয়'}</span>
+    <section className="mx-hero">
+      <div className="mx-hero-bg"><i></i><i></i><i></i></div>
+      <div className="mx-hero-copy">
+        <span className="mx-kicker"><Sparkles/>{en?'PERSONAL · SMART · SELF-SERVICE':'ব্যক্তিগত · স্মার্ট · স্বয়ংক্রিয় সেবা'}</span>
         <h1>{en?'Your career, salary, promotion and points — all in one place':'আপনার ক্যারিয়ার, বেতন, পদোন্নতি ও পয়েন্ট—সব হিসাব এক জায়গায়'}</h1>
-        <p>{en?'A modern self-service platform for managing personal employment information, supported calculations, career progress and useful records from one account.':'একটি আধুনিক Self-Service প্ল্যাটফর্ম—এক অ্যাকাউন্ট থেকে ব্যক্তিগত চাকরির তথ্য, সমর্থিত হিসাব, ক্যারিয়ার অগ্রগতি ও প্রয়োজনীয় রেকর্ড সহজে পরিচালনা করুন।'}</p>
-        <div className="ph-hero-actions"><button className="primary" onClick={onLogin}>{en?'Sign in':'সাইন ইন করুন'}<ArrowRight/></button><button className="secondary" onClick={onSignup}>{en?'Create new account':'নতুন অ্যাকাউন্ট তৈরি করুন'}<ChevronRight/></button></div>
-        <div className="ph-trust-row"><span><CheckCircle2/>{en?'Necessary data only':'শুধু প্রয়োজনীয় তথ্য'}</span><span><ShieldCheck/>{en?'Private account':'ব্যক্তিগত অ্যাকাউন্ট'}</span><span><Calculator/>{en?'Automatic calculations':'স্বয়ংক্রিয় হিসাব'}</span></div>
+        <p>{en?'Manage personal career information, supported calculations, salary, points, leave and useful service records from one modern account.':'একটি আধুনিক অ্যাকাউন্ট থেকে ব্যক্তিগত ক্যারিয়ার তথ্য, সমর্থিত হিসাব, বেতন, পয়েন্ট, ছুটি ও প্রয়োজনীয় সেবা রেকর্ড পরিচালনা করুন।'}</p>
+        <div className="mx-hero-buttons">
+          <button className="primary" onClick={onLogin}>{en?'Sign in now':'সাইন ইন করুন'}<ArrowRight/></button>
+          <button className="secondary" onClick={onSignup}>{en?'Create new account':'নতুন অ্যাকাউন্ট তৈরি করুন'}<ChevronRight/></button>
+        </div>
+        <div className="mx-hero-trust">
+          <span><CheckCircle2/>{en?'Necessary information only':'শুধু প্রয়োজনীয় তথ্য'}</span>
+          <span><ShieldCheck/>{en?'Private self-service':'ব্যক্তিগত Self-Service'}</span>
+          <span><Calculator/>{en?'Automatic calculations':'স্বয়ংক্রিয় হিসাব'}</span>
+        </div>
       </div>
 
-      <div className="ph-device-stage" aria-hidden="true">
-        <div className="ph-laptop">
-          <div className="ph-laptop-top"><span></span><span></span><span></span></div>
-          <div className="ph-laptop-layout">
-            <aside><i></i><i></i><i></i><i></i><i></i><i></i></aside>
-            <div className="ph-laptop-main">
-              <div className="ph-mini-profile"><span><UserRound/></span><div><b></b><small></small></div></div>
-              <div className="ph-mini-actions"><i></i><i></i><i></i><i></i></div>
-              <div className="ph-mini-cards"><i></i><i></i><i></i></div>
-              <div className="ph-mini-chart"><span></span><span></span><span></span><span></span><span></span></div>
-            </div>
+      <div className="mx-hero-device" aria-hidden="true">
+        <div className="mx-desk">
+          <div className="mx-desk-bar"><span></span><span></span><span></span></div>
+          <div className="mx-desk-body">
+            <aside>
+              <b></b>{Array.from({length:7},(_,i)=><i key={i}></i>)}
+            </aside>
+            <main>
+              <div className="mx-preview-head"><span><UserRound/></span><div><b></b><small></small></div><i></i></div>
+              <div className="mx-preview-shortcuts">{Array.from({length:8},(_,i)=><i key={i}></i>)}</div>
+              <div className="mx-preview-row"><i></i><i></i><i></i></div>
+              <div className="mx-preview-chart"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+            </main>
           </div>
         </div>
-        <div className="ph-phone">
-          <div className="ph-phone-head"></div>
-          <div className="ph-phone-profile"><UserRound/><i></i></div>
-          <div className="ph-phone-grid">{Array.from({length:8},(_,i)=><i key={i}></i>)}</div>
-          <div className="ph-phone-status"><i></i><i></i></div>
-          <div className="ph-phone-nav"><i></i><i></i><i></i><i></i><i></i></div>
+        <div className="mx-mobile">
+          <div className="mx-notch"></div>
+          <div className="mx-mobile-profile"><UserRound/><i></i></div>
+          <div className="mx-mobile-grid">{Array.from({length:8},(_,i)=><i key={i}></i>)}</div>
+          <div className="mx-mobile-panels"><i></i><i></i></div>
+          <div className="mx-mobile-nav">{Array.from({length:5},(_,i)=><i key={i}></i>)}</div>
         </div>
+        <div className="mx-float-card f1"><TrendingUp/><b>{en?'Promotion':'পদোন্নতি'}</b></div>
+        <div className="mx-float-card f2"><Award/><b>{en?'Points':'পয়েন্ট'}</b></div>
+        <div className="mx-float-card f3"><WalletCards/><b>{en?'Salary':'বেতন'}</b></div>
       </div>
     </section>
 
-    <section id="services" className="ph-section">
-      <div className="ph-section-head"><div><span>{en?'QUICK SERVICES':'দ্রুত সেবা'}</span><h2>{en?'Everything important, clearly organized':'গুরুত্বপূর্ণ সব সেবা, সুন্দরভাবে সাজানো'}</h2></div><p>{en?'Sign in once and move directly to the service you need.':'সাইন ইন করে প্রয়োজনীয় সেবায় সরাসরি প্রবেশ করুন।'}</p></div>
-      <div className="ph-service-grid">
-        {services.map(([Icon,title,sub,page],i)=><button key={page+title} onClick={onLogin} className={`ph-service-card c${i+1}`}><span><Icon/></span><div><b>{title}</b><small>{sub}</small></div><ChevronRight/></button>)}
+    <section id="services" className="mx-section mx-services">
+      <div className="mx-section-title">
+        <span>{en?'QUICK SERVICES':'দ্রুত সেবা'}</span>
+        <h2>{en?'Important services, arranged for one-click access':'গুরুত্বপূর্ণ সব সেবা, এক ক্লিকে ব্যবহারের জন্য সাজানো'}</h2>
+        <p>{en?'The most-used career and employee service tools are available from the homepage.':'সবচেয়ে প্রয়োজনীয় ক্যারিয়ার ও কর্মজীবন-সংক্রান্ত সেবাগুলো হোমপেজ থেকেই দ্রুত ব্যবহার করুন।'}</p>
+      </div>
+      <div className="mx-quick-grid">
+        {quickServices.map(([Icon,title,action,tone])=><button key={title} className={`mx-quick-card ${tone}`} onClick={action}>
+          <span><Icon/></span><b>{title}</b><ChevronRight/>
+        </button>)}
       </div>
     </section>
 
-
-    <section className="ph-section ph-login-benefits">
-      <div className="ph-section-head">
-        <div><span>{en?'AFTER SIGN IN':'লগইন করলে যা পাবেন'}</span><h2>{en?'Your own personal career & service workspace':'নিজের ব্যক্তিগত ক্যারিয়ার ও সেবা ব্যবস্থাপনা'}</h2></div>
-        <p>{en?'Sign in once to access your saved profile, automatic calculations, personal records and career tools from one dashboard.':'একবার লগইন করলেই নিজের সংরক্ষিত তথ্য, স্বয়ংক্রিয় হিসাব, ব্যক্তিগত রেকর্ড ও ক্যারিয়ার টুল—সব এক ড্যাশবোর্ডে পাবেন।'}</p>
+    <section id="benefits" className="mx-section mx-benefits">
+      <div className="mx-section-title">
+        <span>{en?'AFTER SIGN IN':'লগইন করলে যা পাবেন'}</span>
+        <h2>{en?'Your own personal career and service workspace':'নিজের ব্যক্তিগত ক্যারিয়ার ও সেবা ব্যবস্থাপনা'}</h2>
+        <p>{en?'Sign in once to use your saved information across the supported dashboard, calculations and personal records.':'একবার লগইন করলে সংরক্ষিত তথ্য ব্যবহার করে Dashboard, হিসাব ও ব্যক্তিগত রেকর্ড এক জায়গা থেকে পরিচালনা করতে পারবেন।'}</p>
       </div>
-      <div className="ph-benefits-wrap">
-        <div className="ph-benefit-visual">
-          <div className="benefit-browser">
-            <div className="benefit-browser-top"><i></i><i></i><i></i><span></span></div>
-            <div className="benefit-browser-body">
-              <aside>{Array.from({length:7},(_,i)=><i key={i}></i>)}</aside>
-              <main>
-                <div className="benefit-profile"><span><UserRound/></span><div><b></b><small></small></div></div>
-                <div className="benefit-shortcuts">{Array.from({length:8},(_,i)=><i key={i}></i>)}</div>
-                <div className="benefit-panels"><i></i><i></i><i></i><i></i></div>
-              </main>
-            </div>
+      <div className="mx-benefit-layout">
+        <div className="mx-benefit-screen">
+          <div className="mx-benefit-top"></div>
+          <div className="mx-benefit-body">
+            <aside>{Array.from({length:7},(_,i)=><i key={i}></i>)}</aside>
+            <main>
+              <div className="mx-benefit-profile"><span><UserRound/></span><div><b></b><small></small></div></div>
+              <div className="mx-benefit-mini">{Array.from({length:8},(_,i)=><i key={i}></i>)}</div>
+              <div className="mx-benefit-bottom"><i></i><i></i><i></i></div>
+            </main>
           </div>
-          <div className="benefit-float one"><Award/><span>{en?'Points':'পয়েন্ট'}</span></div>
-          <div className="benefit-float two"><TrendingUp/><span>{en?'Promotion':'পদোন্নতি'}</span></div>
-          <div className="benefit-float three"><WalletCards/><span>{en?'Salary':'বেতন'}</span></div>
+          <div className="mx-benefit-bubble one"><Award/>{en?'Points':'পয়েন্ট'}</div>
+          <div className="mx-benefit-bubble two"><TrendingUp/>{en?'Promotion':'পদোন্নতি'}</div>
+          <div className="mx-benefit-bubble three"><WalletCards/>{en?'Salary':'বেতন'}</div>
         </div>
-
-        <div className="ph-benefit-grid">
-          {[
-            [LayoutDashboard,en?'Personal Dashboard':'ব্যক্তিগত ড্যাশবোর্ড',en?'See career, salary, leave, points and important status together.':'ক্যারিয়ার, বেতন, ছুটি, পয়েন্ট ও গুরুত্বপূর্ণ অবস্থা একসঙ্গে দেখুন।'],
-            [UserRound,en?'Career Profile':'চাকরি ও ক্যারিয়ার প্রোফাইল',en?'Keep your own employment and qualification information organized.':'নিজের চাকরি ও শিক্ষাগত তথ্য সুন্দরভাবে সংরক্ষণ ও হালনাগাদ করুন।'],
-            [TrendingUp,en?'Promotion Forecast':'পদোন্নতি Forecast',en?'See service requirement, eligibility date, remaining time and career roadmap.':'প্রয়োজনীয় চাকরিকাল, যোগ্যতার তারিখ, বাকি সময় ও ক্যারিয়ার রোডম্যাপ দেখুন।'],
-            [Award,en?'Points Calculator':'পয়েন্ট ক্যালকুলেটর',en?'Use service, education and supported house-allocation point calculations.':'সার্ভিস, শিক্ষাগত ও সমর্থিত বাসা বরাদ্দ পয়েন্ট হিসাব করুন।'],
-            [WalletCards,en?'Salary & Pay Scale':'বেতন ও পে-স্কেল',en?'Calculate basic, gross, deductions, net salary and pay-scale information.':'মূল বেতন, মোট বেতন, কর্তন, নিট বেতন ও পে-স্কেল হিসাব করুন।'],
-            [ReceiptText,en?'Salary History':'বেতন ইতিহাস',en?'Maintain your own salary records over time.':'নিজের বিভিন্ন সময়ের বেতন রেকর্ড সংরক্ষণ ও পর্যালোচনা করুন।'],
-            [CalendarDays,en?'Leave & Calendar':'ছুটি ও ক্যালেন্ডার',en?'Manage personal leave records and view office calendar information.':'নিজের ছুটির রেকর্ড ও অফিস ক্যালেন্ডারের তথ্য দেখুন।'],
-            [FileText,en?'Career Reports':'ক্যারিয়ার রিপোর্ট',en?'Prepare personal career, salary and leave summaries for your own reference.':'নিজের ব্যবহারের জন্য ক্যারিয়ার, বেতন ও ছুটির সারাংশ তৈরি করুন।'],
-            [BookOpen,en?'Knowledge Center':'নলেজ সেন্টার',en?'Find notices, policies and useful reference information.':'নোটিশ, নীতিমালা ও প্রয়োজনীয় তথ্য সহায়িকা খুঁজুন।'],
-            [LockKeyhole,en?'Account & Security':'অ্যাকাউন্ট ও নিরাপত্তা',en?'Manage password, recovery code, privacy and active sessions.':'Password, Recovery Code, Privacy ও Active Session নিয়ন্ত্রণ করুন।']
-          ].map(([Icon,title,desc],i)=><article key={title} className={`ph-benefit-card b${i+1}`}><span><Icon/></span><div><h3>{title}</h3><p>{desc}</p></div></article>)}
+        <div className="mx-benefit-cards">
+          {loginBenefits.map(([Icon,title,desc],i)=><article key={title} className={`mx-benefit-card b${i+1}`}>
+            <span><Icon/></span><div><h3>{title}</h3><p>{desc}</p></div>
+          </article>)}
         </div>
       </div>
-      <div className="ph-benefit-cta">
-        <div><b>{en?'Ready to use your personal service dashboard?':'নিজের ব্যক্তিগত সেবা ড্যাশবোর্ড ব্যবহার করতে প্রস্তুত?'}</b><small>{en?'Create your account and enter the necessary information once.':'নতুন অ্যাকাউন্ট তৈরি করে প্রয়োজনীয় তথ্য একবারই দিন।'}</small></div>
-        <button onClick={onSignup}>{en?'Create My Account':'আমার অ্যাকাউন্ট তৈরি করুন'}<ArrowRight/></button>
+      <div className="mx-benefit-cta">
+        <div><b>{en?'Create your personal account and start organizing your career information.':'নিজের অ্যাকাউন্ট তৈরি করে ক্যারিয়ারের প্রয়োজনীয় তথ্য গুছিয়ে রাখা শুরু করুন।'}</b><small>{en?'Enter the necessary information once and reuse it across supported services.':'প্রয়োজনীয় তথ্য একবার দিন—সমর্থিত সেবাগুলো পরে সেই তথ্য ব্যবহার করবে।'}</small></div>
+        <button onClick={onSignup}>{en?'Create Account':'অ্যাকাউন্ট তৈরি করুন'}<ArrowRight/></button>
       </div>
     </section>
 
-    <section className="ph-section ph-why">
-      <div className="ph-section-head"><div><span>{en?'WHY THIS PLATFORM':'কেন এই প্ল্যাটফর্ম'}</span><h2>{en?'One profile, a simpler personal service experience':'এক প্রোফাইলে সহজ ব্যক্তিগত সেবা'}</h2></div></div>
-      <div className="ph-feature-grid">{features.map(([Icon,title,desc])=><article key={title}><span><Icon/></span><h3>{title}</h3><p>{desc}</p></article>)}</div>
+    <section className="mx-band">
+      <div><span>{en?'PERSONAL CAREER MANAGEMENT':'ব্যক্তিগত ক্যারিয়ার ব্যবস্থাপনা'}</span><h2>{en?'One profile, multiple supported calculations and records':'একবার তথ্য দিন—ড্যাশবোর্ড ও সমর্থিত হিসাবগুলো পরে নিজে থেকেই কাজে লাগবে'}</h2><p>{en?'A clean personal workspace for your career, salary, points, leave and reports.':'ক্যারিয়ার, বেতন, পয়েন্ট, ছুটি ও রিপোর্টের জন্য একটি পরিষ্কার ব্যক্তিগত workspace।'}</p></div>
+      <div><button onClick={onSignup}>{en?'New Account':'নতুন অ্যাকাউন্ট'}<ArrowRight/></button><button onClick={onLogin}>{en?'Sign in':'সাইন ইন'}</button></div>
     </section>
 
-    <section id="calculators" className="ph-career-banner">
-      <div><span>{en?'START YOUR PERSONAL CAREER SPACE':'নিজের ক্যারিয়ার হিসাব এখনই শুরু করুন'}</span><h2>{en?'Your information can power your dashboard and supported calculators automatically.':'একবার তথ্য দিন—ড্যাশবোর্ড ও সমর্থিত হিসাবগুলো পরে নিজে থেকেই কাজে লাগবে।'}</h2><p>{en?'Create your personal account, complete your profile and keep your own career information organized.':'নিজের অ্যাকাউন্ট তৈরি করে চাকরি ও ক্যারিয়ারের প্রয়োজনীয় তথ্য সুন্দরভাবে গুছিয়ে রাখুন।'}</p></div>
-      <div><button onClick={onSignup}>{en?'Create Account':'নতুন অ্যাকাউন্ট'}<ArrowRight/></button><button onClick={onLogin}>{en?'Sign in':'সাইন ইন'}</button></div>
-    </section>
-
-    <section className="ph-section ph-points-showcase">
-      <div className="ph-section-head"><div><span>{en?'POINTS CENTER':'পয়েন্ট ক্যালকুলেটর'}</span><h2>{en?'Three point systems, one clean center':'তিন ধরনের পয়েন্ট—একটি পরিষ্কার সেন্টার'}</h2></div></div>
-      <div className="ph-points-grid">
-        <article><span className="green"><Clock3/></span><h3>{en?'Service Points':'সার্ভিস পয়েন্ট'}</h3><p>{en?'Calculate points from applicable service experience.':'প্রযোজ্য চাকরির অভিজ্ঞতা থেকে সার্ভিস পয়েন্ট হিসাব।'}</p></article>
-        <article><span className="violet"><GraduationCap/></span><h3>{en?'Education Points':'শিক্ষাগত যোগ্যতার পয়েন্ট'}</h3><p>{en?'Calculate qualification points from saved results.':'সংরক্ষিত শিক্ষাগত ফলাফল থেকে যোগ্যতার পয়েন্ট হিসাব।'}</p></article>
-        <article><span className="pink"><Home/></span><h3>{en?'House Allocation Points':'বাসা বরাদ্দ পয়েন্ট'}</h3><p>{en?'Automatic calculation for supported employee categories.':'সমর্থিত কর্মী শ্রেণির জন্য স্বয়ংক্রিয় বাসা বরাদ্দ পয়েন্ট হিসাব।'}</p></article>
+    <section id="points" className="mx-section mx-points">
+      <div className="mx-section-title">
+        <span>{en?'POINTS CENTER':'পয়েন্ট ক্যালকুলেটর'}</span>
+        <h2>{en?'Three point systems, one clean center':'তিন ধরনের পয়েন্ট—একটি পরিষ্কার সেন্টার'}</h2>
+      </div>
+      <div className="mx-point-grid">
+        <article><span className="g"><Clock3/></span><h3>{en?'Service Points':'সার্ভিস পয়েন্ট'}</h3><p>{en?'Service-experience based point calculation.':'চাকরির অভিজ্ঞতাভিত্তিক সার্ভিস পয়েন্ট হিসাব।'}</p></article>
+        <article><span className="v"><GraduationCap/></span><h3>{en?'Education Points':'শিক্ষাগত যোগ্যতার পয়েন্ট'}</h3><p>{en?'Qualification points from supported academic results.':'সমর্থিত শিক্ষাগত ফলাফল থেকে যোগ্যতার পয়েন্ট।'}</p></article>
+        <article><span className="p"><Home/></span><h3>{en?'House Allocation Points':'বাসা বরাদ্দ পয়েন্ট'}</h3><p>{en?'Automatic calculation for supported employee categories.':'সমর্থিত কর্মী শ্রেণির জন্য স্বয়ংক্রিয় হিসাব।'}</p></article>
       </div>
     </section>
 
-    <section className="ph-section ph-preview-grid">
-      <article className="ph-preview-card"><div className="ph-card-head"><span><TrendingUp/></span><div><small>{en?'CAREER':'ক্যারিয়ার'}</small><h3>{en?'Promotion & Career Roadmap':'পদোন্নতি ও ক্যারিয়ার রোডম্যাপ'}</h3></div></div><div className="ph-roadmap-preview"><i></i><div><b>{en?'Current Post':'বর্তমান পদ'}</b><small>{en?'Career timeline and next eligibility':'ক্যারিয়ার টাইমলাইন ও পরবর্তী যোগ্যতা'}</small></div><i></i><div><b>{en?'Next Step':'পরবর্তী ধাপ'}</b><small>{en?'Rule-based planning support':'নিয়মভিত্তিক পরিকল্পনা সহায়তা'}</small></div></div></article>
-      <article className="ph-preview-card"><div className="ph-card-head"><span><WalletCards/></span><div><small>{en?'SALARY':'বেতন'}</small><h3>{en?'Salary & Pay Snapshot':'বেতন ও পে-স্কেল সারাংশ'}</h3></div></div><div className="ph-salary-preview"><div><small>{en?'Current Basic':'বর্তমান মূল বেতন'}</small><b>—</b></div><div><small>{en?'Pay History':'বেতন ইতিহাস'}</small><b>—</b></div><div><small>{en?'Net Salary':'নিট বেতন'}</small><b>—</b></div></div></article>
+    <section className="mx-section mx-two-up">
+      <article className="mx-module-card">
+        <div className="mx-module-head"><span><TrendingUp/></span><div><small>{en?'CAREER':'ক্যারিয়ার'}</small><h3>{en?'Promotion & Career Roadmap':'পদোন্নতি ও ক্যারিয়ার রোডম্যাপ'}</h3></div></div>
+        <div className="mx-roadmap">
+          <i></i><div><b>{en?'Current position':'বর্তমান অবস্থান'}</b><small>{en?'Current grade and service timeline':'বর্তমান গ্রেড ও চাকরিকাল টাইমলাইন'}</small></div>
+          <i></i><div><b>{en?'Next eligibility':'পরবর্তী যোগ্যতা'}</b><small>{en?'Required service and remaining time':'প্রয়োজনীয় চাকরিকাল ও বাকি সময়'}</small></div>
+          <i></i><div><b>{en?'Future roadmap':'ভবিষ্যৎ রোডম্যাপ'}</b><small>{en?'Next supported promotion steps':'পরবর্তী সমর্থিত পদোন্নতির ধাপ'}</small></div>
+        </div>
+      </article>
+      <article className="mx-module-card">
+        <div className="mx-module-head"><span><WalletCards/></span><div><small>{en?'SALARY':'বেতন'}</small><h3>{en?'Salary & Pay Scale Snapshot':'বেতন ও পে-স্কেল সারাংশ'}</h3></div></div>
+        <div className="mx-salary-boxes"><div><small>{en?'Basic':'মূল বেতন'}</small><b>—</b></div><div><small>{en?'Gross':'মোট বেতন'}</small><b>—</b></div><div><small>{en?'Net':'নিট বেতন'}</small><b>—</b></div></div>
+        <div className="mx-salary-bars"><i></i><i></i><i></i><i></i><i></i></div>
+      </article>
     </section>
 
-    <section className="ph-section ph-calendar-preview">
-      <div className="ph-section-head"><div><span>{en?'OFFICE CALENDAR':'অফিস ক্যালেন্ডার'}</span><h2>{en?'Office dates at a glance':'অফিসের দিন-তারিখ এক নজরে'}</h2></div></div>
+    <section id="public-tools" className="mx-section mx-public-tools">
+      <div className="mx-section-title">
+        <span>{en?'PUBLIC CALCULATORS':'পাবলিক ক্যালকুলেটর'}</span>
+        <h2>{en?'Use selected calculators without signing in':'সাইন ইন ছাড়াই নির্বাচিত হিসাব ব্যবহার করুন'}</h2>
+      </div>
+      <div className="mx-tool-tabs">
+        <button className={publicTool==='promotion'?'active':''} onClick={()=>setPublicTool('promotion')}><TrendingUp/>{en?'Promotion':'পদোন্নতি'}</button>
+        <button className={publicTool==='salary'?'active':''} onClick={()=>setPublicTool('salary')}><WalletCards/>{en?'Pay Scale':'পে-স্কেল'}</button>
+      </div>
+      <div className="mx-tool-stage">{publicTool==='promotion'?<PromotionCenter lang={lang}/>:<SalaryCalculator lang={lang}/>}</div>
+    </section>
+
+    <section id="calendar" className="mx-section mx-calendar">
+      <div className="mx-section-title">
+        <span>{en?'OFFICE CALENDAR':'অফিস ক্যালেন্ডার'}</span>
+        <h2>{en?'Office days and holidays at a glance':'অফিসের দিন-তারিখ এক নজরে'}</h2>
+      </div>
       <FiscalOfficeCalendar lang={lang}/>
     </section>
 
-    <section id="notices" className="ph-section ph-info-columns">
-      <div className="ph-info-panel">
-        <div className="ph-section-head compact"><div><span>{en?'LATEST':'সাম্প্রতিক'}</span><h2>{en?'Notices':'নোটিশ'}</h2></div></div>
-        <div className="ph-list">
-          {publicNotices.length?publicNotices.slice(0,4).map((n,i)=><article key={n.id||i}><span className={`dot d${i%4}`}></span><div><b>{en?(n.title_en||n.title_bn):(n.title_bn||n.title_en)}</b><small>{n.publish_date||n.created_at?.slice?.(0,10)||'—'}</small></div></article>):<div className="ph-empty">{en?'No public notice available':'কোনো পাবলিক নোটিশ নেই'}</div>}
+    <section className="mx-section mx-info-grid">
+      <div id="notices" className="mx-info-panel">
+        <div className="mx-panel-title"><span>{en?'LATEST':'সাম্প্রতিক'}</span><h2>{en?'Notices':'নোটিশ'}</h2></div>
+        <div className="mx-list">
+          {publicNotices.length?publicNotices.map((n,i)=><article key={n.id||i}><i className={`dot d${i}`}></i><div><b>{en?(n.title_en||n.title_bn):(n.title_bn||n.title_en)}</b><small>{n.publish_date||n.created_at?.slice?.(0,10)||'—'}</small></div></article>):<div className="mx-empty">{en?'No public notice available':'কোনো পাবলিক নোটিশ নেই'}</div>}
         </div>
       </div>
-      <div id="policies" className="ph-info-panel">
-        <div className="ph-section-head compact"><div><span>{en?'REFERENCE':'তথ্য সহায়িকা'}</span><h2>{en?'Policies':'নীতিমালা'}</h2></div></div>
-        <div className="ph-list">
-          {publicPolicies.length?publicPolicies.slice(0,4).map((p,i)=><article key={p.id||i}><span className={`doc d${i%4}`}><BookOpen/></span><div><b>{en?(p.title_en||p.title_bn):(p.title_bn||p.title_en)}</b><small>{p.effective_date||p.publish_date||'—'}</small></div></article>):<div className="ph-empty">{en?'No public policy available':'কোনো পাবলিক নীতিমালা নেই'}</div>}
+      <div id="policies" className="mx-info-panel">
+        <div className="mx-panel-title"><span>{en?'REFERENCE':'তথ্য সহায়িকা'}</span><h2>{en?'Policies':'নীতিমালা'}</h2></div>
+        <div className="mx-list">
+          {publicPolicies.length?publicPolicies.map((p,i)=><article key={p.id||i}><span className={`doc d${i}`}><BookOpen/></span><div><b>{en?(p.title_en||p.title_bn):(p.title_bn||p.title_en)}</b><small>{p.effective_date||p.publish_date||'—'}</small></div></article>):<div className="mx-empty">{en?'No public policy available':'কোনো পাবলিক নীতিমালা নেই'}</div>}
         </div>
       </div>
     </section>
 
-    <section className="ph-section ph-privacy">
-      <div><ShieldCheck/><div><span>{en?'PRIVACY & SECURITY':'গোপনীয়তা ও নিরাপত্তা'}</span><h2>{en?'Only necessary information for supported services':'সমর্থিত সেবার জন্য প্রয়োজনীয় তথ্যই নেওয়া হয়'}</h2><p>{en?'Bank account details, card information, PIN, OTP or mobile-banking secrets are not required for this platform.':'এই প্ল্যাটফর্মে ব্যাংক অ্যাকাউন্ট, কার্ডের তথ্য, PIN, OTP বা মোবাইল ব্যাংকিংয়ের গোপন তথ্যের প্রয়োজন নেই।'}</p></div></div>
-      <button onClick={onSignup}>{en?'Read and create account':'জেনে-বুঝে অ্যাকাউন্ট তৈরি করুন'}<ArrowRight/></button>
+    <section className="mx-section mx-security">
+      <div><span className="mx-security-icon"><ShieldCheck/></span><div><small>{en?'PRIVACY & SECURITY':'গোপনীয়তা ও নিরাপত্তা'}</small><h2>{en?'Only information necessary for supported services is requested':'সমর্থিত সেবার জন্য প্রয়োজনীয় তথ্যই নেওয়া হয়'}</h2><p>{en?'Bank account details, card information, PIN, OTP and mobile-banking secrets are not required.':'ব্যাংক অ্যাকাউন্ট, কার্ডের তথ্য, PIN, OTP বা মোবাইল ব্যাংকিংয়ের গোপন তথ্যের প্রয়োজন নেই।'}</p></div></div>
+      <button onClick={onSignup}>{en?'Read & Create Account':'জেনে-বুঝে অ্যাকাউন্ট তৈরি করুন'}<ArrowRight/></button>
     </section>
 
-    <section id="support" className="ph-support">
-      <div><span>{en?'SUPPORT':'সহায়তা'}</span><h2>{en?'Need help using the platform?':'প্ল্যাটফর্ম ব্যবহার করতে সহায়তা প্রয়োজন?'}</h2><p>{en?'Developer support is available for technical assistance.':'কারিগরি সহায়তার জন্য Developer Support রয়েছে।'}</p></div>
-      <div><a href="tel:01759084692"><PhoneCall/>{en?'Call':'কল করুন'} · 01759084692</a><a href="https://wa.me/8801759084692" target="_blank" rel="noreferrer"><MessageCircle/>WhatsApp</a></div>
+    <section className="mx-support">
+      <div><small>{en?'SUPPORT':'সহায়তা'}</small><h2>{en?'Need help using the platform?':'প্ল্যাটফর্ম ব্যবহার করতে সহায়তা প্রয়োজন?'}</h2><p>{en?'Developer support is available for technical assistance.':'কারিগরি সহায়তার জন্য Developer Support রয়েছে।'}</p></div>
+      <div><a href="tel:01759084692"><PhoneCall/>{en?'Call':'কল'} · 01759084692</a><a href="https://wa.me/8801759084692" target="_blank" rel="noreferrer"><MessageCircle/>WhatsApp</a></div>
     </section>
 
-    <footer className="ph-footer">
+    <footer className="mx-footer">
       <div><b>{en?'Employee Digital Service Platform':'কর্মকর্তা-কর্মচারী ডিজিটাল সেবা'}</b><p>{en?'Independent personal self-service platform.':'ব্যক্তিগত উদ্যোগে তৈরি স্বাধীন Self-Service Platform।'}</p></div>
-      <div>{nav.slice(0,5).map(([label,id])=><button key={id} onClick={()=>scrollTo(id)}>{label}</button>)}</div>
+      <div><button onClick={()=>scrollTo('services')}>{en?'Services':'সেবাসমূহ'}</button><button onClick={()=>scrollTo('benefits')}>{en?'Benefits':'সুবিধাসমূহ'}</button><button onClick={()=>scrollTo('calendar')}>{en?'Calendar':'ক্যালেন্ডার'}</button><button onClick={()=>scrollTo('notices')}>{en?'Notices':'নোটিশ'}</button><button onClick={()=>scrollTo('policies')}>{en?'Policies':'নীতিমালা'}</button></div>
       <div><small>{en?'Developer Support':'ডেভেলপার সহায়তা'}</small><b>মোঃ মশিউর রহমান · 01759084692</b></div>
     </footer>
   </div>
