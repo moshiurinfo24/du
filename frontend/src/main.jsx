@@ -30,6 +30,7 @@ import './promotion-forecast-v16-3-7.css';
 import './house-allocation-points-v16-3-8.css';
 import './automatic-house-points-v16-3-9.css';
 import './clean-user-facing-v16-3-10.css';
+import './responsive-app-desktop-v16-4.css';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import {
   PAY2015,PAY2026,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
@@ -339,7 +340,7 @@ function PublicHome({onLogin,lang,setLang}){
   };
   const navItems=[[copy.home,'top'],[copy.promotion,'public-calculator','promotion'],[copy.pay,'public-calculator','salary'],[copy.policies,'policies'],[copy.notices,'notices'],[copy.forms,'forms'],[copy.help,'help']];
   const goto=(id,tool)=>{setPublicMenu(false);if(tool)return openTool(tool);trackPublic('section_view',id);scrollTo(id);};
-  return <div id="top" data-public-version="v16.3.10" className={'public premium-public premium-home-v16-3 '+(en?'lang-en':'lang-bn')}>
+  return <div id="top" data-public-version="v16.4.0" className={'public premium-public premium-home-v16-3 '+(en?'lang-en':'lang-bn')}>
     <header className="public-nav luxury-nav premium-v16-nav">
       <div className="public-brand"><div className="brand-orb"><ShieldCheck size={19}/></div><div><b>{t.appName}</b><small>{t.appSub}</small></div></div>
       <button className="public-mobile-trigger" onClick={()=>setPublicMenu(v=>!v)} aria-label={en?(publicMenu?'Close menu':'Open menu'):(publicMenu?'মেনু বন্ধ করুন':'মেনু খুলুন')}><span></span><span></span><span></span></button>
@@ -594,9 +595,177 @@ function AdminAnalyticsDashboard({user,onPage,lang='bn'}){
     </section>
   </div>
 }
+
+function UnifiedEmployeeDashboard({user,onPage,lang='bn'}){
+  const en=lang==='en';
+  const [career,setCareer]=useState({profile:null,education:[],events:[]});
+  const [salaryItems,setSalaryItems]=useState([]);
+  const [leaveItems,setLeaveItems]=useState([]);
+  const [notices,setNotices]=useState([]);
+  const [busy,setBusy]=useState(true);
+
+  useEffect(()=>{
+    let alive=true;
+    Promise.allSettled([
+      api('/api/my-career'),
+      api('/api/my-salary-history'),
+      api('/api/my-leave-records'),
+      api('/api/public/notices?limit=4')
+    ]).then(rs=>{
+      if(!alive)return;
+      const c=rs[0].status==='fulfilled'?rs[0].value:{};
+      const s=rs[1].status==='fulfilled'?rs[1].value:{};
+      const l=rs[2].status==='fulfilled'?rs[2].value:{};
+      const n=rs[3].status==='fulfilled'?rs[3].value:{};
+      setCareer({profile:c.profile||null,education:c.education||[],events:c.events||[]});
+      setSalaryItems(s.items||[]);
+      setLeaveItems(l.items||[]);
+      setNotices(n.items||n.notices||[]);
+      setBusy(false);
+    });
+    return()=>{alive=false};
+  },[]);
+
+  const p=career.profile||{};
+  const today=todayLocalIso();
+  const service=p.first_joining_date?diffYMD(p.first_joining_date,today):null;
+  const postService=p.current_post_joining_date?diffYMD(p.current_post_joining_date,today):null;
+  const serviceText=d=>!d?'—':en?`${numLang(d.y,lang,0)}y ${numLang(d.m,lang,0)}m ${numLang(d.d,lang,0)}d`:`${numLang(d.y,lang,0)} বছর ${numLang(d.m,lang,0)} মাস ${numLang(d.d,lang,0)} দিন`;
+  const currentPost=p.current_post||p.designation|| (en?'Not added':'যোগ করা হয়নি');
+  const currentGrade=p.current_grade?`${en?'Grade':'গ্রেড'} ${numLang(p.current_grade,lang,0)}`:'—';
+  const latestSalary=salaryItems?.[0]||null;
+  const thisYear=String(new Date().getFullYear());
+  const yearLeave=(leaveItems||[]).filter(x=>String(x.start_date||'').startsWith(thisYear));
+  const usedLeave=yearLeave.reduce((sum,x)=>sum+Number(x.total_days||0),0);
+  const recentEvents=(career.events||[]).slice(0,3);
+
+  let nextPromo='—';
+  let remainingPromo='';
+  if(p.current_grade&&p.current_post_joining_date){
+    const rule=PROMO_RULES[String(p.current_grade)];
+    if(rule&&!rule.noPromotion&&!rule.top){
+      const eduKey=p.education_level||'bachelor';
+      const years=rule.years?.[eduKey]||rule.years?.bachelor;
+      if(years){
+        nextPromo=fmtDateLang(addYears(p.current_post_joining_date,years),lang);
+        const rem=diffYMD(today,addYears(p.current_post_joining_date,years));
+        remainingPromo=rem&&new Date(addYears(p.current_post_joining_date,years))>new Date(today)?serviceText(rem):(en?'Eligible':'যোগ্য');
+      }
+    }else if(rule?.top||rule?.noPromotion){
+      nextPromo=en?'See roadmap':'রোডম্যাপ দেখুন';
+    }
+  }
+
+  const completion=[
+    p.first_joining_date,p.current_post,p.current_grade,p.current_post_joining_date,
+    p.employee_id||p.reference_id
+  ].filter(Boolean).length;
+  const completionPct=Math.round(completion/5*100);
+
+  const quick=[
+    {id:'promotion',Icon:TrendingUp,bn:'পদোন্নতি',en:'Promotion',tone:'green'},
+    {id:'points',Icon:Award,bn:'পয়েন্ট',en:'Points',tone:'blue'},
+    {id:'salary',Icon:WalletCards,bn:'বেতন',en:'Salary',tone:'orange'},
+    {id:'leave',Icon:CalendarDays,bn:'ছুটি',en:'Leave',tone:'pink'},
+    {id:'calendar',Icon:CalendarDays,bn:'ক্যালেন্ডার',en:'Calendar',tone:'red'},
+    {id:'career',Icon:BookUser,bn:'আমার চাকরি',en:'Career',tone:'violet'},
+    {id:'reports',Icon:FileText,bn:'রিপোর্ট',en:'Reports',tone:'cyan'},
+    {id:'library',Icon:Boxes,bn:'আরও সেবা',en:'More',tone:'slate'}
+  ];
+
+  const pointCards=[
+    {Icon:Clock3,bn:'সার্ভিস পয়েন্ট',en:'Service Points',subBn:'চাকরিকালভিত্তিক পয়েন্ট',subEn:'Service-based points'},
+    {Icon:GraduationCap,bn:'শিক্ষাগত যোগ্যতার পয়েন্ট',en:'Education Points',subBn:'শিক্ষাগত ফলাফলভিত্তিক পয়েন্ট',subEn:'Qualification-based points'},
+    {Icon:Home,bn:'বাসা বরাদ্দ পয়েন্ট',en:'House Allocation Points',subBn:'বাসা বরাদ্দের পয়েন্ট হিসাব',subEn:'House allocation points'}
+  ];
+
+  return <div className="unified-dashboard">
+    <section className="ud-welcome">
+      <div className="ud-profile">
+        <div className="ud-avatar"><UserRound/></div>
+        <div>
+          <small>{en?'WELCOME':'স্বাগতম'}</small>
+          <h1>{user.name}</h1>
+          <p>{[currentPost,currentGrade,p.department_name||p.office_name].filter(Boolean).join(' · ')}</p>
+        </div>
+      </div>
+      <div className="ud-profile-progress">
+        <div className="ud-progress-copy"><span>{en?'Profile complete':'প্রোফাইল সম্পন্ন'}</span><b>{numLang(completionPct,lang,0)}%</b></div>
+        <div className="ud-progress-track"><i style={{width:`${completionPct}%`}}></i></div>
+        <button onClick={()=>onPage('career')}>{en?'Update profile':'প্রোফাইল আপডেট'}<ChevronRight/></button>
+      </div>
+    </section>
+
+    <section className="ud-quick-section">
+      <div className="ud-section-title"><div><Sparkles/><h2>{en?'Quick Services':'দ্রুত সেবা'}</h2></div></div>
+      <div className="ud-quick-grid">
+        {quick.map(({id,Icon,bn,en:et,tone})=><button key={id} className={`ud-quick ${tone}`} onClick={()=>onPage(id)}>
+          <span><Icon/></span><b>{en?et:bn}</b>
+        </button>)}
+      </div>
+    </section>
+
+    <section className="ud-section-block">
+      <div className="ud-section-title"><div><Gauge/><h2>{en?'Your Current Status':'আপনার বর্তমান অবস্থা'}</h2></div></div>
+      <div className="ud-status-grid">
+        <article><span className="green"><Briefcase/></span><small>{en?'Total Service':'মোট চাকরিকাল'}</small><b>{serviceText(service)}</b><p>{p.first_joining_date?fmtDateLang(p.first_joining_date,lang):'—'}</p></article>
+        <article><span className="blue"><Milestone/></span><small>{en?'Current Post Tenure':'বর্তমান পদে চাকরিকাল'}</small><b>{serviceText(postService)}</b><p>{currentPost}</p></article>
+        <article><span className="violet"><TrendingUp/></span><small>{en?'Next Promotion Eligibility':'পরবর্তী পদোন্নতির যোগ্যতা'}</small><b>{nextPromo}</b><p>{remainingPromo}</p></article>
+        <article><span className="orange"><WalletCards/></span><small>{en?'Latest Basic Salary':'সর্বশেষ মূল বেতন'}</small><b>{latestSalary?`${en?'Tk':'৳'} ${moneyLang(latestSalary.payable_basic||latestSalary.basic_2015||0,lang)}`:'—'}</b><p>{latestSalary?.effective_date?fmtDateLang(latestSalary.effective_date,lang):(en?'No salary history yet':'বেতন ইতিহাস নেই')}</p></article>
+      </div>
+    </section>
+
+    <section className="ud-two-col">
+      <div className="ud-panel">
+        <div className="ud-section-title compact"><div><Award/><h2>{en?'Points Center':'পয়েন্ট সেন্টার'}</h2></div><button onClick={()=>onPage('points')}>{en?'View all':'সব দেখুন'}<ChevronRight/></button></div>
+        <div className="ud-point-list">
+          {pointCards.map(({Icon,bn,en:et,subBn,subEn},i)=><button key={bn} onClick={()=>onPage('points')} className={`pc-${i+1}`}><span><Icon/></span><div><b>{en?et:bn}</b><small>{en?subEn:subBn}</small></div><ChevronRight/></button>)}
+        </div>
+      </div>
+
+      <div className="ud-panel">
+        <div className="ud-section-title compact"><div><CalendarDays/><h2>{en?'Leave Overview':'ছুটির সারাংশ'}</h2></div><button onClick={()=>onPage('leave')}>{en?'Details':'বিস্তারিত'}<ChevronRight/></button></div>
+        <div className="ud-leave-hero">
+          <span><CalendarDays/></span>
+          <div><small>{en?'Leave recorded this year':'চলতি বছরে রেকর্ডকৃত ছুটি'}</small><b>{numLang(usedLeave,lang,1)} {en?'days':'দিন'}</b><p>{numLang(yearLeave.length,lang,0)} {en?'record(s)':'টি রেকর্ড'}</p></div>
+        </div>
+        <div className="ud-mini-list">
+          {yearLeave.slice(0,3).map(x=><div key={x.id}><span>{x.leave_type|| (en?'Leave':'ছুটি')}</span><b>{numLang(x.total_days,lang,1)} {en?'day(s)':'দিন'}</b></div>)}
+          {yearLeave.length===0&&<div className="ud-empty">{en?'No leave record for this year':'চলতি বছরের ছুটির রেকর্ড নেই'}</div>}
+        </div>
+      </div>
+    </section>
+
+    <section className="ud-two-col ud-lower">
+      <div className="ud-panel">
+        <div className="ud-section-title compact"><div><History/><h2>{en?'Career Progress':'ক্যারিয়ার অগ্রগতি'}</h2></div><button onClick={()=>onPage('promotion-timeline')}>{en?'Roadmap':'রোডম্যাপ'}<ChevronRight/></button></div>
+        <div className="ud-timeline">
+          {recentEvents.map((x,i)=><div className="ud-timeline-row" key={x.id||i}><i></i><div><small>{fmtDateLang(x.event_date,lang)}</small><b>{x.title||x.post_name|| (en?'Career event':'চাকরি ইভেন্ট')}</b><p>{[x.post_name,x.grade?`${en?'Grade':'গ্রেড'} ${numLang(x.grade,lang,0)}`:''].filter(Boolean).join(' · ')}</p></div></div>)}
+          {recentEvents.length===0&&<div className="ud-empty">{en?'Add your career events to see the timeline':'টাইমলাইন দেখতে চাকরির ইভেন্ট যোগ করুন'}</div>}
+        </div>
+      </div>
+
+      <div className="ud-panel">
+        <div className="ud-section-title compact"><div><Bell/><h2>{en?'Latest Notices':'সাম্প্রতিক নোটিশ'}</h2></div><button onClick={()=>onPage('library')}>{en?'See all':'সব দেখুন'}<ChevronRight/></button></div>
+        <div className="ud-notices">
+          {notices.slice(0,4).map((x,i)=><button key={x.id||i} onClick={()=>onPage('library')}><span className={`n${i%4}`}><FileText/></span><div><b>{x.title_bn||x.title||x.title_en||'—'}</b><small>{fmtDateLang(x.published_at||x.created_at||x.date,lang)}</small></div><ChevronRight/></button>)}
+          {notices.length===0&&<div className="ud-empty">{en?'No notice available':'কোনো নোটিশ নেই'}</div>}
+        </div>
+      </div>
+    </section>
+
+    <section className="ud-calendar-wrap">
+      <div className="ud-section-title"><div><CalendarDays/><h2>{en?'Office Calendar':'অফিস ক্যালেন্ডার'}</h2></div><button onClick={()=>onPage('calendar')}>{en?'Open calendar':'ক্যালেন্ডার খুলুন'}<ChevronRight/></button></div>
+      <CalendarDashboardWidget lang={lang} onOpen={()=>onPage('calendar')}/>
+    </section>
+
+    {busy&&<div className="ud-loading">{en?'Loading your dashboard...':'আপনার ড্যাশবোর্ড লোড হচ্ছে...'}</div>}
+  </div>
+}
+
 function DashboardHome({user,onPage,lang='bn'}){
   const admin=['super_admin','admin','department_admin'].includes(user.role);
-  return admin?<AdminAnalyticsDashboard user={user} onPage={onPage} lang={lang}/>:<PremiumPersonalDashboard user={user} onPage={onPage} lang={lang}/>;
+  return admin?<AdminAnalyticsDashboard user={user} onPage={onPage} lang={lang}/>:<UnifiedEmployeeDashboard user={user} onPage={onPage} lang={lang}/>;
 }
 
 function PersonalCareerDashboard({user,onPage,lang='bn'}){
@@ -2213,9 +2382,8 @@ function App(){
   const queryToken=params.get('token')||'';
   const[user,setUser]=useState(null),[loading,setLoading]=useState(true),[page,setPage]=useState('dashboard'),
     [showLogin,setShowLogin]=useState(()=>!!queryAuth),[authMode,setAuthMode]=useState(()=>queryAuth||'login'),[authToken,setAuthToken]=useState(()=>queryToken),
-    [lang,setLang]=useState(()=>localStorage.getItem('app_lang')||'bn'),[mobileMenu,setMobileMenu]=useState(false);
+    [lang,setLang]=useState('bn'),[mobileMenu,setMobileMenu]=useState(false);
   useEffect(()=>{api('/api/me').then(x=>setUser(x.user)).catch(()=>{}).finally(()=>setLoading(false))},[]);
-  useEffect(()=>{localStorage.setItem('app_lang',lang)},[lang]);
   useEffect(()=>{setMobileMenu(false)},[page]);
   useEffect(()=>{
     document.body.classList.toggle('mobile-drawer-open',mobileMenu);
@@ -2270,7 +2438,7 @@ function App(){
     <nav className="mobile-bottom-nav" aria-label={lang==='en'?'Mobile navigation':'মোবাইল নেভিগেশন'}>
       <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}><LayoutDashboard/><span>{lang==='en'?'Home':'হোম'}</span></button>
       <button className={page==='career'?'active':''} onClick={()=>setPage('career')}><BookUser/><span>{lang==='en'?'Career':'চাকরি'}</span></button>
-      <button className={page==='promotion'?'active':''} onClick={()=>setPage('promotion')}><TrendingUp/><span>{lang==='en'?'Promotion':'পদোন্নতি'}</span></button>
+      <button className={page==='points'?'active':''} onClick={()=>setPage('points')}><Award/><span>{lang==='en'?'Points':'পয়েন্ট'}</span></button>
       <button className={page==='calendar'?'active':''} onClick={()=>setPage('calendar')}><CalendarDays/><span>{lang==='en'?'Calendar':'ক্যালেন্ডার'}</span></button>
       <button className={mobileMenu?'active':''} onClick={()=>setMobileMenu(v=>!v)}><Boxes/><span>{lang==='en'?'Menu':'মেনু'}</span></button>
     </nav>

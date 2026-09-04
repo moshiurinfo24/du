@@ -1,0 +1,158 @@
+
+/* v16.4.0 — Responsive app-style mobile + premium desktop UI */
+:root{
+  --app-blue:#123d7a;
+  --app-blue-2:#2459b8;
+  --app-indigo:#4b49ef;
+  --app-bg:#f5f8fc;
+  --app-card:#fff;
+  --app-line:#e5ecf5;
+  --app-text:#1b2f4b;
+  --app-muted:#74839a;
+  --app-shadow:0 8px 26px rgba(30,56,94,.07);
+}
+body{background:var(--app-bg)}
+.app{background:var(--app-bg)}
+.app main{background:var(--app-bg)}
+.side{background:#fff;border-right:1px solid var(--app-line);box-shadow:8px 0 28px rgba(27,55,94,.04)}
+.side .brand{min-height:92px;padding:18px 17px;background:linear-gradient(145deg,#11386f,#1e4f99);color:#fff}
+.side .brand b{font-size:15px;line-height:1.35}
+.side .brand small{display:block;margin-top:5px;color:rgba(255,255,255,.75);font-size:10px}
+.side nav{padding:12px 10px 18px}
+.side nav button{min-height:42px;border-radius:10px;margin:2px 0;color:#53647b;font-size:12px;font-weight:700}
+.side nav button svg{width:17px;color:#6e7f96}
+.side nav button:hover{background:#f1f6ff;color:#204e9d}
+.side nav button.active{background:#eaf2ff;color:#164ca6}
+.side nav button.active svg{color:#1d59c4}
+.app-topbar{min-height:68px;background:#fff;border-bottom:1px solid var(--app-line);box-shadow:0 4px 16px rgba(32,53,87,.03);padding:10px 22px}
+.app-topbar h2{font-size:15px;color:#243952}
+.app-topbar p{font-size:10px;color:#8390a3}
+.lang-btn{border:1px solid #dce5f1;background:#fff;color:#335176;border-radius:9px;min-height:36px;padding:0 12px;font-weight:800}
+.logout{border:0;background:#f6f8fb;color:#52647a;border-radius:9px;min-height:36px;padding:0 11px}
+
+.unified-dashboard{padding:22px;max-width:1500px;margin:0 auto;display:grid;gap:18px}
+.ud-welcome{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:22px 24px;border:1px solid var(--app-line);background:#fff;border-radius:18px;box-shadow:var(--app-shadow)}
+.ud-profile{display:flex;align-items:center;gap:14px;min-width:0}
+.ud-avatar{width:62px;height:62px;border-radius:17px;background:linear-gradient(145deg,#edf4ff,#dfeaff);display:grid;place-items:center;color:#1b55ae;flex:0 0 62px}
+.ud-avatar svg{width:30px;height:30px}
+.ud-profile small{font-size:10px;letter-spacing:.08em;color:#7b89a0;font-weight:900}
+.ud-profile h1{font-size:22px;margin:2px 0;color:#1d3352;line-height:1.25}
+.ud-profile p{margin:0;color:#6f8096;font-size:11px}
+.ud-profile-progress{width:min(340px,34vw);padding:14px 16px;background:#f7f9fe;border:1px solid #e8eef8;border-radius:14px}
+.ud-progress-copy{display:flex;justify-content:space-between;gap:15px;color:#63758e;font-size:10px;font-weight:800}
+.ud-progress-copy b{color:#1d4e9e;font-size:12px}
+.ud-progress-track{height:7px;background:#e3eaf5;border-radius:999px;overflow:hidden;margin:8px 0 9px}
+.ud-progress-track i{display:block;height:100%;background:linear-gradient(90deg,#26b767,#6bd892);border-radius:999px}
+.ud-profile-progress button,.ud-section-title>button{border:0;background:transparent;color:#315da4;display:flex;align-items:center;gap:4px;padding:0;font-size:10.5px;font-weight:800;cursor:pointer}
+.ud-profile-progress button svg,.ud-section-title>button svg{width:14px}
+
+.ud-section-block,.ud-quick-section,.ud-calendar-wrap{display:grid;gap:11px}
+.ud-section-title{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.ud-section-title>div{display:flex;align-items:center;gap:8px}
+.ud-section-title>div>svg{width:18px;color:#2458ad}
+.ud-section-title h2{margin:0;font-size:14px;color:#263c5a}
+.ud-section-title.compact{margin-bottom:12px}
+
+.ud-quick-grid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:10px}
+.ud-quick{border:1px solid var(--app-line);background:#fff;border-radius:15px;min-height:94px;padding:12px 8px;display:grid;place-items:center;align-content:center;gap:8px;cursor:pointer;box-shadow:0 5px 16px rgba(42,64,99,.04);transition:.18s ease}
+.ud-quick:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(35,65,111,.09)}
+.ud-quick span{width:43px;height:43px;border-radius:13px;display:grid;place-items:center}
+.ud-quick span svg{width:21px}
+.ud-quick b{font-size:10.5px;color:#43566f}
+.ud-quick.green span{background:#e8f9ef;color:#1b9a57}.ud-quick.blue span{background:#e8f0ff;color:#285fc8}.ud-quick.orange span{background:#fff1df;color:#df8b20}.ud-quick.pink span{background:#ffe9f2;color:#db4e8b}.ud-quick.red span{background:#ffe8e8;color:#de5555}.ud-quick.violet span{background:#f0e9ff;color:#7859d8}.ud-quick.cyan span{background:#e7f7fb;color:#2786a0}.ud-quick.slate span{background:#edf1f6;color:#64768d}
+
+.ud-status-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px}
+.ud-status-grid article{background:#fff;border:1px solid var(--app-line);border-radius:16px;padding:16px;box-shadow:0 5px 16px rgba(42,64,99,.04);min-width:0}
+.ud-status-grid article>span{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;margin-bottom:10px}
+.ud-status-grid article>span svg{width:19px}
+.ud-status-grid .green{background:#e8f9ef;color:#1a9a57}.ud-status-grid .blue{background:#e8f0ff;color:#285fc8}.ud-status-grid .violet{background:#f0e9ff;color:#7255d3}.ud-status-grid .orange{background:#fff0dd;color:#d88117}
+.ud-status-grid small{display:block;color:#7c899d;font-size:9.5px;font-weight:800}
+.ud-status-grid b{display:block;margin:4px 0 3px;color:#203957;font-size:15px;line-height:1.3}
+.ud-status-grid p{margin:0;color:#8090a4;font-size:9.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.ud-two-col{display:grid;grid-template-columns:1.2fr .8fr;gap:14px}
+.ud-two-col.ud-lower{grid-template-columns:1fr 1fr}
+.ud-panel,.ud-calendar-wrap{background:#fff;border:1px solid var(--app-line);border-radius:17px;padding:16px;box-shadow:var(--app-shadow);min-width:0}
+.ud-calendar-wrap{display:grid}
+
+.ud-point-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.ud-point-list button{border:1px solid #e2e9f3;border-radius:14px;background:#fff;padding:15px 12px;text-align:left;display:grid;grid-template-columns:42px 1fr 16px;align-items:center;gap:10px;cursor:pointer}
+.ud-point-list button>span{width:42px;height:42px;border-radius:12px;display:grid;place-items:center}
+.ud-point-list button>span svg{width:20px}
+.ud-point-list .pc-1>span{background:#e6f8ec;color:#239f5c}.ud-point-list .pc-2>span{background:#eee9ff;color:#6e56d3}.ud-point-list .pc-3>span{background:#ffe9f1;color:#d84b81}
+.ud-point-list b{display:block;color:#29425f;font-size:11px}
+.ud-point-list small{display:block;color:#8693a5;font-size:9px;margin-top:2px}
+.ud-point-list>button>svg{width:14px;color:#93a0b1}
+
+.ud-leave-hero{display:flex;align-items:center;gap:12px;padding:14px;border-radius:14px;background:linear-gradient(135deg,#fff0f5,#fef6f9);border:1px solid #f6dfe9}
+.ud-leave-hero>span{width:46px;height:46px;border-radius:13px;background:#ff6d9d;color:#fff;display:grid;place-items:center}
+.ud-leave-hero>span svg{width:22px}
+.ud-leave-hero small{display:block;color:#986b7b;font-size:9.5px}.ud-leave-hero b{display:block;color:#5b2d3f;font-size:20px;margin:2px 0}.ud-leave-hero p{margin:0;color:#9c7483;font-size:9px}
+.ud-mini-list{margin-top:9px;display:grid;gap:0}
+.ud-mini-list>div{display:flex;justify-content:space-between;gap:12px;padding:9px 2px;border-bottom:1px dashed #e5ebf3;font-size:10px;color:#64758b}
+.ud-mini-list b{color:#2d4766}
+
+.ud-timeline{display:grid;gap:10px}
+.ud-timeline-row{display:grid;grid-template-columns:14px 1fr;gap:10px;position:relative}
+.ud-timeline-row i{width:10px;height:10px;border:3px solid #3d67ce;border-radius:50%;margin-top:4px;background:#fff;box-shadow:0 0 0 3px #e9efff}
+.ud-timeline-row small{color:#8693a6;font-size:9px}.ud-timeline-row b{display:block;color:#2a4261;font-size:11px;margin:1px 0}.ud-timeline-row p{margin:0;color:#8693a6;font-size:9px}
+.ud-notices{display:grid}
+.ud-notices button{display:grid;grid-template-columns:34px 1fr 15px;gap:9px;align-items:center;border:0;border-bottom:1px solid #edf1f6;background:transparent;padding:9px 0;text-align:left;cursor:pointer}
+.ud-notices button>span{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;background:#eef3ff;color:#4e69c9}.ud-notices button>span svg{width:15px}
+.ud-notices b{display:block;color:#344b68;font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ud-notices small{color:#929eb0;font-size:8.8px}.ud-notices button>svg{width:13px;color:#a2adbc}
+.ud-empty{padding:16px;text-align:center;color:#8b98a8;font-size:10px}
+.ud-loading{position:fixed;right:20px;bottom:20px;background:#173e7c;color:#fff;padding:9px 12px;border-radius:10px;font-size:10px;box-shadow:0 8px 24px rgba(19,53,106,.25);z-index:20}
+
+/* Make all inner pages visually match the dashboard design language */
+.page-head,.calc-card,.result-panel,.salary-summary,.breakdown-card,.points-panel,.career-dashboard-card,.leave-card,.calendar-shell,.knowledge-card,.privacy-card{
+  border-color:var(--app-line)!important;
+  border-radius:16px!important;
+  box-shadow:0 7px 22px rgba(32,57,94,.05)!important;
+}
+.page-head h2,.page-head h1{color:#233b59!important}
+.form-grid label{color:#607189!important;font-size:10.5px!important;font-weight:800!important}
+.form-grid input,.form-grid select,.form-grid textarea,.calc-card input,.calc-card select{
+  border:1px solid #dce5f0!important;border-radius:10px!important;background:#fff!important;
+}
+.primary,.primary.wide{background:linear-gradient(135deg,#3e52e7,#5142ef)!important;border:0!important;border-radius:10px!important;box-shadow:0 7px 16px rgba(71,72,228,.18)!important}
+
+/* Mobile app layout close to the approved mockup */
+@media(max-width:760px){
+  .app{padding-bottom:70px}
+  .app main{width:100%}
+  .app-topbar{position:sticky;top:0;z-index:50;min-height:64px;padding:8px 12px;background:linear-gradient(135deg,#133d79,#2456a7);border-bottom:0;color:#fff}
+  .app-topbar h2{color:#fff;font-size:13px;max-width:190px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .app-topbar p{color:rgba(255,255,255,.72)}
+  .mobile-menu-trigger span{background:#fff!important}
+  .header-actions .lang-btn{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.28);color:#fff;min-height:32px;padding:0 9px}
+  .header-actions .logout{display:none}
+  .unified-dashboard{padding:10px;gap:13px}
+  .ud-welcome{padding:13px;border-radius:14px;display:block}
+  .ud-profile{gap:10px}
+  .ud-avatar{width:50px;height:50px;flex-basis:50px;border-radius:14px}.ud-avatar svg{width:25px}
+  .ud-profile h1{font-size:15px}.ud-profile p{font-size:9px;margin-top:2px}
+  .ud-profile-progress{width:100%;margin-top:11px;padding:10px 11px;border-radius:11px}
+  .ud-section-title h2{font-size:12.5px}.ud-section-title>div>svg{width:16px}
+  .ud-quick-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+  .ud-quick{min-height:78px;border-radius:13px;padding:10px 5px}.ud-quick span{width:39px;height:39px;border-radius:11px}.ud-quick b{font-size:9.5px}
+  .ud-status-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .ud-status-grid article{padding:12px;border-radius:13px}.ud-status-grid article>span{width:34px;height:34px}.ud-status-grid b{font-size:12px}.ud-status-grid small{font-size:8.5px}.ud-status-grid p{font-size:8.5px}
+  .ud-two-col,.ud-two-col.ud-lower{grid-template-columns:1fr;gap:10px}
+  .ud-panel,.ud-calendar-wrap{padding:12px;border-radius:14px}
+  .ud-point-list{grid-template-columns:1fr}
+  .ud-point-list button{grid-template-columns:38px 1fr 14px;padding:11px}.ud-point-list button>span{width:38px;height:38px}
+  .ud-leave-hero b{font-size:17px}
+  .ud-calendar-wrap .calendar-dashboard-widget{margin:0!important}
+  .mobile-bottom-nav{height:64px;background:#fff;border-top:1px solid #dfe7f1;box-shadow:0 -7px 20px rgba(34,55,89,.08)}
+  .mobile-bottom-nav button{color:#7e8a9b;font-size:8px}.mobile-bottom-nav button svg{width:19px;height:19px}.mobile-bottom-nav button.active{color:#244fcd}
+  .side.mobile-open{background:#fff}
+  .side .brand{min-height:76px}
+}
+
+/* Desktop proportions matching the approved wide mockup */
+@media(min-width:1181px){
+  .app{grid-template-columns:230px minmax(0,1fr)!important}
+  .side{width:230px!important}
+  .app main{min-width:0}
+  .unified-dashboard{padding:20px 24px 30px}
+}
