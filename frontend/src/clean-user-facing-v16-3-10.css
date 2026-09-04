@@ -1,0 +1,5 @@
+/* v16.3.10 — clean user-facing UI */
+.internal-admin-note{display:none!important}
+.calculator-safety-note:empty,
+.point-context-note:empty,
+.house-rule-status:empty{display:none!important}

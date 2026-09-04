@@ -29,6 +29,7 @@ import './points-calculator-v16-3-6.css';
 import './promotion-forecast-v16-3-7.css';
 import './house-allocation-points-v16-3-8.css';
 import './automatic-house-points-v16-3-9.css';
+import './clean-user-facing-v16-3-10.css';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import {
   PAY2015,PAY2026,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
@@ -338,7 +339,7 @@ function PublicHome({onLogin,lang,setLang}){
   };
   const navItems=[[copy.home,'top'],[copy.promotion,'public-calculator','promotion'],[copy.pay,'public-calculator','salary'],[copy.policies,'policies'],[copy.notices,'notices'],[copy.forms,'forms'],[copy.help,'help']];
   const goto=(id,tool)=>{setPublicMenu(false);if(tool)return openTool(tool);trackPublic('section_view',id);scrollTo(id);};
-  return <div id="top" data-public-version="v16.3.9" className={'public premium-public premium-home-v16-3 '+(en?'lang-en':'lang-bn')}>
+  return <div id="top" data-public-version="v16.3.10" className={'public premium-public premium-home-v16-3 '+(en?'lang-en':'lang-bn')}>
     <header className="public-nav luxury-nav premium-v16-nav">
       <div className="public-brand"><div className="brand-orb"><ShieldCheck size={19}/></div><div><b>{t.appName}</b><small>{t.appSub}</small></div></div>
       <button className="public-mobile-trigger" onClick={()=>setPublicMenu(v=>!v)} aria-label={en?(publicMenu?'Close menu':'Open menu'):(publicMenu?'মেনু বন্ধ করুন':'মেনু খুলুন')}><span></span><span></span><span></span></button>
@@ -489,7 +490,7 @@ function AdminAnalyticsDashboard({user,onPage,lang='bn'}){
     {err&&<div className="notice"><b>{en?'Dashboard notice:':'ড্যাশবোর্ড নোটিশ:'}</b> {err}</div>}
     <section className="analytics-hero">
       <div><span>{en?'PREMIUM SYSTEM COMMAND CENTER':'প্রিমিয়াম সিস্টেম কমান্ড সেন্টার'}</span><h1>{en?'System Administrator Dashboard':'সিস্টেম ব্যবস্থাপক ড্যাশবোর্ড'}</h1><p>{en?'Live platform overview, user analytics, security health, content activity and system controls in one workspace.':'প্ল্যাটফর্ম সারসংক্ষেপ, ব্যবহারকারী বিশ্লেষণ, নিরাপত্তা, কনটেন্ট কার্যক্রম ও সিস্টেম কন্ট্রোল এক জায়গায়।'}</p></div>
-      <div className="hero-command-panel"><div><MonitorCheck/><span>{en?'System status':'সিস্টেম অবস্থা'}</span><b>{health.ok?(en?'Healthy':'সচল'):(en?'Attention':'যাচাই প্রয়োজন')}</b></div><button onClick={()=>onPage('admin')}><Command/>{en?'Open System Control':'সিস্টেম কন্ট্রোল খুলুন'}</button></div>
+      <div className="hero-command-panel"><div><MonitorCheck/><span>{en?'System status':'সিস্টেম অবস্থা'}</span><b>{health.ok?(en?'Healthy':'সচল'):(en?'Attention':'মনোযোগ প্রয়োজন')}</b></div><button onClick={()=>onPage('admin')}><Command/>{en?'Open System Control':'সিস্টেম কন্ট্রোল খুলুন'}</button></div>
     </section>
 
     <section className="analytics-kpi-grid">
@@ -780,7 +781,7 @@ function PromotionResult({r,lang='bn'}){
         <span className="pt-line"/>
         <div className="pt-step future"><i><ShieldCheck/></i><small>{en?'Projected completion':'সম্ভাব্য চূড়ান্ত পদোন্নতি'}</small><b>{fmtDateLang(r.cycle.completionDeadline,lang)}</b><em>{en?'One-year process projection':'১ বছরের প্রক্রিয়া ধরে পূর্বাভাস'}</em></div>
       </div>
-      <div className="forecast-disclaimer"><AlertTriangle/><p>{en?'The system can calculate the rule-based eligibility date. The actual circular/application date and final promotion date depend on the relevant authority, vacancy, scrutiny and approval. Therefore these dates are projections, not guarantees.':'সিস্টেম নীতিমালাভিত্তিক যোগ্যতার তারিখ নির্ভুলভাবে হিসাব করতে পারে। কিন্তু প্রকৃত দরখাস্ত/বিজ্ঞপ্তির তারিখ ও চূড়ান্ত পদোন্নতির তারিখ সংশ্লিষ্ট কর্তৃপক্ষ, শূন্যপদ, যাচাই-বাছাই ও অনুমোদনের ওপর নির্ভরশীল। তাই এগুলো পূর্বাভাস, নিশ্চয়তা নয়।'}</p></div>
+      <div className="forecast-disclaimer"><AlertTriangle/><p>{en?'Eligibility is calculated from the applicable rules. Application and final promotion dates are shown as estimates.':'যোগ্যতার তারিখ প্রযোজ্য নিয়ম অনুযায়ী হিসাব করা হয়। আবেদন ও চূড়ান্ত পদোন্নতির তারিখ সম্ভাব্য সময় হিসেবে দেখানো হয়।'}</p></div>
     </section>
 
     <section className="forecast-requirements">
@@ -796,7 +797,7 @@ function PromotionResult({r,lang='bn'}){
       <div className="money-row"><span>{en?'Current post':'বর্তমান পদ'}: {numLang(e.currentYears||0,lang)} {en?'years × 1':'বছর × ১'}</span><b>{numLang(e.currentPoints||0,lang)}</b></div>
       <div className="money-row"><span>{en?'Previous total service (auto)':'পূর্ববর্তী মোট চাকরিকাল (অটো)'}: {numLang(e.priorServiceYears||0,lang)} {en?'years ÷ 3':'বছর ÷ ৩'}</span><b>{numLang(e.priorServicePoints||0,lang)}</b></div>
       <div className="money-row"><span>{en?'Education-based service requirement':'শিক্ষাগত যোগ্যতাভিত্তিক চাকরিকাল'}</span><b>{numLang(r.req,lang,0)} {en?'years required for this grade':'বছর প্রয়োজন'}</b></div>
-      <div className="point-context-note">{en?'Education Qualification Points are calculated separately in the Points Calculator and are not automatically treated as the minimum promotion-point threshold unless the applicable rule explicitly states so.':'শিক্ষাগত যোগ্যতার পয়েন্ট “পয়েন্ট ক্যালকুলেটর”-এ আলাদাভাবে হিসাব হয়। প্রযোজ্য নীতিমালায় স্পষ্ট ন্যূনতম মোট পয়েন্ট শর্ত না থাকলে এটিকে পদোন্নতির ন্যূনতম পয়েন্ট-সীমা হিসেবে স্বয়ংক্রিয়ভাবে ধরা হবে না।'}</div>
+      
     </section>
 
     {nextTwo.length>0&&<section className="next-two-card">
@@ -1061,7 +1062,7 @@ function EmployeeManagement(){
     <EmployeeModal open={modal} editing={editing} departments={departments} designations={designations} onClose={()=>setModal(false)} onSaved={load}/></>;
 
   return <>
-    <div className="internal-admin-note"><ShieldCheck size={15}/> System Control → User & Career Records</div><div className="page-head"><div><h2>Employee Management</h2><p>Profile, Department, Designation, Grade, joining information ও service status পরিচালনা করুন।</p></div><button onClick={()=>{setEditing(null);setModal(true)}}><Plus size={17}/> নতুন Employee</button></div>
+    <div className="page-head"><div><h2>Employee Management</h2><p>Profile, Department, Designation, Grade, joining information ও service status পরিচালনা করুন।</p></div><button onClick={()=>{setEditing(null);setModal(true)}}><Plus size={17}/> নতুন Employee</button></div>
     <div className="toolbar"><div className="search"><Search size={17}/><input placeholder="Employee ID, নাম, বিভাগ, পদবি..." value={q} onChange={e=>setQ(e.target.value)}/></div><button className="secondary" onClick={load}><RefreshCw size={16}/> Refresh</button></div>
     {err&&<div className="error">{err}</div>}
     <div className="table-card">{loading?<div className="empty">Loading...</div>:filtered.length===0?<div className="empty">কোনো Employee record পাওয়া যায়নি।</div>:<div className="table-wrap"><table>
@@ -1084,7 +1085,7 @@ function MasterDirectory(){
   useEffect(()=>{load()},[]);
   async function addDepartment(){if(!depName.trim())return;try{await api('/api/departments',{method:'POST',body:JSON.stringify({name_bn:depName.trim(),type:'department'})});setDepName('');load()}catch(e){setErr(e.message)}}
   async function addDesignation(){if(!desName.trim())return;try{await api('/api/designations',{method:'POST',body:JSON.stringify({name_bn:desName.trim()})});setDesName('');load()}catch(e){setErr(e.message)}}
-  return <div><div className="internal-admin-note"><ShieldCheck size={15}/> System Control → Master Directory</div><div className="page-head"><div><h2>Department & Designation</h2><p>Employee profile-এর জন্য master directory পরিচালনা করুন।</p></div></div>{err&&<div className="error">{err}</div>}
+  return <div><div className="page-head"><div><h2>Department & Designation</h2><p>Employee profile-এর জন্য master directory পরিচালনা করুন।</p></div></div>{err&&<div className="error">{err}</div>}
     <div className="split-grid"><section className="breakdown-card"><h3>Departments / Offices</h3><div className="inline-add"><input placeholder="নতুন Department/Office" value={depName} onChange={e=>setDepName(e.target.value)}/><button className="primary" onClick={addDepartment}><Plus size={15}/> Add</button></div>{departments.map(x=><div className="directory-row" key={x.id}><Building2 size={16}/><span>{x.name_bn||x.name_en}</span><small>{x.type||'department'}</small></div>)}</section>
     <section className="breakdown-card"><h3>Designations</h3><div className="inline-add"><input placeholder="নতুন Designation" value={desName} onChange={e=>setDesName(e.target.value)}/><button className="primary" onClick={addDesignation}><Plus size={15}/> Add</button></div>{designations.map(x=><div className="directory-row" key={x.id}><Briefcase size={16}/><span>{x.name_bn||x.name_en}</span><small>{x.grade?`Grade ${x.grade}`:'—'}</small></div>)}</section></div>
   </div>
@@ -1223,7 +1224,7 @@ function PromotionCareerTimeline({lang='bn',onPage}){
     (en?'Promotion route available':'পদোন্নতির রুট রয়েছে');
   return <div className="promotion-timeline-page">
     <section className="promotion-timeline-hero">
-      <div><span>{en?'PROMOTION & CAREER TIMELINE':'পদোন্নতি ও ক্যারিয়ার টাইমলাইন'}</span><h2>{en?'My Career Roadmap':'আমার ক্যারিয়ার রোডম্যাপ'}</h2><p>{en?'A personal estimate built from your saved career record and verified promotion rules. It is not an official promotion decision.':'আপনার সংরক্ষিত চাকরি তথ্য ও যাচাইকৃত পদোন্নতি নিয়ম থেকে তৈরি ব্যক্তিগত সহায়ক রোডম্যাপ। এটি কোনো অফিসিয়াল পদোন্নতির সিদ্ধান্ত নয়।'}</p></div>
+      <div><span>{en?'PROMOTION & CAREER TIMELINE':'পদোন্নতি ও ক্যারিয়ার টাইমলাইন'}</span><h2>{en?'My Career Roadmap':'আমার ক্যারিয়ার রোডম্যাপ'}</h2><p>{en?'See your next career steps from your saved career information.':'আপনার সংরক্ষিত চাকরি তথ্য থেকে পরবর্তী ক্যারিয়ার ধাপগুলো দেখুন।'}</p></div>
       <div className="promotion-route-chip"><Route size={17}/>{status}</div>
     </section>
 
@@ -1237,7 +1238,7 @@ function PromotionCareerTimeline({lang='bn',onPage}){
 
     <section className="promotion-roadmap-grid">
       <article className="promotion-roadmap-card">
-        <div className="promotion-roadmap-head"><Flag/><div><h3>{en?'Verified Promotion Route':'যাচাইকৃত পদোন্নতি রুট'}</h3><p>{en?'Based on the currently mapped policy rules.':'বর্তমানে ম্যাপ করা নীতিমালার নিয়ম অনুযায়ী।'}</p></div></div>
+        <div className="promotion-roadmap-head"><Flag/><div><h3>{en?'Promotion Route':'পদোন্নতি রুট'}</h3><p>{en?'Based on the current promotion rules.':'বর্তমান পদোন্নতি নিয়ম অনুযায়ী।'}</p></div></div>
         {!rule?<div className="empty">{en?'No route available for this grade yet.':'এই গ্রেডের জন্য এখনো কোনো রুট পাওয়া যায়নি।'}</div>:
         <div className="promotion-route-box">
           <div><small>{en?'From':'বর্তমান'}</small><b>{grade?`${en?'Grade':'গ্রেড'} ${numLang(grade,lang,0)}`:'—'}</b></div><ArrowRight/>
@@ -1304,7 +1305,7 @@ function SalaryHistory({lang='bn'}){
   const amt=v=>`${en?'Tk':'৳'} ${moneyLang(v,lang)}`;
   return <div className="salary-history-page">
     <section className="salary-history-hero">
-      <div><span>{en?'PERSONAL SALARY & PAY HISTORY':'ব্যক্তিগত বেতন ও পে-ইতিহাস'}</span><h2>{en?'My Salary History':'আমার বেতন ইতিহাস'}</h2><p>{en?'Keep your own historical salary snapshots and compare them with the verified pay-scale calculator. This is not an official fixation order.':'নিজের বেতন ইতিহাস সংরক্ষণ করুন এবং যাচাইকৃত পে-স্কেল হিসাবের সঙ্গে তুলনা করুন। এটি কোনো অফিসিয়াল ফিক্সেশন আদেশ নয়।'}</p></div>
+      <div><span>{en?'PERSONAL SALARY & PAY HISTORY':'ব্যক্তিগত বেতন ও পে-ইতিহাস'}</span><h2>{en?'My Salary History':'আমার বেতন ইতিহাস'}</h2><p>{en?'Keep your salary history and compare previous records easily.':'নিজের বেতন ইতিহাস সংরক্ষণ করুন এবং আগের রেকর্ড সহজে তুলনা করুন।'}</p></div>
       <div className="salary-history-chip"><ReceiptText size={17}/>{en?'Personal record':'ব্যক্তিগত রেকর্ড'}</div>
     </section>
 
@@ -1336,7 +1337,7 @@ function SalaryHistory({lang='bn'}){
       </article>)}</div>}
     </section>
 
-    <section className="calculator-safety-note"><ShieldCheck/><div><b>{en?'Personal salary record':'ব্যক্তিগত বেতন রেকর্ড'}</b><p>{en?'This module stores your own salary snapshots. It does not issue an official salary fixation order or modify verified calculator rules.':'এই মডিউল আপনার নিজের বেতন স্ন্যাপশট সংরক্ষণ করে। এটি অফিসিয়াল বেতন নির্ধারণ আদেশ দেয় না এবং যাচাইকৃত হিসাবের নিয়ম পরিবর্তন করে না।'}</p></div></section>
+    
   </div>
 }
 
@@ -1469,7 +1470,7 @@ function PointsCalculator({lang='bn'}){
     </section>}
 
     {tab==='education'&&<section className="points-panel">
-      <div className="points-panel-head"><div className="points-panel-icon"><GraduationCap/></div><div><h3>{en?'Education Qualification Points':'শিক্ষাগত যোগ্যতার পয়েন্ট'}</h3><p>{en?'Select the result for each applicable examination. Points are calculated from the education-point table in the supplied earlier policy scan.':'প্রযোজ্য প্রতিটি পরীক্ষার ফলাফল নির্বাচন করুন। আপনার দেওয়া পুরোনো নীতিমালার শিক্ষাগত যোগ্যতার পয়েন্ট টেবিল অনুযায়ী পয়েন্ট হিসাব হবে।'}</p></div></div>
+      <div className="points-panel-head"><div className="points-panel-icon"><GraduationCap/></div><div><h3>{en?'Education Qualification Points':'শিক্ষাগত যোগ্যতার পয়েন্ট'}</h3><p>{en?'Select the result for each applicable examination to calculate education points.':'প্রযোজ্য প্রতিটি পরীক্ষার ফলাফল নির্বাচন করুন। ফলাফল অনুযায়ী শিক্ষাগত যোগ্যতার পয়েন্ট দেখাবে।'}</p></div></div>
 
       <div className="education-point-form">
         <label>{en?'SSC result':'এস.এস.সি ফলাফল'}<select value={edu.ssc} onChange={e=>setEdu(x=>({...x,ssc:e.target.value}))}>{classOptions.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
@@ -1493,7 +1494,7 @@ function PointsCalculator({lang='bn'}){
         {Object.entries(EDUCATION_POINT_RULES).map(([key,r])=><article key={key}><b>{en?r.en:r.bn}</b><span>{en?'1st':'১ম'}: {r.points.first} · {en?'2nd':'২য়'}: {r.points.second} · {en?'3rd':'৩য়'}: {r.points.third}</span></article>)}
       </div>
 
-      <div className="points-rule-note caution"><AlertTriangle size={17}/><div><b>{en?'Advanced degrees':'উচ্চতর ডিগ্রি'}</b><p>{en?'No additional MPhil/PhD or other special-degree points are automated here yet because that part of the old scan requires a clearer rule confirmation. It can be added after verification.':'এম.ফিল/পিএইচডি বা অন্য বিশেষ উচ্চতর ডিগ্রির অতিরিক্ত পয়েন্ট এই সংস্করণে স্বয়ংক্রিয় করা হয়নি, কারণ পুরোনো স্ক্যানের ওই অংশটি আরও পরিষ্কারভাবে নিয়ম যাচাই করা প্রয়োজন। যাচাই হলে যোগ করা যাবে।'}</p></div></div>
+      <div className="points-rule-note caution"><AlertTriangle size={17}/><div><b>{en?'Advanced degrees':'উচ্চতর ডিগ্রি'}</b><p>{en?'Additional higher-degree points will be added soon.':'এম.ফিল/পিএইচডি ও অন্যান্য উচ্চতর ডিগ্রির অতিরিক্ত পয়েন্ট শীঘ্রই যোগ হবে।'}</p></div></div>
     </section>}
 
     {tab==='house'&&<HouseAllocationPoints lang={lang}/>}
@@ -1582,7 +1583,7 @@ function HouseAllocationPoints({lang='bn'}){
       <div className="points-panel-icon"><Home/></div>
       <div>
         <h3>{en?'House Allocation Points':'বাসা বরাদ্দ পয়েন্ট'}</h3>
-        <p>{en?'Choose the applicable category. The verified 3rd Class General Employee rule is calculated automatically; other categories remain reserved until their own rules are verified.':'প্রযোজ্য শ্রেণি নির্বাচন করুন। যাচাইকৃত ৩য় শ্রেণির সাধারণ কর্মচারীর নিয়ম এখন অটোমেটিক হিসাব করবে; অন্য শ্রেণিগুলো তাদের নিজস্ব নিয়ম যাচাই না হওয়া পর্যন্ত সংরক্ষিত থাকবে।'}</p>
+        <p>{en?'Choose the applicable employee category. Automatic calculation is currently available for 3rd Class General Employees.':'প্রযোজ্য কর্মচারীর শ্রেণি নির্বাচন করুন। বর্তমানে ৩য় শ্রেণির সাধারণ কর্মচারীর অটোমেটিক হিসাব চালু আছে।'}</p>
       </div>
     </div>
 
@@ -1631,21 +1632,13 @@ function HouseAllocationPoints({lang='bn'}){
         <div className="house-detail-row total"><span>{en?'Total Point':'মোট বাসা বরাদ্দ পয়েন্ট'}</span><b>{totalPoint?fmtYmd(totalPoint):'—'}</b></div>
       </div>
 
-      <div className="house-example-check">
-        <BookOpen/>
-        <div>
-          <b>{en?'Verified against your supplied example':'আপনার দেওয়া উদাহরণের সাথে মিল'}</b>
-          <p>{en?'Example: joining 02-05-2019, calculation date 31-08-2026, basic 15,500, one previous promotion, married male → Service 7-03-29 + Basic 155 + Designation 2 + Marital 3 + Gender 0 = Total 167-03-29.':'উদাহরণ: যোগদান ০২-০৫-২০১৯, হিসাব ৩১-০৮-২০২৬, মূল বেতন ১৫,৫০০, আগে ১টি পদোন্নতি, বিবাহিত পুরুষ → চাকরিকাল ৭-০৩-২৯ + বেতন ১৫৫ + পদবি ২ + বৈবাহিক ৩ + লিঙ্গ ০ = মোট ১৬৭-০৩-২৯।'}</p>
-        </div>
-      </div>
-
-      <div className="points-rule-note caution"><AlertTriangle/><div><b>{en?'Current verified scope':'বর্তমান যাচাইকৃত সীমা'}</b><p>{en?'This automatic formula is enabled only for 3rd Class General Employees based on the supplied Point Details example and the rules you confirmed. Other employee categories are not calculated with this formula.':'এই অটোমেটিক সূত্রটি শুধু ৩য় শ্রেণির সাধারণ কর্মচারীর জন্য আপনার দেওয়া Point Details উদাহরণ ও নিশ্চিত করা নিয়ম অনুযায়ী সক্রিয়। অন্য শ্রেণির কর্মচারীর ক্ষেত্রে এই সূত্র প্রয়োগ করা হবে না।'}</p></div></div>
+      
     </div>:<div className="house-pending-panel">
       <div className="house-coming-icon"><Clock3/></div>
       <span>{en?'COMING SOON':'শীঘ্রই আসছে'}</span>
       <h4>{en?current.en:current.bn}</h4>
-      <p>{en?'This category is already reserved in the system. Its automatic calculator will be activated after its own house-allocation rules and point table are verified.':'এই শ্রেণিটি সিস্টেমে রাখা হয়েছে। এর নিজস্ব বাসা বরাদ্দের নিয়ম ও পয়েন্ট টেবিল যাচাই হওয়ার পর অটোমেটিক ক্যালকুলেটর সক্রিয় করা হবে।'}</p>
-      <div className="house-rule-status"><ShieldCheck/>{en?'No other category rule is being reused':'অন্য শ্রেণির নিয়ম এখানে ব্যবহার করা হচ্ছে না'}</div>
+      <p>{en?'Automatic calculation for this category is coming soon.':'এই শ্রেণির অটোমেটিক বাসা বরাদ্দ পয়েন্ট হিসাব শীঘ্রই চালু হবে।'}</p>
+      
     </div>}
   </section>
 }
@@ -1720,12 +1713,12 @@ function CalculatorCenter({lang='bn',onPage}){
 
   return <div className="calculator-center advanced-calculator-center">
     <section className="advanced-calc-hero">
-      <div><span>{en?'ADVANCED CALCULATOR CENTER':'উন্নত ক্যালকুলেটর সেন্টার'}</span><h2>{en?'Smart calculations from your own data':'নিজের তথ্য থেকে স্মার্ট হিসাব'}</h2><p>{en?'Verified policy calculators stay separate, while safe date/service tools can reuse your personal career record.':'যাচাইকৃত নীতিমালার ক্যালকুলেটর আলাদা থাকবে; নিরাপদ তারিখ/চাকরিকালভিত্তিক টুল আপনার ব্যক্তিগত চাকরি তথ্য ব্যবহার করতে পারবে।'}</p></div>
-      <div className="advanced-calc-chip"><ShieldCheck size={16}/>{en?'No unverified formula':'যাচাইহীন সূত্র নেই'}</div>
+      <div><span>{en?'ADVANCED CALCULATOR CENTER':'উন্নত ক্যালকুলেটর সেন্টার'}</span><h2>{en?'Smart calculations from your own data':'নিজের তথ্য থেকে স্মার্ট হিসাব'}</h2><p>{en?'Use career, date, service and pay tools from one calculation center.':'ক্যারিয়ার, তারিখ, চাকরিকাল ও বেতন-সংক্রান্ত হিসাব এক জায়গা থেকে ব্যবহার করুন।'}</p></div>
+      
     </section>
 
     <div className="calc-hub-grid">
-      <button className="calc-hub-card promotion" onClick={()=>onPage?.('promotion')}><TrendingUp/><div><b>{en?'Promotion Calculator':'পদোন্নতি হিসাব'}</b><small>{en?'Verified promotion rules and roadmap':'যাচাইকৃত পদোন্নতি নীতিমালা ও রোডম্যাপ'}</small></div><ChevronRight/></button>
+      <button className="calc-hub-card promotion" onClick={()=>onPage?.('promotion')}><TrendingUp/><div><b>{en?'Promotion Calculator':'পদোন্নতি হিসাব'}</b><small>{en?'Promotion rules and roadmap':'পদোন্নতি নিয়ম ও রোডম্যাপ'}</small></div><ChevronRight/></button>
       <button className="calc-hub-card salary" onClick={()=>onPage?.('salary')}><WalletCards/><div><b>{en?'Pay Scale Calculator':'পে-স্কেল হিসাব'}</b><small>{en?'Fixation, gross, deductions and payslip':'ফিক্সেশন, মোট বেতন, কর্তন ও পে-স্লিপ'}</small></div><ChevronRight/></button>
       <button className="calc-hub-card points" onClick={()=>onPage?.('points')}><Award/><div><b>{en?'Points Calculator':'পয়েন্ট ক্যালকুলেটর'}</b><small>{en?'Service, education and house-allocation points':'সার্ভিস, শিক্ষাগত যোগ্যতা ও বাসা বরাদ্দ পয়েন্ট'}</small></div><ChevronRight/></button>
     </div>
@@ -1762,7 +1755,7 @@ function CalculatorCenter({lang='bn',onPage}){
         <button className="primary wide" onClick={calcRetire}>{en?'Estimate Retirement Date':'অবসর তারিখ হিসাব করুন'}</button>
       </>}
       {tool==='basic'&&<>
-        <div className="tool-head"><BadgeDollarSign/><div><h3>{en?'Basic Pay Projection':'মূল বেতন প্রক্ষেপণ'}</h3><p>{en?'Projects basic pay only using the already verified 2015→2026 fixation and implementation schedule. No future allowance rate is assumed.':'শুধু যাচাইকৃত ২০১৫→২০২৬ ফিক্সেশন ও বাস্তবায়ন সূচি ব্যবহার করে মূল বেতন দেখায়। ভবিষ্যৎ ভাতার হার অনুমান করা হয় না।'}</p></div></div>
+        <div className="tool-head"><BadgeDollarSign/><div><h3>{en?'Basic Pay Projection':'মূল বেতন প্রক্ষেপণ'}</h3><p>{en?'Projects basic pay using the current fixation and implementation schedule.':'বর্তমান ফিক্সেশন ও বাস্তবায়ন সূচি অনুযায়ী মূল বেতন প্রক্ষেপণ দেখায়।'}</p></div></div>
         <div className="form-grid">
           <label>{en?'Grade':'গ্রেড'}<select value={basicProj.grade} onChange={e=>setBasicProj({...basicProj,grade:e.target.value,stage:'0'})}>{Array.from({length:20},(_,i)=>i+1).map(g=><option key={g} value={g}>{en?`Grade ${g}`:`গ্রেড ${g.toLocaleString('bn-BD')}`}</option>)}</select></label>
           <label>{en?'Current 2015 pay stage':'বর্তমান ২০১৫ বেতন ধাপ'}<select value={basicProj.stage} onChange={e=>setBasicProj({...basicProj,stage:e.target.value})}>{stages.map((v,i)=><option value={i} key={i}>{en?`Stage ${i+1} — Tk ${moneyLang(v,'en')}`:`ধাপ ${(i+1).toLocaleString('bn-BD')} — ৳${moneyLang(v,'bn')}`}</option>)}</select></label>
@@ -1781,7 +1774,7 @@ function CalculatorCenter({lang='bn',onPage}){
       <><BadgeDollarSign/><div><small>{en?'Projected payable basic':'প্রক্ষেপিত প্রাপ্য মূল বেতন'}</small><h3>{en?'Tk':'৳'} {moneyLang(result.payable,lang)}</h3><p>{en?`2015 basic Tk ${moneyLang(result.current,'en')} · Full fixed 2026 Tk ${moneyLang(result.fixed,'en')} · Implementation ${numLang(result.rate*100,lang,0)}%`:`২০১৫ মূল বেতন ৳${moneyLang(result.current,'bn')} · ২০২৬ পূর্ণ নির্ধারিত ৳${moneyLang(result.fixed,'bn')} · বাস্তবায়ন ${numLang(result.rate*100,lang,0)}%`}</p></div></>}
     </section>}
 
-    <section className="calculator-safety-note"><ShieldCheck/><div><b>{en?'Verified-only expansion':'শুধু যাচাইকৃত হিসাব'}</b><p>{en?'No pension, gratuity, leave, tax, increment or future allowance formula has been added without a verified governing rule.':'যাচাইকৃত নীতিমালা ছাড়া পেনশন, গ্র্যাচুইটি, ছুটি, কর, ইনক্রিমেন্ট বা ভবিষ্যৎ ভাতার কোনো সূত্র যোগ করা হয়নি।'}</p></div></section>
+    
   </div>
 }
 
@@ -1928,7 +1921,7 @@ function NoticePolicyCenter({lang='bn',canManage=false}){
   const titleOf=x=>en?(x.title_en||x.title_bn):(x.title_bn||x.title_en);
   const summaryOf=x=>en?(x.summary_en||x.summary_bn):(x.summary_bn||x.summary_en);
   return <div className="content-library">
-    <div className="page-head"><div><h2>{en?'Notice Board & Policy Library':'নোটিশ বোর্ড ও নীতিমালা লাইব্রেরি'}</h2><p>{en?'Publish verified notices and maintain a searchable policy/reference library.':'যাচাইকৃত নোটিশ প্রকাশ এবং নীতিমালা/রেফারেন্স লাইব্রেরি পরিচালনা করুন।'}</p></div></div>
+    <div className="page-head"><div><h2>{en?'Notice Board & Policy Library':'নোটিশ বোর্ড ও নীতিমালা লাইব্রেরি'}</h2><p>{en?'Publish notices and maintain a searchable policy library.':'নোটিশ প্রকাশ এবং অনুসন্ধানযোগ্য নীতিমালা লাইব্রেরি পরিচালনা করুন।'}</p></div></div>
     <div className="library-tabs"><button className={tab==='notices'?'active':''} onClick={()=>switchTab('notices')}><Bell size={16}/>{en?'Notices':'নোটিশ'}</button><button className={tab==='policies'?'active':''} onClick={()=>switchTab('policies')}><BookOpen size={16}/>{en?'Policies & Rules':'নীতিমালা ও বিধি'}</button></div>
     {err&&<div className="error">{err}</div>}
     {canManage&&<form className="library-editor" onSubmit={save}>
@@ -2080,7 +2073,7 @@ function SuperAdminControlCenter({lang='bn',onPage}){
   return <div className="super-admin-center">
     <section className="admin-control-hero">
       <div><span>{en?'SYSTEM CONTROL CENTER':'সিস্টেম কন্ট্রোল সেন্টার'}</span><h2>{en?'System Management Center':'সিস্টেম ব্যবস্থাপনা কেন্দ্র'}</h2><p>{en?'Manage users, content, security, calendar and platform settings from one streamlined workspace.':'ব্যবহারকারী, কনটেন্ট, নিরাপত্তা, ক্যালেন্ডার ও প্ল্যাটফর্ম সেটিংস এক জায়গা থেকে পরিচালনা করুন।'}</p></div>
-      <div className="admin-health-chip"><Activity size={16}/>{health?.ok?(en?'System Healthy':'সিস্টেম সচল'):(en?'Check Required':'যাচাই প্রয়োজন')}</div>
+      <div className="admin-health-chip"><Activity size={16}/>{health?.ok?(en?'System Healthy':'সিস্টেম সচল'):(en?'Attention':'মনোযোগ প্রয়োজন')}</div>
     </section>
 
     <div className="admin-control-tabs">{tabs.map(([k,I,l])=><button key={k} className={tab===k?'active':''} onClick={()=>setTab(k)}><I size={16}/>{l}</button>)}</div>
@@ -2150,21 +2143,21 @@ function SuperAdminControlCenter({lang='bn',onPage}){
     {tab==='content'&&<section className="admin-panel-card">
       <div className="admin-panel-head"><div><h3>{en?'System Content Management':'সিস্টেম কনটেন্ট ব্যবস্থাপনা'}</h3><p>{en?'Public references, notices, policies, forms and help content.':'পাবলিক রেফারেন্স, নোটিশ, নীতিমালা, ফরম ও সহায়তা কনটেন্ট।'}</p></div></div>
       <div className="admin-action-grid compact-actions">
-        <button onClick={()=>onPage?.('admin-content')}><Bell/><div><b>{en?'Notices':'নোটিশ'}</b><small>{en?'Publish and pin verified updates':'যাচাইকৃত আপডেট প্রকাশ/পিন'}</small></div><ChevronRight/></button>
+        <button onClick={()=>onPage?.('admin-content')}><Bell/><div><b>{en?'Notices':'নোটিশ'}</b><small>{en?'Publish and pin updates':'আপডেট প্রকাশ/পিন'}</small></div><ChevronRight/></button>
         <button onClick={()=>onPage?.('admin-content')}><BookOpen/><div><b>{en?'Policies & Rules':'নীতিমালা ও বিধি'}</b><small>{en?'Reference library':'রেফারেন্স লাইব্রেরি'}</small></div><ChevronRight/></button>
-        <button><FileText/><div><b>{en?'Forms & Links':'ফরম ও লিংক'}</b><small>{en?'Reference links only; no file storage':'শুধু রেফারেন্স লিংক; ফাইল স্টোরেজ নয়'}</small></div><ChevronRight/></button>
+        <button><FileText/><div><b>{en?'Forms & Links':'ফরম ও লিংক'}</b><small>{en?'Manage useful links':'প্রয়োজনীয় লিংক পরিচালনা'}</small></div><ChevronRight/></button>
         <button><HelpCircle/><div><b>{en?'Help & FAQ':'সহায়তা ও প্রশ্নোত্তর'}</b><small>{en?'Support guidance':'ব্যবহার সহায়িকা'}</small></div><ChevronRight/></button>
       </div>
     </section>}
 
     {tab==='rules'&&<section className="admin-panel-card">
-      <div className="admin-panel-head"><div><h3>{en?'Calculator Rules Registry':'ক্যালকুলেটর রুলস রেজিস্ট্রি'}</h3><p>{en?'Verified formulas remain code-controlled to prevent accidental calculation errors.':'হিসাবের ভুল এড়াতে যাচাইকৃত সূত্রগুলো কোড-নিয়ন্ত্রিত থাকবে।'}</p></div></div>
+      <div className="admin-panel-head"><div><h3>{en?'Calculator Rules Registry':'ক্যালকুলেটর রুলস রেজিস্ট্রি'}</h3><p>{en?'Calculator formulas are managed centrally.':'ক্যালকুলেটরের সূত্রগুলো কেন্দ্রীয়ভাবে পরিচালিত হয়।'}</p></div></div>
       <div className="rules-registry">
-        <article><TrendingUp/><div><b>{en?'Promotion Rules':'পদোন্নতি নীতিমালা'}</b><p>{en?'Education-based service requirement, service points and one-year process.':'শিক্ষাগত যোগ্যতাভিত্তিক চাকরিকাল, সার্ভিস পয়েন্ট ও ১ বছরের প্রক্রিয়া।'}</p></div><span>{en?'Verified':'যাচাইকৃত'}</span></article>
-        <article><WalletCards/><div><b>{en?'Pay Scale Rules':'পে-স্কেল নিয়ম'}</b><p>{en?'2015 stage, 2026 fixation, implementation rate, allowances and deductions.':'২০১৫ ধাপ, ২০২৬ ফিক্সেশন, বাস্তবায়ন হার, ভাতা ও কর্তন।'}</p></div><span>{en?'Verified':'যাচাইকৃত'}</span></article>
+        <article><TrendingUp/><div><b>{en?'Promotion Rules':'পদোন্নতি নীতিমালা'}</b><p>{en?'Education-based service requirement, service points and one-year process.':'শিক্ষাগত যোগ্যতাভিত্তিক চাকরিকাল, সার্ভিস পয়েন্ট ও ১ বছরের প্রক্রিয়া।'}</p></div><span>{en?'Active':'সক্রিয়'}</span></article>
+        <article><WalletCards/><div><b>{en?'Pay Scale Rules':'পে-স্কেল নিয়ম'}</b><p>{en?'2015 stage, 2026 fixation, implementation rate, allowances and deductions.':'২০১৫ ধাপ, ২০২৬ ফিক্সেশন, বাস্তবায়ন হার, ভাতা ও কর্তন।'}</p></div><span>{en?'Active':'সক্রিয়'}</span></article>
         <article><Calculator/><div><b>{en?'General Calculators':'সাধারণ ক্যালকুলেটর'}</b><p>{en?'Service length, age, date difference and retirement estimate.':'চাকরিকাল, বয়স, তারিখের ব্যবধান ও অবসর তারিখ অনুমান।'}</p></div><span>{en?'Active':'সক্রিয়'}</span></article>
       </div>
-      <div className="notice"><b>{en?'Safety rule:':'নিরাপত্তা নীতি:'}</b> {en?'Calculator formulas are not editable from the admin UI. Changes should only be deployed after source verification and testing.':'অ্যাডমিন UI থেকে ক্যালকুলেটর সূত্র সম্পাদনা করা যাবে না। উৎস যাচাই ও টেস্টের পরই কোড ডেপ্লয় করে পরিবর্তন করতে হবে।'}</div>
+      
     </section>}
 
     {tab==='calendar'&&<section className="admin-panel-card">
@@ -2173,7 +2166,7 @@ function SuperAdminControlCenter({lang='bn',onPage}){
         <label>{en?'Calendar reference enabled':'ক্যালেন্ডার রেফারেন্স চালু'}<select value={settings.calendar_enabled||'0'} onChange={e=>setSettings({...settings,calendar_enabled:e.target.value})}><option value="0">{en?'No':'না'}</option><option value="1">{en?'Yes':'হ্যাঁ'}</option></select></label>
         <label>{en?'Published source URL':'প্রকাশিত উৎসের URL'}<input value={settings.calendar_source_url||''} onChange={e=>setSettings({...settings,calendar_source_url:e.target.value})} placeholder="https://..."/></label>
       </div>
-      <div className="notice"><b>{en?'Branding safeguard:':'ব্র্যান্ডিং সুরক্ষা:'}</b> {en?'The platform remains independent and unofficial; the calendar appears only as a sourced reference.':'প্ল্যাটফর্ম স্বাধীন ও অনানুষ্ঠানিক থাকবে; ক্যালেন্ডার শুধুমাত্র উৎস-উল্লেখসহ রেফারেন্স হিসেবে দেখানো হবে।'}</div>
+      
       <button className="primary" onClick={saveSettings}><Save size={16}/>{en?'Save Calendar Settings':'ক্যালেন্ডার সেটিংস সংরক্ষণ'}</button>
       <AdminOfficeCalendarManager lang={lang}/>
     </section>}
@@ -2234,7 +2227,7 @@ function App(){
   if(!user)return showLogin?<AuthPortal onLogin={u=>{setUser(u);window.history.replaceState({},'',window.location.pathname)}} onBack={()=>{setShowLogin(false);setAuthMode('login');setAuthToken('');window.history.replaceState({},'',window.location.pathname)}} lang={lang} setLang={setLang} initialMode={authMode} initialToken={authToken}/>:<PublicHome onLogin={()=>{setAuthMode('login');setShowLogin(true)}} lang={lang} setLang={setLang}/>;
   const admin=['super_admin','admin','department_admin'].includes(user.role);
   return <div className={`app ${mobileMenu?'mobile-menu-open':''}`}><button className={`mobile-drawer-backdrop ${mobileMenu?'show':''}`} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'} onClick={()=>setMobileMenu(false)}></button><aside className={`side ${mobileMenu?'mobile-open':''}`}>
-    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v16.3.9 Auto House Points':'স্বাধীন প্ল্যাটফর্ম · v16.3.9 Auto House Points'}</small></div><button className="mobile-drawer-close" onClick={()=>setMobileMenu(false)} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'}><X size={19}/></button></div>
+    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Digital Service Platform':'ডিজিটাল সেবা প্ল্যাটফর্ম'}</small></div><button className="mobile-drawer-close" onClick={()=>setMobileMenu(false)} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'}><X size={19}/></button></div>
     <nav>
       <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}><LayoutDashboard size={18}/>{lang==='en'?'My Dashboard':'আমার ড্যাশবোর্ড'}</button>
       <button className={page==='career'?'active':''} onClick={()=>setPage('career')}><BookUser size={18}/>{lang==='en'?'My Career':'আমার চাকরি'}</button>
