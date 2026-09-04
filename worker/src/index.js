@@ -2,9 +2,47 @@
 const json=(d,s=200,h={})=>new Response(JSON.stringify(d),{status:s,headers:{'content-type':'application/json; charset=utf-8',...h}});
 const enc=new TextEncoder();
 
+const ALLOWED_ORIGINS=new Set([
+  'https://dhakau.pages.dev'
+]);
 function cors(req){
-  const o=req.headers.get('Origin')||'*';
-  return{'Access-Control-Allow-Origin':o,'Access-Control-Allow-Credentials':'true','Access-Control-Allow-Headers':'Content-Type','Access-Control-Allow-Methods':'GET,POST,PUT,DELETE,OPTIONS','Vary':'Origin'};
+  const o=req.headers.get('Origin')||'';
+  const allowed=ALLOWED_ORIGINS.has(o);
+  return{
+    ...(allowed?{'Access-Control-Allow-Origin':o}:{}),
+    'Access-Control-Allow-Credentials':'true',
+    'Access-Control-Allow-Headers':'Content-Type',
+    'Access-Control-Allow-Methods':'GET,POST,PUT,DELETE,OPTIONS',
+    'Vary':'Origin',
+    'X-Content-Type-Options':'nosniff',
+    'Referrer-Policy':'no-referrer',
+    'Cache-Control':'no-store'
+  };
+}
+function originAllowed(req){
+  const o=req.headers.get('Origin');
+  return !o||ALLOWED_ORIGINS.has(o);
+}
+
+// Lightweight D1-backed abuse guard. No new table/migration required.
+// It uses existing login_events for login/reset throttling and conservative
+// recent-account checks for registration throttling.
+async function loginAbuseBlocked(env,email){
+  const e=emailNorm(email);
+  const recent=await safeCount(env,`SELECT COUNT(*) c FROM login_events WHERE success=0 AND email=? AND created_at>=datetime('now','-15 minutes')`,[e]);
+  return recent>=8;
+}
+async function resetAbuseBlocked(env,email){
+  const e=emailNorm(email);
+  const recent=await safeCount(env,`SELECT COUNT(*) c FROM login_events WHERE success=0 AND email=? AND created_at>=datetime('now','-15 minutes')`,[e]);
+  return recent>=12;
+}
+async function registrationAbuseBlocked(env,email){
+  const e=emailNorm(email);
+  const domain=(e.split('@')[1]||'').slice(0,120);
+  if(!domain)return false;
+  const recent=await safeCount(env,`SELECT COUNT(*) c FROM users WHERE lower(email) LIKE ? AND registered_at>=datetime('now','-10 minutes')`,[`%@${domain}`]);
+  return recent>=12;
 }
 function b64(b){return btoa(String.fromCharCode(...new Uint8Array(b)))}
 function ub64(s){return Uint8Array.from(atob(s),c=>c.charCodeAt(0))}
@@ -63,6 +101,7 @@ async function recoveryHash(code){return sha(normalizeRecoveryCode(code))}
 
 export default{async fetch(req,env){
   const C=cors(req);
+  if(!originAllowed(req))return json({error:'Origin not allowed'},403,C);
   if(req.method==='OPTIONS')return new Response(null,{status:204,headers:C});
   const u=new URL(req.url);
   try{
@@ -72,6 +111,7 @@ export default{async fetch(req,env){
     // v16.5 Smart registration: create account + personal profile + education in one flow
     if(u.pathname==='/api/register-complete'&&req.method==='POST'){
       const b=await req.json(),name=safeName(b.name),email=emailNorm(b.email),password=String(b.password||''),accountType=['officer','employee'].includes(b.account_type)?b.account_type:'employee';
+      if(await registrationAbuseBlocked(env,email))return json({error:'Too many registration attempts. Please try again later.'},429,C);
       if(!b.consent_read||!b.consent_own||!b.consent_advisory)return json({error:'Please accept all required declarations before registration'},400,C);
       if(!name||!email||!email.includes('@')||!String(b.employee_reference||'').trim())return json({error:'Name, email and employee/reference ID are required'},400,C);
       if(!strongPassword(password))return json({error:'Password must be at least 10 characters and include letters and numbers'},400,C);
@@ -111,6 +151,7 @@ export default{async fetch(req,env){
 
     if(u.pathname==='/api/register'&&req.method==='POST'){
       const b=await req.json(),name=safeName(b.name),email=emailNorm(b.email),password=String(b.password||''),accountType=['officer','employee'].includes(b.account_type)?b.account_type:'employee';
+      if(await registrationAbuseBlocked(env,email))return json({error:'Too many registration attempts. Please try again later.'},429,C);
       if(!name||!email||!email.includes('@'))return json({error:'Valid name and email are required'},400,C);
       if(!strongPassword(password))return json({error:'Password must be at least 10 characters and include letters and numbers'},400,C);
       const exists=await env.DB.prepare('SELECT id FROM users WHERE email=?').bind(email).first();
@@ -123,9 +164,13 @@ export default{async fetch(req,env){
 
     if(u.pathname==='/api/reset-password-recovery'&&req.method==='POST'){
       const b=await req.json(),email=emailNorm(b.email),password=String(b.password||''),rh=await recoveryHash(b.recovery_code);
+      if(await resetAbuseBlocked(env,email))return json({error:'Too many recovery attempts. Please try again later.'},429,C);
       if(!strongPassword(password))return json({error:'Password must be at least 10 characters and include letters and numbers'},400,C);
       const x=await env.DB.prepare(`SELECT id FROM users WHERE email=? AND recovery_code_hash=? AND is_active=1`).bind(email,rh).first();
-      if(!x)return json({error:'Email or recovery code is incorrect'},400,C);
+      if(!x){
+        try{await env.DB.prepare(`INSERT INTO login_events(user_id,email,success) VALUES(?,?,0)`).bind(null,email).run()}catch{}
+        return json({error:'Email or recovery code is incorrect'},400,C);
+      }
       const p=await mkpass(password);
       await env.DB.prepare(`UPDATE users SET password_hash=?,password_salt=? WHERE id=?`).bind(p.hash,p.salt,x.id).run();
       await env.DB.prepare(`DELETE FROM sessions WHERE user_id=?`).bind(x.id).run();
@@ -133,8 +178,9 @@ export default{async fetch(req,env){
     }
 
     if(u.pathname==='/api/login'&&req.method==='POST'){
-      const b=await req.json();
-      const x=await env.DB.prepare('SELECT * FROM users WHERE email=? AND is_active=1').bind(String(b.email||'').toLowerCase()).first();
+      const b=await req.json(),loginEmail=emailNorm(b.email);
+      if(await loginAbuseBlocked(env,loginEmail))return json({error:'অনেকবার ভুল চেষ্টা হয়েছে। ১৫ মিনিট পরে আবার চেষ্টা করুন।'},429,C);
+      const x=await env.DB.prepare('SELECT * FROM users WHERE email=? AND is_active=1').bind(loginEmail).first();
       if(!x||!(await ver(String(b.password||''),x.password_salt,x.password_hash))){
         try{await env.DB.prepare(`INSERT INTO login_events(user_id,email,success) VALUES(?,?,0)`).bind(x?.id||null,emailNorm(b.email)).run()}catch{}
         return json({error:'ইমেইল বা পাসওয়ার্ড সঠিক নয়'},401,C);
@@ -766,6 +812,7 @@ export default{async fetch(req,env){
   }catch(e){
     const msg=String(e.message||e);
     if(msg.includes('UNIQUE constraint failed: employees.employee_id'))return json({error:'এই Employee ID ইতোমধ্যে আছে'},409,C);
-    return json({error:'Server error',detail:msg},500,C);
+    console.error('Worker error:',msg);
+    return json({error:'Server error'},500,C);
   }
 }};
