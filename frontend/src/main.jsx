@@ -28,6 +28,7 @@ import './super-admin-user-control-v16-3-5.css';
 import './points-calculator-v16-3-6.css';
 import './promotion-forecast-v16-3-7.css';
 import './house-allocation-points-v16-3-8.css';
+import './automatic-house-points-v16-3-9.css';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import {
   PAY2015,PAY2026,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
@@ -337,7 +338,7 @@ function PublicHome({onLogin,lang,setLang}){
   };
   const navItems=[[copy.home,'top'],[copy.promotion,'public-calculator','promotion'],[copy.pay,'public-calculator','salary'],[copy.policies,'policies'],[copy.notices,'notices'],[copy.forms,'forms'],[copy.help,'help']];
   const goto=(id,tool)=>{setPublicMenu(false);if(tool)return openTool(tool);trackPublic('section_view',id);scrollTo(id);};
-  return <div id="top" data-public-version="v16.3.8.1" className={'public premium-public premium-home-v16-3 '+(en?'lang-en':'lang-bn')}>
+  return <div id="top" data-public-version="v16.3.9" className={'public premium-public premium-home-v16-3 '+(en?'lang-en':'lang-bn')}>
     <header className="public-nav luxury-nav premium-v16-nav">
       <div className="public-brand"><div className="brand-orb"><ShieldCheck size={19}/></div><div><b>{t.appName}</b><small>{t.appSub}</small></div></div>
       <button className="public-mobile-trigger" onClick={()=>setPublicMenu(v=>!v)} aria-label={en?(publicMenu?'Close menu':'Open menu'):(publicMenu?'মেনু বন্ধ করুন':'মেনু খুলুন')}><span></span><span></span><span></span></button>
@@ -1438,9 +1439,9 @@ function PointsCalculator({lang='bn'}){
         <div className="points-summary-icon"><GraduationCap/></div>
         <div><small>{en?'Education Points':'শিক্ষাগত যোগ্যতার পয়েন্ট'}</small><b>{numLang(educationTotal,lang,0)}</b><span>{en?'Based on selected qualifications':'নির্বাচিত যোগ্যতা ও ফলাফল অনুযায়ী'}</span></div>
       </article>
-      <article className="points-summary-card pending">
+      <article className="points-summary-card">
         <div className="points-summary-icon"><Home/></div>
-        <div><small>{en?'House Allocation Points':'বাসা বরাদ্দ পয়েন্ট'}</small><b>—</b><span>{en?'Rule will be added after verification':'নিয়ম যাচাইয়ের পর যোগ হবে'}</span></div>
+        <div><small>{en?'House Allocation Points':'বাসা বরাদ্দ পয়েন্ট'}</small><b>{en?'AUTO':'অটো'}</b><span>{en?'3rd Class General Employee is active':'৩য় শ্রেণির সাধারণ কর্মচারীর হিসাব সক্রিয়'}</span></div>
       </article>
     </section>
 
@@ -1504,11 +1505,18 @@ function PointsCalculator({lang='bn'}){
 function HouseAllocationPoints({lang='bn'}){
   const en=lang==='en';
   const [kind,setKind]=useState('third_general');
-  const [manual,setManual]=useState({service:'',basic:'',designation:'',marital:'',gender:''});
-  const total=['service','basic','designation','marital','gender'].reduce((s,k)=>s+(Number(manual[k])||0),0);
+  const [form,setForm]=useState({
+    firstJoin:'',
+    thirdClassStart:'',
+    calcDate:todayLocalIso(),
+    basicSalary:'',
+    previousPromotions:'0',
+    marital:'married',
+    gender:'male'
+  });
 
   const groups=[
-    {id:'third_general',icon:Users,bn:'৩য় শ্রেণির সাধারণ কর্মচারী',en:'3rd Class General Employee',ready:true,subBn:'বর্তমানে সক্রিয়',subEn:'Available now'},
+    {id:'third_general',icon:Users,bn:'৩য় শ্রেণির সাধারণ কর্মচারী',en:'3rd Class General Employee',ready:true,subBn:'অটোমেটিক হিসাব সক্রিয়',subEn:'Automatic calculation active'},
     {id:'third_technical',icon:Settings,bn:'৩য় শ্রেণির কারিগরি কর্মচারী',en:'3rd Class Technical Employee',ready:false,subBn:'নীতিমালা যাচাই ও সংযোজনাধীন',subEn:'Rules under verification'},
     {id:'fourth_general',icon:Users,bn:'৪র্থ শ্রেণির সাধারণ কর্মচারী',en:'4th Class General Employee',ready:false,subBn:'নীতিমালা যাচাই ও সংযোজনাধীন',subEn:'Rules under verification'},
     {id:'fourth_technical',icon:Settings,bn:'৪র্থ শ্রেণির কারিগরি কর্মচারী',en:'4th Class Technical Employee',ready:false,subBn:'নীতিমালা যাচাই ও সংযোজনাধীন',subEn:'Rules under verification'},
@@ -1517,12 +1525,64 @@ function HouseAllocationPoints({lang='bn'}){
   ];
   const current=groups.find(x=>x.id===kind)||groups[0];
 
+  useEffect(()=>{
+    api('/api/my-career').then(x=>{
+      const p=x?.profile||{};
+      const first=p.first_joining_date||p.first_join_date||'';
+      if(first)setForm(v=>({...v,firstJoin:v.firstJoin||first}));
+    }).catch(()=>{});
+  },[]);
+
+  function ymdDiff(start,end){
+    if(!start||!end)return null;
+    const [sy,sm,sd]=String(start).split('-').map(Number);
+    const [ey,em,ed]=String(end).split('-').map(Number);
+    if(!sy||!sm||!sd||!ey||!em||!ed)return null;
+    const a=new Date(Date.UTC(sy,sm-1,sd)),b=new Date(Date.UTC(ey,em-1,ed));
+    if(b<a)return null;
+    let y=ey-sy,m=em-sm,d=ed-sd;
+    if(d<0){
+      m-=1;
+      const daysPrevMonth=new Date(Date.UTC(ey,em-1,0)).getUTCDate();
+      d+=daysPrevMonth;
+    }
+    if(m<0){y-=1;m+=12}
+    return {y,m,d};
+  }
+  const zero={y:0,m:0,d:0};
+  const fmtYmd=x=>x?`${numLang(x.y,lang,0)}-${String(x.m).padStart(2,'0').replace(/[0-9]/g,c=>lang==='bn'?'০১২৩৪৫৬৭৮৯'[+c]:c)}-${String(x.d).padStart(2,'0').replace(/[0-9]/g,c=>lang==='bn'?'০১২৩৪৫৬৭৮৯'[+c]:c)}`:'—';
+
+  const first=form.firstJoin;
+  const third=form.thirdClassStart||form.firstJoin;
+  const calc=form.calcDate||todayLocalIso();
+  const validDates=!!first&&!!third&&!!calc&&new Date(first+'T00:00:00')<=new Date(third+'T00:00:00')&&new Date(third+'T00:00:00')<=new Date(calc+'T00:00:00');
+
+  const fourthService=validDates&&first!==third?(ymdDiff(first,third)||zero):zero;
+  const thirdService=validDates?(ymdDiff(third,calc)||zero):null;
+  const totalService=validDates?(ymdDiff(first,calc)||zero):null;
+
+  const basic=Number(form.basicSalary)||0;
+  const basicPoint=basic>0?basic/100:0;
+  const priorPromotionCount=Math.max(0,Math.floor(Number(form.previousPromotions)||0));
+  const designationPoint=1+priorPromotionCount;
+  const maritalPoint=form.marital==='married'?3:0;
+  const genderPoint=form.gender==='female'?3:0;
+
+  // House-allocation total uses whole numeric points plus the month/day remainder
+  // from service. This matches the observed screen: 7-03-29 + 155 + 2 + 3 + 0 = 167-03-29.
+  const fixedNumericPoints=basicPoint+designationPoint+maritalPoint+genderPoint;
+  const totalPoint=totalService?{
+    y:totalService.y+fixedNumericPoints,
+    m:totalService.m,
+    d:totalService.d
+  }:null;
+
   return <section className="points-panel house-allocation-module">
     <div className="points-panel-head">
       <div className="points-panel-icon"><Home/></div>
       <div>
         <h3>{en?'House Allocation Points':'বাসা বরাদ্দ পয়েন্ট'}</h3>
-        <p>{en?'Choose the applicable employee category. Only the verified category is active; other rule sets will be enabled after their policy tables are verified.':'প্রযোজ্য কর্মচারীর ধরন নির্বাচন করুন। যে শ্রেণির নিয়ম যাচাই করা হয়েছে শুধু সেটিই সক্রিয়; অন্য শ্রেণিগুলো নীতিমালা যাচাই শেষে চালু হবে।'}</p>
+        <p>{en?'Choose the applicable category. The verified 3rd Class General Employee rule is calculated automatically; other categories remain reserved until their own rules are verified.':'প্রযোজ্য শ্রেণি নির্বাচন করুন। যাচাইকৃত ৩য় শ্রেণির সাধারণ কর্মচারীর নিয়ম এখন অটোমেটিক হিসাব করবে; অন্য শ্রেণিগুলো তাদের নিজস্ব নিয়ম যাচাই না হওয়া পর্যন্ত সংরক্ষিত থাকবে।'}</p>
       </div>
     </div>
 
@@ -1537,46 +1597,58 @@ function HouseAllocationPoints({lang='bn'}){
       })}
     </div>
 
-    {current.ready?<div className="house-active-panel">
+    {current.ready?<div className="house-active-panel auto-house-panel">
       <div className="house-active-head">
         <div>
-          <span>{en?'ACTIVE RULE SET':'সক্রিয় নিয়ম কাঠামো'}</span>
+          <span>{en?'AUTOMATIC RULE SET':'অটোমেটিক নিয়ম'}</span>
           <h4>{en?current.en:current.bn}</h4>
-          <p>{en?'The point structure below follows the categories visible in the provided house-allocation point-details screen. The underlying official formula for each component has not yet been supplied, so no value is invented automatically.':'আপনার দেওয়া বাসা বরাদ্দের Point Details স্ক্রিনে যে পয়েন্ট বিভাগগুলো দেখা গেছে, নিচে সেই কাঠামোই রাখা হয়েছে। প্রতিটি পয়েন্টের মূল সরকারি সূত্র/টেবিল এখনও দেওয়া হয়নি, তাই কোনো মান অনুমান করে স্বয়ংক্রিয়ভাবে বসানো হয়নি।'}</p>
+          <p>{en?'Enter the employee information below. Service, basic-salary, designation, marital-status and gender points will be calculated automatically.':'নিচে কর্মচারীর তথ্য দিন। চাকরিকাল, মূল বেতন, পদবি, বৈবাহিক অবস্থা ও লিঙ্গভিত্তিক পয়েন্ট স্বয়ংক্রিয়ভাবে হিসাব হবে।'}</p>
         </div>
-        <div className="house-active-badge"><ShieldCheck/>{en?'Structure verified':'কাঠামো যাচাইকৃত'}</div>
+        <div className="house-active-badge"><ShieldCheck/>{en?'Auto calculation':'অটো হিসাব'}</div>
       </div>
 
-      <div className="house-point-input-grid">
-        <label>{en?'Point based on Service':'চাকরিকালভিত্তিক পয়েন্ট'}<input type="number" step="0.01" value={manual.service} onChange={e=>setManual(x=>({...x,service:e.target.value}))} placeholder="0.00"/></label>
-        <label>{en?'Point based on Basic Salary':'মূল বেতনভিত্তিক পয়েন্ট'}<input type="number" step="0.01" value={manual.basic} onChange={e=>setManual(x=>({...x,basic:e.target.value}))} placeholder="0.00"/></label>
-        <label>{en?'Point based on Designation':'পদবিভিত্তিক পয়েন্ট'}<input type="number" step="0.01" value={manual.designation} onChange={e=>setManual(x=>({...x,designation:e.target.value}))} placeholder="0.00"/></label>
-        <label>{en?'Point based on Marital Status':'বৈবাহিক অবস্থাভিত্তিক পয়েন্ট'}<input type="number" step="0.01" value={manual.marital} onChange={e=>setManual(x=>({...x,marital:e.target.value}))} placeholder="0.00"/></label>
-        <label>{en?'Point based on Gender':'লিঙ্গভিত্তিক পয়েন্ট'}<input type="number" step="0.01" value={manual.gender} onChange={e=>setManual(x=>({...x,gender:e.target.value}))} placeholder="0.00"/></label>
+      <div className="house-auto-form">
+        <DMY label={en?'First joining date':'প্রথম যোগদানের তারিখ'} value={form.firstJoin} onChange={v=>setForm(x=>({...x,firstJoin:v}))}/>
+        <DMY label={en?'Entered 3rd Class on':'৩য় শ্রেণিতে প্রবেশের তারিখ'} value={form.thirdClassStart} onChange={v=>setForm(x=>({...x,thirdClassStart:v}))}/>
+        <DMY label={en?'Point calculation date':'পয়েন্ট হিসাবের তারিখ'} value={form.calcDate} onChange={v=>setForm(x=>({...x,calcDate:v}))}/>
+        <label>{en?'Current basic salary':'বর্তমান মূল বেতন'}<input type="number" min="0" step="100" value={form.basicSalary} onChange={e=>setForm(x=>({...x,basicSalary:e.target.value}))} placeholder={en?'e.g. 15500':'যেমন ১৫৫০০'}/></label>
+        <label>{en?'Previous promotions received':'আগে পাওয়া পদোন্নতির সংখ্যা'}<input type="number" min="0" step="1" value={form.previousPromotions} onChange={e=>setForm(x=>({...x,previousPromotions:e.target.value}))}/></label>
+        <label>{en?'Marital status':'বৈবাহিক অবস্থা'}<select value={form.marital} onChange={e=>setForm(x=>({...x,marital:e.target.value}))}><option value="married">{en?'Married':'বিবাহিত'}</option><option value="unmarried">{en?'Unmarried':'অবিবাহিত'}</option></select></label>
+        <label>{en?'Gender':'লিঙ্গ'}<select value={form.gender} onChange={e=>setForm(x=>({...x,gender:e.target.value}))}><option value="male">{en?'Male':'পুরুষ'}</option><option value="female">{en?'Female':'নারী'}</option></select></label>
       </div>
 
-      <div className="house-total-box">
-        <div><small>{en?'Total House Allocation Point':'মোট বাসা বরাদ্দ পয়েন্ট'}</small><b>{numLang(total,lang)}</b></div>
-        <span>{en?'Manual component entry until exact policy formulas are supplied':'মূল নীতিমালার সূত্র পাওয়া পর্যন্ত যাচাইকৃত component-value ইনপুটের যোগফল'}</span>
+      {!validDates&&<div className="house-date-help"><AlertTriangle/>{en?'Enter valid service dates in order: first joining ≤ 3rd Class entry ≤ calculation date. If the employee joined directly in 3rd Class, use the same date for the first two fields.':'তারিখ সঠিক ক্রমে দিন: প্রথম যোগদান ≤ ৩য় শ্রেণিতে প্রবেশ ≤ হিসাবের তারিখ। সরাসরি ৩য় শ্রেণিতে যোগ দিলে প্রথম দুই ঘরে একই তারিখ দিন।'}</div>}
+
+      <div className="house-official-style">
+        <div className="house-detail-head"><span>{en?'POINT DETAILS':'পয়েন্টের বিস্তারিত'}</span><b>{en?'Automatic Calculation':'স্বয়ংক্রিয় হিসাব'}</b></div>
+        <div className="house-detail-row"><span>{en?'Service as 3rd Class':'৩য় শ্রেণিতে চাকরিকাল'}</span><b>{thirdService?fmtYmd(thirdService):'—'}</b></div>
+        <div className="house-detail-row"><span>{en?'Service as 4th Class':'৪র্থ শ্রেণিতে পূর্ববর্তী চাকরিকাল'}</span><b>{validDates?fmtYmd(fourthService):'—'}</b></div>
+        <div className="house-detail-row strong"><span>{en?'Point based on Service':'চাকরিকালভিত্তিক পয়েন্ট'}</span><b>{totalService?fmtYmd(totalService):'—'}</b></div>
+        <div className="house-detail-row"><span>{en?'Point based on Basic Salary':'মূল বেতনভিত্তিক পয়েন্ট'} <small>({en?'Basic ÷ 100':'মূল বেতন ÷ ১০০'})</small></span><b>{numLang(basicPoint,lang)}</b></div>
+        <div className="house-detail-row"><span>{en?'Point based on Designation':'পদবিভিত্তিক পয়েন্ট'} <small>({en?'current post 1 + each previous promotion 1':'বর্তমান পদ ১ + প্রতিটি পূর্ববর্তী পদোন্নতি ১'})</small></span><b>{numLang(designationPoint,lang,0)}</b></div>
+        <div className="house-detail-row"><span>{en?'Point based on Marital Status':'বৈবাহিক অবস্থাভিত্তিক পয়েন্ট'} <small>({en?'married +3':'বিবাহিত +৩'})</small></span><b>{numLang(maritalPoint,lang,0)}</b></div>
+        <div className="house-detail-row"><span>{en?'Point based on Gender':'লিঙ্গভিত্তিক পয়েন্ট'} <small>({en?'female +3, male 0':'নারী +৩, পুরুষ ০'})</small></span><b>{numLang(genderPoint,lang,0)}</b></div>
+        <div className="house-detail-row total"><span>{en?'Total Point':'মোট বাসা বরাদ্দ পয়েন্ট'}</span><b>{totalPoint?fmtYmd(totalPoint):'—'}</b></div>
       </div>
 
-      <div className="house-components-note">
+      <div className="house-example-check">
         <BookOpen/>
         <div>
-          <b>{en?'Point components currently identified':'বর্তমানে শনাক্ত করা পয়েন্টের বিভাগ'}</b>
-          <p>{en?'Service + Basic Salary + Designation + Marital Status + Gender = Total Point. The screenshot also shows separate Third-Class and Fourth-Class service values feeding the service component.':'চাকরিকাল + মূল বেতন + পদবি + বৈবাহিক অবস্থা + লিঙ্গ = মোট পয়েন্ট। স্ক্রিনশটে ৩য় শ্রেণি ও ৪র্থ শ্রেণিতে চাকরিকাল আলাদাভাবে দেখিয়ে সেখান থেকে Service Point তৈরি হওয়ার কাঠামোও দেখা গেছে।'}</p>
+          <b>{en?'Verified against your supplied example':'আপনার দেওয়া উদাহরণের সাথে মিল'}</b>
+          <p>{en?'Example: joining 02-05-2019, calculation date 31-08-2026, basic 15,500, one previous promotion, married male → Service 7-03-29 + Basic 155 + Designation 2 + Marital 3 + Gender 0 = Total 167-03-29.':'উদাহরণ: যোগদান ০২-০৫-২০১৯, হিসাব ৩১-০৮-২০২৬, মূল বেতন ১৫,৫০০, আগে ১টি পদোন্নতি, বিবাহিত পুরুষ → চাকরিকাল ৭-০৩-২৯ + বেতন ১৫৫ + পদবি ২ + বৈবাহিক ৩ + লিঙ্গ ০ = মোট ১৬৭-০৩-২৯।'}</p>
         </div>
       </div>
+
+      <div className="points-rule-note caution"><AlertTriangle/><div><b>{en?'Current verified scope':'বর্তমান যাচাইকৃত সীমা'}</b><p>{en?'This automatic formula is enabled only for 3rd Class General Employees based on the supplied Point Details example and the rules you confirmed. Other employee categories are not calculated with this formula.':'এই অটোমেটিক সূত্রটি শুধু ৩য় শ্রেণির সাধারণ কর্মচারীর জন্য আপনার দেওয়া Point Details উদাহরণ ও নিশ্চিত করা নিয়ম অনুযায়ী সক্রিয়। অন্য শ্রেণির কর্মচারীর ক্ষেত্রে এই সূত্র প্রয়োগ করা হবে না।'}</p></div></div>
     </div>:<div className="house-pending-panel">
       <div className="house-coming-icon"><Clock3/></div>
       <span>{en?'COMING SOON':'শীঘ্রই আসছে'}</span>
       <h4>{en?current.en:current.bn}</h4>
-      <p>{en?'This category is already reserved in the system. Its calculator will be activated after the applicable house-allocation policy and point table are verified.':'এই শ্রেণিটি সিস্টেমে রাখা হয়েছে। প্রযোজ্য বাসা বরাদ্দ নীতিমালা ও পয়েন্ট টেবিল যাচাই হওয়ার পর এর ক্যালকুলেটর সক্রিয় করা হবে।'}</p>
-      <div className="house-rule-status"><ShieldCheck/>{en?'No unverified formula is being used':'যাচাই ছাড়া কোনো সূত্র ব্যবহার করা হচ্ছে না'}</div>
+      <p>{en?'This category is already reserved in the system. Its automatic calculator will be activated after its own house-allocation rules and point table are verified.':'এই শ্রেণিটি সিস্টেমে রাখা হয়েছে। এর নিজস্ব বাসা বরাদ্দের নিয়ম ও পয়েন্ট টেবিল যাচাই হওয়ার পর অটোমেটিক ক্যালকুলেটর সক্রিয় করা হবে।'}</p>
+      <div className="house-rule-status"><ShieldCheck/>{en?'No other category rule is being reused':'অন্য শ্রেণির নিয়ম এখানে ব্যবহার করা হচ্ছে না'}</div>
     </div>}
   </section>
 }
-
 
 function CalculatorCenter({lang='bn',onPage}){
   const en=lang==='en';
@@ -2162,7 +2234,7 @@ function App(){
   if(!user)return showLogin?<AuthPortal onLogin={u=>{setUser(u);window.history.replaceState({},'',window.location.pathname)}} onBack={()=>{setShowLogin(false);setAuthMode('login');setAuthToken('');window.history.replaceState({},'',window.location.pathname)}} lang={lang} setLang={setLang} initialMode={authMode} initialToken={authToken}/>:<PublicHome onLogin={()=>{setAuthMode('login');setShowLogin(true)}} lang={lang} setLang={setLang}/>;
   const admin=['super_admin','admin','department_admin'].includes(user.role);
   return <div className={`app ${mobileMenu?'mobile-menu-open':''}`}><button className={`mobile-drawer-backdrop ${mobileMenu?'show':''}`} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'} onClick={()=>setMobileMenu(false)}></button><aside className={`side ${mobileMenu?'mobile-open':''}`}>
-    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v16.3.8.1 House Points Fix':'স্বাধীন প্ল্যাটফর্ম · v16.3.8.1 House Points Fix'}</small></div><button className="mobile-drawer-close" onClick={()=>setMobileMenu(false)} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'}><X size={19}/></button></div>
+    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v16.3.9 Auto House Points':'স্বাধীন প্ল্যাটফর্ম · v16.3.9 Auto House Points'}</small></div><button className="mobile-drawer-close" onClick={()=>setMobileMenu(false)} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'}><X size={19}/></button></div>
     <nav>
       <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}><LayoutDashboard size={18}/>{lang==='en'?'My Dashboard':'আমার ড্যাশবোর্ড'}</button>
       <button className={page==='career'?'active':''} onClick={()=>setPage('career')}><BookUser size={18}/>{lang==='en'?'My Career':'আমার চাকরি'}</button>

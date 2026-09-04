@@ -1,0 +1,37 @@
+
+/* v16.3.9 — Automatic House Allocation Points */
+.house-auto-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:2px 0 15px}
+.house-auto-form>label{display:grid;gap:7px;color:#53657f;font-size:11px;font-weight:800}
+.house-auto-form input,.house-auto-form select{width:100%;min-height:45px;padding:0 12px;border:1px solid #d8e2ee;border-radius:12px;background:#fff;color:#223f63;font:inherit;font-size:12px}
+.house-auto-form input:focus,.house-auto-form select:focus{outline:2px solid rgba(75,93,240,.12);border-color:#8b97eb}
+.house-date-help{display:flex;align-items:flex-start;gap:8px;margin-bottom:14px;padding:11px 12px;border:1px solid #f1dbad;border-radius:12px;background:#fffaf0;color:#765b2d;font-size:10.5px;line-height:1.55}
+.house-date-help svg{width:16px;flex:0 0 16px;margin-top:1px;color:#ad7826}
+
+.house-official-style{overflow:hidden;border:1px solid #d9e4f0;border-radius:17px;background:#fff}
+.house-detail-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;background:linear-gradient(135deg,#173c6d,#263c7a);color:#fff}
+.house-detail-head span{font-size:10px;font-weight:900;letter-spacing:.09em;color:#d5e2f7}
+.house-detail-head b{font-size:11px}
+.house-detail-row{display:grid;grid-template-columns:minmax(0,1fr) 170px;align-items:center;gap:15px;padding:11px 14px;border-bottom:1px solid #e8eef5}
+.house-detail-row:last-child{border-bottom:0}
+.house-detail-row>span{color:#52657f;font-size:11.5px;line-height:1.45}
+.house-detail-row>span small{color:#8b97aa;font-size:9.5px}
+.house-detail-row>b{text-align:right;color:#213e63;font-size:14px}
+.house-detail-row.strong{background:#f8fbff}
+.house-detail-row.strong>b{color:#3e5bd9}
+.house-detail-row.total{padding:14px;background:linear-gradient(135deg,#eff3ff,#f7f4ff)}
+.house-detail-row.total>span{font-size:12px;font-weight:900;color:#344b71}
+.house-detail-row.total>b{color:#5148da;font-size:22px}
+
+.house-example-check{display:flex;align-items:flex-start;gap:9px;margin-top:14px;padding:12px 13px;border:1px solid #cee7d8;border-radius:13px;background:#f4fbf7}
+.house-example-check>svg{width:17px;flex:0 0 17px;color:#2f8253}
+.house-example-check b{display:block;margin-bottom:3px;color:#2e6046;font-size:11px}
+.house-example-check p{margin:0;color:#657c70;font-size:10.5px;line-height:1.6}
+
+.points-summary-card .points-summary-icon:has(svg){transition:.18s ease}
+
+@media(max-width:700px){
+  .house-auto-form{grid-template-columns:1fr}
+  .house-detail-row{grid-template-columns:minmax(0,1fr) 110px}
+  .house-detail-row>b{font-size:12px}
+  .house-detail-row.total>b{font-size:18px}
+}
