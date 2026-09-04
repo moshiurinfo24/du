@@ -337,7 +337,7 @@ function PublicHome({onLogin,lang,setLang}){
   };
   const navItems=[[copy.home,'top'],[copy.promotion,'public-calculator','promotion'],[copy.pay,'public-calculator','salary'],[copy.policies,'policies'],[copy.notices,'notices'],[copy.forms,'forms'],[copy.help,'help']];
   const goto=(id,tool)=>{setPublicMenu(false);if(tool)return openTool(tool);trackPublic('section_view',id);scrollTo(id);};
-  return <div id="top" data-public-version="v16.3.8" className={'public premium-public premium-home-v16-3 '+(en?'lang-en':'lang-bn')}>
+  return <div id="top" data-public-version="v16.3.8.1" className={'public premium-public premium-home-v16-3 '+(en?'lang-en':'lang-bn')}>
     <header className="public-nav luxury-nav premium-v16-nav">
       <div className="public-brand"><div className="brand-orb"><ShieldCheck size={19}/></div><div><b>{t.appName}</b><small>{t.appSub}</small></div></div>
       <button className="public-mobile-trigger" onClick={()=>setPublicMenu(v=>!v)} aria-label={en?(publicMenu?'Close menu':'Open menu'):(publicMenu?'মেনু বন্ধ করুন':'মেনু খুলুন')}><span></span><span></span><span></span></button>
@@ -1509,9 +1509,9 @@ function HouseAllocationPoints({lang='bn'}){
 
   const groups=[
     {id:'third_general',icon:Users,bn:'৩য় শ্রেণির সাধারণ কর্মচারী',en:'3rd Class General Employee',ready:true,subBn:'বর্তমানে সক্রিয়',subEn:'Available now'},
-    {id:'third_technical',icon:Wrench,bn:'৩য় শ্রেণির কারিগরি কর্মচারী',en:'3rd Class Technical Employee',ready:false,subBn:'নীতিমালা যাচাই ও সংযোজনাধীন',subEn:'Rules under verification'},
+    {id:'third_technical',icon:Settings,bn:'৩য় শ্রেণির কারিগরি কর্মচারী',en:'3rd Class Technical Employee',ready:false,subBn:'নীতিমালা যাচাই ও সংযোজনাধীন',subEn:'Rules under verification'},
     {id:'fourth_general',icon:Users,bn:'৪র্থ শ্রেণির সাধারণ কর্মচারী',en:'4th Class General Employee',ready:false,subBn:'নীতিমালা যাচাই ও সংযোজনাধীন',subEn:'Rules under verification'},
-    {id:'fourth_technical',icon:Wrench,bn:'৪র্থ শ্রেণির কারিগরি কর্মচারী',en:'4th Class Technical Employee',ready:false,subBn:'নীতিমালা যাচাই ও সংযোজনাধীন',subEn:'Rules under verification'},
+    {id:'fourth_technical',icon:Settings,bn:'৪র্থ শ্রেণির কারিগরি কর্মচারী',en:'4th Class Technical Employee',ready:false,subBn:'নীতিমালা যাচাই ও সংযোজনাধীন',subEn:'Rules under verification'},
     {id:'officer',icon:Briefcase,bn:'কর্মকর্তা',en:'Officer',ready:false,subBn:'নীতিমালা যাচাই ও সংযোজনাধীন',subEn:'Rules under verification'},
     {id:'teacher',icon:GraduationCap,bn:'শিক্ষক',en:'Teacher',ready:false,subBn:'নীতিমালা যাচাই ও সংযোজনাধীন',subEn:'Rules under verification'}
   ];
@@ -2162,7 +2162,7 @@ function App(){
   if(!user)return showLogin?<AuthPortal onLogin={u=>{setUser(u);window.history.replaceState({},'',window.location.pathname)}} onBack={()=>{setShowLogin(false);setAuthMode('login');setAuthToken('');window.history.replaceState({},'',window.location.pathname)}} lang={lang} setLang={setLang} initialMode={authMode} initialToken={authToken}/>:<PublicHome onLogin={()=>{setAuthMode('login');setShowLogin(true)}} lang={lang} setLang={setLang}/>;
   const admin=['super_admin','admin','department_admin'].includes(user.role);
   return <div className={`app ${mobileMenu?'mobile-menu-open':''}`}><button className={`mobile-drawer-backdrop ${mobileMenu?'show':''}`} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'} onClick={()=>setMobileMenu(false)}></button><aside className={`side ${mobileMenu?'mobile-open':''}`}>
-    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v16.3.8 House Points':'স্বাধীন প্ল্যাটফর্ম · v16.3.8 House Points'}</small></div><button className="mobile-drawer-close" onClick={()=>setMobileMenu(false)} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'}><X size={19}/></button></div>
+    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v16.3.8.1 House Points Fix':'স্বাধীন প্ল্যাটফর্ম · v16.3.8.1 House Points Fix'}</small></div><button className="mobile-drawer-close" onClick={()=>setMobileMenu(false)} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'}><X size={19}/></button></div>
     <nav>
       <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}><LayoutDashboard size={18}/>{lang==='en'?'My Dashboard':'আমার ড্যাশবোর্ড'}</button>
       <button className={page==='career'?'active':''} onClick={()=>setPage('career')}><BookUser size={18}/>{lang==='en'?'My Career':'আমার চাকরি'}</button>
