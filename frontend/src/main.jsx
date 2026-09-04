@@ -26,6 +26,7 @@ import './mobile-menu-hotfix-v16-3-1.css';
 import './system-control-v16-3-3.css';
 import './super-admin-user-control-v16-3-5.css';
 import './points-calculator-v16-3-6.css';
+import './promotion-forecast-v16-3-7.css';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import {
   PAY2015,PAY2026,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
@@ -335,7 +336,7 @@ function PublicHome({onLogin,lang,setLang}){
   };
   const navItems=[[copy.home,'top'],[copy.promotion,'public-calculator','promotion'],[copy.pay,'public-calculator','salary'],[copy.policies,'policies'],[copy.notices,'notices'],[copy.forms,'forms'],[copy.help,'help']];
   const goto=(id,tool)=>{setPublicMenu(false);if(tool)return openTool(tool);trackPublic('section_view',id);scrollTo(id);};
-  return <div id="top" data-public-version="v16.3.6" className={'public premium-public premium-home-v16-3 '+(en?'lang-en':'lang-bn')}>
+  return <div id="top" data-public-version="v16.3.7" className={'public premium-public premium-home-v16-3 '+(en?'lang-en':'lang-bn')}>
     <header className="public-nav luxury-nav premium-v16-nav">
       <div className="public-brand"><div className="brand-orb"><ShieldCheck size={19}/></div><div><b>{t.appName}</b><small>{t.appSub}</small></div></div>
       <button className="public-mobile-trigger" onClick={()=>setPublicMenu(v=>!v)} aria-label={en?(publicMenu?'Close menu':'Open menu'):(publicMenu?'মেনু বন্ধ করুন':'মেনু খুলুন')}><span></span><span></span><span></span></button>
@@ -714,8 +715,11 @@ function PromotionCenter({lang='bn'}){
     if(current>calcDate)return setResult({error:en?'The current post joining date cannot be later than today.':'বর্তমান পদে যোগদানের তারিখ আজকের তারিখের পরে হতে পারে না।',input:next});
     const req=rule.years?.[next.edu]??4, eligible=addYears(next.currentDate,req), elapsed=diffYMD(next.currentDate,asOf), remaining=eligible>calcDate?diffYMD(calcDate,eligible):{y:0,m:0,d:0};
     const exp=serviceExperiencePoints({currentPostStart:next.currentDate,firstJoin:next.firstJoinDate,asOf});
-    const prelim=calcDate>=eligible&&next.computer==='yes'&&next.acr==='yes'; const cycle=annualPromotionCycle(eligible); const roadmap=futureRoadmap(next.grade,next.currentDate,next.edu,6);
-    setResult({rule,req,eligible,elapsed,remaining,exp,points:exp.valid?exp.points:0,prelim,cycle,roadmap,input:next});
+    const prelim=calcDate>=eligible&&next.computer==='yes'&&next.acr==='yes';
+    const cycle=annualPromotionCycle(eligible);
+    const roadmap=futureRoadmap(next.grade,next.currentDate,next.edu,6);
+    const projectedExp=serviceExperiencePoints({currentPostStart:next.currentDate,firstJoin:next.firstJoinDate,asOf:eligible});
+    setResult({rule,req,eligible,elapsed,remaining,exp,points:exp.valid?exp.points:0,projectedExp,prelim,cycle,roadmap,input:next});
   }
   const eduOptions=en?[['masters','Masters'],['bachelor',"Bachelor's"],['hsc','HSC'],['diploma','Diploma'],['bsceng','BSc Engineering'],['mbbs','MBBS']]:[['masters','মাস্টার্স'],['bachelor','স্নাতক'],['hsc','এইচএসসি'],['diploma','ডিপ্লোমা'],['bsceng','বিএসসি ইঞ্জিনিয়ারিং'],['mbbs','এমবিবিএস']];
   return <div>
@@ -731,17 +735,86 @@ function PromotionCenter({lang='bn'}){
     {result&&<PromotionResult r={result} lang={lang}/>} </div>
 }
 function PromotionResult({r,lang='bn'}){
-  const en=lang==='en',[preview,setPreview]=useState(false); if(r.error)return <section className="result-panel warn"><h3>{en?'Unable to calculate':'হিসাব করা যায়নি'}</h3><p>{r.error}</p></section>;
+  const en=lang==='en',[preview,setPreview]=useState(false);
+  if(r.error)return <section className="result-panel warn"><h3>{en?'Unable to calculate':'হিসাব করা যায়নি'}</h3><p>{r.error}</p></section>;
   const report=promotionReportHtml(r,lang),filename=`promotion-report-${Date.now()}.pdf`;
   if(r.stop)return <div className="result-stack"><section className="result-panel warn"><h3>{r.rule.target}</h3><p>{en?'Reference':'রেফারেন্স'}: {r.rule.ref||r.rule.page||'—'}</p></section><button className="primary wide" onClick={()=>setPreview(true)}><FileText size={17}/> {en?'A4 PDF Preview':'বিস্তারিত A4 PDF প্রিভিউ'}</button>{preview&&<PdfPreviewModal html={report} filename={filename} onClose={()=>setPreview(false)} lang={lang}/>}</div>;
-  const e=r.exp||{}; const dur=x=>en?`${x.y} years ${x.m} months ${x.d} days`:durationBn(x);
-  return <div className="result-stack"><section className={`result-panel ${r.prelim?'ok':'warn'}`}><small>{en?'Next promotion level':'সম্ভাব্য পরবর্তী পদ/ধাপ'}</small><h3>{r.rule.target} · {en?'Grade':'গ্রেড'} {r.rule.targetGrade}</h3><p>{en?'Required service based on education':'শিক্ষাগত যোগ্যতা অনুযায়ী প্রয়োজনীয় চাকরিকাল'}: <b>{numLang(r.req,lang,0)} {en?'years':'বছর'}</b></p></section>
-    <section className="stats-grid"><Stat label={en?'Eligibility date':'যোগ্যতার তারিখ'} value={fmtDateLang(r.eligible,lang)} icon={CalendarDays}/><Stat label={en?'Current post service':'বর্তমান পদে চাকরি'} value={dur(r.elapsed)} icon={Clock3}/><Stat label={en?'Remaining time':'আর কত সময় লাগবে'} value={(r.remaining.y||r.remaining.m||r.remaining.d)?dur(r.remaining):(en?'Completed':'সময় পূর্ণ')} icon={Activity}/><Stat label={en?'Total service points':'মোট সার্ভিস পয়েন্ট'} value={numLang(r.points,lang)} icon={TrendingUp}/></section>
-    <section className="breakdown-card"><h3>{en?'Service point breakdown':'সার্ভিস পয়েন্টের বিস্তারিত'}</h3><div className="money-row"><span>{en?'Current post':'বর্তমান পদ'}: {numLang(e.currentYears||0,lang)} {en?'years × 1':'বছর × ১'}</span><b>{numLang(e.currentPoints||0,lang)}</b></div><div className="money-row"><span>{en?'Previous total service (auto)':'পূর্ববর্তী মোট চাকরিকাল (অটো)'}: {numLang(e.priorServiceYears||0,lang)} {en?'years ÷ 3':'বছর ÷ ৩'}</span><b>{numLang(e.priorServicePoints||0,lang)}</b></div><div className="money-row"><span>{en?'Education rule':'শিক্ষাগত যোগ্যতার নিয়ম'}</span><b>{en?`Requires ${r.req} years for this grade; no separate point is added.`:`এই গ্রেডে ${r.req} বছর প্রয়োজন; আলাদা পয়েন্ট যোগ হয় না।`}</b></div></section>
-    <section className="cycle-card"><h3>{en?'One-year promotion process':'১ বছরের পদোন্নতি প্রক্রিয়া'}</h3><div className="cycle-flow"><div><small>{en?'Eligible':'যোগ্যতা পূর্ণ'}</small><b>{fmtDateLang(r.eligible,lang)}</b></div><span>→</span><div><small>{en?'Application/circular deadline':'দরখাস্ত আহ্বানের সময়সীমা'}</small><b>{fmtDateLang(r.cycle.circularDeadline,lang)}</b></div><span>→</span><div><small>{en?'Projected final promotion':'সম্ভাব্য চূড়ান্ত পদোন্নতি'}</small><b>{fmtDateLang(r.cycle.completionDeadline,lang)}</b></div></div><p>{en?'The application, scrutiny and approval process is calculated as one full year after eligibility. The displayed date is projected, not guaranteed.':'যোগ্যতা অর্জনের পর আবেদন, যাচাই-বাছাই ও অনুমোদনসহ ১ পূর্ণ বছর ধরে সম্ভাব্য চূড়ান্ত পদোন্নতির তারিখ হিসাব করা হয়েছে। প্রদর্শিত তারিখটি সম্ভাব্য, নিশ্চিত নয়।'}</p></section>
-    <section className="roadmap-card"><h3>{en?'Future promotion roadmap':'পরবর্তী পদোন্নতির সম্ভাব্য রোডম্যাপ'}</h3>{r.roadmap.map((x,i)=>x.stop?<div className="roadmap-row stop" key={i}><b>{en?'After grade':'গ্রেড'} {x.fromGrade}</b><span>{x.label}</span></div>:<div className="roadmap-row" key={i}><div><b>{x.fromGrade} → {x.toGrade} · {x.title}</b><small>{x.years} {en?'years':'বছর'}</small></div><div><b>{fmtDateLang(x.completionDeadline,lang)}</b><small>{en?'Projected final promotion':'সম্ভাব্য চূড়ান্ত পদোন্নতি'}</small></div></div>)}</section>
-    <button className="primary wide" onClick={()=>setPreview(true)}><FileText size={17}/> {en?'A4 PDF Preview':'বিস্তারিত A4 PDF প্রিভিউ'}</button>{preview&&<PdfPreviewModal html={report} filename={filename} onClose={()=>setPreview(false)} lang={lang}/>} </div>
+
+  const e=r.exp||{}, pe=r.projectedExp||{};
+  const dur=x=>en?`${x.y} years ${x.m} months ${x.d} days`:durationBn(x);
+  const hasRemaining=!!(r.remaining.y||r.remaining.m||r.remaining.d);
+  const eligibleNow=!hasRemaining;
+  const projectedPoints=pe.valid?Number(pe.points||0):null;
+  const nextTwo=(r.roadmap||[]).filter(x=>!x.stop).slice(0,2);
+
+  return <div className="result-stack promotion-forecast">
+    <section className={`forecast-hero ${r.prelim?'ready':'waiting'}`}>
+      <div className="forecast-main">
+        <span>{en?'NEXT PROMOTION FORECAST':'পরবর্তী পদোন্নতি পূর্বাভাস'}</span>
+        <h3>{r.rule.target}</h3>
+        <p>{en?'Target grade':'লক্ষ্য গ্রেড'}: <b>{r.rule.targetGrade}</b> · {en?'Required service':'প্রয়োজনীয় চাকরিকাল'}: <b>{numLang(r.req,lang,0)} {en?'years':'বছর'}</b></p>
+      </div>
+      <div className="forecast-status">
+        <ShieldCheck/>
+        <div><small>{en?'Current status':'বর্তমান অবস্থা'}</small><b>{r.prelim?(en?'Preliminarily eligible':'প্রাথমিকভাবে যোগ্য'):(eligibleNow?(en?'Service completed; conditions pending':'চাকরিকাল পূর্ণ; শর্ত যাচাই বাকি'):(en?'Waiting for eligibility':'যোগ্যতার অপেক্ষায়'))}</b></div>
+      </div>
+    </section>
+
+    <section className="forecast-kpi-grid">
+      <article><div className="fk-icon"><CalendarDays/></div><div><small>{en?'Eligibility date':'যোগ্যতার তারিখ'}</small><b>{fmtDateLang(r.eligible,lang)}</b><span>{en?'Earliest rule-based eligibility':'নীতিমালাভিত্তিক সর্বপ্রথম যোগ্যতার সময়'}</span></div></article>
+      <article><div className="fk-icon"><Clock3/></div><div><small>{en?'More service required':'আরও চাকরি প্রয়োজন'}</small><b>{hasRemaining?dur(r.remaining):(en?'Completed':'সময় পূর্ণ')}</b><span>{en?'From today':'আজকের তারিখ থেকে'}</span></div></article>
+      <article><div className="fk-icon"><TrendingUp/></div><div><small>{en?'Current service points':'বর্তমান সার্ভিস পয়েন্ট'}</small><b>{numLang(r.points,lang)}</b><span>{en?'Calculated under the existing service-point rule':'বিদ্যমান সার্ভিস-পয়েন্ট নিয়ম অনুযায়ী'}</span></div></article>
+      <article><div className="fk-icon"><Award/></div><div><small>{en?'Projected points at eligibility':'যোগ্যতার সময় সম্ভাব্য সার্ভিস পয়েন্ট'}</small><b>{projectedPoints===null?'—':numLang(projectedPoints,lang)}</b><span>{en?'Projection, not a separate minimum-point requirement':'এটি পূর্বাভাস; আলাদা ন্যূনতম পয়েন্ট শর্ত নয়'}</span></div></article>
+    </section>
+
+    <section className="promotion-window-card">
+      <div className="promotion-window-head"><div><span>{en?'FORECAST TIMELINE':'সম্ভাব্য সময়রেখা'}</span><h3>{en?'From eligibility to possible promotion':'যোগ্যতা থেকে সম্ভাব্য পদোন্নতি'}</h3></div><div className="projection-badge">{en?'Projected':'সম্ভাব্য'}</div></div>
+      <div className="promotion-timeline">
+        <div className="pt-step done"><i><CheckCircle2/></i><small>{en?'Today':'আজ'}</small><b>{fmtDateLang(r.input?.calcDate||todayLocalIso(),lang)}</b></div>
+        <span className="pt-line"/>
+        <div className={`pt-step ${eligibleNow?'done':'next'}`}><i><CalendarCheck/></i><small>{en?'Eligibility completed':'যোগ্যতা পূর্ণ'}</small><b>{fmtDateLang(r.eligible,lang)}</b></div>
+        <span className="pt-line"/>
+        <div className="pt-step future"><i><FileText/></i><small>{en?'Possible application period':'সম্ভাব্য আবেদন সময়'}</small><b>{en?'From eligibility onward':'যোগ্যতার পর থেকে'}</b><em>{en?'Subject to publication of circular/notice':'বিজ্ঞপ্তি/দরখাস্ত আহ্বান সাপেক্ষে'}</em></div>
+        <span className="pt-line"/>
+        <div className="pt-step future"><i><BadgeCheck/></i><small>{en?'Projected completion':'সম্ভাব্য চূড়ান্ত পদোন্নতি'}</small><b>{fmtDateLang(r.cycle.completionDeadline,lang)}</b><em>{en?'One-year process projection':'১ বছরের প্রক্রিয়া ধরে পূর্বাভাস'}</em></div>
+      </div>
+      <div className="forecast-disclaimer"><AlertTriangle/><p>{en?'The system can calculate the rule-based eligibility date. The actual circular/application date and final promotion date depend on the relevant authority, vacancy, scrutiny and approval. Therefore these dates are projections, not guarantees.':'সিস্টেম নীতিমালাভিত্তিক যোগ্যতার তারিখ নির্ভুলভাবে হিসাব করতে পারে। কিন্তু প্রকৃত দরখাস্ত/বিজ্ঞপ্তির তারিখ ও চূড়ান্ত পদোন্নতির তারিখ সংশ্লিষ্ট কর্তৃপক্ষ, শূন্যপদ, যাচাই-বাছাই ও অনুমোদনের ওপর নির্ভরশীল। তাই এগুলো পূর্বাভাস, নিশ্চয়তা নয়।'}</p></div>
+    </section>
+
+    <section className="forecast-requirements">
+      <div className="fr-head"><h3>{en?'What is still required?':'এখনও কী কী প্রয়োজন?'}</h3><span>{en?'Live checklist':'বর্তমান চেকলিস্ট'}</span></div>
+      <div className="fr-grid">
+        <div className={eligibleNow?'ok':'wait'}><CheckCircle2/><div><b>{en?'Required service':'প্রয়োজনীয় চাকরিকাল'}</b><small>{eligibleNow?(en?'Completed':'পূরণ হয়েছে'):(en?`${dur(r.remaining)} remaining`:`আরও ${dur(r.remaining)} বাকি`)}</small></div></div>
+        <div className={r.input?.computer==='yes'?'ok':'wait'}><MonitorCheck/><div><b>{en?'Computer skill/training':'কম্পিউটার দক্ষতা/প্রশিক্ষণ'}</b><small>{r.input?.computer==='yes'?(en?'Available':'আছে'):(en?'Still required':'এখনও প্রয়োজন')}</small></div></div>
+        <div className={r.input?.acr==='yes'?'ok':'wait'}><ClipboardCheck/><div><b>{en?'ACR condition':'ACR শর্ত'}</b><small>{r.input?.acr==='yes'?(en?'Satisfactory':'সন্তোষজনক'):(en?'Not yet satisfied':'এখনও পূর্ণ নয়')}</small></div></div>
+      </div>
+    </section>
+
+    <section className="breakdown-card"><h3>{en?'Service point breakdown':'সার্ভিস পয়েন্টের বিস্তারিত'}</h3>
+      <div className="money-row"><span>{en?'Current post':'বর্তমান পদ'}: {numLang(e.currentYears||0,lang)} {en?'years × 1':'বছর × ১'}</span><b>{numLang(e.currentPoints||0,lang)}</b></div>
+      <div className="money-row"><span>{en?'Previous total service (auto)':'পূর্ববর্তী মোট চাকরিকাল (অটো)'}: {numLang(e.priorServiceYears||0,lang)} {en?'years ÷ 3':'বছর ÷ ৩'}</span><b>{numLang(e.priorServicePoints||0,lang)}</b></div>
+      <div className="money-row"><span>{en?'Education-based service requirement':'শিক্ষাগত যোগ্যতাভিত্তিক চাকরিকাল'}</span><b>{numLang(r.req,lang,0)} {en?'years required for this grade':'বছর প্রয়োজন'}</b></div>
+      <div className="point-context-note">{en?'Education Qualification Points are calculated separately in the Points Calculator and are not automatically treated as the minimum promotion-point threshold unless the applicable rule explicitly states so.':'শিক্ষাগত যোগ্যতার পয়েন্ট “পয়েন্ট ক্যালকুলেটর”-এ আলাদাভাবে হিসাব হয়। প্রযোজ্য নীতিমালায় স্পষ্ট ন্যূনতম মোট পয়েন্ট শর্ত না থাকলে এটিকে পদোন্নতির ন্যূনতম পয়েন্ট-সীমা হিসেবে স্বয়ংক্রিয়ভাবে ধরা হবে না।'}</div>
+    </section>
+
+    {nextTwo.length>0&&<section className="next-two-card">
+      <div className="next-two-head"><div><span>{en?'CAREER PROJECTION':'ক্যারিয়ার পূর্বাভাস'}</span><h3>{en?'Next two possible promotion steps':'পরবর্তী ২টি সম্ভাব্য পদোন্নতির ধাপ'}</h3></div></div>
+      <div className="next-two-grid">
+        {nextTwo.map((x,i)=><article key={i}>
+          <div className="step-no">{numLang(i+1,lang,0)}</div>
+          <div><small>{en?'Possible step':'সম্ভাব্য ধাপ'}</small><h4>{en?'Grade':'গ্রেড'} {x.fromGrade} → {x.toGrade}</h4><p>{x.title}</p></div>
+          <div className="step-date"><small>{en?'Projected final date':'সম্ভাব্য চূড়ান্ত সময়'}</small><b>{fmtDateLang(x.completionDeadline,lang)}</b></div>
+        </article>)}
+      </div>
+    </section>}
+
+    <section className="roadmap-card"><h3>{en?'Full future promotion roadmap':'সম্পূর্ণ সম্ভাব্য পদোন্নতি রোডম্যাপ'}</h3>{r.roadmap.map((x,i)=>x.stop?<div className="roadmap-row stop" key={i}><b>{en?'After grade':'গ্রেড'} {x.fromGrade}</b><span>{x.label}</span></div>:<div className="roadmap-row" key={i}><div><b>{x.fromGrade} → {x.toGrade} · {x.title}</b><small>{x.years} {en?'years':'বছর'}</small></div><div><b>{fmtDateLang(x.completionDeadline,lang)}</b><small>{en?'Projected final promotion':'সম্ভাব্য চূড়ান্ত পদোন্নতি'}</small></div></div>)}</section>
+
+    <button className="primary wide" onClick={()=>setPreview(true)}><FileText size={17}/> {en?'A4 PDF Preview':'বিস্তারিত A4 PDF প্রিভিউ'}</button>
+    {preview&&<PdfPreviewModal html={report} filename={filename} onClose={()=>setPreview(false)} lang={lang}/>}
+  </div>
 }
+
 function SalaryCalculator({lang='bn'}){
   const en=lang==='en',today=todayLocalIso();
   const [f,setF]=useState({grade:'13',currentStage:'0',date:today,housing:'no',children:'0',tiffin:'yes',zone:'dhaka',category:'class3',health:'149.34',group:'192.50',stamp:'10',association:'10',tax:'0',loan:'0',other:'0'});
@@ -2016,7 +2089,7 @@ function App(){
   if(!user)return showLogin?<AuthPortal onLogin={u=>{setUser(u);window.history.replaceState({},'',window.location.pathname)}} onBack={()=>{setShowLogin(false);setAuthMode('login');setAuthToken('');window.history.replaceState({},'',window.location.pathname)}} lang={lang} setLang={setLang} initialMode={authMode} initialToken={authToken}/>:<PublicHome onLogin={()=>{setAuthMode('login');setShowLogin(true)}} lang={lang} setLang={setLang}/>;
   const admin=['super_admin','admin','department_admin'].includes(user.role);
   return <div className={`app ${mobileMenu?'mobile-menu-open':''}`}><button className={`mobile-drawer-backdrop ${mobileMenu?'show':''}`} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'} onClick={()=>setMobileMenu(false)}></button><aside className={`side ${mobileMenu?'mobile-open':''}`}>
-    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v16.3.6 Points Center':'স্বাধীন প্ল্যাটফর্ম · v16.3.6 Points Center'}</small></div><button className="mobile-drawer-close" onClick={()=>setMobileMenu(false)} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'}><X size={19}/></button></div>
+    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v16.3.7 Promotion Forecast':'স্বাধীন প্ল্যাটফর্ম · v16.3.7 Promotion Forecast'}</small></div><button className="mobile-drawer-close" onClick={()=>setMobileMenu(false)} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'}><X size={19}/></button></div>
     <nav>
       <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}><LayoutDashboard size={18}/>{lang==='en'?'My Dashboard':'আমার ড্যাশবোর্ড'}</button>
       <button className={page==='career'?'active':''} onClick={()=>setPage('career')}><BookUser size={18}/>{lang==='en'?'My Career':'আমার চাকরি'}</button>
