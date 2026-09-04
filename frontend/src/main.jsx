@@ -25,6 +25,7 @@ import './public-home-v16-3.css';
 import './mobile-menu-hotfix-v16-3-1.css';
 import './system-control-v16-3-3.css';
 import './super-admin-user-control-v16-3-5.css';
+import './points-calculator-v16-3-6.css';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import {
   PAY2015,PAY2026,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
@@ -334,7 +335,7 @@ function PublicHome({onLogin,lang,setLang}){
   };
   const navItems=[[copy.home,'top'],[copy.promotion,'public-calculator','promotion'],[copy.pay,'public-calculator','salary'],[copy.policies,'policies'],[copy.notices,'notices'],[copy.forms,'forms'],[copy.help,'help']];
   const goto=(id,tool)=>{setPublicMenu(false);if(tool)return openTool(tool);trackPublic('section_view',id);scrollTo(id);};
-  return <div id="top" data-public-version="v16.3.5" className={'public premium-public premium-home-v16-3 '+(en?'lang-en':'lang-bn')}>
+  return <div id="top" data-public-version="v16.3.6" className={'public premium-public premium-home-v16-3 '+(en?'lang-en':'lang-bn')}>
     <header className="public-nav luxury-nav premium-v16-nav">
       <div className="public-brand"><div className="brand-orb"><ShieldCheck size={19}/></div><div><b>{t.appName}</b><small>{t.appSub}</small></div></div>
       <button className="public-mobile-trigger" onClick={()=>setPublicMenu(v=>!v)} aria-label={en?(publicMenu?'Close menu':'Open menu'):(publicMenu?'মেনু বন্ধ করুন':'মেনু খুলুন')}><span></span><span></span><span></span></button>
@@ -1264,6 +1265,173 @@ function SalaryHistory({lang='bn'}){
   </div>
 }
 
+
+const EDUCATION_POINT_RULES={
+  ssc:{bn:'এস.এস.সি',en:'SSC',points:{first:3,second:2,third:1}},
+  hsc:{bn:'এইচ.এস.সি',en:'HSC',points:{first:3,second:2,third:1}},
+  bachelor:{bn:'স্নাতক পাশ',en:"Bachelor's Pass",points:{first:3,second:2,third:1}},
+  honours:{bn:'স্নাতক সম্মান',en:"Bachelor's Honours",points:{first:4,second:3,third:2}},
+  masters:{bn:'স্নাতকোত্তর',en:"Master's",points:{first:3,second:2,third:1}}
+};
+
+function PointsCalculator({lang='bn'}){
+  const en=lang==='en';
+  const today=todayLocalIso();
+  const [tab,setTab]=useState('service');
+  const [service,setService]=useState({firstJoin:'',currentPostStart:'',asOf:today});
+  const [serviceResult,setServiceResult]=useState(null);
+  const [edu,setEdu]=useState({
+    ssc:'',hsc:'',graduationType:'honours',graduationResult:'',masters:''
+  });
+
+  useEffect(()=>{
+    api('/api/my-career').then(x=>{
+      const p=x.profile||{};
+      setService(v=>({
+        ...v,
+        firstJoin:p.first_joining_date||v.firstJoin,
+        currentPostStart:p.current_post_start_date||p.current_post_joining_date||v.currentPostStart,
+        asOf:todayLocalIso()
+      }));
+    }).catch(()=>{});
+  },[]);
+
+  const classOptions=[
+    ['',en?'Select result':'ফলাফল নির্বাচন করুন'],
+    ['first',en?'1st Division / Class':'১ম বিভাগ / শ্রেণি'],
+    ['second',en?'2nd Division / Class':'২য় বিভাগ / শ্রেণি'],
+    ['third',en?'3rd Division / Class / Equivalent':'৩য় বিভাগ / শ্রেণি / সমমান']
+  ];
+
+  function calcServicePoints(){
+    const asOf=todayLocalIso();
+    setService(v=>({...v,asOf}));
+    if(!service.firstJoin||!service.currentPostStart){
+      return setServiceResult({error:en?'Enter the first joining date and current-post joining date.':'প্রথম যোগদানের তারিখ ও বর্তমান পদে যোগদানের তারিখ দিন।'});
+    }
+    const first=new Date(service.firstJoin+'T00:00:00');
+    const current=new Date(service.currentPostStart+'T00:00:00');
+    const now=new Date(asOf+'T00:00:00');
+    if(Number.isNaN(first.getTime())||Number.isNaN(current.getTime())||first>current||current>now){
+      return setServiceResult({error:en?'Check the dates and enter them in chronological order.':'তারিখগুলো যাচাই করে সঠিক ক্রমে দিন।'});
+    }
+    const exp=serviceExperiencePoints({
+      currentPostStart:service.currentPostStart,
+      firstJoin:service.firstJoin,
+      asOf
+    });
+    if(!exp?.valid){
+      return setServiceResult({error:en?'Service points could not be calculated from these dates.':'এই তারিখগুলো থেকে সার্ভিস পয়েন্ট হিসাব করা যায়নি।'});
+    }
+    setServiceResult({...exp,asOf});
+  }
+
+  const eduRows=useMemo(()=>{
+    const rows=[];
+    const add=(key,result)=>{
+      if(!result)return;
+      const rule=EDUCATION_POINT_RULES[key];
+      rows.push({key,label:en?rule.en:rule.bn,result,points:rule.points[result]||0});
+    };
+    add('ssc',edu.ssc);
+    add('hsc',edu.hsc);
+    add(edu.graduationType==='bachelor'?'bachelor':'honours',edu.graduationResult);
+    add('masters',edu.masters);
+    return rows;
+  },[edu,lang]);
+
+  const educationTotal=eduRows.reduce((s,x)=>s+x.points,0);
+  const resultLabel=v=>en?({first:'1st Division / Class',second:'2nd Division / Class',third:'3rd Division / Class / Equivalent'}[v]||'—'):({first:'১ম বিভাগ / শ্রেণি',second:'২য় বিভাগ / শ্রেণি',third:'৩য় বিভাগ / শ্রেণি / সমমান'}[v]||'—');
+
+  const servicePoints=serviceResult&&!serviceResult.error?Number(serviceResult.points||0):null;
+
+  return <div className="points-center">
+    <section className="points-hero">
+      <div>
+        <span>{en?'POINTS CALCULATOR':'পয়েন্ট ক্যালকুলেটর'}</span>
+        <h2>{en?'All applicable points in one place':'সব প্রযোজ্য পয়েন্ট এক জায়গায়'}</h2>
+        <p>{en?'View service points, education-qualification points and house-allocation points from one organized center.':'সার্ভিস পয়েন্ট, শিক্ষাগত যোগ্যতার পয়েন্ট এবং বাসা বরাদ্দের পয়েন্ট একটি সাজানো কেন্দ্র থেকে দেখুন।'}</p>
+      </div>
+      <div className="points-policy-chip"><ShieldCheck size={16}/>{en?'Rule-based calculation':'নীতিমালাভিত্তিক হিসাব'}</div>
+    </section>
+
+    <section className="points-summary-grid">
+      <article className="points-summary-card">
+        <div className="points-summary-icon"><Briefcase/></div>
+        <div><small>{en?'Service Points':'সার্ভিস পয়েন্ট'}</small><b>{servicePoints===null?'—':numLang(servicePoints,lang)}</b><span>{en?'Current + previous service':'বর্তমান + পূর্ববর্তী চাকরিকাল'}</span></div>
+      </article>
+      <article className="points-summary-card">
+        <div className="points-summary-icon"><GraduationCap/></div>
+        <div><small>{en?'Education Points':'শিক্ষাগত যোগ্যতার পয়েন্ট'}</small><b>{numLang(educationTotal,lang,0)}</b><span>{en?'Based on selected qualifications':'নির্বাচিত যোগ্যতা ও ফলাফল অনুযায়ী'}</span></div>
+      </article>
+      <article className="points-summary-card pending">
+        <div className="points-summary-icon"><Home/></div>
+        <div><small>{en?'House Allocation Points':'বাসা বরাদ্দ পয়েন্ট'}</small><b>—</b><span>{en?'Rule will be added after verification':'নিয়ম যাচাইয়ের পর যোগ হবে'}</span></div>
+      </article>
+    </section>
+
+    <div className="points-tabs">
+      <button className={tab==='service'?'active':''} onClick={()=>setTab('service')}><Briefcase/>{en?'Service Points':'সার্ভিস পয়েন্ট'}</button>
+      <button className={tab==='education'?'active':''} onClick={()=>setTab('education')}><GraduationCap/>{en?'Education Points':'শিক্ষাগত যোগ্যতার পয়েন্ট'}</button>
+      <button className={tab==='house'?'active':''} onClick={()=>setTab('house')}><Home/>{en?'House Allocation Points':'বাসা বরাদ্দ পয়েন্ট'}</button>
+    </div>
+
+    {tab==='service'&&<section className="points-panel">
+      <div className="points-panel-head"><div className="points-panel-icon"><Briefcase/></div><div><h3>{en?'Service Points':'সার্ভিস পয়েন্ট'}</h3><p>{en?'Current post service and previous service are calculated separately under the existing service-point rule.':'বর্তমান পদে চাকরিকাল এবং পূর্ববর্তী চাকরিকাল বিদ্যমান সার্ভিস-পয়েন্ট নিয়ম অনুযায়ী আলাদাভাবে হিসাব করা হবে।'}</p></div></div>
+      <div className="form-grid points-form-grid">
+        <DMY label={en?'First joining date':'প্রথম যোগদানের তারিখ'} value={service.firstJoin} onChange={v=>setService(x=>({...x,firstJoin:v}))}/>
+        <DMY label={en?'Current post joining date':'বর্তমান পদে যোগদানের তারিখ'} value={service.currentPostStart} onChange={v=>setService(x=>({...x,currentPostStart:v}))}/>
+      </div>
+      <div className="notice"><b>{en?'Calculation date:':'হিসাবের তারিখ:'}</b> {fmtDateLang(today,lang)} — {en?'taken automatically.':'স্বয়ংক্রিয়ভাবে নেওয়া হয়েছে।'}</div>
+      <button className="primary points-calc-btn" onClick={calcServicePoints}><Calculator size={17}/>{en?'Calculate Service Points':'সার্ভিস পয়েন্ট হিসাব করুন'}</button>
+      {serviceResult?.error&&<div className="points-inline-error"><AlertTriangle size={16}/>{serviceResult.error}</div>}
+      {serviceResult&&!serviceResult.error&&<div className="points-result-grid">
+        <div><small>{en?'Current post points':'বর্তমান পদের পয়েন্ট'}</small><b>{numLang(serviceResult.currentPoints||0,lang)}</b></div>
+        <div><small>{en?'Previous service points':'পূর্ববর্তী চাকরিকালের পয়েন্ট'}</small><b>{numLang(serviceResult.priorServicePoints||0,lang)}</b></div>
+        <div className="strong"><small>{en?'Total service points':'মোট সার্ভিস পয়েন্ট'}</small><b>{numLang(serviceResult.points||0,lang)}</b></div>
+      </div>}
+      <div className="points-rule-note"><BookOpen size={17}/><div><b>{en?'Existing service-point rule':'বিদ্যমান সার্ভিস-পয়েন্ট নিয়ম'}</b><p>{en?'Current post: 1 year = 1 point. Previous service: every 3 years = 1 point. The older 1/5 rule is not applied after 31 December 2025.':'বর্তমান পদে প্রতি ১ বছর = ১ পয়েন্ট। পূর্ববর্তী চাকরিকালের প্রতি ৩ বছর = ১ পয়েন্ট। ৩১ ডিসেম্বর ২০২৫-এর পর পুরোনো ১/৫ নিয়ম প্রয়োগ করা হয় না।'}</p></div></div>
+    </section>}
+
+    {tab==='education'&&<section className="points-panel">
+      <div className="points-panel-head"><div className="points-panel-icon"><GraduationCap/></div><div><h3>{en?'Education Qualification Points':'শিক্ষাগত যোগ্যতার পয়েন্ট'}</h3><p>{en?'Select the result for each applicable examination. Points are calculated from the education-point table in the supplied earlier policy scan.':'প্রযোজ্য প্রতিটি পরীক্ষার ফলাফল নির্বাচন করুন। আপনার দেওয়া পুরোনো নীতিমালার শিক্ষাগত যোগ্যতার পয়েন্ট টেবিল অনুযায়ী পয়েন্ট হিসাব হবে।'}</p></div></div>
+
+      <div className="education-point-form">
+        <label>{en?'SSC result':'এস.এস.সি ফলাফল'}<select value={edu.ssc} onChange={e=>setEdu(x=>({...x,ssc:e.target.value}))}>{classOptions.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
+        <label>{en?'HSC result':'এইচ.এস.সি ফলাফল'}<select value={edu.hsc} onChange={e=>setEdu(x=>({...x,hsc:e.target.value}))}>{classOptions.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
+        <label>{en?'Graduation type':'স্নাতকের ধরন'}<select value={edu.graduationType} onChange={e=>setEdu(x=>({...x,graduationType:e.target.value,graduationResult:''}))}><option value="bachelor">{en?"Bachelor's Pass":'স্নাতক পাশ'}</option><option value="honours">{en?"Bachelor's Honours":'স্নাতক সম্মান'}</option></select></label>
+        <label>{en?'Graduation result':'স্নাতক ফলাফল'}<select value={edu.graduationResult} onChange={e=>setEdu(x=>({...x,graduationResult:e.target.value}))}>{classOptions.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
+        <label>{en?"Master's result (if applicable)":'স্নাতকোত্তর ফলাফল (প্রযোজ্য হলে)'}<select value={edu.masters} onChange={e=>setEdu(x=>({...x,masters:e.target.value}))}>{classOptions.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
+      </div>
+
+      <div className="education-table-wrap">
+        <table className="education-point-table">
+          <thead><tr><th>{en?'Qualification':'যোগ্যতা'}</th><th>{en?'Selected result':'নির্বাচিত ফলাফল'}</th><th>{en?'Points':'পয়েন্ট'}</th></tr></thead>
+          <tbody>
+            {eduRows.length?eduRows.map(r=><tr key={r.key}><td>{r.label}</td><td>{resultLabel(r.result)}</td><td><b>{numLang(r.points,lang,0)}</b></td></tr>):<tr><td colSpan="3" className="empty-row">{en?'Select results above to calculate education points.':'শিক্ষাগত পয়েন্ট দেখতে উপরে ফলাফল নির্বাচন করুন।'}</td></tr>}
+          </tbody>
+          <tfoot><tr><td colSpan="2">{en?'Total education points':'মোট শিক্ষাগত যোগ্যতার পয়েন্ট'}</td><td><b>{numLang(educationTotal,lang,0)}</b></td></tr></tfoot>
+        </table>
+      </div>
+
+      <div className="education-rule-grid">
+        {Object.entries(EDUCATION_POINT_RULES).map(([key,r])=><article key={key}><b>{en?r.en:r.bn}</b><span>{en?'1st':'১ম'}: {r.points.first} · {en?'2nd':'২য়'}: {r.points.second} · {en?'3rd':'৩য়'}: {r.points.third}</span></article>)}
+      </div>
+
+      <div className="points-rule-note caution"><AlertTriangle size={17}/><div><b>{en?'Advanced degrees':'উচ্চতর ডিগ্রি'}</b><p>{en?'No additional MPhil/PhD or other special-degree points are automated here yet because that part of the old scan requires a clearer rule confirmation. It can be added after verification.':'এম.ফিল/পিএইচডি বা অন্য বিশেষ উচ্চতর ডিগ্রির অতিরিক্ত পয়েন্ট এই সংস্করণে স্বয়ংক্রিয় করা হয়নি, কারণ পুরোনো স্ক্যানের ওই অংশটি আরও পরিষ্কারভাবে নিয়ম যাচাই করা প্রয়োজন। যাচাই হলে যোগ করা যাবে।'}</p></div></div>
+    </section>}
+
+    {tab==='house'&&<section className="points-panel house-points-coming">
+      <div className="house-coming-icon"><Home/></div>
+      <span>{en?'RULE PENDING':'নিয়ম অপেক্ষমাণ'}</span>
+      <h3>{en?'House Allocation Points':'বাসা বরাদ্দ পয়েন্ট'}</h3>
+      <p>{en?'The module is ready, but no formula has been added. Once you provide the applicable house-allocation point rules, they will be added here without inventing any value or condition.':'মডিউল প্রস্তুত রাখা হয়েছে, তবে কোনো সূত্র যোগ করা হয়নি। আপনি প্রযোজ্য বাসা বরাদ্দ পয়েন্টের নিয়ম দিলে কোনো মান বা শর্ত অনুমান না করে এখানেই যোগ করা হবে।'}</p>
+      <div className="house-rule-status"><ShieldCheck size={17}/>{en?'No dummy rule used':'কোনো ডামি নিয়ম ব্যবহার করা হয়নি'}</div>
+    </section>}
+  </div>
+}
+
+
 function CalculatorCenter({lang='bn',onPage}){
   const en=lang==='en';
   const [tool,setTool]=useState('service');
@@ -1341,6 +1509,7 @@ function CalculatorCenter({lang='bn',onPage}){
     <div className="calc-hub-grid">
       <button className="calc-hub-card promotion" onClick={()=>onPage?.('promotion')}><TrendingUp/><div><b>{en?'Promotion Calculator':'পদোন্নতি হিসাব'}</b><small>{en?'Verified promotion rules and roadmap':'যাচাইকৃত পদোন্নতি নীতিমালা ও রোডম্যাপ'}</small></div><ChevronRight/></button>
       <button className="calc-hub-card salary" onClick={()=>onPage?.('salary')}><WalletCards/><div><b>{en?'Pay Scale Calculator':'পে-স্কেল হিসাব'}</b><small>{en?'Fixation, gross, deductions and payslip':'ফিক্সেশন, মোট বেতন, কর্তন ও পে-স্লিপ'}</small></div><ChevronRight/></button>
+      <button className="calc-hub-card points" onClick={()=>onPage?.('points')}><Award/><div><b>{en?'Points Calculator':'পয়েন্ট ক্যালকুলেটর'}</b><small>{en?'Service, education and house-allocation points':'সার্ভিস, শিক্ষাগত যোগ্যতা ও বাসা বরাদ্দ পয়েন্ট'}</small></div><ChevronRight/></button>
     </div>
 
     {career.profile&&<section className="calc-personal-data-strip">
@@ -1847,7 +2016,7 @@ function App(){
   if(!user)return showLogin?<AuthPortal onLogin={u=>{setUser(u);window.history.replaceState({},'',window.location.pathname)}} onBack={()=>{setShowLogin(false);setAuthMode('login');setAuthToken('');window.history.replaceState({},'',window.location.pathname)}} lang={lang} setLang={setLang} initialMode={authMode} initialToken={authToken}/>:<PublicHome onLogin={()=>{setAuthMode('login');setShowLogin(true)}} lang={lang} setLang={setLang}/>;
   const admin=['super_admin','admin','department_admin'].includes(user.role);
   return <div className={`app ${mobileMenu?'mobile-menu-open':''}`}><button className={`mobile-drawer-backdrop ${mobileMenu?'show':''}`} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'} onClick={()=>setMobileMenu(false)}></button><aside className={`side ${mobileMenu?'mobile-open':''}`}>
-    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v16.3.5 Dual Recovery':'স্বাধীন প্ল্যাটফর্ম · v16.3.5 Dual Recovery'}</small></div><button className="mobile-drawer-close" onClick={()=>setMobileMenu(false)} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'}><X size={19}/></button></div>
+    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v16.3.6 Points Center':'স্বাধীন প্ল্যাটফর্ম · v16.3.6 Points Center'}</small></div><button className="mobile-drawer-close" onClick={()=>setMobileMenu(false)} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'}><X size={19}/></button></div>
     <nav>
       <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}><LayoutDashboard size={18}/>{lang==='en'?'My Dashboard':'আমার ড্যাশবোর্ড'}</button>
       <button className={page==='career'?'active':''} onClick={()=>setPage('career')}><BookUser size={18}/>{lang==='en'?'My Career':'আমার চাকরি'}</button>
@@ -1858,6 +2027,7 @@ function App(){
       <button className={page==='leave'?'active':''} onClick={()=>setPage('leave')}><CalendarDays size={18}/>{lang==='en'?'My Leave Record':'আমার ছুটির হিসাব'}</button>
       <button className={page==='calendar'?'active':''} onClick={()=>setPage('calendar')}><CalendarDays size={18}/>{lang==='en'?'My Calendar':'আমার ক্যালেন্ডার'}</button>
       <button className={page==='calculators'?'active':''} onClick={()=>setPage('calculators')}><Calculator size={18}/>{lang==='en'?'Calculator Center':'ক্যালকুলেটর সেন্টার'}</button>
+      <button className={page==='points'?'active':''} onClick={()=>setPage('points')}><Award size={18}/>{lang==='en'?'Points Calculator':'পয়েন্ট ক্যালকুলেটর'}</button>
       <button className={page==='library'?'active':''} onClick={()=>setPage('library')}><BookOpen size={18}/>{lang==='en'?'Knowledge Center':'নলেজ সেন্টার'}</button>
       <button className={page==='reports'?'active':''} onClick={()=>setPage('reports')}><FileText size={18}/>{lang==='en'?'My Reports':'আমার রিপোর্ট'}</button>
       <button className={page==='privacy'?'active':''} onClick={()=>setPage('privacy')}><ShieldCheck size={18}/>{lang==='en'?'My Data & Privacy':'আমার ডাটা ও গোপনীয়তা'}</button>
@@ -1875,6 +2045,7 @@ function App(){
       {page==='leave'&&<PersonalLeaveRecord lang={lang}/>} 
       {page==='calendar'&&<LoggedInOfficeCalendar lang={lang}/>} 
       {page==='calculators'&&<CalculatorCenter lang={lang} onPage={setPage}/>}
+      {page==='points'&&<PointsCalculator lang={lang}/>}
       {page==='admin-content'&&admin&&<NoticePolicyCenter lang={lang} canManage={true}/>}
       {page==='library'&&<KnowledgeCenter lang={lang}/>}
       {page==='reports'&&<PersonalCareerReports lang={lang}/>}

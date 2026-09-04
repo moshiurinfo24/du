@@ -1,0 +1,104 @@
+
+/* v16.3.6 — Unified Points Calculator */
+.points-center{display:grid;gap:18px;min-width:0}
+.points-hero{
+  position:relative;overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:22px;
+  padding:26px 28px;border-radius:25px;color:#fff;
+  background:radial-gradient(circle at 88% 8%,rgba(147,110,255,.32),transparent 34%),linear-gradient(120deg,#102d59 0%,#19457d 58%,#563a9d 100%);
+  box-shadow:0 18px 42px rgba(24,48,88,.14)
+}
+.points-hero:after{content:"";position:absolute;right:-70px;bottom:-150px;width:260px;height:260px;border-radius:50%;border:1px solid rgba(255,255,255,.13);box-shadow:0 0 0 34px rgba(255,255,255,.025),0 0 0 68px rgba(255,255,255,.018)}
+.points-hero>div:first-child{position:relative;z-index:1;max-width:760px}
+.points-hero span{display:block;margin-bottom:7px;color:#c4d6f7;font-size:12px;font-weight:900;letter-spacing:.08em}
+.points-hero h2{margin:0;color:#fff;font-size:clamp(27px,2.2vw,39px);line-height:1.15}
+.points-hero p{margin:9px 0 0;color:#dbe6f8;line-height:1.7;font-size:14px}
+.points-policy-chip{position:relative;z-index:1;display:flex!important;align-items:center;gap:8px;flex:0 0 auto;padding:11px 15px;border:1px solid rgba(255,255,255,.2);border-radius:999px;background:rgba(255,255,255,.09);font-size:12px;font-weight:800;color:#fff!important;letter-spacing:0!important;margin:0!important}
+
+.points-summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+.points-summary-card{min-width:0;display:flex;align-items:center;gap:14px;padding:18px;border:1px solid #dce6f3;border-radius:20px;background:#fff;box-shadow:0 9px 25px rgba(31,56,94,.055)}
+.points-summary-icon{width:48px;height:48px;flex:0 0 48px;display:grid;place-items:center;border-radius:15px;background:#eef3ff;color:#475ef1}
+.points-summary-icon svg{width:22px;height:22px}
+.points-summary-card>div:last-child{min-width:0;display:grid;gap:3px}
+.points-summary-card small{color:#7b89a1;font-size:12px}
+.points-summary-card b{color:#15325d;font-size:27px;line-height:1}
+.points-summary-card span{color:#8995a9;font-size:11px;line-height:1.4}
+.points-summary-card.pending .points-summary-icon{background:#fff5df;color:#b67a17}
+
+.points-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.points-tabs button{
+  min-width:0;min-height:54px;display:flex;align-items:center;justify-content:center;gap:9px;
+  padding:10px 14px;border:1px solid #d9e4f1;border-radius:15px;background:#fff;color:#294469;
+  font:inherit;font-size:13px;font-weight:850;cursor:pointer;transition:.18s ease
+}
+.points-tabs button svg{width:18px;height:18px}
+.points-tabs button:hover{border-color:#b9c9e3;transform:translateY(-1px)}
+.points-tabs button.active{border-color:transparent;background:linear-gradient(135deg,#485df4,#7147dc);color:#fff;box-shadow:0 10px 24px rgba(75,73,221,.2)}
+
+.points-panel{padding:22px;border:1px solid #dce6f3;border-radius:22px;background:#fff;box-shadow:0 11px 30px rgba(30,55,94,.05)}
+.points-panel-head{display:flex;align-items:flex-start;gap:13px;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid #edf2f7}
+.points-panel-icon{width:45px;height:45px;flex:0 0 45px;display:grid;place-items:center;border-radius:14px;background:#eef3ff;color:#4b61ef}
+.points-panel-icon svg{width:21px}
+.points-panel-head h3{margin:0 0 5px;color:#16345e;font-size:20px}
+.points-panel-head p{margin:0;color:#71809a;font-size:13px;line-height:1.65}
+.points-form-grid{margin-bottom:12px}
+.points-calc-btn{margin-top:12px;display:inline-flex!important;align-items:center;justify-content:center;gap:8px}
+.points-inline-error{display:flex;align-items:center;gap:8px;margin-top:13px;padding:11px 13px;border:1px solid #ffd3cd;border-radius:13px;background:#fff6f4;color:#a84038;font-size:13px}
+
+.points-result-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:15px}
+.points-result-grid>div{display:grid;gap:5px;padding:15px;border:1px solid #e0e8f3;border-radius:16px;background:#fbfdff}
+.points-result-grid small{color:#7a889f;font-size:11px}
+.points-result-grid b{font-size:24px;color:#17345d}
+.points-result-grid .strong{border-color:#cbd1ff;background:#f4f4ff}
+.points-result-grid .strong b{color:#5249d9}
+
+.points-rule-note{display:flex;align-items:flex-start;gap:10px;margin-top:16px;padding:13px 14px;border:1px solid #d9e7f6;border-radius:14px;background:#f7fbff;color:#49617f}
+.points-rule-note>svg{flex:0 0 auto;margin-top:2px;color:#4e65ec}
+.points-rule-note b{display:block;margin-bottom:3px;color:#263f63;font-size:12px}
+.points-rule-note p{margin:0;font-size:11.5px;line-height:1.6}
+.points-rule-note.caution{border-color:#f2dfb8;background:#fffaf0}
+.points-rule-note.caution>svg{color:#b48124}
+
+.education-point-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin-bottom:17px}
+.education-point-form label{display:grid;gap:7px;color:#51627c;font-size:12px;font-weight:750}
+.education-point-form select{width:100%;min-height:46px;padding:0 12px;border:1px solid #d9e3ef;border-radius:12px;background:#fff;color:#233d61;font:inherit;font-size:13px}
+.education-point-form select:focus{outline:2px solid rgba(72,93,244,.13);border-color:#8091ee}
+
+.education-table-wrap{overflow-x:auto;border:1px solid #dce6f2;border-radius:16px}
+.education-point-table{width:100%;border-collapse:collapse;min-width:560px;background:#fff}
+.education-point-table th,.education-point-table td{padding:12px 14px;border-bottom:1px solid #e9eef5;text-align:left;font-size:12.5px;color:#405573}
+.education-point-table th{background:#f6f9fd;color:#61708a;font-size:11.5px;text-transform:none}
+.education-point-table td:last-child,.education-point-table th:last-child{text-align:right}
+.education-point-table tfoot td{border-bottom:0;background:#f6f5ff;color:#393d70;font-weight:800}
+.education-point-table .empty-row{text-align:center!important;color:#8895a8;padding:22px}
+
+.education-rule-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:14px}
+.education-rule-grid article{display:grid;gap:4px;padding:11px;border:1px solid #e0e7f1;border-radius:13px;background:#fbfdff}
+.education-rule-grid b{font-size:11.5px;color:#314a6d}
+.education-rule-grid span{font-size:10.5px;color:#7c8ba0;line-height:1.45}
+
+.house-points-coming{text-align:center;padding:40px 24px}
+.house-coming-icon{width:66px;height:66px;margin:0 auto 13px;display:grid;place-items:center;border-radius:20px;background:#fff4da;color:#b77c17}
+.house-coming-icon svg{width:29px;height:29px}
+.house-points-coming>span{display:block;color:#a97826;font-size:11px;font-weight:900;letter-spacing:.08em}
+.house-points-coming h3{margin:7px 0;color:#203c63;font-size:24px}
+.house-points-coming p{max-width:720px;margin:0 auto;color:#738199;font-size:13px;line-height:1.7}
+.house-rule-status{display:inline-flex;align-items:center;gap:8px;margin-top:17px;padding:9px 13px;border-radius:999px;background:#edf9f2;color:#28744b;font-size:11.5px;font-weight:800}
+
+.calc-hub-card.points svg:first-child{color:#684bd8}
+
+@media(max-width:900px){
+  .points-summary-grid{grid-template-columns:1fr}
+  .points-result-grid{grid-template-columns:1fr}
+  .education-rule-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:700px){
+  .points-center{gap:13px}
+  .points-hero{display:grid;padding:21px 17px;border-radius:21px}
+  .points-hero h2{font-size:26px}
+  .points-policy-chip{justify-self:start}
+  .points-tabs{grid-template-columns:1fr}
+  .points-tabs button{justify-content:flex-start;padding-left:15px}
+  .points-panel{padding:16px;border-radius:19px}
+  .education-point-form{grid-template-columns:1fr}
+  .education-rule-grid{grid-template-columns:1fr}
+}
