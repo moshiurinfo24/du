@@ -291,6 +291,17 @@ function AuthPortal({onLogin,onBack,lang,setLang,initialMode='login'}) {
 
       <form onSubmit={submit} className="smart-reg-form">
         {step===0&&<section className="reg-policy">
+          <div className="reg-signup-benefits">
+            <div className="reg-signup-benefits-head"><Sparkles/><div><h3>{en?'What you get after creating an account':'অ্যাকাউন্ট তৈরি করলে যা পাবেন'}</h3><p>{en?'Your own dashboard with career, promotion, points, salary, leave, calendar and report tools.':'নিজের Dashboard-এ Career, Promotion, Points, Salary, Leave, Calendar ও Report সুবিধা পাবেন।'}</p></div></div>
+            <div className="reg-signup-mini-grid">
+              <span><LayoutDashboard/>{en?'Dashboard':'ড্যাশবোর্ড'}</span>
+              <span><TrendingUp/>{en?'Promotion':'পদোন্নতি'}</span>
+              <span><Award/>{en?'Points':'পয়েন্ট'}</span>
+              <span><WalletCards/>{en?'Salary':'বেতন'}</span>
+              <span><CalendarDays/>{en?'Leave & Calendar':'ছুটি ও ক্যালেন্ডার'}</span>
+              <span><FileText/>{en?'Reports':'রিপোর্ট'}</span>
+            </div>
+          </div>
           <div className="reg-policy-hero"><ShieldCheck/><div><h2>{en?'Know before you sign up':'সাইন আপ করার আগে জেনে নিন'}</h2><p>{en?'Create an account only after reading and understanding the following conditions.':'নিচের বিষয়গুলো সম্পূর্ণ পড়ে ও বুঝে তারপর অ্যাকাউন্ট তৈরি করুন।'}</p></div></div>
           <div className="reg-warning"><AlertTriangle/><div><b>{en?'Never enter banking secrets here':'কোনো গোপন ব্যাংকিং তথ্য এখানে দেবেন না'}</b><p>{en?'This platform does not ask for bank account numbers, card details, ATM PIN, OTP, mobile-banking PIN, internet-banking password or financial transaction credentials.':'এই প্ল্যাটফর্মে ব্যাংক অ্যাকাউন্ট নম্বর, কার্ডের তথ্য, ATM PIN, OTP, বিকাশ/নগদ/রকেট PIN, ইন্টারনেট ব্যাংকিং পাসওয়ার্ড বা আর্থিক লেনদেনের গোপন তথ্য চাওয়া হয় না।'}</p></div></div>
           <div className="reg-policy-list">
@@ -502,6 +513,51 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
       <div className="ph-section-head"><div><span>{en?'QUICK SERVICES':'দ্রুত সেবা'}</span><h2>{en?'Everything important, clearly organized':'গুরুত্বপূর্ণ সব সেবা, সুন্দরভাবে সাজানো'}</h2></div><p>{en?'Sign in once and move directly to the service you need.':'সাইন ইন করে প্রয়োজনীয় সেবায় সরাসরি প্রবেশ করুন।'}</p></div>
       <div className="ph-service-grid">
         {services.map(([Icon,title,sub,page],i)=><button key={page+title} onClick={onLogin} className={`ph-service-card c${i+1}`}><span><Icon/></span><div><b>{title}</b><small>{sub}</small></div><ChevronRight/></button>)}
+      </div>
+    </section>
+
+
+    <section className="ph-section ph-login-benefits">
+      <div className="ph-section-head">
+        <div><span>{en?'AFTER SIGN IN':'লগইন করলে যা পাবেন'}</span><h2>{en?'Your own personal career & service workspace':'নিজের ব্যক্তিগত ক্যারিয়ার ও সেবা ব্যবস্থাপনা'}</h2></div>
+        <p>{en?'Sign in once to access your saved profile, automatic calculations, personal records and career tools from one dashboard.':'একবার লগইন করলেই নিজের সংরক্ষিত তথ্য, স্বয়ংক্রিয় হিসাব, ব্যক্তিগত রেকর্ড ও ক্যারিয়ার টুল—সব এক ড্যাশবোর্ডে পাবেন।'}</p>
+      </div>
+      <div className="ph-benefits-wrap">
+        <div className="ph-benefit-visual">
+          <div className="benefit-browser">
+            <div className="benefit-browser-top"><i></i><i></i><i></i><span></span></div>
+            <div className="benefit-browser-body">
+              <aside>{Array.from({length:7},(_,i)=><i key={i}></i>)}</aside>
+              <main>
+                <div className="benefit-profile"><span><UserRound/></span><div><b></b><small></small></div></div>
+                <div className="benefit-shortcuts">{Array.from({length:8},(_,i)=><i key={i}></i>)}</div>
+                <div className="benefit-panels"><i></i><i></i><i></i><i></i></div>
+              </main>
+            </div>
+          </div>
+          <div className="benefit-float one"><Award/><span>{en?'Points':'পয়েন্ট'}</span></div>
+          <div className="benefit-float two"><TrendingUp/><span>{en?'Promotion':'পদোন্নতি'}</span></div>
+          <div className="benefit-float three"><WalletCards/><span>{en?'Salary':'বেতন'}</span></div>
+        </div>
+
+        <div className="ph-benefit-grid">
+          {[
+            [LayoutDashboard,en?'Personal Dashboard':'ব্যক্তিগত ড্যাশবোর্ড',en?'See career, salary, leave, points and important status together.':'ক্যারিয়ার, বেতন, ছুটি, পয়েন্ট ও গুরুত্বপূর্ণ অবস্থা একসঙ্গে দেখুন।'],
+            [UserRound,en?'Career Profile':'চাকরি ও ক্যারিয়ার প্রোফাইল',en?'Keep your own employment and qualification information organized.':'নিজের চাকরি ও শিক্ষাগত তথ্য সুন্দরভাবে সংরক্ষণ ও হালনাগাদ করুন।'],
+            [TrendingUp,en?'Promotion Forecast':'পদোন্নতি Forecast',en?'See service requirement, eligibility date, remaining time and career roadmap.':'প্রয়োজনীয় চাকরিকাল, যোগ্যতার তারিখ, বাকি সময় ও ক্যারিয়ার রোডম্যাপ দেখুন।'],
+            [Award,en?'Points Calculator':'পয়েন্ট ক্যালকুলেটর',en?'Use service, education and supported house-allocation point calculations.':'সার্ভিস, শিক্ষাগত ও সমর্থিত বাসা বরাদ্দ পয়েন্ট হিসাব করুন।'],
+            [WalletCards,en?'Salary & Pay Scale':'বেতন ও পে-স্কেল',en?'Calculate basic, gross, deductions, net salary and pay-scale information.':'মূল বেতন, মোট বেতন, কর্তন, নিট বেতন ও পে-স্কেল হিসাব করুন।'],
+            [ReceiptText,en?'Salary History':'বেতন ইতিহাস',en?'Maintain your own salary records over time.':'নিজের বিভিন্ন সময়ের বেতন রেকর্ড সংরক্ষণ ও পর্যালোচনা করুন।'],
+            [CalendarDays,en?'Leave & Calendar':'ছুটি ও ক্যালেন্ডার',en?'Manage personal leave records and view office calendar information.':'নিজের ছুটির রেকর্ড ও অফিস ক্যালেন্ডারের তথ্য দেখুন।'],
+            [FileText,en?'Career Reports':'ক্যারিয়ার রিপোর্ট',en?'Prepare personal career, salary and leave summaries for your own reference.':'নিজের ব্যবহারের জন্য ক্যারিয়ার, বেতন ও ছুটির সারাংশ তৈরি করুন।'],
+            [BookOpen,en?'Knowledge Center':'নলেজ সেন্টার',en?'Find notices, policies and useful reference information.':'নোটিশ, নীতিমালা ও প্রয়োজনীয় তথ্য সহায়িকা খুঁজুন।'],
+            [LockKeyhole,en?'Account & Security':'অ্যাকাউন্ট ও নিরাপত্তা',en?'Manage password, recovery code, privacy and active sessions.':'Password, Recovery Code, Privacy ও Active Session নিয়ন্ত্রণ করুন।']
+          ].map(([Icon,title,desc],i)=><article key={title} className={`ph-benefit-card b${i+1}`}><span><Icon/></span><div><h3>{title}</h3><p>{desc}</p></div></article>)}
+        </div>
+      </div>
+      <div className="ph-benefit-cta">
+        <div><b>{en?'Ready to use your personal service dashboard?':'নিজের ব্যক্তিগত সেবা ড্যাশবোর্ড ব্যবহার করতে প্রস্তুত?'}</b><small>{en?'Create your account and enter the necessary information once.':'নতুন অ্যাকাউন্ট তৈরি করে প্রয়োজনীয় তথ্য একবারই দিন।'}</small></div>
+        <button onClick={onSignup}>{en?'Create My Account':'আমার অ্যাকাউন্ট তৈরি করুন'}<ArrowRight/></button>
       </div>
     </section>
 
