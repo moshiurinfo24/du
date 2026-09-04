@@ -262,7 +262,7 @@ function AuthPortal({onLogin,onBack,lang,setLang,initialMode='login'}) {
     <label>{mode==='forgot'?(en?'New password':'নতুন পাসওয়ার্ড'):(en?'Password':'পাসওয়ার্ড')}<input value={form.password} onChange={e=>change('password',e.target.value)} type="password" minLength="10" required/></label>
     {(mode==='register'||mode==='forgot')&&<label>{en?'Confirm password':'পাসওয়ার্ড নিশ্চিত করুন'}<input value={form.confirm} onChange={e=>change('confirm',e.target.value)} type="password" minLength="10" required/></label>}
     {(mode==='register'||mode==='forgot')&&<small className="password-rule">{en?'Use at least 10 characters with letters and numbers.':'কমপক্ষে ১০ অক্ষর ব্যবহার করুন এবং অক্ষর ও সংখ্যা রাখুন।'}</small>}
-    {err&&<div className="error">{err}</div>}{msg&&<div className="auth-success">{msg}</div>}
+    {err&&<div className={(stats||users.length||auditRows.length||health)?'notice':'error'}>{err}</div>}{msg&&<div className="auth-success">{msg}</div>}
     {recovery&&<div className="recovery-box"><div>{en?'YOUR RECOVERY CODE':'আপনার রিকভারি কোড'}</div><strong>{recovery}</strong><button type="button" onClick={()=>navigator.clipboard?.writeText(recovery)}>{en?'Copy Code':'কোড কপি করুন'}</button><small>{en?'Keep this code private and safe.':'কোডটি গোপন ও নিরাপদ স্থানে রাখুন।'}</small></div>}
     {!recovery&&<button disabled={busy}>{busy?(en?'Please wait...':'অপেক্ষা করুন...'):mode==='register'?(en?'Create Account':'অ্যাকাউন্ট তৈরি করুন'):mode==='forgot'?(en?'Reset Password':'পাসওয়ার্ড পরিবর্তন করুন'):(en?'Login':'লগইন')}</button>}
     {recovery&&<button type="button" onClick={()=>switchMode('login')}>{en?'I saved it — Go to Login':'সংরক্ষণ করেছি — লগইনে যান'}</button>}
@@ -333,7 +333,7 @@ function PublicHome({onLogin,lang,setLang}){
   };
   const navItems=[[copy.home,'top'],[copy.promotion,'public-calculator','promotion'],[copy.pay,'public-calculator','salary'],[copy.policies,'policies'],[copy.notices,'notices'],[copy.forms,'forms'],[copy.help,'help']];
   const goto=(id,tool)=>{setPublicMenu(false);if(tool)return openTool(tool);trackPublic('section_view',id);scrollTo(id);};
-  return <div id="top" data-public-version="v16.3.3" className={'public premium-public premium-home-v16-3 '+(en?'lang-en':'lang-bn')}>
+  return <div id="top" data-public-version="v16.3.4" className={'public premium-public premium-home-v16-3 '+(en?'lang-en':'lang-bn')}>
     <header className="public-nav luxury-nav premium-v16-nav">
       <div className="public-brand"><div className="brand-orb"><ShieldCheck size={19}/></div><div><b>{t.appName}</b><small>{t.appSub}</small></div></div>
       <button className="public-mobile-trigger" onClick={()=>setPublicMenu(v=>!v)} aria-label={en?(publicMenu?'Close menu':'Open menu'):(publicMenu?'মেনু বন্ধ করুন':'মেনু খুলুন')}><span></span><span></span><span></span></button>
@@ -1582,16 +1582,37 @@ function SuperAdminControlCenter({lang='bn',onPage}){
     });
   async function load(){
     setBusy(true);setErr('');
+    const wait=ms=>new Promise(r=>setTimeout(r,ms));
+    const fetchSafe=async(path)=>{
+      let lastErr=null;
+      for(let attempt=0;attempt<2;attempt++){
+        try{return{ok:true,data:await api(path)}}
+        catch(e){lastErr=e;if(attempt===0)await wait(280)}
+      }
+      return{ok:false,error:lastErr};
+    };
     try{
-      const [s,u,a,h,st]=await Promise.all([
-        api('/api/admin/stats'),
-        api('/api/admin/users'),
-        api('/api/admin/audit?limit=80'),
-        api('/api/admin/system-health'),
-        api('/api/admin/settings')
+      const [sR,uR,aR,hR,stR]=await Promise.all([
+        fetchSafe('/api/admin/stats'),
+        fetchSafe('/api/admin/users'),
+        fetchSafe('/api/admin/audit?limit=80'),
+        fetchSafe('/api/admin/system-health'),
+        fetchSafe('/api/admin/settings')
       ]);
-      setStats(s);setUsers(u.users||[]);setAuditRows(a.logs||[]);setHealth(h);setSettings(x=>({...x,...(st.settings||{})}));
-    }catch(e){setErr(e.message)}finally{setBusy(false)}
+
+      if(sR.ok)setStats(sR.data);
+      if(uR.ok)setUsers(uR.data?.users||[]);
+      if(aR.ok)setAuditRows(aR.data?.logs||[]);
+      if(hR.ok)setHealth(hR.data);
+      if(stR.ok)setSettings(x=>({...x,...(stR.data?.settings||{})}));
+
+      const failed=[sR,uR,aR,hR,stR].filter(x=>!x.ok);
+      if(failed.length===5){
+        setErr(en?'The admin data service could not be reached. Please refresh once.':'অ্যাডমিন ডাটা সার্ভিসে সংযোগ পাওয়া যায়নি। একবার রিফ্রেশ করুন।');
+      }else if(failed.length){
+        setErr(en?'Some admin data is temporarily unavailable; available information is still shown.':'কিছু অ্যাডমিন তথ্য সাময়িকভাবে পাওয়া যায়নি; যেগুলো পাওয়া গেছে সেগুলো দেখানো হচ্ছে।');
+      }
+    }finally{setBusy(false)}
   }
   useEffect(()=>{load()},[]);
   async function toggleUser(x){
@@ -1734,7 +1755,7 @@ function App(){
   if(!user)return showLogin?<AuthPortal onLogin={u=>{setUser(u);window.history.replaceState({},'',window.location.pathname)}} onBack={()=>{setShowLogin(false);setAuthMode('login');setAuthToken('');window.history.replaceState({},'',window.location.pathname)}} lang={lang} setLang={setLang} initialMode={authMode} initialToken={authToken}/>:<PublicHome onLogin={()=>{setAuthMode('login');setShowLogin(true)}} lang={lang} setLang={setLang}/>;
   const admin=['super_admin','admin','department_admin'].includes(user.role);
   return <div className={`app ${mobileMenu?'mobile-menu-open':''}`}><button className={`mobile-drawer-backdrop ${mobileMenu?'show':''}`} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'} onClick={()=>setMobileMenu(false)}></button><aside className={`side ${mobileMenu?'mobile-open':''}`}>
-    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v16.3.3 Premium Control':'স্বাধীন প্ল্যাটফর্ম · v16.3.3 Premium Control'}</small></div><button className="mobile-drawer-close" onClick={()=>setMobileMenu(false)} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'}><X size={19}/></button></div>
+    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v16.3.4 Stable Admin API':'স্বাধীন প্ল্যাটফর্ম · v16.3.4 Stable Admin API'}</small></div><button className="mobile-drawer-close" onClick={()=>setMobileMenu(false)} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'}><X size={19}/></button></div>
     <nav>
       <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}><LayoutDashboard size={18}/>{lang==='en'?'My Dashboard':'আমার ড্যাশবোর্ড'}</button>
       <button className={page==='career'?'active':''} onClick={()=>setPage('career')}><BookUser size={18}/>{lang==='en'?'My Career':'আমার চাকরি'}</button>
