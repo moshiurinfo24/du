@@ -423,8 +423,24 @@ function AccountSecurity({lang='bn'}){
 function PublicHome({onLogin,onSignup,lang,setLang}){
   const en=lang==='en';
   const [publicMenu,setPublicMenu]=useState(false);
-  useEffect(()=>{trackPublic('page_view','home')},[]);
-  const closeMenu=()=>setPublicMenu(false);
+  const [notices,setNotices]=useState([]);
+  const [policies,setPolicies]=useState([]);
+
+  useEffect(()=>{
+    trackPublic('page_view','home');
+    Promise.allSettled([
+      api('/api/public/notices?limit=4'),
+      api('/api/public/policies?limit=4')
+    ]).then(([n,p])=>{
+      if(n.status==='fulfilled')setNotices(n.value.items||n.value.notices||[]);
+      if(p.status==='fulfilled')setPolicies(p.value.items||p.value.policies||[]);
+    });
+  },[]);
+
+  const go=(id)=>{
+    setPublicMenu(false);
+    window.requestAnimationFrame(()=>document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'}));
+  };
 
   const quick=[
     [TrendingUp,en?'Promotion':'পদোন্নতি হিসাব','green'],
@@ -436,10 +452,11 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
     [BookOpen,en?'Policies':'নীতিমালা','violet'],
     [Bell,en?'Notices':'নোটিশ','slate']
   ];
+
   const benefits=[
     [LayoutDashboard,en?'Personal Dashboard':'ব্যক্তিগত ড্যাশবোর্ড',en?'Career, salary, leave and points together.':'চাকরি, বেতন, ছুটি ও পয়েন্ট—সব এক নজরে।'],
     [UserRound,en?'Career Profile':'চাকরি ও ক্যারিয়ার প্রোফাইল',en?'Keep your own career information organized.':'নিজের চাকরির সম্পূর্ণ তথ্য সংরক্ষণ করুন।'],
-    [TrendingUp,en?'Promotion Forecast':'পদোন্নতি Forecast',en?'Eligibility, remaining time and roadmap.':'যোগ্যতা, বাকি সময় ও সম্ভাব্য তারিখ জানুন।'],
+    [TrendingUp,en?'Promotion Forecast':'পদোন্নতি পূর্বাভাস',en?'Eligibility, remaining time and roadmap.':'যোগ্যতা, বাকি সময় ও সম্ভাব্য তারিখ জানুন।'],
     [Award,en?'Points Calculator':'পয়েন্ট ক্যালকুলেটর',en?'Service, education and supported house points.':'সার্ভিস, শিক্ষা ও সমর্থিত বাসা বরাদ্দ পয়েন্ট হিসাব করুন।'],
     [WalletCards,en?'Salary & Pay Scale':'বেতন ও পে-স্কেল',en?'Basic, gross, deduction and net salary.':'মূল বেতন, ভাতা ও নিট বেতন হিসাব করুন।'],
     [ReceiptText,en?'Salary History':'বেতন ইতিহাস',en?'Review your previous salary records.':'পূর্ববর্তী বেতন রেকর্ড দেখুন ও সংরক্ষণ করুন।'],
@@ -449,46 +466,130 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
     [LockKeyhole,en?'Account & Security':'অ্যাকাউন্ট ও নিরাপত্তা',en?'Password, recovery code and privacy controls.':'পাসওয়ার্ড, রিকভারি কোড ও তথ্যের নিরাপত্তা।']
   ];
 
-  return <div className="approved-home">
+  const whatsappText=encodeURIComponent(en?'Hello, I need help with the Employee Digital Service Platform.':'আসসালামু আলাইকুম, কর্মকর্তা-কর্মচারী ডিজিটাল সেবা প্ল্যাটফর্ম বিষয়ে সহায়তা প্রয়োজন।');
+
+  const HeroDevice=()=> <div className="native-device-stage" aria-label={en?'Live interface preview':'লাইভ ইন্টারফেস নমুনা'}>
+    <div className="native-laptop">
+      <div className="native-laptop-screen">
+        <div className="demo-sidebar">
+          <div className="demo-logo"><Landmark/><b>{en?'Digital Service':'ডিজিটাল সেবা'}</b></div>
+          <button className="active"><LayoutDashboard/>{en?'Dashboard':'ড্যাশবোর্ড'}</button>
+          <button><UserRound/>{en?'Profile':'প্রোফাইল'}</button>
+          <button><Briefcase/>{en?'Career':'চাকরি'}</button>
+          <button><TrendingUp/>{en?'Promotion':'পদোন্নতি'}</button>
+          <button><Award/>{en?'Points':'পয়েন্ট'}</button>
+          <button><WalletCards/>{en?'Salary':'বেতন'}</button>
+          <button><CalendarDays/>{en?'Leave':'ছুটি'}</button>
+        </div>
+        <div className="demo-main">
+          <div className="demo-top"><b>{en?'Personal Dashboard':'ব্যক্তিগত ড্যাশবোর্ড'}</b><span><UserRound/>{en?'Sample User':'নমুনা ব্যবহারকারী'}</span></div>
+          <div className="demo-greeting"><small>{en?'WELCOME':'স্বাগতম'}</small><h3>{en?'Your career at a glance':'আপনার ক্যারিয়ার এক নজরে'}</h3></div>
+          <div className="demo-kpis">
+            <article><span><Clock3/></span><small>{en?'Service':'চাকরিকাল'}</small><b>{en?'12y 4m':'১২ বছর ৪ মাস'}</b></article>
+            <article><span><Award/></span><small>{en?'Grade':'বর্তমান গ্রেড'}</small><b>{en?'Grade 13':'গ্রেড ১৩'}</b></article>
+            <article><span><WalletCards/></span><small>{en?'Basic':'মূল বেতন'}</small><b>{en?'৳ 17,100':'৳ ১৭,১০০'}</b></article>
+          </div>
+          <div className="demo-panels">
+            <article><div><TrendingUp/><b>{en?'Promotion readiness':'পদোন্নতি প্রস্তুতি'}</b></div><div className="progress"><i></i></div><small>{en?'Eligibility progress':'যোগ্যতার অগ্রগতি'} · 80%</small></article>
+            <article><div><Bell/><b>{en?'Recent notice':'সাম্প্রতিক নোটিশ'}</b></div><p>{en?'Important updates will appear here.':'গুরুত্বপূর্ণ আপডেট এখানে দেখা যাবে।'}</p></article>
+          </div>
+          <div className="demo-services">
+            <span><WalletCards/>{en?'Salary':'বেতন'}</span><span><Award/>{en?'Points':'পয়েন্ট'}</span><span><CalendarDays/>{en?'Calendar':'ক্যালেন্ডার'}</span><span><FileText/>{en?'Reports':'রিপোর্ট'}</span>
+          </div>
+        </div>
+      </div>
+      <div className="native-laptop-base"></div>
+    </div>
+    <div className="native-phone">
+      <div className="native-phone-notch"></div>
+      <div className="phone-head"><div><small>{en?'Hello':'স্বাগতম'}</small><b>{en?'Sample User':'নমুনা ব্যবহারকারী'}</b></div><UserRound/></div>
+      <div className="phone-summary"><small>{en?'Current Grade':'বর্তমান গ্রেড'}</small><b>{en?'Grade 13':'গ্রেড ১৩'}</b></div>
+      <div className="phone-grid">
+        <span><WalletCards/>{en?'Salary':'বেতন'}</span><span><TrendingUp/>{en?'Promotion':'পদোন্নতি'}</span>
+        <span><Award/>{en?'Points':'পয়েন্ট'}</span><span><CalendarDays/>{en?'Leave':'ছুটি'}</span>
+        <span><FileText/>{en?'Reports':'রিপোর্ট'}</span><span><BookOpen/>{en?'Info':'তথ্য'}</span>
+      </div>
+      <div className="phone-bottom"><Home/><WalletCards/><Award/><CalendarDays/></div>
+    </div>
+  </div>;
+
+  const DashboardPreview=()=> <div className="native-dashboard-preview">
+    <div className="preview-side">
+      <div><Landmark/><b>{en?'My Service':'আমার সেবা'}</b></div>
+      <span className="active"><LayoutDashboard/>{en?'Dashboard':'ড্যাশবোর্ড'}</span>
+      <span><UserRound/>{en?'Profile':'প্রোফাইল'}</span>
+      <span><TrendingUp/>{en?'Promotion':'পদোন্নতি'}</span>
+      <span><Award/>{en?'Points':'পয়েন্ট'}</span>
+      <span><WalletCards/>{en?'Salary':'বেতন'}</span>
+    </div>
+    <div className="preview-main">
+      <div className="preview-top"><b>{en?'Personal Dashboard':'ব্যক্তিগত ড্যাশবোর্ড'}</b><span>{en?'Sample data':'নমুনা তথ্য'}</span></div>
+      <div className="preview-profile"><span><UserRound/></span><div><h3>{en?'Sample User':'নমুনা ব্যবহারকারী'}</h3><p>{en?'Employee Service Profile':'কর্মকর্তা-কর্মচারী সেবা প্রোফাইল'}</p></div></div>
+      <div className="preview-kpi-row">
+        <article><small>{en?'Service':'চাকরিকাল'}</small><b>{en?'12 years 4 months':'১২ বছর ৪ মাস'}</b></article>
+        <article><small>{en?'Current Grade':'বর্তমান গ্রেড'}</small><b>{en?'Grade 13':'গ্রেড ১৩'}</b></article>
+        <article><small>{en?'Current Basic':'বর্তমান মূল বেতন'}</small><b>{en?'৳ 17,100':'৳ ১৭,১০০'}</b></article>
+      </div>
+      <div className="preview-bottom-row">
+        <article><b>{en?'Promotion readiness':'পদোন্নতি প্রস্তুতি'}</b><div className="progress"><i></i></div><small>80%</small></article>
+        <article><b>{en?'Quick services':'দ্রুত সেবা'}</b><div className="mini-actions"><span><Award/>{en?'Points':'পয়েন্ট'}</span><span><WalletCards/>{en?'Salary':'বেতন'}</span><span><CalendarDays/>{en?'Leave':'ছুটি'}</span></div></article>
+      </div>
+    </div>
+  </div>;
+
+  return <div className="approved-home" id="home">
     <header className="approved-header">
-      <div className="approved-brand"><span><Landmark/></span><div><b>{en?'Employee Digital Service':'কর্মকর্তা-কর্মচারী ডিজিটাল সেবা'}</b><small>{en?'Personal Career & Service Management':'ব্যক্তিগত ক্যারিয়ার ও সেবা ব্যবস্থাপনা'}</small></div></div>
-      <nav className={publicMenu?'open':''}>
-        <button onClick={closeMenu}>{en?'Home':'হোম'}</button>
-        <button onClick={closeMenu}>{en?'Services':'সেবাসমূহ'}</button>
-        <button onClick={closeMenu}>{en?'Benefits':'সুবিধাসমূহ'}</button>
-        <button onClick={closeMenu}>{en?'Points':'পয়েন্ট'}</button>
-        <button onClick={closeMenu}>{en?'Calculators':'ক্যালকুলেটর'}</button>
-        <button onClick={closeMenu}>{en?'Notices':'নোটিশ'}</button>
-        <button onClick={closeMenu}>{en?'Policies':'নীতিমালা'}</button>
+      <button className="approved-brand brand-button" onClick={()=>go('home')}>
+        <span><Landmark/></span><div><b>{en?'Employee Digital Service':'কর্মকর্তা-কর্মচারী ডিজিটাল সেবা'}</b><small>{en?'Personal Career & Service Management':'ব্যক্তিগত ক্যারিয়ার ও সেবা ব্যবস্থাপনা'}</small></div>
+      </button>
+
+      <nav className={publicMenu?'open':''} aria-label={en?'Main navigation':'প্রধান মেনু'}>
+        <button onClick={()=>go('home')}>{en?'Home':'হোম'}</button>
+        <button onClick={()=>go('services')}>{en?'Services':'সেবাসমূহ'}</button>
+        <button onClick={()=>go('benefits')}>{en?'Benefits':'সুবিধাসমূহ'}</button>
+        <button onClick={()=>go('points')}>{en?'Points':'পয়েন্ট'}</button>
+        <button onClick={()=>go('calculators')}>{en?'Calculators':'ক্যালকুলেটর'}</button>
+        <button onClick={()=>go('notices')}>{en?'Notices':'নোটিশ'}</button>
+        <button onClick={()=>go('policies')}>{en?'Policies':'নীতিমালা'}</button>
       </nav>
+
       <div className="approved-actions">
         <LangToggle lang={lang} setLang={setLang}/>
         <button className="sign-in" onClick={onLogin}>{en?'Sign in':'সাইন ইন'}</button>
         <button className="new-account" onClick={onSignup}>{en?'New Account':'নতুন অ্যাকাউন্ট'}</button>
-        <button className="menu" onClick={()=>setPublicMenu(v=>!v)}><Boxes/></button>
+        <button className={`menu ${publicMenu?'active':''}`} aria-expanded={publicMenu} onClick={()=>setPublicMenu(v=>!v)}>
+          {publicMenu?(en?'Close Menu':'মেনু বন্ধ'):(en?'Menu':'মেনু')}
+        </button>
       </div>
     </header>
 
     <section className="approved-hero">
       <div className="approved-hero-copy">
-        <span className="approved-kicker"><Sparkles/>{en?'PERSONAL · SMART · SELF-SERVICE':'ব্যক্তিগত · স্মার্ট · স্ব-সেবামূলক (Self-Service)'}</span>
+        <span className="approved-kicker"><Sparkles/>{en?'PERSONAL · SMART · SELF-SERVICE':'ব্যক্তিগত · স্মার্ট · স্ব-সেবামূলক'}</span>
         <h1>{en?'Your career, salary, promotion and points — all in one place':'আপনার ক্যারিয়ার, বেতন, পদোন্নতি ও পয়েন্ট—সব হিসাব এক জায়গায়'}</h1>
-        <p>{en?'A modern self-service platform where you can easily manage your career, salary, promotion, points, leave and necessary services.':'একটি আধুনিক স্ব-সেবামূলক (Self-Service) প্ল্যাটফর্ম যেখানে আপনি নিজের চাকরি, বেতন, পদোন্নতি, পয়েন্ট, ছুটি ও প্রয়োজনীয় সেবা সহজে খুঁজে পেতে পারবেন।'}</p>
-        <div className="approved-hero-buttons"><button className="primary" onClick={onLogin}>{en?'Sign in now':'সাইন ইন করুন'}<ArrowRight/></button><button className="secondary" onClick={onSignup}>{en?'Create new account':'নতুন অ্যাকাউন্ট তৈরি করুন'}<ArrowRight/></button></div>
-        <div className="approved-trust"><span><CheckCircle2/>{en?'Simple & secure':'সহজ ও নিরাপদ'}</span><span><CheckCircle2/>{en?'Personal data protected':'ব্যক্তিগত ডাটা সুরক্ষিত'}</span><span><CheckCircle2/>{en?'Anytime, anywhere':'যেকোনো সময়, যেকোনো স্থান থেকে'}</span></div>
+        <p>{en?'A modern self-service platform where you can easily manage career, salary, promotion, points, leave and essential services.':'একটি আধুনিক স্ব-সেবামূলক প্ল্যাটফর্ম যেখানে নিজের চাকরি, বেতন, পদোন্নতি, পয়েন্ট, ছুটি ও প্রয়োজনীয় সেবা সহজে ব্যবহার করতে পারবেন।'}</p>
+        <div className="approved-hero-buttons">
+          <button className="primary" onClick={onLogin}>{en?'Sign in now':'সাইন ইন করুন'}<ArrowRight/></button>
+          <button className="secondary" onClick={onSignup}>{en?'Create new account':'নতুন অ্যাকাউন্ট তৈরি করুন'}<ArrowRight/></button>
+        </div>
+        <div className="approved-trust">
+          <span><CheckCircle2/>{en?'Simple & secure':'সহজ ও নিরাপদ'}</span>
+          <span><CheckCircle2/>{en?'Personal data protected':'ব্যক্তিগত তথ্য সুরক্ষিত'}</span>
+          <span><CheckCircle2/>{en?'Anytime, anywhere':'যেকোনো সময়, যেকোনো স্থান থেকে'}</span>
+        </div>
       </div>
-      <div className="approved-hero-device"><img src="/mockup/hero-device.webp" alt={en?'Dashboard shown on laptop and phone':'ল্যাপটপ ও মোবাইলে ড্যাশবোর্ডের নমুনা'}/></div>
+      <HeroDevice/>
     </section>
 
-    <section className="approved-section approved-quick">
-      <div className="approved-section-title"><span>{en?'POPULAR SERVICES':'সর্বাধিক জরুরি সেবা'}</span><h2>{en?'Important services, organized for one-click access':'গুরুত্বপূর্ণ সব সেবা, এক ক্লিকে ব্যবহারের জন্য সাজানো'}</h2><p>{en?'Career, salary, leave, promotion, points and useful information — all within easy reach.':'আপনার ক্যারিয়ার, বেতন, ছুটি, পদোন্নতি ও প্রয়োজনীয় তথ্য—সব সহজেই হাতের মুঠোয়।'}</p></div>
+    <section className="approved-section approved-quick" id="services">
+      <div className="approved-section-title"><span>{en?'POPULAR SERVICES':'গুরুত্বপূর্ণ সেবা'}</span><h2>{en?'Important services, organized for one-click access':'গুরুত্বপূর্ণ সব সেবা, এক ক্লিকে ব্যবহারের জন্য সাজানো'}</h2><p>{en?'Career, salary, leave, promotion, points and useful information — all within easy reach.':'ক্যারিয়ার, বেতন, ছুটি, পদোন্নতি ও প্রয়োজনীয় তথ্য—সব সহজেই হাতের মুঠোয়।'}</p></div>
       <div className="approved-quick-grid">{quick.map(([I,t,c])=><button key={t} className={c} onClick={onLogin}><span><I/></span><b>{t}</b><ChevronRight/></button>)}</div>
     </section>
 
-    <section className="approved-section approved-benefits">
-      <div className="approved-section-title"><span>{en?'YOUR DATA, YOUR CONTROL':'নিজের তথ্য, নিজের নিয়ন্ত্রণ'}</span><h2>{en?'Your personal career and service management':'নিজের ব্যক্তিগত ক্যারিয়ার ও সেবা ব্যবস্থাপনা'}</h2><p>{en?'From one account, see your career, salary, promotion, points, leave and essential services.':'একটি ব্যক্তিগত অ্যাকাউন্ট থেকে আপনার চাকরি, বেতন, পদোন্নতি, পয়েন্ট, ছুটি ও প্রয়োজনীয় সেবার তথ্য দেখুন।'}</p></div>
+    <section className="approved-section approved-benefits" id="benefits">
+      <div className="approved-section-title"><span>{en?'YOUR DATA, YOUR CONTROL':'নিজের তথ্য, নিজের নিয়ন্ত্রণ'}</span><h2>{en?'Your personal career and service management':'নিজের ব্যক্তিগত ক্যারিয়ার ও সেবা ব্যবস্থাপনা'}</h2><p>{en?'See your career, salary, promotion, points, leave and essential services from one personal account.':'একটি ব্যক্তিগত অ্যাকাউন্ট থেকে চাকরি, বেতন, পদোন্নতি, পয়েন্ট, ছুটি ও প্রয়োজনীয় সেবার তথ্য দেখুন।'}</p></div>
       <div className="approved-benefit-layout">
-        <div className="approved-dashboard-shot"><img src="/mockup/benefit-dashboard.webp" alt={en?'Sample career dashboard':'নমুনা ক্যারিয়ার ড্যাশবোর্ড'}/></div>
+        <DashboardPreview/>
         <div className="approved-benefit-grid">{benefits.map(([I,t,d],i)=><article key={t}><span className={`tone t${i%4}`}><I/></span><div><h3>{t}</h3><p>{d}</p></div></article>)}</div>
       </div>
     </section>
@@ -498,8 +599,8 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
       <div><button className="white" onClick={onSignup}>{en?'Create new account':'নতুন অ্যাকাউন্ট তৈরি করুন'}<ArrowRight/></button><button className="outline" onClick={onLogin}>{en?'Sign in':'সাইন ইন'}</button></div>
     </section>
 
-    <section className="approved-section approved-points">
-      <div className="approved-section-title"><span>{en?'ALL IN ONE':'সবার জন্য উন্মুক্ত'}</span><h2>{en?'Three point systems — one clean center':'তিন ধরনের পয়েন্ট—একটি পরিচ্ছন্ন সেন্টার'}</h2><p>{en?'Calculate service, education and supported house-allocation points.':'পদোন্নতি, বাসা বরাদ্দ ও অন্যান্য ক্ষেত্রে প্রয়োজনীয় পয়েন্ট হিসাব করুন।'}</p></div>
+    <section className="approved-section approved-points" id="points">
+      <div className="approved-section-title"><span>{en?'ALL IN ONE':'এক জায়গায় সব'}</span><h2>{en?'Three point systems — one clean center':'তিন ধরনের পয়েন্ট—একটি পরিচ্ছন্ন সেন্টার'}</h2><p>{en?'Calculate service, education and supported house-allocation points.':'সার্ভিস, শিক্ষাগত যোগ্যতা ও সমর্থিত বাসা বরাদ্দ পয়েন্ট হিসাব করুন।'}</p></div>
       <div className="approved-points-grid">
         <article><span className="green"><Award/></span><div><h3>{en?'Service Points':'সার্ভিস পয়েন্ট'}</h3><p>{en?'Calculate points based on service experience.':'চাকরিকাল ভিত্তিক পয়েন্ট হিসাব করুন।'}</p></div></article>
         <article><span className="purple"><GraduationCap/></span><div><h3>{en?'Education Points':'শিক্ষাগত যোগ্যতার পয়েন্ট'}</h3><p>{en?'Calculate points from supported academic results.':'শিক্ষাগত যোগ্যতা অনুযায়ী পয়েন্ট হিসাব করুন।'}</p></div></article>
@@ -507,16 +608,47 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
       </div>
     </section>
 
+    <section className="approved-section approved-calculators" id="calculators">
+      <div className="approved-section-title"><span>{en?'QUICK CALCULATORS':'দ্রুত ক্যালকুলেটর'}</span><h2>{en?'Useful calculations without unnecessary complexity':'প্রয়োজনীয় হিসাব, সহজ ও পরিষ্কারভাবে'}</h2><p>{en?'Sign in to use the complete calculator center with your own data.':'নিজের তথ্য দিয়ে পূর্ণ ক্যালকুলেটর সেন্টার ব্যবহার করতে সাইন ইন করুন।'}</p></div>
+      <div className="approved-calc-grid">
+        <button onClick={onLogin}><span><Clock3/></span><div><b>{en?'Service Length':'চাকরিকাল হিসাব'}</b><small>{en?'Years, months and days':'বছর, মাস ও দিন'}</small></div><ArrowRight/></button>
+        <button onClick={onLogin}><span><UserRound/></span><div><b>{en?'Age Calculator':'বয়স হিসাব'}</b><small>{en?'Exact age from date of birth':'জন্মতারিখ থেকে সঠিক বয়স'}</small></div><ArrowRight/></button>
+        <button onClick={onLogin}><span><CalendarDays/></span><div><b>{en?'Date Difference':'তারিখের ব্যবধান'}</b><small>{en?'Difference between two dates':'দুই তারিখের ব্যবধান'}</small></div><ArrowRight/></button>
+      </div>
+    </section>
+
+    <section className="approved-section approved-information" id="notices">
+      <div className="approved-section-title"><span>{en?'LATEST UPDATES':'সর্বশেষ আপডেট'}</span><h2>{en?'Notices':'নোটিশ'}</h2><p>{en?'Published notices and useful updates.':'প্রকাশিত নোটিশ ও প্রয়োজনীয় আপডেট।'}</p></div>
+      <div className="approved-info-grid">
+        {(notices.length?notices:[{id:'empty',title:en?'No published notice is available right now.':'এই মুহূর্তে কোনো প্রকাশিত নোটিশ নেই।'}]).map((x,i)=><article key={x.id||i}><span><Bell/></span><div><h3>{x.title||x.name||x.subject}</h3>{x.published_at&&<small>{fmtDate(x.published_at,lang)}</small>}<p>{x.summary||x.description||''}</p></div></article>)}
+      </div>
+    </section>
+
+    <section className="approved-section approved-information policies" id="policies">
+      <div className="approved-section-title"><span>{en?'REFERENCE':'রেফারেন্স'}</span><h2>{en?'Policies':'নীতিমালা'}</h2><p>{en?'Published reference policies for personal assistance.':'ব্যক্তিগত সহায়ক ব্যবহারের জন্য প্রকাশিত রেফারেন্স নীতিমালা।'}</p></div>
+      <div className="approved-info-grid">
+        {(policies.length?policies:[{id:'empty',title:en?'No published policy is available right now.':'এই মুহূর্তে কোনো প্রকাশিত নীতিমালা নেই।'}]).map((x,i)=><article key={x.id||i}><span><BookOpen/></span><div><h3>{x.title||x.name||x.subject}</h3>{x.published_at&&<small>{fmtDate(x.published_at,lang)}</small>}<p>{x.summary||x.description||''}</p></div></article>)}
+      </div>
+    </section>
+
     <section className="approved-support">
-      <div><span><HelpCircle/></span><div><h2>{en?'Need help?':'সহায়তা প্রয়োজন?'}</h2><p>{en?'Contact us for platform or technical assistance.':'যেকোনো সমস্যা, পরামর্শ বা জিজ্ঞাসার জন্য আমাদের সাথে যোগাযোগ করুন।'}</p></div></div>
-      <a href="tel:01759084692">{en?'Contact':'যোগাযোগ করুন'}<ArrowRight/></a>
+      <div><span><MessageCircle/></span><div><h2>{en?'Need help?':'সহায়তা প্রয়োজন?'}</h2><p>{en?'For platform or technical help, send a WhatsApp message.':'প্ল্যাটফর্ম বা কারিগরি সহায়তার জন্য শুধু হোয়াটসঅ্যাপে মেসেজ করুন।'}</p></div></div>
+      <a href={`https://wa.me/8801759084692?text=${whatsappText}`} target="_blank" rel="noreferrer"><MessageCircle/>{en?'Message on WhatsApp':'হোয়াটসঅ্যাপে মেসেজ করুন'}</a>
     </section>
 
     <footer className="approved-footer">
-      <div className="approved-brand"><span><Landmark/></span><div><b>{en?'Employee Digital Service':'কর্মকর্তা-কর্মচারী ডিজিটাল সেবা'}</b><small>{en?'Personal Career & Service Management':'ব্যক্তিগত ক্যারিয়ার ও সেবা ব্যবস্থাপনা'}</small></div></div>
-      <div className="approved-footer-links"><button>{en?'Home':'হোম'}</button><button>{en?'Services':'সেবা সমূহ'}</button><button>{en?'Policies':'নীতিমালা'}</button><button>{en?'Privacy':'গোপনীয়তা'}</button><button>{en?'Contact':'যোগাযোগ'}</button></div>
-      <small>{en?'Developer Support':'ডেভেলপার সহায়তা'}<br/><b>মোঃ মশিউর রহমান · 01759084692</b></small>
+      <button className="approved-brand brand-button footer-brand" onClick={()=>go('home')}><span><Landmark/></span><div><b>{en?'Employee Digital Service':'কর্মকর্তা-কর্মচারী ডিজিটাল সেবা'}</b><small>{en?'Personal Career & Service Management':'ব্যক্তিগত ক্যারিয়ার ও সেবা ব্যবস্থাপনা'}</small></div></button>
+      <div className="approved-footer-links">
+        <button onClick={()=>go('home')}>{en?'Home':'হোম'}</button>
+        <button onClick={()=>go('services')}>{en?'Services':'সেবা সমূহ'}</button>
+        <button onClick={()=>go('policies')}>{en?'Policies':'নীতিমালা'}</button>
+        <button onClick={()=>go('benefits')}>{en?'Privacy':'গোপনীয়তা'}</button>
+        <a href={`https://wa.me/8801759084692?text=${whatsappText}`} target="_blank" rel="noreferrer">{en?'WhatsApp':'হোয়াটসঅ্যাপ'}</a>
+      </div>
+      <small>{en?'Developer Support via WhatsApp':'ডেভেলপার সহায়তা — শুধু হোয়াটসঅ্যাপ'}<br/><b>মোঃ মশিউর রহমান · 01759084692</b></small>
     </footer>
+
+    <a className="floating-whatsapp" href={`https://wa.me/8801759084692?text=${whatsappText}`} target="_blank" rel="noreferrer" aria-label={en?'Message on WhatsApp':'হোয়াটসঅ্যাপে মেসেজ করুন'}><MessageCircle/><span>{en?'WhatsApp':'হোয়াটসঅ্যাপ'}</span></a>
   </div>
 }
 
@@ -2526,7 +2658,7 @@ function App(){
         {admin&&<button className={page==='admin'?'active':''} onClick={()=>setPage('admin')}><ShieldCheck size={18}/>{lang==='en'?'System Control':'সিস্টেম কন্ট্রোল'}</button>}
       </div>
     </nav></aside>
-    <main><header className="app-topbar"><div className="mobile-topbar-left"><button className="mobile-menu-trigger" onClick={()=>setMobileMenu(v=>!v)} aria-label={lang==='en'?(mobileMenu?'Close menu':'Open menu'):(mobileMenu?'মেনু বন্ধ করুন':'মেনু খুলুন')}><span></span><span></span><span></span></button><div><h2>{lang==='en'?`Welcome, ${user.name}`:`স্বাগতম, ${user.name}`}</h2><p>{lang==='en'?(roleLabel[user.role]||user.role):({super_admin:'সিস্টেম ব্যবস্থাপক',admin:'অ্যাডমিন',department_admin:'বিভাগীয় অ্যাডমিন',editor:'সম্পাদক',employee:'কর্মকর্তা-কর্মচারী'}[user.role]||user.role)}</p></div></div><div className="header-actions"><LangToggle lang={lang} setLang={setLang}/><button className="logout" onClick={logout}><LogOut size={16}/><span>{lang==='en'?'Logout':'লগআউট'}</span></button></div></header>
+    <main><header className="app-topbar"><div className="mobile-topbar-left"><button className={`mobile-menu-trigger text-menu-trigger ${mobileMenu?'active':''}`} onClick={()=>setMobileMenu(v=>!v)} aria-expanded={mobileMenu} aria-label={lang==='en'?(mobileMenu?'Close menu':'Open menu'):(mobileMenu?'মেনু বন্ধ করুন':'মেনু খুলুন')}><span>{lang==='en'?(mobileMenu?'Close Menu':'Menu'):(mobileMenu?'মেনু বন্ধ':'মেনু')}</span></button><div><h2>{lang==='en'?`Welcome, ${user.name}`:`স্বাগতম, ${user.name}`}</h2><p>{lang==='en'?(roleLabel[user.role]||user.role):({super_admin:'সিস্টেম ব্যবস্থাপক',admin:'অ্যাডমিন',department_admin:'বিভাগীয় অ্যাডমিন',editor:'সম্পাদক',employee:'কর্মকর্তা-কর্মচারী'}[user.role]||user.role)}</p></div></div><div className="header-actions"><LangToggle lang={lang} setLang={setLang}/><button className="logout" onClick={logout}><LogOut size={16}/><span>{lang==='en'?'Logout':'লগআউট'}</span></button></div></header>
       {page==='dashboard'&&<DashboardHome user={user} onPage={setPage} lang={lang}/>} 
       {page==='career'&&<MyCareer lang={lang}/>}
       {page==='promotion'&&<PromotionCenter lang={lang}/>}
@@ -2554,6 +2686,7 @@ function App(){
       <button className={page==='calendar'?'active':''} onClick={()=>setPage('calendar')}><CalendarDays/><span>{lang==='en'?'Calendar':'ক্যালেন্ডার'}</span></button>
       <button className={mobileMenu?'active':''} onClick={()=>setMobileMenu(v=>!v)}><Boxes/><span>{lang==='en'?'Menu':'মেনু'}</span></button>
     </nav>
+    <a className="floating-whatsapp logged-in-whatsapp" href={`https://wa.me/8801759084692?text=${encodeURIComponent(lang==='en'?'Hello, I need help with the Employee Digital Service Platform.':'আসসালামু আলাইকুম, কর্মকর্তা-কর্মচারী ডিজিটাল সেবা প্ল্যাটফর্ম বিষয়ে সহায়তা প্রয়োজন।')}`} target="_blank" rel="noreferrer" aria-label={lang==='en'?'Message on WhatsApp':'হোয়াটসঅ্যাপে মেসেজ করুন'}><MessageCircle/><span>{lang==='en'?'WhatsApp':'হোয়াটসঅ্যাপ'}</span></a>
   </div>
 }
 createRoot(document.getElementById('root')).render(<App/>);
