@@ -18,6 +18,37 @@ function canManage(user){return user&&['super_admin','admin','department_admin']
 function canDelete(user){return user&&['super_admin','admin'].includes(user.role)}
 async function audit(env,user,action,type,id,metadata={}){try{await env.DB.prepare(`INSERT INTO audit_logs(user_id,action,entity_type,entity_id,metadata) VALUES(?,?,?,?,?)`).bind(user.id,action,type,String(id||''),JSON.stringify(metadata)).run()}catch{}}
 
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function d1First(env,sql,binds=[]){
+  let last=null;
+  for(let i=0;i<2;i++){
+    try{
+      let q=env.DB.prepare(sql);
+      if(binds.length)q=q.bind(...binds);
+      return await q.first();
+    }catch(e){last=e;if(i===0)await sleep(40)}
+  }
+  throw last;
+}
+async function d1All(env,sql,binds=[]){
+  let last=null;
+  for(let i=0;i<2;i++){
+    try{
+      let q=env.DB.prepare(sql);
+      if(binds.length)q=q.bind(...binds);
+      const x=await q.all();
+      return x?.results||[];
+    }catch(e){last=e;if(i===0)await sleep(40)}
+  }
+  throw last;
+}
+async function safeCount(env,sql,binds=[]){
+  try{const x=await d1First(env,sql,binds);return +(x?.c||0)}catch{return 0}
+}
+async function safeRows(env,sql,binds=[]){
+  try{return await d1All(env,sql,binds)}catch{return []}
+}
+
 function emailNorm(v){return String(v||'').trim().toLowerCase()}
 function strongPassword(p){return typeof p==='string'&&p.length>=10&&/[A-Za-z]/.test(p)&&/\d/.test(p)}
 function safeName(v){return String(v||'').trim().slice(0,120)}
@@ -35,7 +66,7 @@ export default{async fetch(req,env){
   if(req.method==='OPTIONS')return new Response(null,{status:204,headers:C});
   const u=new URL(req.url);
   try{
-    if(u.pathname==='/api/health')return json({ok:true,service:'Employee Service ERP API',phase:'16.0-final'},200,C);
+    if(u.pathname==='/api/health')return json({ok:true,service:'Employee Service ERP API',phase:'16.3.4-stable-admin-api'},200,C);
 
     // Phase 8 FREE: self-service registration and recovery code password reset
     if(u.pathname==='/api/register'&&req.method==='POST'){
@@ -173,47 +204,37 @@ export default{async fetch(req,env){
       if(!canManage(user))return json({error:'Forbidden'},403,C);
       const now=new Date(),days=[];
       for(let i=6;i>=0;i--){const d=new Date(now);d.setDate(d.getDate()-i);days.push(d.toISOString().slice(0,10))}
-      async function count(sql,fallback=0){try{const x=await env.DB.prepare(sql).first();return +(x?.c||0)}catch{return fallback}}
-      async function rows(sql){try{const x=await env.DB.prepare(sql).all();return x.results||[]}catch{return[]}}
+      // Stability fix: avoid a large burst of concurrent D1 queries.
+      // Each query retries once and optional analytics tables degrade to 0/[] instead of 500.
+      const totalUsers=await safeCount(env,`SELECT COUNT(*) c FROM users`);
+      const activeUsers=await safeCount(env,`SELECT COUNT(*) c FROM users WHERE is_active=1`);
+      const officers=await safeCount(env,`SELECT COUNT(*) c FROM users WHERE account_type='officer'`);
+      const employees=await safeCount(env,`SELECT COUNT(*) c FROM users WHERE COALESCE(account_type,'employee')='employee'`);
+      const profiles=await safeCount(env,`SELECT COUNT(*) c FROM career_profiles`);
+      const deps=await safeCount(env,`SELECT COUNT(*) c FROM departments`);
+      const desigs=await safeCount(env,`SELECT COUNT(*) c FROM designations WHERE is_active=1`);
+      const notices=await safeCount(env,`SELECT COUNT(*) c FROM notices WHERE is_active=1`);
+      const policies=await safeCount(env,`SELECT COUNT(*) c FROM policies WHERE is_active=1`);
+      const activeSessions=await safeCount(env,`SELECT COUNT(*) c FROM sessions WHERE expires_at>CURRENT_TIMESTAMP`);
+      const expiredSessions=await safeCount(env,`SELECT COUNT(*) c FROM sessions WHERE expires_at<=CURRENT_TIMESTAMP`);
+      const inactiveUsers=await safeCount(env,`SELECT COUNT(*) c FROM users WHERE is_active=0`);
+      const recoveryUsers=await safeCount(env,`SELECT COUNT(*) c FROM users WHERE recovery_code_hash IS NOT NULL AND recovery_code_hash<>''`);
+      const todayViews=await safeCount(env,`SELECT COUNT(*) c FROM public_events WHERE date(created_at,'localtime')=date('now','localtime')`);
+      const todayUnique=await safeCount(env,`SELECT COUNT(DISTINCT visitor_hash) c FROM public_events WHERE date(created_at,'localtime')=date('now','localtime')`);
+      const todayCalculatorViews=await safeCount(env,`SELECT COUNT(*) c FROM public_events WHERE date(created_at,'localtime')=date('now','localtime') AND section IN ('promotion_calculator','pay_scale_calculator')`);
+      const returningToday=await safeCount(env,`SELECT COUNT(DISTINCT p.visitor_hash) c FROM public_events p WHERE date(p.created_at,'localtime')=date('now','localtime') AND EXISTS (SELECT 1 FROM public_events old WHERE old.visitor_hash=p.visitor_hash AND date(old.created_at,'localtime')<date('now','localtime'))`);
+      const todayLoginSuccess=await safeCount(env,`SELECT COUNT(*) c FROM login_events WHERE success=1 AND date(created_at,'localtime')=date('now','localtime')`);
+      const todayLoginFailed=await safeCount(env,`SELECT COUNT(*) c FROM login_events WHERE success=0 AND date(created_at,'localtime')=date('now','localtime')`);
+      const todayLoginUnique=await safeCount(env,`SELECT COUNT(DISTINCT user_id) c FROM login_events WHERE success=1 AND user_id IS NOT NULL AND date(created_at,'localtime')=date('now','localtime')`);
+      const todayLoginAttempts=await safeCount(env,`SELECT COUNT(*) c FROM login_events WHERE date(created_at,'localtime')=date('now','localtime')`);
 
-      const [
-        totalUsers,activeUsers,officers,employees,profiles,deps,desigs,notices,policies,
-        activeSessions,expiredSessions,inactiveUsers,recoveryUsers,
-        todayViews,todayUnique,todayCalculatorViews,returningToday,
-        todayLoginSuccess,todayLoginFailed,todayLoginUnique,todayLoginAttempts
-      ]=await Promise.all([
-        count(`SELECT COUNT(*) c FROM users`),
-        count(`SELECT COUNT(*) c FROM users WHERE is_active=1`),
-        count(`SELECT COUNT(*) c FROM users WHERE account_type='officer'`),
-        count(`SELECT COUNT(*) c FROM users WHERE COALESCE(account_type,'employee')='employee'`),
-        count(`SELECT COUNT(*) c FROM career_profiles`),
-        count(`SELECT COUNT(*) c FROM departments`),
-        count(`SELECT COUNT(*) c FROM designations WHERE is_active=1`),
-        count(`SELECT COUNT(*) c FROM notices WHERE is_active=1`),
-        count(`SELECT COUNT(*) c FROM policies WHERE is_active=1`),
-        count(`SELECT COUNT(*) c FROM sessions WHERE expires_at>CURRENT_TIMESTAMP`),
-        count(`SELECT COUNT(*) c FROM sessions WHERE expires_at<=CURRENT_TIMESTAMP`),
-        count(`SELECT COUNT(*) c FROM users WHERE is_active=0`),
-        count(`SELECT COUNT(*) c FROM users WHERE recovery_code_hash IS NOT NULL AND recovery_code_hash<>''`),
-        count(`SELECT COUNT(*) c FROM public_events WHERE date(created_at,'localtime')=date('now','localtime')`),
-        count(`SELECT COUNT(DISTINCT visitor_hash) c FROM public_events WHERE date(created_at,'localtime')=date('now','localtime')`),
-        count(`SELECT COUNT(*) c FROM public_events WHERE date(created_at,'localtime')=date('now','localtime') AND section IN ('promotion_calculator','pay_scale_calculator')`),
-        count(`SELECT COUNT(DISTINCT p.visitor_hash) c FROM public_events p WHERE date(p.created_at,'localtime')=date('now','localtime') AND EXISTS (SELECT 1 FROM public_events old WHERE old.visitor_hash=p.visitor_hash AND date(old.created_at,'localtime')<date('now','localtime'))`),
-        count(`SELECT COUNT(*) c FROM login_events WHERE success=1 AND date(created_at,'localtime')=date('now','localtime')`),
-        count(`SELECT COUNT(*) c FROM login_events WHERE success=0 AND date(created_at,'localtime')=date('now','localtime')`),
-        count(`SELECT COUNT(DISTINCT user_id) c FROM login_events WHERE success=1 AND user_id IS NOT NULL AND date(created_at,'localtime')=date('now','localtime')`),
-        count(`SELECT COUNT(*) c FROM login_events WHERE date(created_at,'localtime')=date('now','localtime')`)
-      ]);
-
-      const [usage,recentUsers,recentAudit,activity,hourlyRows,loginDaily,recentLogins]=await Promise.all([
-        rows(`SELECT module,COUNT(*) c FROM usage_events GROUP BY module ORDER BY c DESC LIMIT 7`),
-        rows(`SELECT id,name,email,role,is_active,COALESCE(account_type,'employee') account_type FROM users ORDER BY id DESC LIMIT 6`),
-        rows(`SELECT a.id,a.action,a.created_at,u.name user_name FROM audit_logs a LEFT JOIN users u ON u.id=a.user_id ORDER BY a.id DESC LIMIT 6`),
-        rows(`SELECT substr(created_at,1,10) day,COUNT(*) c FROM usage_events WHERE created_at>=datetime('now','-7 days') GROUP BY substr(created_at,1,10)`),
-        rows(`SELECT CAST(strftime('%H',created_at,'localtime') AS INTEGER) hour,COUNT(*) c FROM public_events WHERE date(created_at,'localtime')=date('now','localtime') GROUP BY hour ORDER BY hour`),
-        rows(`SELECT date(created_at,'localtime') day,COUNT(*) c FROM login_events WHERE success=1 AND created_at>=datetime('now','-7 days') GROUP BY date(created_at,'localtime')`),
-        rows(`SELECT l.id,l.email,l.success,l.created_at,u.name user_name FROM login_events l LEFT JOIN users u ON u.id=l.user_id ORDER BY l.id DESC LIMIT 10`)
-      ]);
+      const usage=await safeRows(env,`SELECT module,COUNT(*) c FROM usage_events GROUP BY module ORDER BY c DESC LIMIT 7`);
+      const recentUsers=await safeRows(env,`SELECT id,name,email,role,is_active,COALESCE(account_type,'employee') account_type FROM users ORDER BY id DESC LIMIT 6`);
+      const recentAudit=await safeRows(env,`SELECT a.id,a.action,a.created_at,u.name user_name FROM audit_logs a LEFT JOIN users u ON u.id=a.user_id ORDER BY a.id DESC LIMIT 6`);
+      const activity=await safeRows(env,`SELECT substr(created_at,1,10) day,COUNT(*) c FROM usage_events WHERE created_at>=datetime('now','-7 days') GROUP BY substr(created_at,1,10)`);
+      const hourlyRows=await safeRows(env,`SELECT CAST(strftime('%H',created_at,'localtime') AS INTEGER) hour,COUNT(*) c FROM public_events WHERE date(created_at,'localtime')=date('now','localtime') GROUP BY hour ORDER BY hour`);
+      const loginDaily=await safeRows(env,`SELECT date(created_at,'localtime') day,COUNT(*) c FROM login_events WHERE success=1 AND created_at>=datetime('now','-7 days') GROUP BY date(created_at,'localtime')`);
+      const recentLogins=await safeRows(env,`SELECT l.id,l.email,l.success,l.created_at,u.name user_name FROM login_events l LEFT JOIN users u ON u.id=l.user_id ORDER BY l.id DESC LIMIT 10`);
 
       const amap=Object.fromEntries(activity.map(r=>[r.day,+r.c]));
       const lmap=Object.fromEntries(loginDaily.map(r=>[r.day,+r.c]));
@@ -513,8 +534,8 @@ export default{async fetch(req,env){
 
     if(u.pathname==='/api/admin/users'&&req.method==='GET'){
       if(!canManage(user))return json({error:'Forbidden'},403,C);
-      const x=await env.DB.prepare(`SELECT id,employee_id,name,email,role,is_active,COALESCE(account_type,'employee') account_type,COALESCE(email_verified,1) email_verified FROM users ORDER BY id DESC LIMIT 1000`).all();
-      return json({users:x.results||[]},200,C);
+      const rows=await safeRows(env,`SELECT id,employee_id,name,email,role,is_active,COALESCE(account_type,'employee') account_type,COALESCE(email_verified,1) email_verified FROM users ORDER BY id DESC LIMIT 1000`);
+      return json({users:rows},200,C);
     }
     const adminUserStatus=u.pathname.match(/^\/api\/admin\/users\/(\d+)\/status$/);
     if(adminUserStatus&&req.method==='PUT'){
@@ -529,25 +550,23 @@ export default{async fetch(req,env){
     if(u.pathname==='/api/admin/audit'&&req.method==='GET'){
       if(!canManage(user))return json({error:'Forbidden'},403,C);
       const lim=Math.min(Math.max(Number(u.searchParams.get('limit')||80),1),200);
-      const x=await env.DB.prepare(`SELECT a.id,a.user_id,a.action,a.entity_type,a.entity_id,a.metadata,a.created_at,u.name user_name,u.email user_email
-        FROM audit_logs a LEFT JOIN users u ON u.id=a.user_id ORDER BY a.id DESC LIMIT ?`).bind(lim).all();
-      return json({logs:x.results||[]},200,C);
+      const rows=await safeRows(env,`SELECT a.id,a.user_id,a.action,a.entity_type,a.entity_id,a.metadata,a.created_at,u.name user_name,u.email user_email
+        FROM audit_logs a LEFT JOIN users u ON u.id=a.user_id ORDER BY a.id DESC LIMIT ?`,[lim]);
+      return json({logs:rows},200,C);
     }
     if(u.pathname==='/api/admin/system-health'&&req.method==='GET'){
       if(!canManage(user))return json({error:'Forbidden'},403,C);
-      const [active,expired,inactive,recovery,auditCount]=await Promise.all([
-        env.DB.prepare(`SELECT COUNT(*) c FROM sessions WHERE expires_at>CURRENT_TIMESTAMP`).first(),
-        env.DB.prepare(`SELECT COUNT(*) c FROM sessions WHERE expires_at<=CURRENT_TIMESTAMP`).first(),
-        env.DB.prepare(`SELECT COUNT(*) c FROM users WHERE is_active=0`).first(),
-        env.DB.prepare(`SELECT COUNT(*) c FROM users WHERE recovery_code_hash IS NOT NULL AND recovery_code_hash<>''`).first(),
-        env.DB.prepare(`SELECT COUNT(*) c FROM audit_logs`).first()
-      ]);
-      return json({ok:true,active_sessions:+active.c,expired_sessions:+expired.c,inactive_users:+inactive.c,recovery_ready_users:+recovery.c,audit_events:+auditCount.c},200,C);
+      const active=await safeCount(env,`SELECT COUNT(*) c FROM sessions WHERE expires_at>CURRENT_TIMESTAMP`);
+      const expired=await safeCount(env,`SELECT COUNT(*) c FROM sessions WHERE expires_at<=CURRENT_TIMESTAMP`);
+      const inactive=await safeCount(env,`SELECT COUNT(*) c FROM users WHERE is_active=0`);
+      const recovery=await safeCount(env,`SELECT COUNT(*) c FROM users WHERE recovery_code_hash IS NOT NULL AND recovery_code_hash<>''`);
+      const auditCount=await safeCount(env,`SELECT COUNT(*) c FROM audit_logs`);
+      return json({ok:true,active_sessions:active,expired_sessions:expired,inactive_users:inactive,recovery_ready_users:recovery,audit_events:auditCount},200,C);
     }
     if(u.pathname==='/api/admin/settings'&&req.method==='GET'){
       if(!canManage(user))return json({error:'Forbidden'},403,C);
-      const x=await env.DB.prepare(`SELECT key,value FROM system_settings ORDER BY key`).all();
-      return json({settings:Object.fromEntries((x.results||[]).map(r=>[r.key,r.value]))},200,C);
+      const rows=await safeRows(env,`SELECT key,value FROM system_settings ORDER BY key`);
+      return json({settings:Object.fromEntries(rows.map(r=>[r.key,r.value]))},200,C);
     }
     if(u.pathname==='/api/admin/settings'&&req.method==='PUT'){
       if(!user||!['super_admin','admin'].includes(user.role))return json({error:'Forbidden'},403,C);
@@ -603,14 +622,12 @@ export default{async fetch(req,env){
 
     if(u.pathname==='/api/admin/stats'&&req.method==='GET'){
       if(!canManage(user))return json({error:'Forbidden'},403,C);
-      const[e,a,us,d,g]=await Promise.all([
-        env.DB.prepare('SELECT COUNT(*) c FROM employees').first(),
-        env.DB.prepare("SELECT COUNT(*) c FROM employees WHERE service_status='active'").first(),
-        env.DB.prepare('SELECT COUNT(*) c FROM users').first(),
-        env.DB.prepare('SELECT COUNT(*) c FROM departments').first(),
-        env.DB.prepare('SELECT COUNT(*) c FROM designations WHERE is_active=1').first()
-      ]);
-      return json({employees:+e.c,active_employees:+a.c,users:+us.c,departments:+d.c,designations:+g.c},200,C);
+      const employeesCount=await safeCount(env,'SELECT COUNT(*) c FROM employees');
+      const activeEmployees=await safeCount(env,"SELECT COUNT(*) c FROM employees WHERE service_status='active'");
+      const usersCount=await safeCount(env,'SELECT COUNT(*) c FROM users');
+      const departmentsCount=await safeCount(env,'SELECT COUNT(*) c FROM departments');
+      const designationsCount=await safeCount(env,'SELECT COUNT(*) c FROM designations WHERE is_active=1');
+      return json({employees:employeesCount,active_employees:activeEmployees,users:usersCount,departments:departmentsCount,designations:designationsCount},200,C);
     }
 
     return json({error:'Not found'},404,C);
