@@ -69,6 +69,46 @@ export default{async fetch(req,env){
     if(u.pathname==='/api/health')return json({ok:true,service:'Employee Service ERP API',phase:'16.3.5-dual-recovery-super-admin'},200,C);
 
     // Phase 8 FREE: self-service registration and recovery code password reset
+    // v16.5 Smart registration: create account + personal profile + education in one flow
+    if(u.pathname==='/api/register-complete'&&req.method==='POST'){
+      const b=await req.json(),name=safeName(b.name),email=emailNorm(b.email),password=String(b.password||''),accountType=['officer','employee'].includes(b.account_type)?b.account_type:'employee';
+      if(!b.consent_read||!b.consent_own||!b.consent_advisory)return json({error:'Please accept all required declarations before registration'},400,C);
+      if(!name||!email||!email.includes('@')||!String(b.employee_reference||'').trim())return json({error:'Name, email and employee/reference ID are required'},400,C);
+      if(!strongPassword(password))return json({error:'Password must be at least 10 characters and include letters and numbers'},400,C);
+      if(!b.date_of_birth||!b.gender||!b.marital_status||!b.current_post||!b.current_grade||!b.first_joining_date||!b.current_post_joining_date||!b.current_basic_salary)return json({error:'Required personal, employment and salary information is incomplete'},400,C);
+      const exists=await env.DB.prepare('SELECT id FROM users WHERE email=? OR employee_id=?').bind(email,String(b.employee_reference).trim()).first();
+      if(exists)return json({error:'An account already exists with this email or employee/reference ID'},409,C);
+      const p=await mkpass(password),recoveryCode=makeRecoveryCode(),rh=await recoveryHash(recoveryCode);
+      let userId=null;
+      try{
+        const r=await env.DB.prepare(`INSERT INTO users(name,email,password_hash,password_salt,role,is_active,account_type,email_verified,recovery_code_hash,employee_id,registered_at) VALUES(?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP)`)
+          .bind(name,email,p.hash,p.salt,'employee',1,accountType,1,rh,String(b.employee_reference).trim()).run();
+        userId=Number(r.meta?.last_row_id);
+        await env.DB.prepare(`INSERT INTO career_profiles(
+          user_id,first_joining_date,current_post,current_grade,current_post_joining_date,employment_type,office_name,department_name,employee_reference,retirement_age,notes,updated_at,
+          date_of_birth,mobile,gender,marital_status,employee_category,third_class_start_date,fourth_class_start_date,previous_promotions,current_basic_salary,salary_effective_date
+        ) VALUES(?,?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,?,?,?,?,?,?,?,?,?,?)`)
+          .bind(userId,b.first_joining_date,b.current_post,Number(b.current_grade),b.current_post_joining_date,accountType,b.office_name||null,b.department_name||null,String(b.employee_reference).trim(),null,null,
+            b.date_of_birth,b.mobile||null,b.gender,b.marital_status,b.employee_category||null,b.third_class_start_date||null,b.fourth_class_start_date||null,Math.max(0,Number(b.previous_promotions)||0),Number(b.current_basic_salary),b.salary_effective_date||null).run();
+        const edus=[
+          ['ssc',b.ssc_result],
+          ['hsc',b.hsc_result],
+          [b.bachelor_type==='honours'?'bachelor_honours':b.bachelor_type==='pass'?'bachelor_pass':'',b.bachelor_result],
+          ['masters',b.masters_result]
+        ].filter(x=>x[0]&&x[1]);
+        for(const [level,result] of edus)await env.DB.prepare(`INSERT INTO career_education(user_id,level,result) VALUES(?,?,?)`).bind(userId,level,result).run();
+        try{await env.DB.prepare(`INSERT INTO career_events(user_id,event_type,event_date,title,post_name,grade,office_name,notes) VALUES(?,?,?,?,?,?,?,?)`)
+          .bind(userId,'appointment',b.first_joining_date,'Initial appointment',b.current_post,Number(b.current_grade),b.office_name||null,'Created automatically during registration').run()}catch{}
+        return json({ok:true,recoveryCode,message:'Account and personal service profile created successfully'},201,C);
+      }catch(err){
+        if(userId){
+          for(const table of ['career_education','career_events','career_profiles','sessions'])try{await env.DB.prepare(`DELETE FROM ${table} WHERE user_id=?`).bind(userId).run()}catch{}
+          try{await env.DB.prepare(`DELETE FROM users WHERE id=?`).bind(userId).run()}catch{}
+        }
+        throw err;
+      }
+    }
+
     if(u.pathname==='/api/register'&&req.method==='POST'){
       const b=await req.json(),name=safeName(b.name),email=emailNorm(b.email),password=String(b.password||''),accountType=['officer','employee'].includes(b.account_type)?b.account_type:'employee';
       if(!name||!email||!email.includes('@'))return json({error:'Valid name and email are required'},400,C);
