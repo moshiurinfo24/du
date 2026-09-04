@@ -27,6 +27,7 @@ import './system-control-v16-3-3.css';
 import './super-admin-user-control-v16-3-5.css';
 import './points-calculator-v16-3-6.css';
 import './promotion-forecast-v16-3-7.css';
+import './house-allocation-points-v16-3-8.css';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import {
   PAY2015,PAY2026,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
@@ -336,7 +337,7 @@ function PublicHome({onLogin,lang,setLang}){
   };
   const navItems=[[copy.home,'top'],[copy.promotion,'public-calculator','promotion'],[copy.pay,'public-calculator','salary'],[copy.policies,'policies'],[copy.notices,'notices'],[copy.forms,'forms'],[copy.help,'help']];
   const goto=(id,tool)=>{setPublicMenu(false);if(tool)return openTool(tool);trackPublic('section_view',id);scrollTo(id);};
-  return <div id="top" data-public-version="v16.3.7.1" className={'public premium-public premium-home-v16-3 '+(en?'lang-en':'lang-bn')}>
+  return <div id="top" data-public-version="v16.3.8" className={'public premium-public premium-home-v16-3 '+(en?'lang-en':'lang-bn')}>
     <header className="public-nav luxury-nav premium-v16-nav">
       <div className="public-brand"><div className="brand-orb"><ShieldCheck size={19}/></div><div><b>{t.appName}</b><small>{t.appSub}</small></div></div>
       <button className="public-mobile-trigger" onClick={()=>setPublicMenu(v=>!v)} aria-label={en?(publicMenu?'Close menu':'Open menu'):(publicMenu?'মেনু বন্ধ করুন':'মেনু খুলুন')}><span></span><span></span><span></span></button>
@@ -1494,14 +1495,86 @@ function PointsCalculator({lang='bn'}){
       <div className="points-rule-note caution"><AlertTriangle size={17}/><div><b>{en?'Advanced degrees':'উচ্চতর ডিগ্রি'}</b><p>{en?'No additional MPhil/PhD or other special-degree points are automated here yet because that part of the old scan requires a clearer rule confirmation. It can be added after verification.':'এম.ফিল/পিএইচডি বা অন্য বিশেষ উচ্চতর ডিগ্রির অতিরিক্ত পয়েন্ট এই সংস্করণে স্বয়ংক্রিয় করা হয়নি, কারণ পুরোনো স্ক্যানের ওই অংশটি আরও পরিষ্কারভাবে নিয়ম যাচাই করা প্রয়োজন। যাচাই হলে যোগ করা যাবে।'}</p></div></div>
     </section>}
 
-    {tab==='house'&&<section className="points-panel house-points-coming">
-      <div className="house-coming-icon"><Home/></div>
-      <span>{en?'RULE PENDING':'নিয়ম অপেক্ষমাণ'}</span>
-      <h3>{en?'House Allocation Points':'বাসা বরাদ্দ পয়েন্ট'}</h3>
-      <p>{en?'The module is ready, but no formula has been added. Once you provide the applicable house-allocation point rules, they will be added here without inventing any value or condition.':'মডিউল প্রস্তুত রাখা হয়েছে, তবে কোনো সূত্র যোগ করা হয়নি। আপনি প্রযোজ্য বাসা বরাদ্দ পয়েন্টের নিয়ম দিলে কোনো মান বা শর্ত অনুমান না করে এখানেই যোগ করা হবে।'}</p>
-      <div className="house-rule-status"><ShieldCheck size={17}/>{en?'No dummy rule used':'কোনো ডামি নিয়ম ব্যবহার করা হয়নি'}</div>
-    </section>}
+    {tab==='house'&&<HouseAllocationPoints lang={lang}/>}
   </div>
+}
+
+
+
+function HouseAllocationPoints({lang='bn'}){
+  const en=lang==='en';
+  const [kind,setKind]=useState('third_general');
+  const [manual,setManual]=useState({service:'',basic:'',designation:'',marital:'',gender:''});
+  const total=['service','basic','designation','marital','gender'].reduce((s,k)=>s+(Number(manual[k])||0),0);
+
+  const groups=[
+    {id:'third_general',icon:Users,bn:'৩য় শ্রেণির সাধারণ কর্মচারী',en:'3rd Class General Employee',ready:true,subBn:'বর্তমানে সক্রিয়',subEn:'Available now'},
+    {id:'third_technical',icon:Wrench,bn:'৩য় শ্রেণির কারিগরি কর্মচারী',en:'3rd Class Technical Employee',ready:false,subBn:'নীতিমালা যাচাই ও সংযোজনাধীন',subEn:'Rules under verification'},
+    {id:'fourth_general',icon:Users,bn:'৪র্থ শ্রেণির সাধারণ কর্মচারী',en:'4th Class General Employee',ready:false,subBn:'নীতিমালা যাচাই ও সংযোজনাধীন',subEn:'Rules under verification'},
+    {id:'fourth_technical',icon:Wrench,bn:'৪র্থ শ্রেণির কারিগরি কর্মচারী',en:'4th Class Technical Employee',ready:false,subBn:'নীতিমালা যাচাই ও সংযোজনাধীন',subEn:'Rules under verification'},
+    {id:'officer',icon:Briefcase,bn:'কর্মকর্তা',en:'Officer',ready:false,subBn:'নীতিমালা যাচাই ও সংযোজনাধীন',subEn:'Rules under verification'},
+    {id:'teacher',icon:GraduationCap,bn:'শিক্ষক',en:'Teacher',ready:false,subBn:'নীতিমালা যাচাই ও সংযোজনাধীন',subEn:'Rules under verification'}
+  ];
+  const current=groups.find(x=>x.id===kind)||groups[0];
+
+  return <section className="points-panel house-allocation-module">
+    <div className="points-panel-head">
+      <div className="points-panel-icon"><Home/></div>
+      <div>
+        <h3>{en?'House Allocation Points':'বাসা বরাদ্দ পয়েন্ট'}</h3>
+        <p>{en?'Choose the applicable employee category. Only the verified category is active; other rule sets will be enabled after their policy tables are verified.':'প্রযোজ্য কর্মচারীর ধরন নির্বাচন করুন। যে শ্রেণির নিয়ম যাচাই করা হয়েছে শুধু সেটিই সক্রিয়; অন্য শ্রেণিগুলো নীতিমালা যাচাই শেষে চালু হবে।'}</p>
+      </div>
+    </div>
+
+    <div className="house-category-grid">
+      {groups.map(g=>{
+        const Icon=g.icon;
+        return <button key={g.id} className={`house-category-card ${kind===g.id?'active':''} ${g.ready?'ready':'pending'}`} onClick={()=>setKind(g.id)}>
+          <div className="house-cat-icon"><Icon/></div>
+          <div><b>{en?g.en:g.bn}</b><small>{en?g.subEn:g.subBn}</small></div>
+          <span className={`house-status ${g.ready?'ready':'pending'}`}>{g.ready?(en?'Active':'সক্রিয়'):(en?'Coming Soon':'শীঘ্রই আসছে')}</span>
+        </button>
+      })}
+    </div>
+
+    {current.ready?<div className="house-active-panel">
+      <div className="house-active-head">
+        <div>
+          <span>{en?'ACTIVE RULE SET':'সক্রিয় নিয়ম কাঠামো'}</span>
+          <h4>{en?current.en:current.bn}</h4>
+          <p>{en?'The point structure below follows the categories visible in the provided house-allocation point-details screen. The underlying official formula for each component has not yet been supplied, so no value is invented automatically.':'আপনার দেওয়া বাসা বরাদ্দের Point Details স্ক্রিনে যে পয়েন্ট বিভাগগুলো দেখা গেছে, নিচে সেই কাঠামোই রাখা হয়েছে। প্রতিটি পয়েন্টের মূল সরকারি সূত্র/টেবিল এখনও দেওয়া হয়নি, তাই কোনো মান অনুমান করে স্বয়ংক্রিয়ভাবে বসানো হয়নি।'}</p>
+        </div>
+        <div className="house-active-badge"><ShieldCheck/>{en?'Structure verified':'কাঠামো যাচাইকৃত'}</div>
+      </div>
+
+      <div className="house-point-input-grid">
+        <label>{en?'Point based on Service':'চাকরিকালভিত্তিক পয়েন্ট'}<input type="number" step="0.01" value={manual.service} onChange={e=>setManual(x=>({...x,service:e.target.value}))} placeholder="0.00"/></label>
+        <label>{en?'Point based on Basic Salary':'মূল বেতনভিত্তিক পয়েন্ট'}<input type="number" step="0.01" value={manual.basic} onChange={e=>setManual(x=>({...x,basic:e.target.value}))} placeholder="0.00"/></label>
+        <label>{en?'Point based on Designation':'পদবিভিত্তিক পয়েন্ট'}<input type="number" step="0.01" value={manual.designation} onChange={e=>setManual(x=>({...x,designation:e.target.value}))} placeholder="0.00"/></label>
+        <label>{en?'Point based on Marital Status':'বৈবাহিক অবস্থাভিত্তিক পয়েন্ট'}<input type="number" step="0.01" value={manual.marital} onChange={e=>setManual(x=>({...x,marital:e.target.value}))} placeholder="0.00"/></label>
+        <label>{en?'Point based on Gender':'লিঙ্গভিত্তিক পয়েন্ট'}<input type="number" step="0.01" value={manual.gender} onChange={e=>setManual(x=>({...x,gender:e.target.value}))} placeholder="0.00"/></label>
+      </div>
+
+      <div className="house-total-box">
+        <div><small>{en?'Total House Allocation Point':'মোট বাসা বরাদ্দ পয়েন্ট'}</small><b>{numLang(total,lang)}</b></div>
+        <span>{en?'Manual component entry until exact policy formulas are supplied':'মূল নীতিমালার সূত্র পাওয়া পর্যন্ত যাচাইকৃত component-value ইনপুটের যোগফল'}</span>
+      </div>
+
+      <div className="house-components-note">
+        <BookOpen/>
+        <div>
+          <b>{en?'Point components currently identified':'বর্তমানে শনাক্ত করা পয়েন্টের বিভাগ'}</b>
+          <p>{en?'Service + Basic Salary + Designation + Marital Status + Gender = Total Point. The screenshot also shows separate Third-Class and Fourth-Class service values feeding the service component.':'চাকরিকাল + মূল বেতন + পদবি + বৈবাহিক অবস্থা + লিঙ্গ = মোট পয়েন্ট। স্ক্রিনশটে ৩য় শ্রেণি ও ৪র্থ শ্রেণিতে চাকরিকাল আলাদাভাবে দেখিয়ে সেখান থেকে Service Point তৈরি হওয়ার কাঠামোও দেখা গেছে।'}</p>
+        </div>
+      </div>
+    </div>:<div className="house-pending-panel">
+      <div className="house-coming-icon"><Clock3/></div>
+      <span>{en?'COMING SOON':'শীঘ্রই আসছে'}</span>
+      <h4>{en?current.en:current.bn}</h4>
+      <p>{en?'This category is already reserved in the system. Its calculator will be activated after the applicable house-allocation policy and point table are verified.':'এই শ্রেণিটি সিস্টেমে রাখা হয়েছে। প্রযোজ্য বাসা বরাদ্দ নীতিমালা ও পয়েন্ট টেবিল যাচাই হওয়ার পর এর ক্যালকুলেটর সক্রিয় করা হবে।'}</p>
+      <div className="house-rule-status"><ShieldCheck/>{en?'No unverified formula is being used':'যাচাই ছাড়া কোনো সূত্র ব্যবহার করা হচ্ছে না'}</div>
+    </div>}
+  </section>
 }
 
 
@@ -2089,7 +2162,7 @@ function App(){
   if(!user)return showLogin?<AuthPortal onLogin={u=>{setUser(u);window.history.replaceState({},'',window.location.pathname)}} onBack={()=>{setShowLogin(false);setAuthMode('login');setAuthToken('');window.history.replaceState({},'',window.location.pathname)}} lang={lang} setLang={setLang} initialMode={authMode} initialToken={authToken}/>:<PublicHome onLogin={()=>{setAuthMode('login');setShowLogin(true)}} lang={lang} setLang={setLang}/>;
   const admin=['super_admin','admin','department_admin'].includes(user.role);
   return <div className={`app ${mobileMenu?'mobile-menu-open':''}`}><button className={`mobile-drawer-backdrop ${mobileMenu?'show':''}`} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'} onClick={()=>setMobileMenu(false)}></button><aside className={`side ${mobileMenu?'mobile-open':''}`}>
-    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v16.3.7.1 Forecast Fix':'স্বাধীন প্ল্যাটফর্ম · v16.3.7.1 Forecast Fix'}</small></div><button className="mobile-drawer-close" onClick={()=>setMobileMenu(false)} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'}><X size={19}/></button></div>
+    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v16.3.8 House Points':'স্বাধীন প্ল্যাটফর্ম · v16.3.8 House Points'}</small></div><button className="mobile-drawer-close" onClick={()=>setMobileMenu(false)} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'}><X size={19}/></button></div>
     <nav>
       <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}><LayoutDashboard size={18}/>{lang==='en'?'My Dashboard':'আমার ড্যাশবোর্ড'}</button>
       <button className={page==='career'?'active':''} onClick={()=>setPage('career')}><BookUser size={18}/>{lang==='en'?'My Career':'আমার চাকরি'}</button>
