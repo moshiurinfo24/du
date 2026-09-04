@@ -555,7 +555,7 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
 
       <div className="approved-actions">
         <LangToggle lang={lang} setLang={setLang}/>
-        <button className="sign-in" onClick={onLogin}>{en?'Sign in':'সাইন ইন'}</button>
+        <button className="sign-in" onClick={onLogin}>{en?'Sign in':'লগইন'}</button>
         <button className="new-account" onClick={onSignup}>{en?'New Account':'নতুন অ্যাকাউন্ট'}</button>
         <button className={`menu ${publicMenu?'active':''}`} aria-expanded={publicMenu} onClick={()=>setPublicMenu(v=>!v)}>
           {publicMenu?(en?'Close Menu':'মেনু বন্ধ'):(en?'Menu':'মেনু')}
