@@ -101,3 +101,149 @@ html{scroll-behavior:smooth}
   .approved-info-grid{grid-template-columns:1fr}
   .floating-whatsapp{right:14px;bottom:74px;width:50px;height:50px;padding:0;border-radius:50%;justify-content:center}.floating-whatsapp span{display:none}.logged-in-whatsapp{bottom:78px}
 }
+
+
+/* v16.8.3 — mobile header: Language | Login | Menu */
+@media(max-width:1000px){
+  .approved-actions .sign-in{
+    display:inline-flex !important;
+    align-items:center;
+    justify-content:center;
+    min-width:68px;
+    height:38px;
+    padding:0 11px;
+    border:1px solid #cfdceb;
+    background:#fff;
+    color:#1f5194;
+    font-family:inherit;
+    font-size:11px;
+    font-weight:900;
+    border-radius:8px;
+  }
+  .approved-actions .new-account{
+    display:none !important;
+  }
+}
+@media(max-width:560px){
+  .approved-header{
+    padding:0 8px;
+  }
+  .approved-actions{
+    gap:4px;
+    flex-shrink:0;
+  }
+  .approved-actions .sign-in{
+    min-width:58px;
+    height:36px;
+    padding:0 9px;
+    font-size:10.5px;
+  }
+  .approved-actions .menu{
+    min-width:58px;
+    height:36px;
+    padding:0 8px;
+    font-size:10.5px;
+  }
+}
+
+
+/* v16.8.4 — force mobile public header controls to stay visible */
+@media(max-width:760px){
+  .approved-header{
+    height:auto !important;
+    min-height:66px !important;
+    padding:8px 10px !important;
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    gap:8px !important;
+    align-items:center !important;
+  }
+
+  .approved-header .approved-brand{
+    width:100% !important;
+    min-width:0 !important;
+  }
+
+  .approved-header .approved-brand b{
+    font-size:12px !important;
+    white-space:normal !important;
+    line-height:1.2 !important;
+  }
+
+  .approved-header .approved-brand small{
+    display:block !important;
+    font-size:8px !important;
+  }
+
+  .approved-actions{
+    width:100% !important;
+    display:grid !important;
+    grid-template-columns:1fr 1fr 1fr !important;
+    gap:6px !important;
+    align-items:center !important;
+  }
+
+  .approved-actions > *{
+    width:100% !important;
+    min-width:0 !important;
+    max-width:none !important;
+  }
+
+  .approved-actions .sign-in{
+    display:flex !important;
+    visibility:visible !important;
+    opacity:1 !important;
+    height:38px !important;
+    padding:0 8px !important;
+    align-items:center !important;
+    justify-content:center !important;
+    border:1px solid #cbd9e8 !important;
+    background:#ffffff !important;
+    color:#154f94 !important;
+    border-radius:8px !important;
+    font-family:inherit !important;
+    font-size:11px !important;
+    font-weight:900 !important;
+  }
+
+  .approved-actions .new-account{
+    display:none !important;
+  }
+
+  .approved-actions .menu{
+    display:flex !important;
+    visibility:visible !important;
+    opacity:1 !important;
+    height:38px !important;
+    padding:0 8px !important;
+    align-items:center !important;
+    justify-content:center !important;
+    border-radius:8px !important;
+    font-family:inherit !important;
+    font-size:11px !important;
+    font-weight:900 !important;
+  }
+
+  .approved-header nav{
+    top:118px !important;
+    max-height:calc(100vh - 118px) !important;
+  }
+}
+
+@media(max-width:420px){
+  .approved-header{
+    padding:7px 8px !important;
+  }
+  .approved-brand>span{
+    width:34px !important;
+    height:34px !important;
+  }
+  .approved-actions{
+    gap:5px !important;
+  }
+  .approved-actions .sign-in,
+  .approved-actions .menu{
+    font-size:10px !important;
+    padding:0 5px !important;
+  }
+}
