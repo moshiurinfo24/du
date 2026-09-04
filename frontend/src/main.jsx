@@ -336,7 +336,7 @@ function PublicHome({onLogin,lang,setLang}){
   };
   const navItems=[[copy.home,'top'],[copy.promotion,'public-calculator','promotion'],[copy.pay,'public-calculator','salary'],[copy.policies,'policies'],[copy.notices,'notices'],[copy.forms,'forms'],[copy.help,'help']];
   const goto=(id,tool)=>{setPublicMenu(false);if(tool)return openTool(tool);trackPublic('section_view',id);scrollTo(id);};
-  return <div id="top" data-public-version="v16.3.7" className={'public premium-public premium-home-v16-3 '+(en?'lang-en':'lang-bn')}>
+  return <div id="top" data-public-version="v16.3.7.1" className={'public premium-public premium-home-v16-3 '+(en?'lang-en':'lang-bn')}>
     <header className="public-nav luxury-nav premium-v16-nav">
       <div className="public-brand"><div className="brand-orb"><ShieldCheck size={19}/></div><div><b>{t.appName}</b><small>{t.appSub}</small></div></div>
       <button className="public-mobile-trigger" onClick={()=>setPublicMenu(v=>!v)} aria-label={en?(publicMenu?'Close menu':'Open menu'):(publicMenu?'মেনু বন্ধ করুন':'মেনু খুলুন')}><span></span><span></span><span></span></button>
@@ -772,11 +772,11 @@ function PromotionResult({r,lang='bn'}){
       <div className="promotion-timeline">
         <div className="pt-step done"><i><CheckCircle2/></i><small>{en?'Today':'আজ'}</small><b>{fmtDateLang(r.input?.calcDate||todayLocalIso(),lang)}</b></div>
         <span className="pt-line"/>
-        <div className={`pt-step ${eligibleNow?'done':'next'}`}><i><CalendarCheck/></i><small>{en?'Eligibility completed':'যোগ্যতা পূর্ণ'}</small><b>{fmtDateLang(r.eligible,lang)}</b></div>
+        <div className={`pt-step ${eligibleNow?'done':'next'}`}><i><CalendarDays/></i><small>{en?'Eligibility completed':'যোগ্যতা পূর্ণ'}</small><b>{fmtDateLang(r.eligible,lang)}</b></div>
         <span className="pt-line"/>
         <div className="pt-step future"><i><FileText/></i><small>{en?'Possible application period':'সম্ভাব্য আবেদন সময়'}</small><b>{en?'From eligibility onward':'যোগ্যতার পর থেকে'}</b><em>{en?'Subject to publication of circular/notice':'বিজ্ঞপ্তি/দরখাস্ত আহ্বান সাপেক্ষে'}</em></div>
         <span className="pt-line"/>
-        <div className="pt-step future"><i><BadgeCheck/></i><small>{en?'Projected completion':'সম্ভাব্য চূড়ান্ত পদোন্নতি'}</small><b>{fmtDateLang(r.cycle.completionDeadline,lang)}</b><em>{en?'One-year process projection':'১ বছরের প্রক্রিয়া ধরে পূর্বাভাস'}</em></div>
+        <div className="pt-step future"><i><ShieldCheck/></i><small>{en?'Projected completion':'সম্ভাব্য চূড়ান্ত পদোন্নতি'}</small><b>{fmtDateLang(r.cycle.completionDeadline,lang)}</b><em>{en?'One-year process projection':'১ বছরের প্রক্রিয়া ধরে পূর্বাভাস'}</em></div>
       </div>
       <div className="forecast-disclaimer"><AlertTriangle/><p>{en?'The system can calculate the rule-based eligibility date. The actual circular/application date and final promotion date depend on the relevant authority, vacancy, scrutiny and approval. Therefore these dates are projections, not guarantees.':'সিস্টেম নীতিমালাভিত্তিক যোগ্যতার তারিখ নির্ভুলভাবে হিসাব করতে পারে। কিন্তু প্রকৃত দরখাস্ত/বিজ্ঞপ্তির তারিখ ও চূড়ান্ত পদোন্নতির তারিখ সংশ্লিষ্ট কর্তৃপক্ষ, শূন্যপদ, যাচাই-বাছাই ও অনুমোদনের ওপর নির্ভরশীল। তাই এগুলো পূর্বাভাস, নিশ্চয়তা নয়।'}</p></div>
     </section>
@@ -786,7 +786,7 @@ function PromotionResult({r,lang='bn'}){
       <div className="fr-grid">
         <div className={eligibleNow?'ok':'wait'}><CheckCircle2/><div><b>{en?'Required service':'প্রয়োজনীয় চাকরিকাল'}</b><small>{eligibleNow?(en?'Completed':'পূরণ হয়েছে'):(en?`${dur(r.remaining)} remaining`:`আরও ${dur(r.remaining)} বাকি`)}</small></div></div>
         <div className={r.input?.computer==='yes'?'ok':'wait'}><MonitorCheck/><div><b>{en?'Computer skill/training':'কম্পিউটার দক্ষতা/প্রশিক্ষণ'}</b><small>{r.input?.computer==='yes'?(en?'Available':'আছে'):(en?'Still required':'এখনও প্রয়োজন')}</small></div></div>
-        <div className={r.input?.acr==='yes'?'ok':'wait'}><ClipboardCheck/><div><b>{en?'ACR condition':'ACR শর্ত'}</b><small>{r.input?.acr==='yes'?(en?'Satisfactory':'সন্তোষজনক'):(en?'Not yet satisfied':'এখনও পূর্ণ নয়')}</small></div></div>
+        <div className={r.input?.acr==='yes'?'ok':'wait'}><CheckCircle2/><div><b>{en?'ACR condition':'ACR শর্ত'}</b><small>{r.input?.acr==='yes'?(en?'Satisfactory':'সন্তোষজনক'):(en?'Not yet satisfied':'এখনও পূর্ণ নয়')}</small></div></div>
       </div>
     </section>
 
@@ -2089,7 +2089,7 @@ function App(){
   if(!user)return showLogin?<AuthPortal onLogin={u=>{setUser(u);window.history.replaceState({},'',window.location.pathname)}} onBack={()=>{setShowLogin(false);setAuthMode('login');setAuthToken('');window.history.replaceState({},'',window.location.pathname)}} lang={lang} setLang={setLang} initialMode={authMode} initialToken={authToken}/>:<PublicHome onLogin={()=>{setAuthMode('login');setShowLogin(true)}} lang={lang} setLang={setLang}/>;
   const admin=['super_admin','admin','department_admin'].includes(user.role);
   return <div className={`app ${mobileMenu?'mobile-menu-open':''}`}><button className={`mobile-drawer-backdrop ${mobileMenu?'show':''}`} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'} onClick={()=>setMobileMenu(false)}></button><aside className={`side ${mobileMenu?'mobile-open':''}`}>
-    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v16.3.7 Promotion Forecast':'স্বাধীন প্ল্যাটফর্ম · v16.3.7 Promotion Forecast'}</small></div><button className="mobile-drawer-close" onClick={()=>setMobileMenu(false)} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'}><X size={19}/></button></div>
+    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v16.3.7.1 Forecast Fix':'স্বাধীন প্ল্যাটফর্ম · v16.3.7.1 Forecast Fix'}</small></div><button className="mobile-drawer-close" onClick={()=>setMobileMenu(false)} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'}><X size={19}/></button></div>
     <nav>
       <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}><LayoutDashboard size={18}/>{lang==='en'?'My Dashboard':'আমার ড্যাশবোর্ড'}</button>
       <button className={page==='career'?'active':''} onClick={()=>setPage('career')}><BookUser size={18}/>{lang==='en'?'My Career':'আমার চাকরি'}</button>
