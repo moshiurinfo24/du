@@ -24,6 +24,7 @@ import './mobile-app-v16-2.css';
 import './public-home-v16-3.css';
 import './mobile-menu-hotfix-v16-3-1.css';
 import './system-control-v16-3-3.css';
+import './super-admin-user-control-v16-3-5.css';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import {
   PAY2015,PAY2026,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
@@ -333,7 +334,7 @@ function PublicHome({onLogin,lang,setLang}){
   };
   const navItems=[[copy.home,'top'],[copy.promotion,'public-calculator','promotion'],[copy.pay,'public-calculator','salary'],[copy.policies,'policies'],[copy.notices,'notices'],[copy.forms,'forms'],[copy.help,'help']];
   const goto=(id,tool)=>{setPublicMenu(false);if(tool)return openTool(tool);trackPublic('section_view',id);scrollTo(id);};
-  return <div id="top" data-public-version="v16.3.4" className={'public premium-public premium-home-v16-3 '+(en?'lang-en':'lang-bn')}>
+  return <div id="top" data-public-version="v16.3.5" className={'public premium-public premium-home-v16-3 '+(en?'lang-en':'lang-bn')}>
     <header className="public-nav luxury-nav premium-v16-nav">
       <div className="public-brand"><div className="brand-orb"><ShieldCheck size={19}/></div><div><b>{t.appName}</b><small>{t.appSub}</small></div></div>
       <button className="public-mobile-trigger" onClick={()=>setPublicMenu(v=>!v)} aria-label={en?(publicMenu?'Close menu':'Open menu'):(publicMenu?'মেনু বন্ধ করুন':'মেনু খুলুন')}><span></span><span></span><span></span></button>
@@ -1577,7 +1578,8 @@ function AdminMetric({label,value,icon:Icon,sub}){
 function SuperAdminControlCenter({lang='bn',onPage}){
   const en=lang==='en';
   const[stats,setStats]=useState(null),[users,setUsers]=useState([]),[auditRows,setAuditRows]=useState([]),[health,setHealth]=useState(null),
-    [tab,setTab]=useState('overview'),[busy,setBusy]=useState(false),[err,setErr]=useState(''),[settings,setSettings]=useState({
+    [tab,setTab]=useState('overview'),[busy,setBusy]=useState(false),[err,setErr]=useState(''),[selectedUser,setSelectedUser]=useState(null),
+    [userEdit,setUserEdit]=useState(null),[newPassword,setNewPassword]=useState(''),[showPassword,setShowPassword]=useState(false),[adminRecovery,setAdminRecovery]=useState(''),[userBusy,setUserBusy]=useState(false),[settings,setSettings]=useState({
       support_phone:'01759084692',whatsapp:'01759084692',calendar_enabled:'0',calendar_source_url:'',maintenance_mode:'0'
     });
   async function load(){
@@ -1618,6 +1620,59 @@ function SuperAdminControlCenter({lang='bn',onPage}){
   async function toggleUser(x){
     if(!confirm(en?`${x.is_active?'Deactivate':'Activate'} this account?`:`এই অ্যাকাউন্ট ${x.is_active?'নিষ্ক্রিয়':'সক্রিয়'} করবেন?`))return;
     try{await api(`/api/admin/users/${x.id}/status`,{method:'PUT',body:JSON.stringify({is_active:!x.is_active})});await load()}catch(e){alert(e.message)}
+  }
+  async function openUserControl(x){
+    setUserBusy(true);setAdminRecovery('');setNewPassword('');setShowPassword(false);
+    try{
+      const d=await api(`/api/admin/users/${x.id}`);
+      setSelectedUser(d);
+      setUserEdit({...d.account,is_active:!!d.account.is_active,email_verified:!!d.account.email_verified});
+    }catch(e){alert(e.message)}finally{setUserBusy(false)}
+  }
+  async function saveUserAccount(){
+    if(!userEdit)return;
+    setUserBusy(true);
+    try{
+      await api(`/api/admin/users/${userEdit.id}`,{method:'PUT',body:JSON.stringify(userEdit)});
+      await load();await openUserControl(userEdit);
+      alert(en?'Account information updated.':'অ্যাকাউন্ট তথ্য আপডেট হয়েছে।');
+    }catch(e){alert(e.message)}finally{setUserBusy(false)}
+  }
+  async function resetUserPassword(){
+    if(!selectedUser?.account?.id)return;
+    if(!newPassword||newPassword.length<10){alert(en?'Use at least 10 characters with letters and numbers.':'কমপক্ষে ১০ অক্ষরের অক্ষর ও সংখ্যা যুক্ত পাসওয়ার্ড দিন।');return}
+    if(!confirm(en?'Replace this user’s password and sign out all existing sessions?':'এই ব্যবহারকারীর পাসওয়ার্ড পরিবর্তন করে সব বর্তমান সেশন লগআউট করবেন?'))return;
+    setUserBusy(true);
+    try{
+      await api(`/api/admin/users/${selectedUser.account.id}/password`,{method:'PUT',body:JSON.stringify({new_password:newPassword})});
+      setNewPassword('');setShowPassword(false);
+      alert(en?'New password has been set.':'নতুন পাসওয়ার্ড সেট হয়েছে।');
+    }catch(e){alert(e.message)}finally{setUserBusy(false)}
+  }
+  async function rotateAdminRecovery(){
+    if(!selectedUser?.account?.id)return;
+    if(!confirm(en?'Generate a new recovery code? The previous recovery code will stop working.':'নতুন রিকভারি কোড তৈরি করবেন? আগের রিকভারি কোড আর কাজ করবে না।'))return;
+    setUserBusy(true);
+    try{
+      const d=await api(`/api/admin/users/${selectedUser.account.id}/recovery-code`,{method:'POST'});
+      setAdminRecovery(d.recoveryCode||'');
+      setSelectedUser(s=>s?{...s,account:{...s.account,recovery_ready:1}}:s);
+      await load();
+    }catch(e){alert(e.message)}finally{setUserBusy(false)}
+  }
+  async function logoutUserEverywhere(){
+    if(!selectedUser?.account?.id)return;
+    if(!confirm(en?'Sign this user out from every device?':'এই ব্যবহারকারীকে সব ডিভাইস থেকে লগআউট করবেন?'))return;
+    setUserBusy(true);try{await api(`/api/admin/users/${selectedUser.account.id}/logout-all`,{method:'POST'});alert(en?'All sessions signed out.':'সব সেশন লগআউট করা হয়েছে।')}catch(e){alert(e.message)}finally{setUserBusy(false)}
+  }
+  async function deleteManagedUser(){
+    const a=selectedUser?.account;if(!a)return;
+    const phrase=`DELETE ${a.id}`;
+    const typed=prompt(en?`Permanent delete: account and personal records will be removed. Type ${phrase} to confirm.`:`স্থায়ীভাবে ডিলিট করলে অ্যাকাউন্ট ও ব্যক্তিগত রেকর্ড মুছে যাবে। নিশ্চিত করতে ${phrase} লিখুন।`);
+    if(typed!==phrase)return;
+    setUserBusy(true);
+    try{await api(`/api/admin/users/${a.id}`,{method:'DELETE'});setSelectedUser(null);setUserEdit(null);await load();alert(en?'User permanently deleted.':'ব্যবহারকারী স্থায়ীভাবে ডিলিট হয়েছে।')}
+    catch(e){alert(e.message)}finally{setUserBusy(false)}
   }
   async function saveSettings(){
     setBusy(true);setErr('');
@@ -1662,11 +1717,48 @@ function SuperAdminControlCenter({lang='bn',onPage}){
     </>}
 
     {tab==='users'&&<section className="admin-panel-card">
-      <div className="admin-panel-head"><div><h3>{en?'User Management':'ব্যবহারকারী ব্যবস্থাপনা'}</h3><p>{en?'Technical account control only. No employment approval workflow.':'শুধু প্রযুক্তিগত অ্যাকাউন্ট নিয়ন্ত্রণ। চাকরি-সংক্রান্ত কোনো অনুমোদন নয়।'}</p></div><button className="secondary" onClick={load}><RefreshCw size={15}/>{en?'Refresh':'রিফ্রেশ'}</button></div>
-      <div className="table-wrap"><table><thead><tr><th>{en?'User':'ব্যবহারকারী'}</th><th>{en?'Role':'ভূমিকা'}</th><th>{en?'Type':'ধরন'}</th><th>{en?'Status':'অবস্থা'}</th><th></th></tr></thead><tbody>
-        {users.map(x=><tr key={x.id}><td><b>{x.name}</b><small style={{display:'block'}}>{x.email}</small></td><td>{roleText(x.role)}</td><td>{x.account_type||'employee'}</td><td><span className={'badge '+(x.is_active?'active':'')}>{x.is_active?(en?'Active':'সক্রিয়'):(en?'Inactive':'নিষ্ক্রিয়')}</span></td><td><button className="icon-btn" title={en?'Toggle status':'অবস্থা পরিবর্তন'} onClick={()=>toggleUser(x)}><Power size={15}/></button></td></tr>)}
+      <div className="admin-panel-head"><div><h3>{en?'User Account & Recovery Management':'ব্যবহারকারী অ্যাকাউন্ট ও রিকভারি ব্যবস্থাপনা'}</h3><p>{en?'Two recovery paths remain active: user self-service recovery and Super Admin assisted recovery. Existing passwords and recovery codes are never displayed; they can only be replaced.':'দুই ধরনের রিকভারি একসাথে থাকবে—ব্যবহারকারীর নিজস্ব রিকভারি এবং সুপার অ্যাডমিন সহায়তায় রিকভারি। নিরাপত্তার কারণে বর্তমান পাসওয়ার্ড বা রিকভারি কোড দেখা যাবে না; শুধু নতুন করে সেট করা যাবে।'}</p></div><button className="secondary" onClick={load}><RefreshCw size={15}/>{en?'Refresh':'রিফ্রেশ'}</button></div>
+      <div className="dual-recovery-note"><ShieldCheck size={18}/><div><b>{en?'Dual Recovery Enabled':'দুই ধরনের রিকভারি সক্রিয়'}</b><span>{en?'Self-service: Email + saved recovery code → new password. Admin-assisted: Super Admin can edit the account, set a new password, replace recovery code, revoke sessions or delete the account.':'নিজস্ব পদ্ধতি: ইমেইল + সংরক্ষিত রিকভারি কোড দিয়ে নতুন পাসওয়ার্ড। অ্যাডমিন সহায়তা: সুপার অ্যাডমিন অ্যাকাউন্ট এডিট, নতুন পাসওয়ার্ড, নতুন রিকভারি কোড, সেশন বন্ধ বা অ্যাকাউন্ট ডিলিট করতে পারবেন।'}</span></div></div>
+      <div className="table-wrap admin-users-table"><table><thead><tr><th>{en?'ID / User':'আইডি / ব্যবহারকারী'}</th><th>{en?'Role':'ভূমিকা'}</th><th>{en?'Type':'ধরন'}</th><th>{en?'Recovery':'রিকভারি'}</th><th>{en?'Status':'অবস্থা'}</th><th>{en?'Control':'নিয়ন্ত্রণ'}</th></tr></thead><tbody>
+        {users.map(x=><tr key={x.id}><td><b>#{x.id} · {x.name}</b><small style={{display:'block'}}>{x.employee_id||'—'} · {x.email}</small></td><td>{roleText(x.role)}</td><td>{x.account_type==='officer'?(en?'Officer':'কর্মকর্তা'):(en?'Employee':'কর্মচারী')}</td><td><span className={'badge '+(x.recovery_ready?'active':'')}>{x.recovery_ready?(en?'Ready':'সক্রিয়'):(en?'Not set':'নেই')}</span></td><td><span className={'badge '+(x.is_active?'active':'')}>{x.is_active?(en?'Active':'সক্রিয়'):(en?'Inactive':'নিষ্ক্রিয়')}</span></td><td><div className="admin-user-actions"><button className="secondary small" onClick={()=>openUserControl(x)}><Edit3 size={14}/>{en?'Manage':'পরিচালনা'}</button><button className="icon-btn" title={en?'Toggle status':'অবস্থা পরিবর্তন'} onClick={()=>toggleUser(x)}><Power size={15}/></button></div></td></tr>)}
       </tbody></table></div>
     </section>}
+
+    {selectedUser&&userEdit&&<div className="modal-backdrop admin-user-modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget){setSelectedUser(null);setUserEdit(null);setAdminRecovery('')}}}>
+      <section className="modal admin-user-control-modal">
+        <div className="modal-head"><div><span className="admin-user-kicker">{en?'SUPER ADMIN USER CONTROL':'সুপার অ্যাডমিন ইউজার কন্ট্রোল'}</span><h3>{userEdit.name||'—'} <small>#{userEdit.id}</small></h3><p>{en?'Account identity, access, password, recovery and personal-data controls.':'অ্যাকাউন্ট পরিচয়, প্রবেশাধিকার, পাসওয়ার্ড, রিকভারি ও ব্যক্তিগত ডাটা নিয়ন্ত্রণ।'}</p></div><button className="icon-btn" onClick={()=>{setSelectedUser(null);setUserEdit(null);setAdminRecovery('')}}><X/></button></div>
+
+        <div className="admin-user-control-grid">
+          <section className="admin-control-block span-2"><div className="control-block-title"><UserCog/><div><b>{en?'Account Information':'অ্যাকাউন্ট তথ্য'}</b><small>{en?'Edit login ID, email, role and account status.':'লগইন আইডি, ইমেইল, ভূমিকা ও অ্যাকাউন্ট স্ট্যাটাস এডিট করুন।'}</small></div></div>
+            <div className="form-grid admin-user-form">
+              <label>{en?'System User ID':'সিস্টেম ইউজার আইডি'}<input value={'#'+userEdit.id} disabled/></label>
+              <label>{en?'Employee / Reference ID':'কর্মী / রেফারেন্স আইডি'}<input value={userEdit.employee_id||''} onChange={e=>setUserEdit({...userEdit,employee_id:e.target.value})}/></label>
+              <label>{en?'Full name':'পূর্ণ নাম'}<input value={userEdit.name||''} onChange={e=>setUserEdit({...userEdit,name:e.target.value})}/></label>
+              <label>{en?'Login email':'লগইন ইমেইল'}<input type="email" value={userEdit.email||''} onChange={e=>setUserEdit({...userEdit,email:e.target.value})}/></label>
+              <label>{en?'Role':'ভূমিকা'}<select value={userEdit.role||'employee'} onChange={e=>setUserEdit({...userEdit,role:e.target.value})}><option value="employee">{en?'Employee User':'কর্মকর্তা-কর্মচারী'}</option><option value="editor">{en?'Editor':'সম্পাদক'}</option><option value="department_admin">{en?'Department Admin':'বিভাগীয় অ্যাডমিন'}</option><option value="admin">{en?'Admin':'অ্যাডমিন'}</option><option value="super_admin">{en?'Super Admin':'সুপার অ্যাডমিন'}</option></select></label>
+              <label>{en?'Account type':'অ্যাকাউন্টের ধরন'}<select value={userEdit.account_type||'employee'} onChange={e=>setUserEdit({...userEdit,account_type:e.target.value})}><option value="officer">{en?'Officer':'কর্মকর্তা'}</option><option value="employee">{en?'Employee':'কর্মচারী'}</option></select></label>
+              <label className="check-row"><input type="checkbox" checked={!!userEdit.is_active} onChange={e=>setUserEdit({...userEdit,is_active:e.target.checked})}/><span>{en?'Account active':'অ্যাকাউন্ট সক্রিয়'}</span></label>
+              <label className="check-row"><input type="checkbox" checked={!!userEdit.email_verified} onChange={e=>setUserEdit({...userEdit,email_verified:e.target.checked})}/><span>{en?'Email verified flag':'ইমেইল ভেরিফাইড স্ট্যাটাস'}</span></label>
+            </div>
+            <button className="primary admin-save-user" disabled={userBusy} onClick={saveUserAccount}><Save size={16}/>{en?'Save Account Changes':'অ্যাকাউন্ট পরিবর্তন সংরক্ষণ'}</button>
+          </section>
+
+          <section className="admin-control-block"><div className="control-block-title"><LockKeyhole/><div><b>{en?'Admin Password Reset':'অ্যাডমিন পাসওয়ার্ড রিসেট'}</b><small>{en?'The current password cannot be viewed. Set a replacement password.':'বর্তমান পাসওয়ার্ড দেখা যাবে না। নতুন পাসওয়ার্ড সেট করুন।'}</small></div></div>
+            <label>{en?'New password':'নতুন পাসওয়ার্ড'}<div className="password-admin-row"><input type={showPassword?'text':'password'} value={newPassword} onChange={e=>setNewPassword(e.target.value)} placeholder={en?'Minimum 10 characters':'কমপক্ষে ১০ অক্ষর'}/><button className="icon-btn" type="button" onClick={()=>setShowPassword(v=>!v)}><Eye size={16}/></button></div></label>
+            <button className="secondary full" disabled={userBusy||!newPassword} onClick={resetUserPassword}><LockKeyhole size={15}/>{en?'Set New Password':'নতুন পাসওয়ার্ড সেট করুন'}</button>
+            <small className="security-copy">{en?'Setting a new password signs the user out from all current sessions.':'নতুন পাসওয়ার্ড সেট করলে ব্যবহারকারীর সব বর্তমান সেশন লগআউট হবে।'}</small>
+          </section>
+
+          <section className="admin-control-block"><div className="control-block-title"><ShieldCheck/><div><b>{en?'Recovery Code':'রিকভারি কোড'}</b><small>{selectedUser.account.recovery_ready?(en?'A recovery code is configured.':'একটি রিকভারি কোড সেট করা আছে।'):(en?'No recovery code is configured.':'রিকভারি কোড সেট করা নেই।')}</small></div></div>
+            {adminRecovery?<div className="admin-recovery-result"><span>{en?'NEW RECOVERY CODE':'নতুন রিকভারি কোড'}</span><strong>{adminRecovery}</strong><button className="secondary full" onClick={()=>navigator.clipboard?.writeText(adminRecovery)}>{en?'Copy Code':'কোড কপি করুন'}</button><small>{en?'Show this to the user securely. It will not be retrievable later.':'নিরাপদভাবে ব্যবহারকারীকে দিন। পরে এই কোড আর দেখা যাবে না।'}</small></div>:<button className="secondary full" disabled={userBusy} onClick={rotateAdminRecovery}><ShieldCheck size={15}/>{en?'Generate / Replace Recovery Code':'রিকভারি কোড তৈরি / পরিবর্তন'}</button>}
+          </section>
+
+          <section className="admin-control-block span-2 user-data-summary"><div className="control-block-title"><Database/><div><b>{en?'Personal Data Summary':'ব্যক্তিগত ডাটা সারসংক্ষেপ'}</b><small>{en?'Records connected to this account.':'এই অ্যাকাউন্টের সঙ্গে যুক্ত রেকর্ড।'}</small></div></div><div className="record-count-grid"><span><b>{selectedUser.profile?1:0}</b>{en?'Career Profile':'ক্যারিয়ার প্রোফাইল'}</span><span><b>{selectedUser.counts?.education||0}</b>{en?'Education':'শিক্ষা'}</span><span><b>{selectedUser.counts?.career_events||0}</b>{en?'Career Events':'ক্যারিয়ার ইভেন্ট'}</span><span><b>{selectedUser.counts?.salary_history||0}</b>{en?'Salary Records':'বেতন রেকর্ড'}</span><span><b>{selectedUser.counts?.leave_records||0}</b>{en?'Leave Records':'ছুটির রেকর্ড'}</span><span><b>{selectedUser.counts?.sessions||0}</b>{en?'Active Sessions':'সক্রিয় সেশন'}</span></div></section>
+
+          <section className="admin-danger-zone span-2"><div><b>{en?'Security & Destructive Actions':'নিরাপত্তা ও স্থায়ী কার্যক্রম'}</b><p>{en?'Use these only when account recovery, access revocation or permanent removal is required.':'শুধু অ্যাকাউন্ট রিকভারি, প্রবেশাধিকার বন্ধ বা স্থায়ীভাবে মুছে ফেলার প্রয়োজন হলে ব্যবহার করুন।'}</p></div><div className="danger-actions"><button className="secondary" disabled={userBusy} onClick={logoutUserEverywhere}><LogOut size={15}/>{en?'Logout All Devices':'সব ডিভাইস লগআউট'}</button><button className="danger-button" disabled={userBusy} onClick={deleteManagedUser}><Trash2 size={15}/>{en?'Delete User & Personal Data':'ব্যবহারকারী ও ব্যক্তিগত ডাটা ডিলিট'}</button></div></section>
+        </div>
+      </section>
+    </div>}
 
     {tab==='content'&&<section className="admin-panel-card">
       <div className="admin-panel-head"><div><h3>{en?'System Content Management':'সিস্টেম কনটেন্ট ব্যবস্থাপনা'}</h3><p>{en?'Public references, notices, policies, forms and help content.':'পাবলিক রেফারেন্স, নোটিশ, নীতিমালা, ফরম ও সহায়তা কনটেন্ট।'}</p></div></div>
@@ -1755,7 +1847,7 @@ function App(){
   if(!user)return showLogin?<AuthPortal onLogin={u=>{setUser(u);window.history.replaceState({},'',window.location.pathname)}} onBack={()=>{setShowLogin(false);setAuthMode('login');setAuthToken('');window.history.replaceState({},'',window.location.pathname)}} lang={lang} setLang={setLang} initialMode={authMode} initialToken={authToken}/>:<PublicHome onLogin={()=>{setAuthMode('login');setShowLogin(true)}} lang={lang} setLang={setLang}/>;
   const admin=['super_admin','admin','department_admin'].includes(user.role);
   return <div className={`app ${mobileMenu?'mobile-menu-open':''}`}><button className={`mobile-drawer-backdrop ${mobileMenu?'show':''}`} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'} onClick={()=>setMobileMenu(false)}></button><aside className={`side ${mobileMenu?'mobile-open':''}`}>
-    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v16.3.4 Stable Admin API':'স্বাধীন প্ল্যাটফর্ম · v16.3.4 Stable Admin API'}</small></div><button className="mobile-drawer-close" onClick={()=>setMobileMenu(false)} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'}><X size={19}/></button></div>
+    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Independent Platform · v16.3.5 Dual Recovery':'স্বাধীন প্ল্যাটফর্ম · v16.3.5 Dual Recovery'}</small></div><button className="mobile-drawer-close" onClick={()=>setMobileMenu(false)} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'}><X size={19}/></button></div>
     <nav>
       <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}><LayoutDashboard size={18}/>{lang==='en'?'My Dashboard':'আমার ড্যাশবোর্ড'}</button>
       <button className={page==='career'?'active':''} onClick={()=>setPage('career')}><BookUser size={18}/>{lang==='en'?'My Career':'আমার চাকরি'}</button>
