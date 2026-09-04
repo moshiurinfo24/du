@@ -34,6 +34,9 @@ import './responsive-app-desktop-v16-4.css';
 import './smart-registration-v16-5.css';
 import './premium-home-navigation-v16-6.css';
 import './exact-mockup-v16-7.css';
+import './exact-mockup-v16-7-1.css';
+import dummyProfile from './assets/dummy-profile.svg';
+import dummyCampus from './assets/dummy-campus.svg';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import {
   PAY2015,PAY2026,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
@@ -487,7 +490,8 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
     </header>
     <button className={`mx-backdrop ${publicMenu?'show':''}`} onClick={()=>setPublicMenu(false)}></button>
 
-    <section className="mx-hero">
+    <section className="mx-hero" style={{'--mx-campus':`url(${dummyCampus})`}}>
+      <div className="mx-hero-photo" aria-hidden="true"></div>
       <div className="mx-hero-bg"><i></i><i></i><i></i></div>
       <div className="mx-hero-copy">
         <span className="mx-kicker"><Sparkles/>{en?'PERSONAL · SMART · SELF-SERVICE':'ব্যক্তিগত · স্মার্ট · স্বয়ংক্রিয় সেবা'}</span>
@@ -512,18 +516,20 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
               <b></b>{Array.from({length:7},(_,i)=><i key={i}></i>)}
             </aside>
             <main>
-              <div className="mx-preview-head"><span><UserRound/></span><div><b></b><small></small></div><i></i></div>
-              <div className="mx-preview-shortcuts">{Array.from({length:8},(_,i)=><i key={i}></i>)}</div>
-              <div className="mx-preview-row"><i></i><i></i><i></i></div>
+              <div className="mx-preview-head"><span className="mx-avatar-photo"><img src={dummyProfile} alt=""/></span><div><strong>{en?'Welcome, Sample User':'শুভ অপরাহ্ন, নমুনা ব্যবহারকারী'}</strong><small>{en?'Employee · Grade 13':'কর্মচারী · গ্রেড ১৩'}</small></div><em>{en?'Profile 82%':'প্রোফাইল ৮২%'}</em></div>
+              <div className="mx-preview-shortcuts">
+                {[['চাকরি',BookUser],['পদোন্নতি',TrendingUp],['পয়েন্ট',Award],['বেতন',WalletCards],['ছুটি',CalendarDays],['ক্যালেন্ডার',CalendarDays],['রিপোর্ট',FileText],['নিরাপত্তা',LockKeyhole]].map(([label,I])=><i key={label}><I/><b>{en?({চাকরি:'Career',পদোন্নতি:'Promotion',পয়েন্ট:'Points',বেতন:'Salary',ছুটি:'Leave',ক্যালেন্ডার:'Calendar',রিপোর্ট:'Reports',নিরাপত্তা:'Security'}[label]):label}</b></i>)}
+              </div>
+              <div className="mx-preview-row"><i><small>{en?'Service':'চাকরিকাল'}</small><b>{en?'16y 4m':'১৬ বছর ৪ মাস'}</b></i><i><small>{en?'Next Promotion':'পরবর্তী পদোন্নতি'}</small><b>{en?'1y 8m':'১ বছর ৮ মাস'}</b></i><i><small>{en?'Current Basic':'বর্তমান মূল বেতন'}</small><b>{en?'Tk 16,000':'৳ ১৬,০০০'}</b></i></div>
               <div className="mx-preview-chart"><span></span><span></span><span></span><span></span><span></span><span></span></div>
             </main>
           </div>
         </div>
         <div className="mx-mobile">
           <div className="mx-notch"></div>
-          <div className="mx-mobile-profile"><UserRound/><i></i></div>
-          <div className="mx-mobile-grid">{Array.from({length:8},(_,i)=><i key={i}></i>)}</div>
-          <div className="mx-mobile-panels"><i></i><i></i></div>
+          <div className="mx-mobile-profile"><img src={dummyProfile} alt=""/><div><b>{en?'Sample User':'নমুনা ব্যবহারকারী'}</b><small>{en?'Employee':'কর্মচারী'}</small></div></div>
+          <div className="mx-mobile-grid">{[[BookUser,'চাকরি'],[TrendingUp,'পদোন্নতি'],[Award,'পয়েন্ট'],[WalletCards,'বেতন'],[CalendarDays,'ছুটি'],[CalendarDays,'ক্যালেন্ডার'],[FileText,'রিপোর্ট'],[LockKeyhole,'নিরাপত্তা']].map(([I,label])=><i key={label}><I/><b>{en?({চাকরি:'Career',পদোন্নতি:'Promo',পয়েন্ট:'Points',বেতন:'Salary',ছুটি:'Leave',ক্যালেন্ডার:'Cal',রিপোর্ট:'Report',নিরাপত্তা:'Security'}[label]):label}</b></i>)}</div>
+          <div className="mx-mobile-panels"><i><small>{en?'Service':'চাকরিকাল'}</small><b>{en?'16y 4m':'১৬ বছর ৪ মাস'}</b></i><i><small>{en?'Basic':'মূল বেতন'}</small><b>{en?'Tk 16,000':'৳ ১৬,০০০'}</b></i></div>
           <div className="mx-mobile-nav">{Array.from({length:5},(_,i)=><i key={i}></i>)}</div>
         </div>
         <div className="mx-float-card f1"><TrendingUp/><b>{en?'Promotion':'পদোন্নতি'}</b></div>
@@ -557,9 +563,9 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
           <div className="mx-benefit-body">
             <aside>{Array.from({length:7},(_,i)=><i key={i}></i>)}</aside>
             <main>
-              <div className="mx-benefit-profile"><span><UserRound/></span><div><b></b><small></small></div></div>
-              <div className="mx-benefit-mini">{Array.from({length:8},(_,i)=><i key={i}></i>)}</div>
-              <div className="mx-benefit-bottom"><i></i><i></i><i></i></div>
+              <div className="mx-benefit-profile"><span><img src={dummyProfile} alt=""/></span><div><strong>{en?'Sample Career Dashboard':'নমুনা ক্যারিয়ার ড্যাশবোর্ড'}</strong><small>{en?'Profile complete 82%':'প্রোফাইল সম্পন্ন ৮২%'}</small></div></div>
+              <div className="mx-benefit-mini">{[[BookUser,'চাকরি'],[TrendingUp,'পদোন্নতি'],[Award,'পয়েন্ট'],[WalletCards,'বেতন'],[CalendarDays,'ছুটি'],[CalendarDays,'ক্যালেন্ডার'],[FileText,'রিপোর্ট'],[BookOpen,'নীতিমালা']].map(([I,label])=><i key={label}><I/><b>{en?({চাকরি:'Career',পদোন্নতি:'Promotion',পয়েন্ট:'Points',বেতন:'Salary',ছুটি:'Leave',ক্যালেন্ডার:'Calendar',রিপোর্ট:'Reports',নীতিমালা:'Policies'}[label]):label}</b></i>)}</div>
+              <div className="mx-benefit-bottom"><i><small>{en?'Service':'চাকরিকাল'}</small><b>{en?'16y 4m':'১৬ বছর ৪ মাস'}</b></i><i><small>{en?'Promotion':'পদোন্নতি'}</small><b>{en?'1y 8m left':'১ বছর ৮ মাস বাকি'}</b></i><i><small>{en?'Basic':'মূল বেতন'}</small><b>{en?'Tk 16,000':'৳ ১৬,০০০'}</b></i></div>
             </main>
           </div>
           <div className="mx-benefit-bubble one"><Award/>{en?'Points':'পয়েন্ট'}</div>
