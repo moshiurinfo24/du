@@ -2622,10 +2622,10 @@ function App(){
     document.body.classList.toggle('mobile-drawer-open',mobileMenu);
     return()=>document.body.classList.remove('mobile-drawer-open');
   },[mobileMenu]);
-  async function logout(){try{await api('/api/logout',{method:'POST'})}catch{}setUser(null);setShowLogin(false);setPage('dashboard')}
+  async function logout(){try{await api('/api/logout',{method:'POST'})}catch{}setLang('bn');setUser(null);setShowLogin(false);setPage('dashboard')}
   useEffect(()=>{if(user&&page)api('/api/usage',{method:'POST',body:JSON.stringify({module:page})}).catch(()=>{})},[user?.id,page]);
   if(loading)return <div className="loading">Loading...</div>;
-  if(!user)return showLogin?<AuthPortal onLogin={u=>{setUser(u);window.history.replaceState({},'',window.location.pathname)}} onBack={()=>{setShowLogin(false);setAuthMode('login');setAuthToken('');window.history.replaceState({},'',window.location.pathname)}} lang={lang} setLang={setLang} initialMode={authMode} initialToken={authToken}/>:<PublicHome onLogin={()=>{setAuthMode('login');setShowLogin(true)}} onSignup={()=>{setAuthMode('register');setShowLogin(true)}} lang={lang} setLang={setLang}/>;
+  if(!user)return showLogin?<AuthPortal onLogin={u=>{setLang('bn');setUser(u);window.history.replaceState({},'',window.location.pathname)}} onBack={()=>{setShowLogin(false);setAuthMode('login');setAuthToken('');window.history.replaceState({},'',window.location.pathname)}} lang={lang} setLang={setLang} initialMode={authMode} initialToken={authToken}/>:<PublicHome onLogin={()=>{setAuthMode('login');setShowLogin(true)}} onSignup={()=>{setAuthMode('register');setShowLogin(true)}} lang={lang} setLang={setLang}/>;
   const admin=['super_admin','admin','department_admin'].includes(user.role);
   return <div className={`app ${mobileMenu?'mobile-menu-open':''}`}><button className={`mobile-drawer-backdrop ${mobileMenu?'show':''}`} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'} onClick={()=>setMobileMenu(false)}></button><aside className={`side ${mobileMenu?'mobile-open':''}`}>
     <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Digital Service Platform':'ডিজিটাল সেবা প্ল্যাটফর্ম'}</small></div><button className="mobile-drawer-close" onClick={()=>setMobileMenu(false)} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'}><X size={19}/></button></div>

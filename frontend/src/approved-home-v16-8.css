@@ -247,3 +247,70 @@ html{scroll-behavior:smooth}
     padding:0 5px !important;
   }
 }
+
+
+/* v16.8.5 — authenticated mobile header readability */
+@media(max-width:760px){
+  .app-topbar{
+    background:#ffffff !important;
+    color:#173a61 !important;
+    border-bottom:1px solid #dfe8f1 !important;
+    box-shadow:0 4px 14px rgba(24,52,82,.06) !important;
+  }
+
+  .app-topbar .mobile-topbar-left,
+  .app-topbar .mobile-topbar-left > div{
+    min-width:0 !important;
+  }
+
+  .app-topbar .mobile-topbar-left h2{
+    color:#173a61 !important;
+    -webkit-text-fill-color:#173a61 !important;
+    opacity:1 !important;
+    visibility:visible !important;
+    text-shadow:none !important;
+  }
+
+  .app-topbar .mobile-topbar-left p{
+    color:#55708f !important;
+    -webkit-text-fill-color:#55708f !important;
+    opacity:1 !important;
+    visibility:visible !important;
+    text-shadow:none !important;
+  }
+
+  .app-topbar .header-actions{
+    color:#173a61 !important;
+  }
+
+  .app-topbar .header-actions .lang-btn{
+    background:#edf4ff !important;
+    color:#1554a0 !important;
+    -webkit-text-fill-color:#1554a0 !important;
+    border:1px solid #d4e2f2 !important;
+    opacity:1 !important;
+    visibility:visible !important;
+  }
+
+  .app-topbar .header-actions .logout{
+    background:#f4f7fb !important;
+    color:#315474 !important;
+    -webkit-text-fill-color:#315474 !important;
+    border:1px solid #dce5ee !important;
+    opacity:1 !important;
+    visibility:visible !important;
+  }
+
+  .app-topbar .mobile-menu-trigger.text-menu-trigger{
+    background:#f5f8fc !important;
+    color:#244e79 !important;
+    -webkit-text-fill-color:#244e79 !important;
+    border:1px solid #d7e2ed !important;
+  }
+
+  .app-topbar .mobile-menu-trigger.text-menu-trigger.active{
+    background:#173f70 !important;
+    color:#ffffff !important;
+    -webkit-text-fill-color:#ffffff !important;
+  }
+}
