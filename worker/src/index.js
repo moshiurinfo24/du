@@ -108,27 +108,46 @@ async function ensurePublicEvents(env){
   await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_public_events_created_at ON public_events(created_at)`).run();
   await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_public_events_visitor_hash ON public_events(visitor_hash)`).run();
   await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_public_events_event_section ON public_events(event,section)`).run();
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS public_traffic_baseline(
+    id INTEGER PRIMARY KEY CHECK(id=1),
+    unique_visitors INTEGER NOT NULL DEFAULT 0,
+    page_views INTEGER NOT NULL DEFAULT 0,
+    source TEXT,
+    source_period TEXT,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`).run();
+  await env.DB.prepare(`INSERT OR IGNORE INTO public_traffic_baseline(id,unique_visitors,page_views,source,source_period) VALUES(1,0,0,'none','')`).run();
   publicEventsReady=true;
 }
 async function publicTrafficStats(env){
   await ensurePublicEvents(env);
-  const x=await env.DB.prepare(`
-    SELECT
-      COUNT(CASE WHEN event='page_view' THEN 1 END) total_views,
-      COUNT(DISTINCT CASE WHEN event='page_view' THEN visitor_hash END) total_unique,
-      COUNT(DISTINCT CASE WHEN event='page_view' AND date(datetime(created_at,'+6 hours'))=date('now','+6 hours') THEN visitor_hash END) today_unique,
-      COUNT(CASE WHEN event='page_view' AND date(datetime(created_at,'+6 hours'))=date('now','+6 hours') THEN 1 END) today_views,
-      COUNT(DISTINCT CASE WHEN event='page_view' AND strftime('%Y-%m',datetime(created_at,'+6 hours'))=strftime('%Y-%m',datetime('now','+6 hours')) THEN visitor_hash END) month_unique,
-      COUNT(CASE WHEN event='page_view' AND strftime('%Y-%m',datetime(created_at,'+6 hours'))=strftime('%Y-%m',datetime('now','+6 hours')) THEN 1 END) month_views
-    FROM public_events
-  `).first();
+  const [x,b]=await Promise.all([
+    env.DB.prepare(`
+      SELECT
+        COUNT(CASE WHEN event='page_view' THEN 1 END) total_views,
+        COUNT(DISTINCT CASE WHEN event='page_view' THEN visitor_hash END) total_unique,
+        COUNT(DISTINCT CASE WHEN event='page_view' AND date(datetime(created_at,'+6 hours'))=date('now','+6 hours') THEN visitor_hash END) today_unique,
+        COUNT(CASE WHEN event='page_view' AND date(datetime(created_at,'+6 hours'))=date('now','+6 hours') THEN 1 END) today_views,
+        COUNT(DISTINCT CASE WHEN event='page_view' AND strftime('%Y-%m',datetime(created_at,'+6 hours'))=strftime('%Y-%m',datetime('now','+6 hours')) THEN visitor_hash END) month_unique,
+        COUNT(CASE WHEN event='page_view' AND strftime('%Y-%m',datetime(created_at,'+6 hours'))=strftime('%Y-%m',datetime('now','+6 hours')) THEN 1 END) month_views
+      FROM public_events
+    `).first(),
+    env.DB.prepare(`SELECT unique_visitors,page_views,source,source_period,updated_at FROM public_traffic_baseline WHERE id=1`).first()
+  ]);
+  const baselineUnique=+(b?.unique_visitors||0),baselineViews=+(b?.page_views||0);
   return {
     today_unique:+(x?.today_unique||0),
     month_unique:+(x?.month_unique||0),
-    total_unique:+(x?.total_unique||0),
+    total_unique:baselineUnique+(+(x?.total_unique||0)),
     today_views:+(x?.today_views||0),
     month_views:+(x?.month_views||0),
-    total_views:+(x?.total_views||0)
+    total_views:baselineViews+(+(x?.total_views||0)),
+    live_total_unique:+(x?.total_unique||0),
+    live_total_views:+(x?.total_views||0),
+    baseline_unique:baselineUnique,
+    baseline_views:baselineViews,
+    baseline_source:b?.source||'none',
+    baseline_period:b?.source_period||''
   };
 }
 
@@ -336,6 +355,25 @@ export default{async fetch(req,env){
       if(!allowed.includes(module))return json({ok:true},200,C);
       try{await env.DB.prepare(`INSERT INTO usage_events(user_id,module) VALUES(?,?)`).bind(user.id,module).run()}catch{}
       return json({ok:true},201,C);
+    }
+
+    if(u.pathname==='/api/admin/public-traffic-baseline'&&req.method==='GET'){
+      if(!canManage(user))return json({error:'Forbidden'},403,C);
+      await ensurePublicEvents(env);
+      const row=await env.DB.prepare(`SELECT * FROM public_traffic_baseline WHERE id=1`).first();
+      return json({baseline:row||null},200,C);
+    }
+    if(u.pathname==='/api/admin/public-traffic-baseline'&&req.method==='POST'){
+      if(!canManage(user))return json({error:'Forbidden'},403,C);
+      await ensurePublicEvents(env);
+      const b=await req.json().catch(()=>({}));
+      const unique=Math.max(0,Math.floor(Number(b.unique_visitors)||0));
+      const views=Math.max(0,Math.floor(Number(b.page_views)||0));
+      const source=String(b.source||'Cloudflare analytics').slice(0,120);
+      const period=String(b.source_period||'').slice(0,120);
+      await env.DB.prepare(`UPDATE public_traffic_baseline SET unique_visitors=?,page_views=?,source=?,source_period=?,updated_at=CURRENT_TIMESTAMP WHERE id=1`)
+        .bind(unique,views,source,period).run();
+      return json({ok:true,baseline:{unique_visitors:unique,page_views:views,source,source_period:period}},200,C);
     }
 
     if(u.pathname==='/api/admin/dashboard-analytics'&&req.method==='GET'){
