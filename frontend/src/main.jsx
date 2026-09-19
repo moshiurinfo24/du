@@ -159,23 +159,57 @@ async function saveA4Pdf(element,filename){
   if(!element)throw new Error('PDF preview is not available');
   const html2pdf=await loadHtml2Pdf();
   await document.fonts?.ready?.catch?.(()=>{});
+
+  const cover=document.createElement('div');
+  cover.style.cssText='position:fixed;inset:0;z-index:2147483647;background:rgba(12,24,39,.96);color:#fff;display:grid;place-items:center;font-family:"Hind Siliguri","Inter",sans-serif;font-size:16px;font-weight:800;letter-spacing:.2px';
+  cover.innerHTML='<div style="padding:16px 22px;border:1px solid rgba(255,255,255,.2);border-radius:14px;background:rgba(255,255,255,.06)">PDF তৈরি হচ্ছে...</div>';
+
   const stage=document.createElement('div');
   stage.setAttribute('data-pdf-stage','true');
-  stage.style.cssText='position:absolute;left:0;top:0;width:194mm;background:#fff;z-index:-2147483647;pointer-events:none;overflow:visible';
+  stage.style.cssText='position:absolute;left:0;top:0;width:194mm;background:#fff;z-index:2147483646;pointer-events:none;overflow:visible;opacity:1;visibility:visible';
   stage.innerHTML=element.innerHTML;
+
   document.body.appendChild(stage);
+  document.body.appendChild(cover);
   try{
     await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
     const pages=[...stage.querySelectorAll('.pdf-page')];
-    const source=pages.length?stage:stage;
+    if(!pages.length)throw new Error('No PDF pages were generated');
+
+    pages.forEach((p,i)=>{
+      p.style.display='block';
+      p.style.position='relative';
+      p.style.background='#fff';
+      p.style.margin='0';
+      p.style.pageBreakAfter=i<pages.length-1?'always':'auto';
+      p.style.breakAfter=i<pages.length-1?'page':'auto';
+    });
+
+    const rect=stage.getBoundingClientRect();
     await html2pdf().set({
-      margin:[6,6,6,6],filename,
+      margin:[6,6,6,6],
+      filename,
       image:{type:'jpeg',quality:.98},
-      html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false,scrollX:0,scrollY:0,windowWidth:stage.scrollWidth||794},
+      html2canvas:{
+        scale:2,
+        useCORS:true,
+        backgroundColor:'#ffffff',
+        logging:false,
+        scrollX:0,
+        scrollY:0,
+        windowWidth:Math.ceil(rect.width||794),
+        windowHeight:Math.ceil(stage.scrollHeight||1123)
+      },
       jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
-      pagebreak:{mode:['css','legacy'],before:[],after:['.pdf-page[data-break-after="true"]'],avoid:['.pdf-keep']}
-    }).from(source).save();
+      pagebreak:{
+        mode:['css','legacy'],
+        before:[],
+        after:['.pdf-page[data-break-after="true"]'],
+        avoid:['.pdf-keep']
+      }
+    }).from(stage).save();
   }finally{
+    cover.remove();
     stage.remove();
   }
 }
