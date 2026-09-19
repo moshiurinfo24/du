@@ -1,0 +1,26 @@
+name: Mobile Premium QA
+on:
+  push:
+    branches:
+      - feature/mobile-premium-calculators
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install
+      - run: npm run build
+      - name: Verify mobile UX hooks
+        working-directory: .
+        run: |
+          grep -q "public-mobile-dock" frontend/src/main.jsx
+          grep -q "mobile-calc-sheet" frontend/src/main.jsx
+          grep -q "salary-result-anchor" frontend/src/main.jsx
+          grep -q "mobile-premium-public-v1.css" frontend/src/main.jsx
+          grep -q "download-all-years" frontend/src/mobile-premium-public-v1.css
