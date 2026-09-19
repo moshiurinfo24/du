@@ -188,14 +188,21 @@ function salaryReportHtml(r,lang='bn'){
   const cat=en?{officer:'Officer',class3:'Class III',class4:'Class IV'}:{officer:'কর্মকর্তা',class3:'তৃতীয় শ্রেণি',class4:'চতুর্থ শ্রেণি'};
   const amt=v=>`${en?'Tk':'৳'} ${moneyLang(v,lang)}`;
   const row=(label,value,bold=false)=>`<div style="display:grid;grid-template-columns:1fr auto;gap:18px;padding:7px 0;border-bottom:1px solid #e8ebf1"><span style="color:#4b5565">${escapeHtml(label)}</span><span style="font-weight:${bold?800:650};color:#172033;text-align:right">${escapeHtml(value)}</span></div>`;
+  const rate=r.phase?.rate??r.rate??0;
+  const zoneLabel=en?({dhaka:'Dhaka North/South City Corporation',major:'Listed City Corporation',savar:'Savar / Keraniganj listed area',other:'Other area'}[f.zone]||'Other area'):({dhaka:'ঢাকা উত্তর/দক্ষিণ সিটি কর্পোরেশন',major:'তালিকাভুক্ত সিটি কর্পোরেশন',savar:'সাভার / কেরানীগঞ্জ তালিকাভুক্ত এলাকা',other:'অন্যান্য এলাকা'}[f.zone]||'অন্যান্য এলাকা');
   const earningRows=[
-    [en?'Payable basic':'প্রাপ্য মূল বেতন',r.payable],
+    [en?'Payable basic':'প্রাপ্য মূল বেতন',r.payableBasic??r.payable],
     [en?'House rent':'বাড়িভাড়া',r.house],
     [en?'Medical allowance':'চিকিৎসা ভাতা',r.medical],
-    [en?'Education allowance':'শিক্ষা ভাতা',r.education],
+    [en?'Education allowance':'শিক্ষা সহায়ক ভাতা',r.education],
     [en?'Tiffin allowance':'টিফিন ভাতা',r.tiffin],
-    [en?'Conveyance allowance':'যাতায়াত ভাতা',r.conveyance]
-  ];
+    [en?'Conveyance allowance':'যাতায়াত ভাতা',r.conveyance],
+    [en?'Mobile allowance':'মোবাইল ভাতা',r.mobile],
+    [en?'Laundry allowance':'ধোলাই ভাতা',r.laundry],
+    [en?'Special-needs child allowance':'বিশেষ চাহিদাসম্পন্ন সন্তান ভাতা',r.disabledChild],
+    [en?'Special area allowance':'বিশেষ এলাকা ভাতা',r.area],
+    [en?'Training allowance':'প্রশিক্ষণ ভাতা',r.training]
+  ].filter(([,v],i)=>i===0||Number(v)>0);
   const deductionRows=[
     [en?'Provident fund subscription (10%)':'ভবিষ্য তহবিল সাবস্ক্রিপশন (১০%)',r.pf],
     [en?'Benevolent fund':'কল্যাণ তহবিল',r.bene],
@@ -210,28 +217,34 @@ function salaryReportHtml(r,lang='bn'){
   const meta=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 26px">
     ${row(en?'Calculation date':'হিসাবের তারিখ',fmtDateLang(f.date||todayLocalIso(),lang))}
     ${row(en?'Grade':'গ্রেড',`${en?'Grade':'গ্রেড'} ${numLang(r.grade,lang,0)}`)}
-    ${row(en?'Current 2015 pay stage':'বর্তমান ২০১৫ বেতন ধাপ',`${en?'Stage':'ধাপ'} ${numLang(r.currentIndex+1,lang,0)}`)}
-    ${row(en?'Current 2015 basic':'বর্তমান ২০১৫ মূল বেতন',amt(r.currentBasic))}
-    ${row(en?'2026 full fixed basic':'২০২৬ পূর্ণ নির্ধারিত মূল বেতন',amt(r.fixed))}
-    ${row(en?'Implementation rate':'বাস্তবায়ন হার',`${numLang(r.rate*100,lang,0)}%`)}
+    ${row(en?'2015 pay stage on 30 June 2026':'৩০ জুন ২০২৬-এর ২০১৫ বেতন ধাপ',`${en?'Stage':'ধাপ'} ${numLang(r.currentIndex+1,lang,0)}`)}
+    ${row(en?'2015 basic':'২০১৫ মূল বেতন',amt(r.currentBasic))}
+    ${row(en?'2026 fixed basic before annual increment':'২০২৬ নির্ধারিত মূল বেতন (বার্ষিক ইনক্রিমেন্টের আগে)',amt(r.fixed))}
+    ${row(en?'Implementation phase':'বাস্তবায়ন ধাপ',r.phase?.label||`${numLang(rate*100,lang,0)}%`)}
+    ${row(en?'Annual increments included':'অন্তর্ভুক্ত বার্ষিক ইনক্রিমেন্ট',numLang(r.dueIncrementCount||0,lang,0))}
     ${row(en?'Employee category':'কর্মচারী শ্রেণি',cat[f.category]||'—')}
-    ${row(en?'Work location':'কর্মস্থল',f.zone==='dhaka'?(en?'Dhaka City':'ঢাকা সিটি'):(en?'Other':'অন্যান্য'))}
+    ${row(en?'Work location':'কর্মস্থল',zoneLabel)}
   </div>`;
-  const earn=earningRows.map(([l,v])=>row(l,amt(v))).join('')+row(en?'Gross salary':'মোট প্রাপ্য',amt(r.gross),true);
+  const earn=earningRows.map(([l,v])=>row(l,amt(v))).join('')+row(en?'Gross monthly salary':'মোট মাসিক প্রাপ্য',amt(r.gross),true);
   const ded=deductionRows.map(([l,v])=>row(l,amt(v))).join('')+row(en?'Total deductions':'মোট কর্তন',amt(r.deductions),true);
-  const title=en?'Salary Calculation Payslip':'বেতন হিসাব পে-স্লিপ';
+  const annual=r.allowance2026&&r.banglaNewYear!=null?row(en?'Bangla New Year allowance (annual)':'বাংলা নববর্ষ ভাতা (বার্ষিক)',amt(r.banglaNewYear),true):'';
+  const title=en?'National Pay Scale 2026 Salary Calculation':'জাতীয় বেতনস্কেল ২০২৬ বেতন হিসাব';
+  const ruleNote=r.allowance2026
+    ?(en?'New allowance rates are applied because the selected date is on or after 1 January 2028.':'নির্বাচিত তারিখ ১ জানুয়ারি ২০২৮ বা পরের হওয়ায় নতুন ভাতার হার প্রয়োগ করা হয়েছে।')
+    :(en?'Until 31 December 2027 the pre-existing allowance amounts/rates remain in force; the new allowance rates start from 1 January 2028.':'৩১ ডিসেম্বর ২০২৭ পর্যন্ত পূর্ববর্তী ভাতার অংক/হার বহাল থাকবে; নতুন ভাতার হার ১ জানুয়ারি ২০২৮ থেকে কার্যকর।');
   const body=`
     <div style="border:1px solid #dce2ec;border-radius:12px;padding:14px 16px;background:#fafbfe">${meta}</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;align-items:start">
-      <div style="border:1px solid #dce2ec;border-radius:12px;padding:12px 14px"><div style="font-size:13px;font-weight:800;color:#1d3263;margin-bottom:4px">${en?'Earnings':'প্রাপ্যসমূহ'}</div>${earn}</div>
+      <div style="border:1px solid #dce2ec;border-radius:12px;padding:12px 14px"><div style="font-size:13px;font-weight:800;color:#1d3263;margin-bottom:4px">${en?'Earnings':'প্রাপ্যসমূহ'}</div>${earn}${annual}</div>
       <div style="border:1px solid #dce2ec;border-radius:12px;padding:12px 14px"><div style="font-size:13px;font-weight:800;color:#1d3263;margin-bottom:4px">${en?'Deductions':'কর্তনসমূহ'}</div>${ded}</div>
     </div>
     <div style="margin-top:14px;border:2px solid #1f3568;border-radius:12px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;background:#f4f7ff">
-      <span style="font-size:14px;font-weight:800;color:#1f3568">${en?'Net payable salary':'নিট প্রাপ্য বেতন'}</span>
+      <span style="font-size:14px;font-weight:800;color:#1f3568">${en?'Estimated net payable salary':'আনুমানিক নিট প্রাপ্য বেতন'}</span>
       <span style="font-size:24px;font-weight:900;color:#111936">${amt(r.net)}</span>
     </div>
-    <div style="margin-top:12px;padding:10px 12px;border-left:4px solid #d59b35;background:#fff8e8;border-radius:8px;font-size:10.5px"><b>${en?'Note:':'নোট:'}</b> ${en?'Special benefit is excluded. Provident fund advance installment is not included in regular deductions. No new allowance rate for 2028 has been assumed.':'বিশেষ সুবিধা সম্পূর্ণ বাদ। ভবিষ্য তহবিল অগ্রিমের কিস্তি নিয়মিত কর্তনের মধ্যে রাখা হয়নি। ২০২৮ সালের নতুন ভাতার হার অনুমান করা হয়নি।'}</div>`;
-  return reportShell(title,en?'A4 payslip-style salary statement':'এ-ফোর পে-স্লিপধর্মী বেতন বিবরণী',body,lang);
+    <div style="margin-top:12px;padding:10px 12px;border-left:4px solid #1f6d4d;background:#effaf5;border-radius:8px;font-size:10.5px"><b>${en?'Gazette rule:':'গেজেটের নিয়ম:'}</b> ${escapeHtml(ruleNote)}</div>
+    <div style="margin-top:9px;padding:10px 12px;border-left:4px solid #d59b35;background:#fff8e8;border-radius:8px;font-size:10.5px"><b>${en?'Deduction note:':'কর্তন নোট:'}</b> ${en?'Provident/benevolent and user-entered deductions use the platform’s existing settings and should be checked against the employee’s actual payroll deductions.':'ভবিষ্য তহবিল/কল্যাণ তহবিল ও ব্যবহারকারী-প্রদত্ত কর্তন প্ল্যাটফর্মের বিদ্যমান সেটিং অনুযায়ী দেখানো হয়েছে; ব্যক্তির প্রকৃত পে-রোল কর্তনের সঙ্গে মিলিয়ে দেখুন।'}</div>`;
+  return reportShell(title,en?'A4 payslip-style statement based on the 17 September 2026 gazette':'১৭ সেপ্টেম্বর ২০২৬-এর গেজেটভিত্তিক এ-ফোর বেতন বিবরণী',body,lang);
 }
 
 function AuthPortal({onLogin,onBack,lang,setLang,initialMode='login'}) {
