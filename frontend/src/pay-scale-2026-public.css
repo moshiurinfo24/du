@@ -1217,3 +1217,262 @@ html[lang="en"] .pay-nav-link::after{content:"NEW"}
   width:17px;
   height:17px;
 }
+
+
+/* Year-by-year result flow */
+.result-year-tabs{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+}
+.result-year-tabs button{
+  min-height:72px;
+  padding:12px 14px;
+  border:1px solid #dce6e1;
+  border-radius:14px;
+  background:#fff;
+  color:#375247;
+  text-align:left;
+  cursor:pointer;
+  box-shadow:0 7px 20px rgba(22,55,42,.04);
+}
+.result-year-tabs button span{
+  display:block;
+  font-family:"Inter","Hind Siliguri",sans-serif;
+  font-size:20px;
+  font-weight:900;
+  color:#173d2e;
+}
+.result-year-tabs button small{
+  display:block;
+  margin-top:4px;
+  color:#7a8881;
+  font-size:10px;
+}
+.result-year-tabs button.active{
+  border-color:#68b08d;
+  background:linear-gradient(135deg,#eaf8f0,#f8fcfa);
+  box-shadow:0 10px 28px rgba(22,128,82,.11);
+}
+.result-year-tabs button.active span{
+  color:#106c42;
+}
+.selected-year-panel{
+  border:1px solid #dce7e2;
+  border-radius:18px;
+  overflow:hidden;
+  background:#fff;
+  box-shadow:0 12px 34px rgba(20,55,42,.05);
+}
+.selected-year-head{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:18px;
+  padding:15px 17px;
+  background:linear-gradient(135deg,#eff8f3,#f9fbff);
+  border-bottom:1px solid #e2ebe6;
+}
+.selected-year-head span{
+  color:#188052;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.6px;
+}
+.selected-year-head h3{
+  margin:3px 0 0;
+  color:#17263e;
+  font-size:18px;
+}
+.selected-year-head small{
+  max-width:440px;
+  color:#6d7a73;
+  text-align:right;
+}
+.selected-year-stages{
+  display:grid;
+  gap:0;
+}
+.selected-year-stages.stages-2{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+}
+.selected-year-stages article{
+  padding:17px;
+  border-right:1px solid #e7eeea;
+}
+.selected-year-stages article:last-child{
+  border-right:0;
+}
+.selected-year-stages article.current{
+  background:#fbfefc;
+}
+.selected-year-stages article>small{
+  display:block;
+  color:#64736b;
+  font-weight:800;
+}
+.selected-year-stages article>b{
+  display:block;
+  margin-top:5px;
+  color:#123e2d;
+  font-family:"Inter","Hind Siliguri",sans-serif;
+  font-size:24px;
+}
+.selected-year-stages article>span{
+  display:block;
+  color:#829089;
+  font-size:10.5px;
+}
+.selected-year-stages article>div{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  margin-top:9px;
+  padding-top:8px;
+  border-top:1px dashed #dce5e0;
+}
+.selected-year-stages article em{
+  color:#69776f;
+  font-style:normal;
+  font-size:11px;
+}
+.selected-year-stages article strong{
+  color:#243c31;
+  font-family:"Inter","Hind Siliguri",sans-serif;
+  font-size:12px;
+}
+.selected-year-stages article .net strong{
+  color:#0e7445;
+}
+.selected-year-main{
+  margin-top:0;
+}
+.year-download-center{
+  border:1px solid #d8e4df;
+  border-radius:18px;
+  background:#fff;
+  overflow:hidden;
+  box-shadow:0 14px 40px rgba(18,60,44,.07);
+}
+.year-download-head{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:18px;
+  padding:15px 17px;
+  background:linear-gradient(135deg,#f1f8f5,#f8fbff);
+  border-bottom:1px solid #e0e8e4;
+}
+.year-download-head span{
+  color:#16794d;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.8px;
+}
+.year-download-head h3{
+  margin:3px 0 0;
+  color:#17253b;
+  font-size:18px;
+}
+.year-download-head small{
+  color:#6e7b75;
+  text-align:right;
+}
+.year-download-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+  padding:14px;
+}
+.year-download-grid button{
+  min-height:68px;
+  padding:11px 12px;
+  border:1px solid #dce6e1;
+  border-radius:13px;
+  background:#fff;
+  color:#315246;
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  gap:9px;
+  align-items:center;
+  text-align:left;
+  cursor:pointer;
+}
+.year-download-grid button:hover{
+  border-color:#9fceb8;
+  background:#f8fcfa;
+}
+.year-download-grid button>svg:first-child{
+  color:#18784d;
+}
+.year-download-grid button b{
+  display:block;
+  color:#173c2e;
+  font-size:13px;
+}
+.year-download-grid button small{
+  display:block;
+  margin-top:2px;
+  color:#7a8881;
+  font-size:9.5px;
+}
+.download-all-years{
+  width:calc(100% - 28px);
+  margin:0 14px 14px;
+  min-height:66px;
+  padding:12px 15px;
+  border:0;
+  border-radius:13px;
+  background:linear-gradient(135deg,#145f41,#168052);
+  color:#fff;
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  gap:11px;
+  align-items:center;
+  text-align:left;
+  cursor:pointer;
+  box-shadow:0 10px 24px rgba(20,96,65,.18);
+}
+.download-all-years b{
+  display:block;
+  font-size:14px;
+}
+.download-all-years small{
+  display:block;
+  margin-top:2px;
+  opacity:.82;
+  font-size:10px;
+}
+.year-download-grid button:disabled,
+.download-all-years:disabled{
+  opacity:.6;
+  cursor:wait;
+}
+@media(max-width:760px){
+  .result-year-tabs{
+    grid-template-columns:1fr;
+  }
+  .selected-year-head,
+  .year-download-head{
+    align-items:flex-start;
+    flex-direction:column;
+    gap:5px;
+  }
+  .selected-year-head small,
+  .year-download-head small{
+    text-align:left;
+  }
+  .selected-year-stages.stages-2{
+    grid-template-columns:1fr;
+  }
+  .selected-year-stages article{
+    border-right:0;
+    border-bottom:1px solid #e7eeea;
+  }
+  .selected-year-stages article:last-child{
+    border-bottom:0;
+  }
+  .year-download-grid{
+    grid-template-columns:1fr;
+  }
+}
