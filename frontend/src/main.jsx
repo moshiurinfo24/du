@@ -282,13 +282,13 @@ async function buildA4Pdf(element,{coverText='PDF তৈরি হচ্ছে..
 
       await new Promise(r=>requestAnimationFrame(r));
       const canvas=await html2canvas(page,{
-        scale:2,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',logging:false,
+        scale:2.6,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',logging:false,
         scrollX:0,scrollY:0,windowWidth:Math.max(page.scrollWidth,734),windowHeight:Math.max(page.scrollHeight,1078)
       });
       if(!canvas.width||!canvas.height)throw new Error('PDF page capture failed');
       if(i>0)pdf.addPage('a4','portrait');
-      const img=canvas.toDataURL('image/jpeg',0.96);
-      pdf.addImage(img,'JPEG',8,6,194,285,undefined,'FAST');
+      const img=canvas.toDataURL('image/jpeg',0.985);
+      pdf.addImage(img,'JPEG',8,6,194,285,undefined,'MEDIUM');
     }
     return pdf;
   }finally{
