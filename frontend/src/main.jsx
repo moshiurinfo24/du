@@ -229,8 +229,8 @@ function salaryReportHtml(r,lang='bn'){
     [en?'Other verified special allowance':'অন্যান্য যাচাইকৃত বিশেষ ভাতা',r.otherSpecial]
   ].filter(([,v],i)=>i===0||Number(v)>0);
   const deductionRows=[
-    [en?`GPF subscription (${numLang(r.gpfRate||0,'en',0)}%)`:`GPF সাবস্ক্রিপশন (${numLang(r.gpfRate||0,'bn',0)}%)`,r.pf],
-    [en?'Benevolent fund (entered)':'কল্যাণ তহবিল (প্রদত্ত অংক)',r.bene],
+    [en?`Provident Fund (${numLang(r.gpfRate||0,'en',0)}%)`:`ভবিষ্য তহবিল (PF) (${numLang(r.gpfRate||0,'bn',0)}%)`,r.pf],
+    [en?`Benevolent Fund${r.deductionMode!=='custom'?` (${numLang((r.beneRate||0)*100,'en',2)}%)`:''}`:`কল্যাণ তহবিল${r.deductionMode!=='custom'?` (${numLang((r.beneRate||0)*100,'bn',2)}%)`:''}`,r.bene],
     [en?'Health insurance':'স্বাস্থ্য বীমা',r.health],
     [en?'Group insurance':'গ্রুপ বীমা',r.group],
     [en?'Revenue stamp':'রাজস্ব স্ট্যাম্প',r.stamp],
@@ -248,7 +248,9 @@ function salaryReportHtml(r,lang='bn'){
     ${row(en?'2026 basic after first eligible increment':'প্রাপ্য প্রথম ইনক্রিমেন্টসহ ২০২৬ মূল বেতন',amt(r.fixedWithFirstIncrement??r.fixed))}
     ${row(en?'Implementation phase':'বাস্তবায়ন ধাপ',r.phase?.label||`${numLang(rate*100,lang,0)}%`)}
     ${row(en?'Annual increments included':'অন্তর্ভুক্ত বার্ষিক ইনক্রিমেন্ট',numLang(r.dueIncrementCount||0,lang,0))}
-    ${row(en?'GPF rate selected':'নির্বাচিত GPF হার',`${numLang(r.gpfRate||0,lang,0)}%`)}
+    ${row(en?'Deduction mode':'কর্তনের ধরন',r.deductionMode!=='custom'?(en?'Dhaka University Auto':'ঢাকা বিশ্ববিদ্যালয় অটো'):(en?'Custom / manual':'কাস্টম / ম্যানুয়াল'))}
+    ${row(en?'DU employee category':'DU কর্মচারী শ্রেণি',r.category==='officer'?(en?'Teacher / Officer':'শিক্ষক / কর্মকর্তা'):r.category==='class4'?(en?'Class IV employee':'৪র্থ শ্রেণির কর্মচারী'):(en?'Class III employee':'৩য় শ্রেণির কর্মচারী'))}
+    ${row(en?'PF rate':'PF হার',`${numLang(r.gpfRate||0,lang,0)}%`)}
     ${row(en?'Work location':'কর্মস্থল',zoneLabel)}
   </div>`;
   const earn=earningRows.map(([l,v])=>row(l,amt(v))).join('')+row(en?'Gross monthly salary':'মোট মাসিক প্রাপ্য',amt(r.gross),true);
@@ -270,7 +272,7 @@ function salaryReportHtml(r,lang='bn'){
       <span style="font-size:24px;font-weight:900;color:#111936">${amt(r.net)}</span>
     </div>
     <div style="margin-top:12px;padding:10px 12px;border-left:4px solid #1f6d4d;background:#effaf5;border-radius:8px;font-size:10.5px"><b>${en?'Gazette rule:':'গেজেটের নিয়ম:'}</b> ${escapeHtml(ruleNote)}</div>
-    <div style="margin-top:9px;padding:10px 12px;border-left:4px solid #d59b35;background:#fff8e8;border-radius:8px;font-size:10.5px"><b>${en?'Deduction note:':'কর্তন নোট:'}</b> ${en?'GPF uses the selected rate; other deductions are user-entered employee-specific amounts and should be checked against the actual payroll.':'GPF নির্বাচিত হার অনুযায়ী; অন্যান্য কর্তন ব্যবহারকারী-প্রদত্ত ব্যক্তিভেদে অংক এবং প্রকৃত পে-রোলের সঙ্গে মিলিয়ে দেখা প্রয়োজন।'}</div>`;
+    <div style="margin-top:9px;padding:10px 12px;border-left:4px solid #d59b35;background:#fff8e8;border-radius:8px;font-size:10.5px"><b>${en?'Deduction note:':'কর্তন নোট:'}</b> ${r.deductionMode!=='custom'?(en?'DU Auto: PF 10% and Benevolent Fund are rule-based; health/group insurance, stamp and association use the platform’s previous DU payroll preset. Tax, loan/advance and other deductions remain employee-specific.':'DU Auto: PF ১০% ও কল্যাণ তহবিল নিয়মভিত্তিক; স্বাস্থ্য/গ্রুপ বীমা, স্ট্যাম্প ও সমিতি আগের DU পে-রোল প্রিসেট অনুযায়ী। আয়কর, ঋণ/অগ্রিম ও অন্যান্য কর্তন ব্যক্তিভেদে।'):(en?'Custom mode: verify all entered deductions against the actual payroll.':'কাস্টম মোড: সব কর্তন প্রকৃত পে-রোলের সঙ্গে মিলিয়ে দেখুন।')}</div>`;
   return reportShell(title,en?'A4 payslip-style statement based on the 17 September 2026 gazette':'১৭ সেপ্টেম্বর ২০২৬-এর গেজেটভিত্তিক এ-ফোর বেতন বিবরণী',body,lang);
 }
 
@@ -1304,16 +1306,14 @@ function SalaryCalculator({lang='bn',publicMode=false}){
     ageBand:'under50',incrementEligible2026:'yes',mobile:'yes',laundry:'no',
     disabledChildren:'0',areaType:'none',trainingInstructor:'no',chargeAllowance:'no',
     entertainmentTier:'none',otherSpecialAllowance:'0',
-    gpfRate:'10',benevolent:'0',health:'0',group:'0',stamp:'0',association:'0',tax:'0',loan:'0',other:'0'
+    deductionMode:'du_auto',category:'class3',gpfRate:'10',benevolent:'0',
+    health:'149.34',group:'192.50',stamp:'10',association:'10',tax:'0',loan:'0',other:'0'
   });
   const [r,setR]=useState(null);
   const stages=PAY2015[f.grade]||[];
   const currentIndex=Math.min(Math.max(0,Number(f.currentStage||0)),Math.max(0,stages.length-1));
   function calc(){
-    const grade=Number(f.grade),currentBasic=stages[currentIndex]||0;
-    const input={...f},manualFixed=
-      Number(f.benevolent||0)+Number(f.health||0)+Number(f.group||0)+Number(f.stamp||0)+
-      Number(f.association||0)+Number(f.tax||0)+Number(f.loan||0)+Number(f.other||0);
+    const grade=Number(f.grade),currentBasic=stages[currentIndex]||0,input={...f};
     const make=(date,label)=>{
       const snap=salary2026Snapshot({
         grade,currentBasic,date,incrementEligible2026:f.incrementEligible2026==='yes',
@@ -1322,9 +1322,18 @@ function SalaryCalculator({lang='bn',publicMode=false}){
         areaType:f.areaType,trainingInstructor:f.trainingInstructor==='yes',chargeAllowance:f.chargeAllowance==='yes',
         entertainmentTier:f.entertainmentTier,otherSpecialAllowance:f.otherSpecialAllowance
       });
-      const gpfRate=Math.max(0,Math.min(25,Number(f.gpfRate||0))),pf=Math.round(snap.payableBasic*(gpfRate/100)*100)/100;
-      const deductions=pf+manualFixed;
-      return {...snap,label,gpfRate,pf,deductions,net:snap.gross-deductions};
+      const duAuto=f.deductionMode!=='custom';
+      const gpfRate=duAuto?10:Math.max(0,Math.min(25,Number(f.gpfRate||0)));
+      const pf=Math.round(snap.payableBasic*(gpfRate/100)*100)/100;
+      const beneRate=f.category==='officer'?.05:f.category==='class4'?.0275:.04;
+      const bene=duAuto?Math.round(snap.payableBasic*beneRate*100)/100:Number(f.benevolent||0);
+      const health=duAuto?149.34:Number(f.health||0);
+      const group=duAuto?192.50:Number(f.group||0);
+      const stamp=duAuto?10:Number(f.stamp||0);
+      const association=duAuto?10:Number(f.association||0);
+      const tax=Number(f.tax||0),loan=Number(f.loan||0),other=Number(f.other||0);
+      const deductions=pf+bene+health+group+stamp+association+tax+loan+other;
+      return {...snap,label,deductionMode:f.deductionMode,category:f.category,gpfRate,pf,beneRate,bene,health,group,stamp,association,tax,loan,other,deductions,net:snap.gross-deductions};
     };
     const chosen=make(f.date||today,en?'Selected date':'নির্বাচিত তারিখ');
     const projections=[
@@ -1338,13 +1347,11 @@ function SalaryCalculator({lang='bn',publicMode=false}){
       laundry=chosen.allowances.laundry,disabledChild=chosen.allowances.disabledChild,area=chosen.allowances.area,
       training=chosen.allowances.training,charge=chosen.allowances.charge,entertainment=chosen.allowances.entertainment,
       otherSpecial=chosen.allowances.otherSpecial,gross=chosen.gross;
-    const bene=Number(f.benevolent||0),health=Number(f.health||0),group=Number(f.group||0),stamp=Number(f.stamp||0),
-      association=Number(f.association||0),tax=Number(f.tax||0),loan=Number(f.loan||0),other=Number(f.other||0);
     setR({...chosen,currentIndex,currentBasic,payable:chosen.payableBasic,house,medical,education,tiffin,conveyance,mobile,laundry,
-      disabledChild,area,training,charge,entertainment,otherSpecial,gross,bene,health,group,stamp,association,tax,loan,other,
-      projections,input});
+      disabledChild,area,training,charge,entertainment,otherSpecial,gross,projections,input});
   }
   useEffect(()=>{setF(x=>({...x,currentStage:'0'}));setR(null)},[f.grade]);
+  const categoryOpts=en?[['officer','Teacher / Officer'],['class3','Class III employee'],['class4','Class IV employee']]:[['officer','শিক্ষক / কর্মকর্তা'],['class3','৩য় শ্রেণির কর্মচারী'],['class4','৪র্থ শ্রেণির কর্মচারী']];
   const zoneOpts=en?[
     ['dhaka','Dhaka North/South City Corporation'],
     ['major','Other listed City Corporations'],
@@ -1363,6 +1370,7 @@ function SalaryCalculator({lang='bn',publicMode=false}){
       <label>{en?'2015 basic on 30 June 2026':'৩০ জুন ২০২৬-এর ২০১৫ মূল বেতন'}<select value={f.currentStage} onChange={e=>setF({...f,currentStage:e.target.value})}>{stages.map((v,i)=><option value={i} key={i}>{en?`Stage ${i+1} — Tk ${moneyLang(v,'en')}`:`ধাপ ${(i+1).toLocaleString('bn-BD')} — ৳${moneyLang(v,'bn')}`}</option>)}</select></label>
       <label>{en?'Calculation date':'হিসাবের তারিখ'}<input type="date" min="2026-07-01" value={f.date} onChange={e=>setF({...f,date:e.target.value})}/></label>
       <label>{en?'1 July 2026 annual increment eligibility':'১ জুলাই ২০২৬ বার্ষিক ইনক্রিমেন্ট'}<select value={f.incrementEligible2026} onChange={e=>setF({...f,incrementEligible2026:e.target.value})}><option value="yes">{en?'Eligible (6+ months service)':'প্রাপ্য (কমপক্ষে ৬ মাস চাকরি)'}</option><option value="no">{en?'Not eligible':'প্রাপ্য নয়'}</option></select></label>
+      <label>{en?'DU employee category':'ঢাকা বিশ্ববিদ্যালয়ের কর্মচারী শ্রেণি'}<select value={f.category} onChange={e=>setF({...f,category:e.target.value})}>{categoryOpts.map(([v,l])=><option value={v} key={v}>{l}</option>)}</select></label>
       <label>{en?'Work location':'কর্মস্থল'}<select value={f.zone} onChange={e=>setF({...f,zone:e.target.value})}>{zoneOpts.map(([v,l])=><option value={v} key={v}>{l}</option>)}</select></label>
       <label>{en?'Government housing facility':'সরকারি বাসা সুবিধা'}<select value={f.housing} onChange={e=>setF({...f,housing:e.target.value})}><option value="no">{en?'No':'না'}</option><option value="yes">{en?'Yes':'হ্যাঁ'}</option></select></label>
       <label>{en?'Age for medical allowance':'চিকিৎসা ভাতার বয়স'}<select value={f.ageBand} onChange={e=>setF({...f,ageBand:e.target.value})}><option value="under50">{en?'Up to 50 years':'৫০ বছর পর্যন্ত'}</option><option value="over50">{en?'Above 50 years':'৫০ বছরের বেশি'}</option></select></label>
@@ -1379,10 +1387,24 @@ function SalaryCalculator({lang='bn',publicMode=false}){
       <label>{en?'Entertainment allowance tier':'আপ্যায়ন ভাতার স্তর'}<select value={f.entertainmentTier} onChange={e=>setF({...f,entertainmentTier:e.target.value})}><option value="none">{en?'Not applicable':'প্রযোজ্য নয়'}</option><option value="cabinet">{en?'Cabinet/Principal Secretary — Tk 2,000':'মন্ত্রিপরিষদ/মুখ্য সচিব — ৳২,০০০'}</option><option value="secretary">{en?'Senior Secretary/Secretary — Tk 1,000':'সিনিয়র সচিব/সচিব — ৳১,০০০'}</option><option value="additional_secretary">{en?'Additional Secretary — Tk 900':'অতিরিক্ত সচিব — ৳৯০০'}</option><option value="joint_secretary">{en?'Joint Secretary / entitled officer — Tk 600':'যুগ্মসচিব/অন্যান্য অধিকারপ্রাপ্ত — ৳৬০০'}</option></select></label>
       <label>{en?'Other verified special allowance (monthly)':'অন্যান্য যাচাইকৃত বিশেষ ভাতা (মাসিক)'}<input type="number" min="0" step="1" value={f.otherSpecialAllowance} onChange={e=>setF({...f,otherSpecialAllowance:e.target.value})} placeholder="0"/></label>
     </div></details>
-    <details className="deduction-box"><summary>{en?'Edit GPF and employee-specific deductions':'GPF ও ব্যক্তিভেদে কর্তন সম্পাদনা'}</summary><div className="form-grid compact">
-      <label>{en?'GPF subscription rate':'GPF সাবস্ক্রিপশন হার'}<select value={f.gpfRate} onChange={e=>setF({...f,gpfRate:e.target.value})}><option value="0">{en?'Not applicable':'প্রযোজ্য নয়'}</option>{Array.from({length:21},(_,i)=>i+5).map(x=><option value={x} key={x}>{numLang(x,lang,0)}%</option>)}</select></label>
-      {(en?[['benevolent','Benevolent fund (actual amount)'],['health','Health insurance (actual amount)'],['group','Group insurance (actual amount)'],['stamp','Revenue stamp'],['association','Association'],['tax','Income tax'],['loan','Loan/advance installment'],['other','Other deduction']]:[['benevolent','কল্যাণ তহবিল (প্রকৃত অংক)'],['health','স্বাস্থ্য বীমা (প্রকৃত অংক)'],['group','গ্রুপ বীমা (প্রকৃত অংক)'],['stamp','রাজস্ব স্ট্যাম্প'],['association','সমিতি'],['tax','আয়কর'],['loan','ঋণ/অগ্রিম কিস্তি'],['other','অন্যান্য কর্তন']]).map(([k,l])=><label key={k}>{l}<input type="number" min="0" step="0.01" value={f[k]} onChange={e=>setF({...f,[k]:e.target.value})}/></label>)}
-    </div><div className="notice compact-notice">{en?'GPF subscription is selectable from 5% to 25% of basic pay when applicable; other deductions vary by employee and must be entered from the actual payroll.':'GPF প্রযোজ্য হলে মূল বেতনের ৫%–২৫% হার নির্বাচন করা যাবে; অন্যান্য কর্তন ব্যক্তিভেদে ভিন্ন, তাই প্রকৃত পে-রোল অনুযায়ী অংক দিন।'}</div></details>
+    <details className="deduction-box du-deduction-box" open><summary>{en?'Dhaka University automatic deductions':'ঢাকা বিশ্ববিদ্যালয়ের অটো কর্তন'}</summary>
+      <div className="form-grid compact">
+        <label>{en?'Deduction mode':'কর্তনের ধরন'}<select value={f.deductionMode} onChange={e=>setF({...f,deductionMode:e.target.value})}><option value="du_auto">{en?'DU Auto (previous payroll preset)':'DU Auto (আগের পে-রোল সেটিং)'}</option><option value="custom">{en?'Custom / manual':'কাস্টম / ম্যানুয়াল'}</option></select></label>
+        {f.deductionMode==='du_auto'?<>
+          <div className="du-auto-deduction-card"><small>{en?'Provident Fund':'ভবিষ্য তহবিল (PF)'}</small><b>10%</b><span>{en?'Automatic from payable basic':'প্রাপ্য মূল বেতন থেকে অটো'}</span></div>
+          <div className="du-auto-deduction-card"><small>{en?'Benevolent Fund':'কল্যাণ তহবিল'}</small><b>{f.category==='officer'?'5%':f.category==='class4'?'2.75%':'4%'}</b><span>{en?'Automatic by DU employee category':'DU কর্মচারী শ্রেণি অনুযায়ী অটো'}</span></div>
+          <div className="du-auto-deduction-card"><small>{en?'Health insurance':'স্বাস্থ্য বীমা'}</small><b>{en?'Tk 149.34':'৳ ১৪৯.৩৪'}</b><span>{en?'Previous platform payroll preset':'আগের সিস্টেমের পে-রোল ডিফল্ট'}</span></div>
+          <div className="du-auto-deduction-card"><small>{en?'Group insurance':'গ্রুপ বীমা'}</small><b>{en?'Tk 192.50':'৳ ১৯২.৫০'}</b><span>{en?'Previous platform payroll preset':'আগের সিস্টেমের পে-রোল ডিফল্ট'}</span></div>
+          <div className="du-auto-deduction-card"><small>{en?'Revenue stamp':'রাজস্ব স্ট্যাম্প'}</small><b>{en?'Tk 10':'৳ ১০'}</b><span>{en?'Automatic default':'অটো ডিফল্ট'}</span></div>
+          <div className="du-auto-deduction-card"><small>{en?'Association':'সমিতি'}</small><b>{en?'Tk 10':'৳ ১০'}</b><span>{en?'Automatic default':'অটো ডিফল্ট'}</span></div>
+        </>:<>
+          <label>{en?'PF subscription rate':'PF সাবস্ক্রিপশন হার'}<select value={f.gpfRate} onChange={e=>setF({...f,gpfRate:e.target.value})}><option value="0">{en?'Not applicable':'প্রযোজ্য নয়'}</option>{Array.from({length:21},(_,i)=>i+5).map(x=><option value={x} key={x}>{numLang(x,lang,0)}%</option>)}</select></label>
+          {(en?[['benevolent','Benevolent fund'],['health','Health insurance'],['group','Group insurance'],['stamp','Revenue stamp'],['association','Association']]:[['benevolent','কল্যাণ তহবিল'],['health','স্বাস্থ্য বীমা'],['group','গ্রুপ বীমা'],['stamp','রাজস্ব স্ট্যাম্প'],['association','সমিতি']]).map(([k,l])=><label key={k}>{l}<input type="number" min="0" step="0.01" value={f[k]} onChange={e=>setF({...f,[k]:e.target.value})}/></label>)}
+        </>}
+        {(en?[['tax','Income tax'],['loan','Loan/advance installment'],['other','Other deduction']]:[['tax','আয়কর'],['loan','ঋণ/অগ্রিম কিস্তি'],['other','অন্যান্য কর্তন']]).map(([k,l])=><label key={k}>{l}<input type="number" min="0" step="0.01" value={f[k]} onChange={e=>setF({...f,[k]:e.target.value})}/></label>)}
+      </div>
+      <div className="notice compact-notice">{en?'DU Auto restores the calculator’s previous payroll behavior: PF 10%, Benevolent Fund by employee category, plus the previous health/group insurance, stamp and association defaults. Tax, loan/advance and other deductions remain employee-specific.':'DU Auto আগের ক্যালকুলেটরের পে-রোল আচরণ ফিরিয়ে দেয়: PF ১০%, কর্মচারী শ্রেণিভেদে কল্যাণ তহবিল, সঙ্গে আগের স্বাস্থ্য/গ্রুপ বীমা, স্ট্যাম্প ও সমিতির ডিফল্ট। আয়কর, ঋণ/অগ্রিম ও অন্যান্য কর্তন ব্যক্তিভেদে থাকবে।'}</div>
+    </details>
     <button className="primary wide" onClick={calc}>{en?'Calculate official pay':'সরকারি নিয়মে হিসাব করুন'}</button></section>
     {r&&<SalaryResult r={r} lang={lang}/>}
   </div>
@@ -1401,7 +1423,8 @@ function SalaryResult({r,lang='bn'}){
     ['বিশেষ চাহিদাসম্পন্ন সন্তান ভাতা',r.disabledChild],['বিশেষ এলাকা ভাতা',r.area],['প্রশিক্ষণ ভাতা',r.training],
     ['কার্যভার ভাতা',r.charge],['আপ্যায়ন ভাতা',r.entertainment],['অন্যান্য যাচাইকৃত বিশেষ ভাতা',r.otherSpecial]
   ];
-  const deds=en?[[`GPF subscription ${numLang(r.gpfRate||0,'en',0)}%`,r.pf],['Benevolent fund (entered)',r.bene],['Health insurance (entered)',r.health],['Group insurance (entered)',r.group],['Revenue stamp',r.stamp],['Association',r.association],['Income tax',r.tax],['Loan/advance',r.loan],['Other',r.other]]:[[`GPF সাবস্ক্রিপশন ${numLang(r.gpfRate||0,'bn',0)}%`,r.pf],['কল্যাণ তহবিল (প্রদত্ত অংক)',r.bene],['স্বাস্থ্য বীমা (প্রদত্ত অংক)',r.health],['গ্রুপ বীমা (প্রদত্ত অংক)',r.group],['রাজস্ব স্ট্যাম্প',r.stamp],['সমিতি',r.association],['আয়কর',r.tax],['ঋণ/অগ্রিম',r.loan],['অন্যান্য',r.other]];
+  const auto=r.deductionMode!=='custom';
+  const deds=en?[[`Provident Fund ${numLang(r.gpfRate||0,'en',0)}%`,r.pf],[`Benevolent Fund ${auto?numLang((r.beneRate||0)*100,'en',2)+'%':''}`,r.bene],[`Health insurance${auto?' (auto)':''}`,r.health],[`Group insurance${auto?' (auto)':''}`,r.group],['Revenue stamp',r.stamp],['Association',r.association],['Income tax',r.tax],['Loan/advance',r.loan],['Other',r.other]]:[[`ভবিষ্য তহবিল (PF) ${numLang(r.gpfRate||0,'bn',0)}%`,r.pf],[`কল্যাণ তহবিল ${auto?numLang((r.beneRate||0)*100,'bn',2)+'%':''}`,r.bene],[`স্বাস্থ্য বীমা${auto?' (অটো)':''}`,r.health],[`গ্রুপ বীমা${auto?' (অটো)':''}`,r.group],['রাজস্ব স্ট্যাম্প',r.stamp],['সমিতি',r.association],['আয়কর',r.tax],['ঋণ/অগ্রিম',r.loan],['অন্যান্য',r.other]];
   return <div className="result-stack">
     <section className="result-panel ok"><small>{en?'Payable basic on selected date':'নির্বাচিত তারিখে প্রাপ্য মূল বেতন'}</small><h3>{amt(r.payableBasic)}</h3><p>{en?`2015 basic ${amt(r.currentBasic)} · 2026 fixation ${amt(r.fixed)} · after first eligible increment ${amt(r.fixedWithFirstIncrement??r.fixed)}`:`২০১৫ মূল বেতন ${amt(r.currentBasic)} · ২০২৬-এ নির্ধারিত মূল বেতন ${amt(r.fixed)} · প্রাপ্য প্রথম ইনক্রিমেন্টসহ ${amt(r.fixedWithFirstIncrement??r.fixed)}`}</p><div className="pay-phase-chip">{r.phase.label}</div></section>
     <section className="salary-summary">
@@ -1420,7 +1443,7 @@ function SalaryResult({r,lang='bn'}){
     <div className="split-grid"><section className="breakdown-card"><h3>{en?'Monthly allowances':'মাসিক ভাতা'}</h3>{allowances.filter(([,v])=>Number(v)>0).map(([l,v])=><div className="money-row" key={l}><span>{l}</span><b>{amt(v)}</b></div>)}{r.allowance2026&&r.houseRate>0&&<div className="money-row source-row"><span>{en?'House-rent rate':'বাড়িভাড়া হার'}</span><b>{numLang(r.houseRate,lang,0)}%</b></div>}{r.allowance2026&&<div className="money-row annual-row"><span>{en?'Bangla New Year allowance (annual)':'বাংলা নববর্ষ ভাতা (বার্ষিক)'}</span><b>{amt(r.banglaNewYear)}</b></div>}</section>
       <section className="breakdown-card"><h3>{en?'Deductions':'কর্তনসমূহ'}</h3>{deds.map(([l,v])=><div className="money-row" key={l}><span>{l}</span><b>{amt(v)}</b></div>)}</section></div>
     <div className="notice official-pay-note"><b>{en?'Official rule status:':'সরকারি নিয়ম:'}</b> {r.allowance2026?(en?'The new allowance rates are applied because the selected date is on/after 1 January 2028.':'নির্বাচিত তারিখ ১ জানুয়ারি ২০২৮ বা পরের হওয়ায় নতুন ভাতার হার প্রয়োগ হয়েছে।'):(en?'Until 31 December 2027 the pre-existing allowance amounts/rates remain in force; new 2028 allowances are not applied.':'৩১ ডিসেম্বর ২০২৭ পর্যন্ত আগের ভাতার অংক/হার বহাল; ২০২৮-এর নতুন ভাতা এখনো প্রয়োগ হয়নি।')}</div>
-    <div className="notice"><b>{en?'Deduction note:':'কর্তন নোট:'}</b> {en?'GPF uses the rate you selected (5%–25% when applicable). All other deduction fields are employee-specific manual amounts; they are not presented as fixed gazette rates.':'GPF আপনার নির্বাচিত হার অনুযায়ী (প্রযোজ্য হলে ৫%–২৫%) হিসাব করা হয়। অন্য সব কর্তন ব্যক্তিভেদে ম্যানুয়াল অংক; এগুলোকে গেজেটের নির্দিষ্ট স্থির হার হিসেবে দেখানো হচ্ছে না।'}</div>
+    <div className="notice"><b>{en?'Deduction note:':'কর্তন নোট:'}</b> {r.deductionMode!=='custom'?(en?'DU Auto is active: PF 10% and Benevolent Fund are calculated automatically under the DU statutes. Health/group insurance, stamp and association use the previous platform payroll defaults; tax, loan and other items remain employee-specific.':'DU Auto সক্রিয়: DU Statute অনুযায়ী PF ১০% এবং কল্যাণ তহবিল স্বয়ংক্রিয়ভাবে হিসাব হয়। স্বাস্থ্য/গ্রুপ বীমা, স্ট্যাম্প ও সমিতিতে আগের প্ল্যাটফর্মের পে-রোল ডিফল্ট ব্যবহৃত হয়; আয়কর, ঋণ ও অন্যান্য কর্তন ব্যক্তিভেদে থাকে।'):(en?'Custom deduction mode is active; verify all entered amounts against the actual payroll.':'কাস্টম কর্তন মোড সক্রিয়; দেওয়া সব অংক প্রকৃত পে-রোলের সঙ্গে মিলিয়ে দেখুন।')}</div>
     <button className="primary wide" onClick={()=>setPreview(true)}><FileText size={17}/> {en?'A4 Payslip Preview':'এ-ফোর পে-স্লিপ প্রিভিউ'}</button>{preview&&<PdfPreviewModal html={report} filename={filename} onClose={()=>setPreview(false)} lang={lang}/>}
   </div>
 }
