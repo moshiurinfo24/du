@@ -59,3 +59,50 @@
   .arrear-actions{grid-template-columns:1fr}
   .arrear-actions>button{width:100%}
 }
+
+
+.auto-special-benefit-note{margin-top:12px}
+.auto-special-benefit-summary{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:7px;
+  margin-top:12px;
+  padding:10px;
+  border:1px solid #d7e6dd;
+  border-radius:13px;
+  background:#f8fcfa;
+}
+.auto-special-benefit-summary>div{
+  padding:9px 10px;
+  border-radius:10px;
+  background:#fff;
+  border:1px solid #e4ece7;
+}
+.auto-special-benefit-summary>div.total{
+  background:#edf8f2;
+  border-color:#c8e3d3;
+}
+.auto-special-benefit-summary small{
+  display:block;
+  color:#748179;
+  font-size:8.5px;
+  line-height:1.3;
+}
+.auto-special-benefit-summary b{
+  display:block;
+  margin-top:3px;
+  color:#204835;
+  font-family:"Inter","Hind Siliguri",sans-serif;
+  font-size:13px;
+  font-weight:900;
+  font-variant-numeric:tabular-nums;
+}
+.auto-special-benefit-summary .total b{color:#126a43}
+@media(max-width:760px){
+  .auto-special-benefit-summary{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    padding:8px;
+    gap:6px;
+  }
+  .auto-special-benefit-summary>div.total{grid-column:1/-1}
+}

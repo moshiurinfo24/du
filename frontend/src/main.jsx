@@ -44,7 +44,7 @@ import './october-arrear.css';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import {
   PAY2015,PAY2026,PAY_SCALE_2026_META,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
-  annualPromotionCycle,futureRoadmap,serviceExperiencePoints,fixed2026,implementationRate,houseRent2015,salary2026Snapshot
+  annualPromotionCycle,futureRoadmap,serviceExperiencePoints,fixed2026,implementationRate,houseRent2015,salary2026Snapshot,incremented2015Basic,specialBenefit2025
 } from './rules';
 
 const API=import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE||'';
@@ -442,14 +442,20 @@ function salaryOctoberArrearReportHtml(base,lang='bn'){
   const amt=v=>`${en?'Tk':'৳'} ${moneyLang(v,lang)}`;
   const rows=[
     [en?'Arrear period':'বকেয়া/সমন্বয় সময়কাল',en?'1 July–31 October 2026 (4 months)':'১ জুলাই–৩১ অক্টোবর ২০২৬ (৪ মাস)'],
-    [en?'2015 basic before implementation':'বাস্তবায়নের আগের ২০১৫ মূল বেতন',amt(a.legacyBasic||base.currentBasic||0)],
+    [en?'30 June 2026 basic':'৩০ জুন ২০২৬ মূল বেতন',amt(a.oldJuneBasic||base.currentBasic||0)],
+    [en?'1 July 2026 old-scale basic':'১ জুলাই ২০২৬ পুরোনো স্কেলের প্রাপ্য মূল বেতন',amt(a.oldJulyBasic||a.legacyBasic||0)],
+    [en?'Selected grade for special benefit':'বিশেষ সুবিধার জন্য নির্বাচিত গ্রেড',(en?'Grade ':'গ্রেড ')+numLang(a.selectedGrade||base.grade||0,lang,0)],
+    [en?'Special-benefit rate':'বিশেষ সুবিধার হার',numLang((a.specialBenefitRate||0)*100,lang,0)+'%'],
+    [en?'Monthly special benefit':'মাসিক বিশেষ সুবিধা',amt(a.specialBenefitMonthly||0)],
+    [en?'July–September special benefit (3 months)':'জুলাই–সেপ্টেম্বর বিশেষ সুবিধা (৩ মাস)',amt(a.specialBenefitThreeMonths||0)],
     [en?'October 2026 payable basic':'অক্টোবর ২০২৬ প্রাপ্য মূল বেতন',amt(a.octoberBasic||0)],
     [en?'Monthly implemented basic increase':'মাসিক বাস্তবায়িত মূল বেতন বৃদ্ধি',amt(a.monthlyBasicArrear||0)],
     [en?'July–September previous arrear (3 months)':'জুলাই–সেপ্টেম্বর পূর্বের বকেয়া (৩ মাস)',amt(a.priorThreeBasicArrear||0)],
     [en?'October increase (current month)':'অক্টোবর মাসের বৃদ্ধি',amt(a.monthlyBasicArrear||0)],
     [en?'Total July–October basic adjustment':'জুলাই–অক্টোবর মোট মূল বেতন সমন্বয়',amt(a.totalBasicArrear||0)],
-    [en?'Already paid special benefit to adjust':'ইতোমধ্যে পাওয়া সমন্বয়যোগ্য বিশেষ সুবিধা',amt(a.specialBenefitPaid||0)],
-    [en?'Previous arrear payable with October bill':'অক্টোবর বিলের সাথে পূর্বের বকেয়া',amt(a.priorArrearAfterAdjustment||0)],
+    [en?'July–September net arrear before special-benefit adjustment':'বিশেষ সুবিধা সমন্বয়ের আগে জুলাই–সেপ্টেম্বর নিট বকেয়া',amt(a.priorThreeNetArrear||0)],
+    [en?'Special benefit deducted automatically':'অটো বিয়োগকৃত বিশেষ সুবিধা',amt(a.specialBenefitThreeMonths||0)],
+    [en?'Previous arrear payable with October bill':'অক্টোবর বিলের সাথে চূড়ান্ত পূর্বের বকেয়া',amt(a.priorNetAfterSpecial||0)],
     [en?'October current estimated net':'অক্টোবর চলতি আনুমানিক নিট',amt(a.octoberCurrentNet||0)],
     [en?'Estimated total receivable in October':'অক্টোবরে আনুমানিক মোট প্রাপ্য',amt(a.octoberBillNet||0)]
   ];
@@ -457,7 +463,7 @@ function salaryOctoberArrearReportHtml(base,lang='bn'){
     rows.map(([l,v])=>kv(l,v)).join('')
   )+`<div style="margin-top:12px;padding:10px 12px;border-left:4px solid #1a7a50;background:#f1fbf6;border-radius:8px;font-size:10.2px">
     <b>${en?'How the October bill is treated:':'অক্টোবর বিল যেভাবে ধরা হয়েছে:'}</b>
-    ${en?'October current salary is calculated at the applicable 2026 rate. Only the previous three months (July–September) are added on top as arrear, so October is not counted twice.':'অক্টোবরের চলতি বেতন ২০২৬-এর প্রযোজ্য হারে ধরা হয়েছে। এর সাথে শুধু আগের ৩ মাসের (জুলাই–সেপ্টেম্বর) বকেয়া যোগ হয়েছে—তাই অক্টোবরের অংশ দুইবার গণনা করা হয়নি।'}
+    ${en?'October current salary is calculated at the applicable 2026 rate. July–September arrears are calculated against the old-scale July payroll, the special benefit already received for those three months is deducted automatically, and October is not counted twice.':'অক্টোবরের চলতি বেতন ২০২৬-এর প্রযোজ্য হারে ধরা হয়েছে। জুলাই–সেপ্টেম্বরের বকেয়া ১ জুলাইয়ের পুরোনো স্কেলের প্রাপ্য বেতনের বিপরীতে হিসাব করে ওই ৩ মাসে পাওয়া বিশেষ সুবিধা স্বয়ংক্রিয়ভাবে বাদ দেওয়া হয়েছে; অক্টোবর দুইবার গণনা করা হয়নি।'}
   </div>
   <div style="margin-top:8px;padding:9px 12px;background:#fff8e8;border-radius:8px;font-size:9.6px;color:#6b5728">
     ${en?'Net amount is an estimate based on the deduction inputs in this calculator. Tax, loan, special-benefit adjustment or payroll-specific deductions may change the final office bill.':'নিট অংকটি এই ক্যালকুলেটরে দেওয়া কর্তনের তথ্য অনুযায়ী আনুমানিক। আয়কর, ঋণ, বিশেষ সুবিধা সমন্বয় বা অফিসভিত্তিক অন্য কর্তনের কারণে চূড়ান্ত বিল ভিন্ন হতে পারে।'}
@@ -1678,7 +1684,7 @@ function SalaryCalculator({lang='bn',publicMode=false}){
     grade:'13',currentStage:'0',date:today,housing:'no',children:'0',tiffin:'yes',zone:'dhaka',
     ageBand:'under50',incrementEligible2026:'yes',mobile:'yes',laundry:'no',
     disabledChildren:'0',areaType:'none',trainingInstructor:'no',chargeAllowance:'no',
-    entertainmentTier:'none',otherSpecialAllowance:'0',specialBenefitPaid:'0',
+    entertainmentTier:'none',otherSpecialAllowance:'0',
     deductionMode:'du_auto',category:'class3',gpfRate:'10',benevolent:'0',
     health:'149.34',group:'192.50',stamp:'10',association:'10',tax:'0',loan:'0',other:'0'
   });
@@ -1687,9 +1693,11 @@ function SalaryCalculator({lang='bn',publicMode=false}){
   const currentIndex=Math.min(Math.max(0,Number(f.currentStage||0)),Math.max(0,stages.length-1));
   function calc(){
     const grade=Number(f.grade),currentBasic=stages[currentIndex]||0,input={...f};
-    const make=(date,label)=>{
+    const make=(date,label,opts={})=>{
+      const baseBasic=Number(opts.currentBasic??currentBasic);
+      const eligible=opts.incrementEligible??(f.incrementEligible2026==='yes');
       const snap=salary2026Snapshot({
-        grade,currentBasic,date,incrementEligible2026:f.incrementEligible2026==='yes',
+        grade,currentBasic:baseBasic,date,incrementEligible2026:eligible,
         housing:f.housing,zone:f.zone,ageBand:f.ageBand,children:f.children,tiffin:f.tiffin==='yes',
         conveyance:true,mobile:f.mobile==='yes',laundry:f.laundry==='yes',disabledChildren:f.disabledChildren,
         areaType:f.areaType,trainingInstructor:f.trainingInstructor==='yes',chargeAllowance:f.chargeAllowance==='yes',
@@ -1715,29 +1723,37 @@ function SalaryCalculator({lang='bn',publicMode=false}){
       make('2027-07-01',en?'2027 · 1 July':'২০২৭ · ১ জুলাই'),
       make('2028-01-01',en?'2028 · 1 January':'২০২৮ · ১ জানুয়ারি')
     ];
-    const legacyJune=make('2026-06-30',en?'Legacy June 2026':'জুন ২০২৬ পুরোনো হার');
+    const julyIncrementEligible=f.incrementEligible2026==='yes';
+    const oldJulyBasic=incremented2015Basic(grade,currentBasic,julyIncrementEligible?1:0);
+    const legacyJuly=make('2026-06-30',en?'Legacy July 2026 payroll':'জুলাই ২০২৬ পুরোনো পে-রোল',{currentBasic:oldJulyBasic,incrementEligible:false});
     const october=make('2026-10-01',en?'October 2026':'অক্টোবর ২০২৬');
-    const monthlyBasicArrear=Math.max(0,Number(october.payableBasic||0)-Number(legacyJune.payableBasic||0));
-    const monthlyGrossArrear=Math.max(0,Number(october.gross||0)-Number(legacyJune.gross||0));
-    const monthlyDeductionIncrease=Number(october.deductions||0)-Number(legacyJune.deductions||0);
-    const monthlyNetArrear=Number(october.net||0)-Number(legacyJune.net||0);
-    const specialBenefitPaid=Math.max(0,Number(f.specialBenefitPaid||0));
+    const special=specialBenefit2025(grade,oldJulyBasic);
+    const monthlyBasicArrear=Math.max(0,Number(october.payableBasic||0)-Number(legacyJuly.payableBasic||0));
+    const monthlyGrossArrear=Math.max(0,Number(october.gross||0)-Number(legacyJuly.gross||0));
+    const monthlyDeductionIncrease=Number(october.deductions||0)-Number(legacyJuly.deductions||0);
+    const monthlyNetArrear=Number(october.net||0)-Number(legacyJuly.net||0);
+    const specialBenefitMonthly=special.monthly;
+    const specialBenefitThreeMonths=specialBenefitMonthly*3;
     const priorThreeBasicArrear=monthlyBasicArrear*3;
     const priorThreeGrossArrear=monthlyGrossArrear*3;
     const priorThreeDeductionIncrease=monthlyDeductionIncrease*3;
     const priorThreeNetArrear=monthlyNetArrear*3;
-    const priorArrearAfterAdjustment=Math.max(0,priorThreeNetArrear-specialBenefitPaid);
+    const priorGrossAfterSpecial=Math.max(0,priorThreeGrossArrear-specialBenefitThreeMonths);
+    const priorNetAfterSpecial=Math.max(0,priorThreeNetArrear-specialBenefitThreeMonths);
     const arrear2026={
       startDate:'2026-07-01',endDate:'2026-10-31',months:4,previousMonths:3,
-      legacyBasic:legacyJune.payableBasic,legacyGross:legacyJune.gross,legacyNet:legacyJune.net,
+      selectedGrade:grade,specialBenefitRate:special.rate,specialBenefitMinimum:special.minimum,
+      oldJuneBasic:currentBasic,oldJulyBasic,
+      legacyBasic:legacyJuly.payableBasic,legacyGross:legacyJuly.gross,legacyNet:legacyJuly.net,
       octoberBasic:october.payableBasic,octoberGross:october.gross,octoberCurrentNet:october.net,
       monthlyBasicArrear,monthlyGrossArrear,monthlyDeductionIncrease,monthlyNetArrear,
+      specialBenefitMonthly,specialBenefitThreeMonths,
       priorThreeBasicArrear,priorThreeGrossArrear,priorThreeDeductionIncrease,priorThreeNetArrear,
+      priorGrossAfterSpecial,priorNetAfterSpecial,
       totalBasicArrear:monthlyBasicArrear*4,totalGrossArrear:monthlyGrossArrear*4,
       totalDeductionIncrease:monthlyDeductionIncrease*4,totalNetAdjustment:monthlyNetArrear*4,
-      specialBenefitPaid,priorArrearAfterAdjustment,
-      octoberBillGross:october.gross+priorThreeGrossArrear,
-      octoberBillNet:october.net+priorArrearAfterAdjustment
+      octoberBillGross:october.gross+priorGrossAfterSpecial,
+      octoberBillNet:october.net+priorNetAfterSpecial
     };
     const house=chosen.allowances.house,medical=chosen.allowances.medical,education=chosen.allowances.education,
       tiffin=chosen.allowances.tiffin,conveyance=chosen.allowances.conveyance,mobile=chosen.allowances.mobile,
@@ -1767,7 +1783,7 @@ function SalaryCalculator({lang='bn',publicMode=false}){
   return <div className={publicMode?'public-salary-calculator':''}>
     <div className="page-head pay-calc-head"><div><h2>{en?'Salary & Pay Scale 2026 Calculator':'বেতন ও পে-স্কেল ২০২৬ হিসাব'}</h2><p>{en?'Uses the official 17 September 2026 gazette. Select the 2015 pay stage held on 30 June 2026 and the date you want to calculate.':'১৭ সেপ্টেম্বর ২০২৬-এর সরকারি গেজেট অনুযায়ী হিসাব। ৩০ জুন ২০২৬-এ প্রাপ্য ২০১৫ বেতন ধাপ এবং যে তারিখের হিসাব চান তা নির্বাচন করুন।'}</p></div></div>
     <section className="calc-card"><div className="form-grid">
-      <label>{en?'Grade':'গ্রেড'}<select value={f.grade} onChange={e=>setF({...f,grade:e.target.value})}>{Array.from({length:20},(_,i)=>i+1).map(g=><option key={g} value={g}>{en?`Grade ${g}`:`গ্রেড ${numLang(g,'bn',0)}`}</option>)}</select></label>
+      <label>{en?'Substantive / selected grade':'মূল/নির্বাচিত গ্রেড'}<select value={f.grade} onChange={e=>setF({...f,grade:e.target.value})}>{Array.from({length:20},(_,i)=>i+1).map(g=><option key={g} value={g}>{en?`Grade ${g}`:`গ্রেড ${numLang(g,'bn',0)}`}</option>)}</select></label>
       <label>{en?'2015 basic on 30 June 2026':'৩০ জুন ২০২৬-এর ২০১৫ মূল বেতন'}<select value={f.currentStage} onChange={e=>setF({...f,currentStage:e.target.value})}>{stages.map((v,i)=><option value={i} key={i}>{en?`Stage ${i+1} — Tk ${moneyLang(v,'en')}`:`ধাপ ${numLang(i+1,'bn',0)} — ৳${moneyLang(v,'bn')}`}</option>)}</select></label>
       <label>{en?'Calculation date':'হিসাবের তারিখ'}<input type="date" min="2026-07-01" value={f.date} onChange={e=>setF({...f,date:e.target.value})}/></label>
       <label>{en?'1 July 2026 annual increment eligibility':'১ জুলাই ২০২৬ বার্ষিক ইনক্রিমেন্ট'}<select value={f.incrementEligible2026} onChange={e=>setF({...f,incrementEligible2026:e.target.value})}><option value="yes">{en?'Eligible (6+ months service)':'প্রাপ্য (কমপক্ষে ৬ মাস চাকরি)'}</option><option value="no">{en?'Not eligible':'প্রাপ্য নয়'}</option></select></label>
@@ -1805,15 +1821,7 @@ function SalaryCalculator({lang='bn',publicMode=false}){
         {(en?[['tax','Income tax'],['loan','Loan/advance installment'],['other','Other deduction']]:[['tax','আয়কর'],['loan','ঋণ/অগ্রিম কিস্তি'],['other','অন্যান্য কর্তন']]).map(([k,l])=><label key={k}>{l}<input type="number" min="0" step="0.01" value={f[k]} onChange={e=>setF({...f,[k]:e.target.value})}/></label>)}
       </div>
     </details>
-    <details className="deduction-box arrear-adjustment-options">
-      <summary>{en?'October 2026 arrear adjustment (optional)':'অক্টোবর ২০২৬ বকেয়া সমন্বয় (ঐচ্ছিক)'}</summary>
-      <div className="form-grid compact">
-        <label>{en?'Special benefit already paid during July–September 2026 (total)':'জুলাই–সেপ্টেম্বর ২০২৬-এ ইতোমধ্যে পাওয়া সমন্বয়যোগ্য বিশেষ সুবিধা (মোট)'}
-          <input type="number" min="0" step="1" value={f.specialBenefitPaid} onChange={e=>setF({...f,specialBenefitPaid:e.target.value})}/>
-        </label>
-      </div>
-      <div className="notice">{en?'Leave this as 0 if no such adjustable special benefit was paid.':'এ ধরনের সমন্বয়যোগ্য বিশেষ সুবিধা না পেয়ে থাকলে ০ রাখুন।'}</div>
-    </details>
+    <div className="notice auto-special-benefit-note"><b>{en?'Special benefit adjustment:':'বিশেষ সুবিধা সমন্বয়:'}</b> {en?'No manual amount is required. It will be calculated automatically from the selected grade and the 1 July 2026 old-scale basic, including the annual increment if eligible.':'কোনো অংক লিখতে হবে না। নির্বাচিত গ্রেড এবং ১ জুলাই ২০২৬-এর পুরোনো স্কেলের প্রাপ্য মূল বেতন (ইনক্রিমেন্ট প্রাপ্য হলে ইনক্রিমেন্টসহ) থেকে বিশেষ সুবিধা অটো হিসাব হবে।'}</div>
     <button className="primary wide" onClick={calc}>{en?'Submit':'সাবমিট করুন'}</button></section>
     {r&&<div id="salary-result" className="salary-result-anchor"><SalaryResult r={r} lang={lang}/></div>}
   </div>
@@ -1918,16 +1926,25 @@ function SalaryResult({r,lang='bn'}){
 
       <div className="arrear-kpi-grid">
         <article><small>{en?'Monthly basic increase':'মাসিক মূল বেতন বৃদ্ধি'}</small><b>{amt(arrear.monthlyBasicArrear||0)}</b><span>{en?'Applicable Jul–Oct 2026':'জুলাই–অক্টোবর ২০২৬'}</span></article>
-        <article><small>{en?'July–September arrear':'জুলাই–সেপ্টেম্বর বকেয়া'}</small><b>{amt(arrear.priorThreeBasicArrear||0)}</b><span>{en?'3 previous months':'আগের ৩ মাস'}</span></article>
+        <article><small>{en?'Final July–September arrear':'চূড়ান্ত জুলাই–সেপ্টেম্বর বকেয়া'}</small><b>{amt(arrear.priorNetAfterSpecial||0)}</b><span>{en?'After special-benefit adjustment':'বিশেষ সুবিধা বিয়োগের পর'}</span></article>
         <article><small>{en?'July–October total adjustment':'জুলাই–অক্টোবর মোট সমন্বয়'}</small><b>{amt(arrear.totalBasicArrear||0)}</b><span>{en?'4 months including October':'অক্টোবরসহ ৪ মাস'}</span></article>
         <article className="highlight"><small>{en?'Estimated total receivable in October':'অক্টোবরে আনুমানিক মোট প্রাপ্য'}</small><b>{amt(arrear.octoberBillNet||0)}</b><span>{en?'October current net + previous arrear':'অক্টোবর চলতি নিট + পূর্বের বকেয়া'}</span></article>
+      </div>
+
+      <div className="auto-special-benefit-summary">
+        <div><small>{en?'Selected grade':'নির্বাচিত গ্রেড'}</small><b>{en?'Grade ':'গ্রেড '}{numLang(arrear.selectedGrade||r.grade||0,lang,0)}</b></div>
+        <div><small>{en?'1 July old-scale basic':'১ জুলাই পুরোনো স্কেলের মূল বেতন'}</small><b>{amt(arrear.oldJulyBasic||0)}</b></div>
+        <div><small>{en?'Special-benefit rate':'বিশেষ সুবিধার হার'}</small><b>{numLang((arrear.specialBenefitRate||0)*100,lang,0)}%</b></div>
+        <div><small>{en?'Monthly special benefit':'মাসিক বিশেষ সুবিধা'}</small><b>{amt(arrear.specialBenefitMonthly||0)}</b></div>
+        <div className="total"><small>{en?'July–September total':'জুলাই–সেপ্টেম্বর মোট'}</small><b>{amt(arrear.specialBenefitThreeMonths||0)}</b></div>
       </div>
 
       <div className="arrear-flow">
         <div><small>{en?'October current estimated net':'অক্টোবর চলতি আনুমানিক নিট'}</small><b>{amt(arrear.octoberCurrentNet||0)}</b></div>
         <i>+</i>
-        <div><small>{en?'July–September estimated net arrear':'জুলাই–সেপ্টেম্বর আনুমানিক নিট বকেয়া'}</small><b>{amt(arrear.priorThreeNetArrear||0)}</b></div>
-        {(arrear.specialBenefitPaid||0)>0&&<><i>−</i><div><small>{en?'Special benefit adjustment':'বিশেষ সুবিধা সমন্বয়'}</small><b>{amt(arrear.specialBenefitPaid||0)}</b></div></>}
+        <div><small>{en?'July–September net arrear before adjustment':'সমন্বয়ের আগে জুলাই–সেপ্টেম্বর নিট বকেয়া'}</small><b>{amt(arrear.priorThreeNetArrear||0)}</b></div>
+        <i>−</i>
+        <div><small>{en?'Special benefit (3 months)':'বিশেষ সুবিধা (৩ মাস)'}</small><b>{amt(arrear.specialBenefitThreeMonths||0)}</b></div>
         <i>=</i>
         <div className="total"><small>{en?'October total':'অক্টোবর মোট'}</small><b>{amt(arrear.octoberBillNet||0)}</b></div>
       </div>
