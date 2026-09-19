@@ -1513,65 +1513,110 @@ function SalaryCalculator({lang='bn',publicMode=false}){
   </div>
 }
 function SalaryResult({r,lang='bn'}){
-  const en=lang==='en',[pdfPreview,setPdfPreview]=useState(null),[pdfBusy,setPdfBusy]=useState('');
+  const en=lang==='en',[activeYear,setActiveYear]=useState(2026),[pdfBusy,setPdfBusy]=useState('');
+  useEffect(()=>setActiveYear(2026),[r]);
   const amt=v=>`${en?'Tk':'৳'} ${moneyLang(v,lang)}`;
   const stamp=Date.now();
+  const projections=r.projections||[];
+  const yearStages=projections.filter(p=>String(p.date||'').startsWith(String(activeYear)));
+  const current=yearStages[yearStages.length-1]||projections[0]||r;
+  const ca=current.allowances||{};
+  const auto=(current.deductionMode??r.deductionMode)!=='custom';
+  const gpfRate=current.gpfRate??r.gpfRate??0;
+  const beneRate=current.beneRate??r.beneRate??0;
+  const allowances=en?[
+    ['House rent',ca.house??0],['Medical allowance',ca.medical??0],['Education allowance',ca.education??0],['Tiffin allowance',ca.tiffin??0],
+    ['Conveyance allowance',ca.conveyance??0],['Mobile allowance',ca.mobile??0],['Laundry allowance',ca.laundry??0],
+    ['Special-needs child allowance',ca.disabledChild??0],['Special area allowance',ca.area??0],['Training allowance',ca.training??0],
+    ['Charge allowance',ca.charge??0],['Entertainment allowance',ca.entertainment??0],['Other verified special allowance',ca.otherSpecial??0]
+  ]:[
+    ['বাড়িভাড়া',ca.house??0],['চিকিৎসা ভাতা',ca.medical??0],['শিক্ষা সহায়ক ভাতা',ca.education??0],['টিফিন ভাতা',ca.tiffin??0],
+    ['যাতায়াত ভাতা',ca.conveyance??0],['মোবাইল ভাতা',ca.mobile??0],['ধোলাই ভাতা',ca.laundry??0],
+    ['বিশেষ চাহিদাসম্পন্ন সন্তান ভাতা',ca.disabledChild??0],['বিশেষ এলাকা ভাতা',ca.area??0],['প্রশিক্ষণ ভাতা',ca.training??0],
+    ['কার্যভার ভাতা',ca.charge??0],['আপ্যায়ন ভাতা',ca.entertainment??0],['অন্যান্য যাচাইকৃত বিশেষ ভাতা',ca.otherSpecial??0]
+  ];
+  const deds=en?[
+    [`Provident Fund ${numLang(gpfRate,'en',0)}%`,current.pf??0],
+    [`Benevolent Fund ${auto?numLang(beneRate*100,'en',2)+'%':''}`,current.bene??0],
+    [`Health insurance${auto?' (auto)':''}`,current.health??0],
+    [`Group insurance${auto?' (auto)':''}`,current.group??0],
+    ['Revenue stamp',current.stamp??0],['Association',current.association??0],['Income tax',current.tax??0],['Loan/advance',current.loan??0],['Other',current.other??0]
+  ]:[
+    [`ভবিষ্য তহবিল (PF) ${numLang(gpfRate,'bn',0)}%`,current.pf??0],
+    [`কল্যাণ তহবিল ${auto?numLang(beneRate*100,'bn',2)+'%':''}`,current.bene??0],
+    [`স্বাস্থ্য বীমা${auto?' (অটো)':''}`,current.health??0],
+    [`গ্রুপ বীমা${auto?' (অটো)':''}`,current.group??0],
+    ['রাজস্ব স্ট্যাম্প',current.stamp??0],['সমিতি',current.association??0],['আয়কর',current.tax??0],['ঋণ/অগ্রিম',current.loan??0],['অন্যান্য',current.other??0]
+  ];
   const yearReports=[2026,2027,2028].map(year=>({
     year,html:salaryYearReportHtml(r,year,lang,{pageNo:1,totalPages:1}),filename:`pay-scale-${year}-${stamp}.pdf`
   }));
-  const combinedReport={year:'all',html:salaryCombinedReportHtml(r,lang),filename:`pay-scale-2026-2028-three-page-${stamp}.pdf`};
+  const combinedReport={html:salaryCombinedReportHtml(r,lang),filename:`pay-scale-2026-2028-three-page-${stamp}.pdf`};
   async function directPdf(item,key){
     try{setPdfBusy(key);await downloadA4Html(item.html,item.filename)}
     catch(e){alert((en?'PDF could not be created: ':'PDF তৈরি করা যায়নি: ')+e.message)}
     finally{setPdfBusy('')}
   }
-  const allowances=en?[
-    ['House rent',r.house],['Medical allowance',r.medical],['Education allowance',r.education],['Tiffin allowance',r.tiffin],
-    ['Conveyance allowance',r.conveyance],['Mobile allowance',r.mobile],['Laundry allowance',r.laundry],
-    ['Special-needs child allowance',r.disabledChild],['Special area allowance',r.area],['Training allowance',r.training],
-    ['Charge allowance',r.charge],['Entertainment allowance',r.entertainment],['Other verified special allowance',r.otherSpecial]
-  ]:[
-    ['বাড়িভাড়া',r.house],['চিকিৎসা ভাতা',r.medical],['শিক্ষা সহায়ক ভাতা',r.education],['টিফিন ভাতা',r.tiffin],
-    ['যাতায়াত ভাতা',r.conveyance],['মোবাইল ভাতা',r.mobile],['ধোলাই ভাতা',r.laundry],
-    ['বিশেষ চাহিদাসম্পন্ন সন্তান ভাতা',r.disabledChild],['বিশেষ এলাকা ভাতা',r.area],['প্রশিক্ষণ ভাতা',r.training],
-    ['কার্যভার ভাতা',r.charge],['আপ্যায়ন ভাতা',r.entertainment],['অন্যান্য যাচাইকৃত বিশেষ ভাতা',r.otherSpecial]
-  ];
-  const auto=r.deductionMode!=='custom';
-  const deds=en?[[`Provident Fund ${numLang(r.gpfRate||0,'en',0)}%`,r.pf],[`Benevolent Fund ${auto?numLang((r.beneRate||0)*100,'en',2)+'%':''}`,r.bene],[`Health insurance${auto?' (auto)':''}`,r.health],[`Group insurance${auto?' (auto)':''}`,r.group],['Revenue stamp',r.stamp],['Association',r.association],['Income tax',r.tax],['Loan/advance',r.loan],['Other',r.other]]:[[`ভবিষ্য তহবিল (PF) ${numLang(r.gpfRate||0,'bn',0)}%`,r.pf],[`কল্যাণ তহবিল ${auto?numLang((r.beneRate||0)*100,'bn',2)+'%':''}`,r.bene],[`স্বাস্থ্য বীমা${auto?' (অটো)':''}`,r.health],[`গ্রুপ বীমা${auto?' (অটো)':''}`,r.group],['রাজস্ব স্ট্যাম্প',r.stamp],['সমিতি',r.association],['আয়কর',r.tax],['ঋণ/অগ্রিম',r.loan],['অন্যান্য',r.other]];
-  return <div className="result-stack">
-    <section className="result-panel ok"><small>{en?'Payable basic on selected date':'নির্বাচিত তারিখে প্রাপ্য মূল বেতন'}</small><h3>{amt(r.payableBasic)}</h3><p>{en?`2015 basic ${amt(r.currentBasic)} · 2026 fixation ${amt(r.fixed)} · after first eligible increment ${amt(r.fixedWithFirstIncrement??r.fixed)}`:`২০১৫ মূল বেতন ${amt(r.currentBasic)} · ২০২৬-এ নির্ধারিত মূল বেতন ${amt(r.fixed)} · প্রাপ্য প্রথম ইনক্রিমেন্টসহ ${amt(r.fixedWithFirstIncrement??r.fixed)}`}</p><div className="pay-phase-chip">{r.phase.label}</div></section>
-    <section className="salary-summary">
-      <article><small>{en?'Difference incl. eligible first increment':'প্রাপ্য প্রথম ইনক্রিমেন্টসহ পার্থক্য'}</small><b>{amt(r.difference)}</b></article>
-      <article><small>{en?'Implemented difference':'বাস্তবায়িত পার্থক্য'}</small><b>{amt(r.implementedDifference)}</b></article>
-      <article><small>{en?'Annual increments included':'অন্তর্ভুক্ত বার্ষিক ইনক্রিমেন্ট'}</small><b>{numLang(r.dueIncrementCount,lang,0)}</b></article>
-      <article><small>{en?'Total monthly allowances':'মাসিক মোট ভাতা'}</small><b>{amt(r.totalAllowances)}</b></article>
-      <article><small>{en?'Gross monthly salary':'মোট মাসিক প্রাপ্য'}</small><b>{amt(r.gross)}</b></article>
-      <article><small>{en?'Total deductions':'মোট কর্তন'}</small><b>{amt(r.deductions)}</b></article>
-      <article className="net"><small>{en?'Estimated net payable':'আনুমানিক নিট প্রাপ্য'}</small><b>{amt(r.net)}</b></article>
+  return <div className="result-stack year-tab-result">
+    <section className="result-year-tabs" aria-label={en?'Salary year':'বেতনের বছর'}>
+      {[2026,2027,2028].map(year=><button key={year} className={activeYear===year?'active':''} onClick={()=>setActiveYear(year)}>
+        <span>{numLang(year,lang,0)}</span>
+        <small>{year===2026?(en?'Shown first':'প্রথমে দেখাবে'):year===2027?(en?'Click to view':'ক্লিক করে দেখুন'):(en?'Click to view':'ক্লিক করে দেখুন')}</small>
+      </button>)}
     </section>
-    <section className="pay-year-projection">
-      <div className="pay-year-projection-head"><div><span>{en?'2026 → 2028':'২০২৬ → ২০২৮'}</span><h3>{en?'How much will you receive at each implementation stage?':'প্রতিটি বাস্তবায়ন ধাপে কত পাবেন?'}</h3></div><small>{en?'Same grade, 30 Jun 2026 basic and selected eligibility/options':'একই গ্রেড, ৩০ জুন ২০২৬-এর মূল বেতন ও নির্বাচিত শর্ত ধরে'}</small></div>
-      <div className="pay-year-grid">{(r.projections||[]).map((p,i)=><article key={p.date} className={i===3?'future':''}><small>{p.label}</small><b>{amt(p.payableBasic)}</b><span>{en?'Payable basic':'প্রাপ্য মূল বেতন'}</span><div><em>{en?'Allowances':'ভাতা'}</em><strong>{amt(p.totalAllowances)}</strong></div><div><em>{en?'Gross':'মোট'}</em><strong>{amt(p.gross)}</strong></div><div><em>{en?'Est. net':'আনু. নিট'}</em><strong>{amt(p.net)}</strong></div></article>)}</div>
-    </section>
-    <div className="split-grid"><section className="breakdown-card"><h3>{en?'Monthly allowances':'মাসিক ভাতা'}</h3>{allowances.filter(([,v])=>Number(v)>0).map(([l,v])=><div className="money-row" key={l}><span>{l}</span><b>{amt(v)}</b></div>)}{r.allowance2026&&r.houseRate>0&&<div className="money-row source-row"><span>{en?'House-rent rate':'বাড়িভাড়া হার'}</span><b>{numLang(r.houseRate,lang,0)}%</b></div>}{r.allowance2026&&<div className="money-row annual-row"><span>{en?'Bangla New Year allowance (annual)':'বাংলা নববর্ষ ভাতা (বার্ষিক)'}</span><b>{amt(r.banglaNewYear)}</b></div>}</section>
-      <section className="breakdown-card"><h3>{en?'Deductions':'কর্তনসমূহ'}</h3>{deds.map(([l,v])=><div className="money-row" key={l}><span>{l}</span><b>{amt(v)}</b></div>)}</section></div>
-    <div className="notice official-pay-note"><b>{en?'Official rule status:':'সরকারি নিয়ম:'}</b> {r.allowance2026?(en?'The new allowance rates are applied because the selected date is on/after 1 January 2028.':'নির্বাচিত তারিখ ১ জানুয়ারি ২০২৮ বা পরের হওয়ায় নতুন ভাতার হার প্রয়োগ হয়েছে।'):(en?'Until 31 December 2027 the pre-existing allowance amounts/rates remain in force; new 2028 allowances are not applied.':'৩১ ডিসেম্বর ২০২৭ পর্যন্ত আগের ভাতার অংক/হার বহাল; ২০২৮-এর নতুন ভাতা এখনো প্রয়োগ হয়নি।')}</div>
-    <div className="notice"><b>{en?'Deduction note:':'কর্তন নোট:'}</b> {r.deductionMode!=='custom'?(en?'DU Auto is active: PF 10% and Benevolent Fund are calculated automatically under the DU statutes. Health/group insurance, stamp and association use the previous platform payroll defaults; tax, loan and other items remain employee-specific.':'DU Auto সক্রিয়: DU Statute অনুযায়ী PF ১০% এবং কল্যাণ তহবিল স্বয়ংক্রিয়ভাবে হিসাব হয়। স্বাস্থ্য/গ্রুপ বীমা, স্ট্যাম্প ও সমিতিতে আগের প্ল্যাটফর্মের পে-রোল ডিফল্ট ব্যবহৃত হয়; আয়কর, ঋণ ও অন্যান্য কর্তন ব্যক্তিভেদে থাকে।'):(en?'Custom deduction mode is active; verify all entered amounts against the actual payroll.':'কাস্টম কর্তন মোড সক্রিয়; দেওয়া সব অংক প্রকৃত পে-রোলের সঙ্গে মিলিয়ে দেখুন।')}</div>
-    <section className="three-year-pdf-section premium-pdf-center">
-      <div className="three-year-pdf-head"><div><span>PDF CENTER</span><h3>{en?'Salary reports for 2026, 2027 and 2028':'২০২৬, ২০২৭ ও ২০২৮ সালের বেতন রিপোর্ট'}</h3><p>{en?'Preview or download each year separately, or download one complete 3-page A4 PDF.':'প্রতিটি বছর আলাদা Preview/Download করুন, অথবা একবারে একটি পূর্ণ ৩-পৃষ্ঠার A4 PDF নিন।'}</p></div><small>{en?'2027 includes both 1 January and 1 July stages. 2028 includes the new allowance structure.':'২০২৭-এ ১ জানুয়ারি ও ১ জুলাই—দুই ধাপ; ২০২৮-এ নতুন ভাতা কাঠামো থাকবে।'}</small></div>
-      <div className="three-year-pdf-grid">
-        {yearReports.map(x=><article key={x.year} className="year-pdf-card">
-          <span><FileText/></span>
-          <div className="year-pdf-copy"><b>{numLang(x.year,lang,0)} PDF</b><small>{x.year===2026?(en?'1 July 2026 implementation':'১ জুলাই ২০২৬ বাস্তবায়ন'):x.year===2027?(en?'1 Jan + 1 Jul 2027':'১ জানুয়ারি + ১ জুলাই ২০২৭'):(en?'1 Jan 2028 + new allowances':'১ জানুয়ারি ২০২৮ + নতুন ভাতা')}</small></div>
-          <div className="year-pdf-actions"><button onClick={()=>setPdfPreview(x)}><Eye size={15}/>{en?'Preview':'প্রিভিউ'}</button><button className="download" disabled={!!pdfBusy} onClick={()=>directPdf(x,String(x.year))}><Save size={15}/>{pdfBusy===String(x.year)?(en?'Creating...':'তৈরি হচ্ছে'):(en?'Download':'ডাউনলোড')}</button></div>
+
+    <section className="selected-year-panel">
+      <div className="selected-year-head">
+        <div><span>{numLang(activeYear,lang,0)}</span><h3>{en?`${activeYear} salary calculation`:`${numLang(activeYear,lang,0)} সালের বেতন হিসাব`}</h3></div>
+        <small>{activeYear===2027?(en?'Both January and July stages are ready below.':'জানুয়ারি ও জুলাই—দুই ধাপই নিচে প্রস্তুত আছে।'):activeYear===2028?(en?'Includes the new allowance structure from January 2028.':'জানুয়ারি ২০২৮ থেকে নতুন ভাতা কাঠামোসহ।'):(en?'First implementation stage from July 2026.':'জুলাই ২০২৬-এর প্রথম বাস্তবায়ন ধাপ।')}</small>
+      </div>
+      <div className={`selected-year-stages stages-${yearStages.length||1}`}>
+        {yearStages.map((p,i)=><article key={p.date} className={i===yearStages.length-1?'current':''}>
+          <small>{p.label}</small>
+          <b>{amt(p.payableBasic)}</b>
+          <span>{en?'Payable basic':'প্রাপ্য মূল বেতন'}</span>
+          <div><em>{en?'Allowances':'ভাতা'}</em><strong>{amt(p.totalAllowances)}</strong></div>
+          <div><em>{en?'Gross':'মোট'}</em><strong>{amt(p.gross)}</strong></div>
+          <div><em>{en?'Deductions':'কর্তন'}</em><strong>{amt(p.deductions)}</strong></div>
+          <div className="net"><em>{en?'Estimated net':'আনুমানিক নিট'}</em><strong>{amt(p.net)}</strong></div>
         </article>)}
       </div>
-      <div className="combined-pdf-card">
-        <div className="combined-pdf-icon"><FileText/></div><div className="combined-pdf-copy"><span>{en?'RECOMMENDED':'প্রস্তাবিত'}</span><h4>{en?'2026–2028 Complete 3-Page PDF':'২০২৬–২০২৮ সম্পূর্ণ ৩-পৃষ্ঠার PDF'}</h4><p>{en?'One PDF file: Page 1 = 2026, Page 2 = 2027, Page 3 = 2028. Each page has a premium header, footer, developer credit and page number.':'একটি PDF ফাইল: পৃষ্ঠা ১ = ২০২৬, পৃষ্ঠা ২ = ২০২৭, পৃষ্ঠা ৩ = ২০২৮। প্রতিটি পৃষ্ঠায় সুন্দর header, footer, developer credit ও page number থাকবে।'}</p></div>
-        <div className="combined-pdf-actions"><button className="preview" onClick={()=>setPdfPreview(combinedReport)}><Eye size={16}/>{en?'Preview 3 Pages':'৩ পৃষ্ঠা প্রিভিউ'}</button><button className="download" disabled={!!pdfBusy} onClick={()=>directPdf(combinedReport,'all')}><Save size={17}/>{pdfBusy==='all'?(en?'Creating 3-page PDF...':'৩-পৃষ্ঠার PDF তৈরি হচ্ছে...'):(en?'Download 3-Page PDF':'৩-পৃষ্ঠার PDF ডাউনলোড')}</button></div>
-      </div>
     </section>
-    {pdfPreview&&<PdfPreviewModal html={pdfPreview.html} filename={pdfPreview.filename} onClose={()=>setPdfPreview(null)} lang={lang}/>}
+
+    <section className="result-panel ok selected-year-main">
+      <small>{en?'Payable basic for the selected year':'নির্বাচিত বছরের প্রাপ্য মূল বেতন'}</small>
+      <h3>{amt(current.payableBasic??r.payableBasic)}</h3>
+      <p>{en?`2015 basic ${amt(r.currentBasic)} · 2026 fixation ${amt(r.fixed)} · first eligible increment ${amt(r.fixedWithFirstIncrement??r.fixed)}`:`২০১৫ মূল বেতন ${amt(r.currentBasic)} · ২০২৬ নির্ধারিত মূল বেতন ${amt(r.fixed)} · প্রাপ্য প্রথম ইনক্রিমেন্টসহ ${amt(r.fixedWithFirstIncrement??r.fixed)}`}</p>
+      <div className="pay-phase-chip">{current.phase?.label||r.phase?.label}</div>
+    </section>
+
+    <section className="salary-summary">
+      <article><small>{en?'Implemented difference':'বাস্তবায়িত পার্থক্য'}</small><b>{amt(current.implementedDifference??r.implementedDifference)}</b></article>
+      <article><small>{en?'Annual increments included':'অন্তর্ভুক্ত বার্ষিক ইনক্রিমেন্ট'}</small><b>{numLang(current.dueIncrementCount??0,lang,0)}</b></article>
+      <article><small>{en?'Total monthly allowances':'মাসিক মোট ভাতা'}</small><b>{amt(current.totalAllowances??0)}</b></article>
+      <article><small>{en?'Gross monthly salary':'মোট মাসিক প্রাপ্য'}</small><b>{amt(current.gross??0)}</b></article>
+      <article><small>{en?'Total deductions':'মোট কর্তন'}</small><b>{amt(current.deductions??0)}</b></article>
+      <article className="net"><small>{en?'Estimated net payable':'আনুমানিক নিট প্রাপ্য'}</small><b>{amt(current.net??0)}</b></article>
+    </section>
+
+    <div className="split-grid">
+      <section className="breakdown-card"><h3>{en?'Monthly allowances':'মাসিক ভাতা'}</h3>
+        {allowances.filter(([,v])=>Number(v)>0).map(([l,v])=><div className="money-row" key={l}><span>{l}</span><b>{amt(v)}</b></div>)}
+        {(current.allowance2026&&current.houseRate>0)&&<div className="money-row source-row"><span>{en?'House-rent rate':'বাড়িভাড়া হার'}</span><b>{numLang(current.houseRate,lang,0)}%</b></div>}
+        {current.allowance2026&&<div className="money-row annual-row"><span>{en?'Bangla New Year allowance (annual)':'বাংলা নববর্ষ ভাতা (বার্ষিক)'}</span><b>{amt(current.banglaNewYear??0)}</b></div>}
+      </section>
+      <section className="breakdown-card"><h3>{en?'Deductions':'কর্তনসমূহ'}</h3>{deds.map(([l,v])=><div className="money-row" key={l}><span>{l}</span><b>{amt(v)}</b></div>)}</section>
+    </div>
+
+    <div className="notice official-pay-note"><b>{en?'Year status:':'বছরের অবস্থা:'}</b> {activeYear===2028?(en?'New allowance rates are applied from 1 January 2028.':'১ জানুয়ারি ২০২৮ থেকে নতুন ভাতার হার প্রয়োগ হয়েছে।'):(en?'Pre-2028 allowance rules remain in force for this year.':'এই বছরে ২০২৮-এর আগের ভাতার নিয়ম/হার কার্যকর থাকবে।')}</div>
+
+    <section className="year-download-center">
+      <div className="year-download-head"><div><span>PDF</span><h3>{en?'Download the three yearly reports':'তিন বছরের PDF ডাউনলোড'}</h3></div><small>{en?'All reports are already prepared from the same submitted calculation.':'একই সাবমিট করা হিসাব থেকেই তিনটি রিপোর্ট প্রস্তুত আছে।'}</small></div>
+      <div className="year-download-grid">
+        {yearReports.map(x=><button key={x.year} disabled={!!pdfBusy} onClick={()=>directPdf(x,String(x.year))}><FileText/><span><b>{numLang(x.year,lang,0)} PDF</b><small>{en?'Download':'ডাউনলোড'}</small></span><Save size={17}/></button>)}
+      </div>
+      <button className="download-all-years" disabled={!!pdfBusy} onClick={()=>directPdf(combinedReport,'all')}><FileText size={19}/><span><b>{en?'2026–2028 together — 3-page PDF':'২০২৬–২০২৮ একসাথে — ৩-পৃষ্ঠার PDF'}</b><small>{en?'One file containing all three years':'একটি ফাইলে তিন বছরের সব হিসাব'}</small></span><Save size={19}/></button>
+    </section>
   </div>
 }
 
