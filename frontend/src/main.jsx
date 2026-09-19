@@ -280,21 +280,128 @@ async function nativeShareReport({html,filename,title,summary='',url='',lang='bn
   await navigator.share(data);
 }
 
-function PdfPreviewModal({html,filename,onClose,lang='bn'}){
-  const reportRef=useRef(null); const[busy,setBusy]=useState(false); const en=lang==='en';
-  async function download(){try{setBusy(true);await saveA4Pdf(reportRef.current,filename)}catch(e){alert((en?'PDF could not be created: ':'PDF তৈরি করা যায়নি: ')+e.message)}finally{setBusy(false)}}
-  useEffect(()=>{const onKey=e=>{if(e.key==='Escape')onClose?.()};document.addEventListener('keydown',onKey);const prev=document.body.style.overflow;document.body.style.overflow='hidden';return()=>{document.removeEventListener('keydown',onKey);document.body.style.overflow=prev}},[onClose]);
-  return <div style={{position:'fixed',inset:0,zIndex:99999,background:'rgba(7,12,28,.78)',backdropFilter:'blur(8px)',display:'flex',flexDirection:'column'}}>
-    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,padding:'12px 18px',background:'#101936',color:'#fff',boxShadow:'0 8px 28px rgba(0,0,0,.24)'}}>
-      <div><b style={{fontSize:16}}>{en?'A4 PDF Preview':'A4 PDF প্রিভিউ'}</b><div style={{fontSize:12,opacity:.78}}>{en?'Check the information first, then download the PDF.':'তথ্য যাচাই করে তারপর PDF ডাউনলোড করুন।'}</div></div>
-      <div style={{display:'flex',gap:10,flexWrap:'wrap',justifyContent:'flex-end'}}>
-        <button onClick={onClose} style={{border:'1px solid rgba(255,255,255,.28)',background:'transparent',color:'#fff',padding:'9px 14px',borderRadius:10,cursor:'pointer'}}>{en?'Close':'বন্ধ করুন'}</button>
-        <button onClick={download} disabled={busy} style={{border:0,background:'linear-gradient(135deg,#d7a84f,#f0c86e)',color:'#17120a',fontWeight:800,padding:'9px 15px',borderRadius:10,cursor:busy?'wait':'pointer',opacity:busy?.7:1}}>{busy?(en?'Creating PDF...':'PDF তৈরি হচ্ছে...'):(en?'Download PDF':'PDF ডাউনলোড')}</button>
-      </div>
-    </div>
-    <div style={{flex:1,overflow:'auto',padding:'24px 12px 40px'}}><div style={{width:'210mm',minHeight:'297mm',margin:'0 auto',background:'#fff',boxShadow:'0 18px 60px rgba(0,0,0,.34)',padding:'8mm',boxSizing:'border-box'}}><div ref={reportRef} style={{background:'#fff'}} dangerouslySetInnerHTML={{__html:html}}/></div></div>
+function ReportShareActions({html,filename,title,summary='',lang='bn',existingUrl='',compact=false}){
+  const en=lang==='en';
+  const [busy,setBusy]=useState(''),[shareUrl,setShareUrl]=useState(existingUrl||''),[copied,setCopied]=useState(false);
+  const shareTitle=title||(en?'Employee Digital Service Report':'কর্মকর্তা-কর্মচারী ডিজিটাল সেবা রিপোর্ট');
+  const shareSummary=summary||(en?'View this calculation report from Employee Digital Service.':'কর্মকর্তা-কর্মচারী ডিজিটাল সেবার এই হিসাবের রিপোর্টটি দেখুন।');
+
+  async function ensureUrl(){
+    if(existingUrl)return existingUrl;
+    if(shareUrl)return shareUrl;
+    const url=await createReportShareLink({html,filename,title:shareTitle,summary:shareSummary,lang});
+    setShareUrl(url);
+    return url;
+  }
+  async function copyLink(){
+    try{setBusy('copy');const url=await ensureUrl();await copyToClipboard(url);setCopied(true);setTimeout(()=>setCopied(false),1800);trackPublic('share','report_copy_link')}
+    catch(e){alert((en?'Could not copy link: ':'লিংক কপি করা যায়নি: ')+e.message)}
+    finally{setBusy('')}
+  }
+  async function whatsapp(){
+    try{setBusy('whatsapp');const url=await ensureUrl();const text=`${shareTitle}\n${shareSummary}\n${url}`;window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank','noopener,noreferrer');trackPublic('share','report_whatsapp')}
+    catch(e){alert((en?'Could not prepare WhatsApp share: ':'হোয়াটসঅ্যাপ শেয়ার প্রস্তুত করা যায়নি: ')+e.message)}
+    finally{setBusy('')}
+  }
+  async function messenger(){
+    try{
+      setBusy('messenger');const url=await ensureUrl();
+      if(navigator.share&&/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)){
+        await navigator.share({title:shareTitle,text:shareSummary,url});
+      }else{
+        await copyToClipboard(url);
+        window.open('https://www.messenger.com/','_blank','noopener,noreferrer');
+      }
+      trackPublic('share','report_messenger');
+    }catch(e){if(e?.name!=='AbortError')alert((en?'Could not open Messenger share: ':'মেসেঞ্জার শেয়ার খোলা যায়নি: ')+e.message)}
+    finally{setBusy('')}
+  }
+  async function moreShare(){
+    try{
+      setBusy('more');const url=await ensureUrl();
+      if(navigator.share)await navigator.share({title:shareTitle,text:shareSummary,url});
+      else{await copyToClipboard(url);setCopied(true);setTimeout(()=>setCopied(false),1800)}
+      trackPublic('share','report_native');
+    }catch(e){if(e?.name!=='AbortError')alert((en?'Sharing is not available: ':'শেয়ার করা যাচ্ছে না: ')+e.message)}
+    finally{setBusy('')}
+  }
+  async function sharePdfFile(){
+    try{
+      setBusy('pdf');
+      if(!navigator.share)throw new Error(en?'PDF file sharing is available on supported mobile browsers.':'PDF ফাইল শেয়ার সমর্থিত মোবাইল ব্রাউজারে পাওয়া যায়।');
+      const url=await ensureUrl();
+      const file=await a4PdfFileFromHtml(html,filename,lang);
+      if(!(file instanceof File)||!navigator.canShare?.({files:[file]}))throw new Error(en?'This browser cannot share PDF files directly.':'এই ব্রাউজার সরাসরি PDF ফাইল শেয়ার করতে পারে না।');
+      await navigator.share({title:shareTitle,text:`${shareSummary}\n${url}`,files:[file]});
+      trackPublic('share','report_pdf_file');
+    }catch(e){
+      if(e?.name!=='AbortError'){
+        try{const url=await ensureUrl();await copyToClipboard(url)}catch{}
+        alert((en?'Direct PDF file sharing is not available here. The report link has been copied instead.':'এখানে সরাসরি PDF ফাইল শেয়ার সম্ভব নয়। বিকল্প হিসেবে রিপোর্টের লিংক কপি করা হয়েছে।'));
+      }
+    }finally{setBusy('')}
+  }
+  return <div className={`report-share-actions ${compact?'compact':''}`}>
+    <button className="share-whatsapp" disabled={!!busy} onClick={whatsapp}><MessageCircle/>{busy==='whatsapp'?(en?'Preparing...':'প্রস্তুত হচ্ছে'):'WhatsApp'}</button>
+    <button className="share-messenger" disabled={!!busy} onClick={messenger}><Send/>{en?'Messenger':'Messenger'}</button>
+    <button disabled={!!busy} onClick={copyLink}><Copy/>{copied?(en?'Copied':'কপি হয়েছে'):(en?'Copy Link':'লিংক কপি')}</button>
+    <button disabled={!!busy} onClick={moreShare}><Share2/>{en?'All Apps':'সব অ্যাপ'}</button>
+    <button className="share-pdf-file" disabled={!!busy} onClick={sharePdfFile}><FileText/>{en?'Share PDF':'PDF শেয়ার'}</button>
   </div>
 }
+
+function PdfPreviewModal({html,filename,onClose,lang='bn',shareTitle='',shareSummary=''}) {
+  const reportRef=useRef(null); const[busy,setBusy]=useState(false); const en=lang==='en';
+  async function download(){try{setBusy(true);await saveA4Pdf(reportRef.current,filename);trackPublic('download','report_pdf')}catch(e){alert((en?'PDF could not be created: ':'PDF তৈরি করা যায়নি: ')+e.message)}finally{setBusy(false)}}
+  useEffect(()=>{const onKey=e=>{if(e.key==='Escape')onClose?.()};document.addEventListener('keydown',onKey);const prev=document.body.style.overflow;document.body.style.overflow='hidden';return()=>{document.removeEventListener('keydown',onKey);document.body.style.overflow=prev}},[onClose]);
+  const title=shareTitle||(en?'Calculation Report':'হিসাবের রিপোর্ট');
+  return <div className="pdf-preview-modal">
+    <div className="pdf-preview-topbar">
+      <div><b>{en?'A4 PDF Preview':'A4 PDF প্রিভিউ'}</b><div>{en?'Check, download or share this report.':'রিপোর্ট যাচাই করুন, ডাউনলোড বা শেয়ার করুন।'}</div></div>
+      <div className="pdf-preview-top-actions">
+        <button className="pdf-close-btn" onClick={onClose}>{en?'Close':'বন্ধ করুন'}</button>
+        <button className="pdf-download-btn" onClick={download} disabled={busy}><Save/>{busy?(en?'Creating...':'তৈরি হচ্ছে'):(en?'Download PDF':'PDF ডাউনলোড')}</button>
+      </div>
+    </div>
+    <div className="pdf-preview-sharebar"><ReportShareActions html={html} filename={filename} title={title} summary={shareSummary} lang={lang}/></div>
+    <div className="pdf-preview-scroll"><div className="pdf-preview-paper"><div ref={reportRef} style={{background:'#fff'}} dangerouslySetInnerHTML={{__html:html}}/></div></div>
+  </div>
+}
+
+function SharedReportViewer({token,lang='bn',setLang}){
+  const en=lang==='en';
+  const [state,setState]=useState({loading:true,report:null,error:''});
+  useEffect(()=>{
+    let alive=true;
+    api('/api/public/report-share/'+encodeURIComponent(token)).then(x=>{
+      if(!alive)return;
+      const r=x.report||{};
+      r.report_html=sanitizeSharedReportHtml(r.report_html||'');
+      if(!r.report_html)throw new Error(en?'This shared report is invalid.':'শেয়ার করা রিপোর্টটি সঠিক নয়।');
+      setState({loading:false,report:r,error:''});
+    }).catch(e=>alive&&setState({loading:false,report:null,error:e.message||String(e)}));
+    return()=>{alive=false};
+  },[token]);
+  if(state.loading)return <div className="shared-report-loading">{en?'Loading shared report...':'শেয়ার করা রিপোর্ট লোড হচ্ছে...'}</div>;
+  if(state.error||!state.report)return <div className="shared-report-error"><AlertTriangle/><h2>{en?'Report unavailable':'রিপোর্ট পাওয়া যাচ্ছে না'}</h2><p>{state.error|| (en?'The link may have expired.':'লিংকের মেয়াদ শেষ হয়ে থাকতে পারে।')}</p><a href="/">{en?'Go to Home':'হোমে যান'}</a></div>;
+  const r=state.report;
+  const currentUrl=window.location.href;
+  return <div className="shared-report-page">
+    <header className="shared-report-header">
+      <a className="shared-report-brand" href="/"><Landmark/><div><b>{en?'Employee Digital Service':'কর্মকর্তা-কর্মচারী ডিজিটাল সেবা'}</b><small>{en?'Shared Report':'শেয়ার করা রিপোর্ট'}</small></div></a>
+      <div className="shared-report-header-actions"><LangToggle lang={lang} setLang={setLang}/><a href="/">{en?'Home':'হোম'}</a></div>
+    </header>
+    <main className="shared-report-main">
+      <div className="shared-report-title"><span>{en?'SHARED REPORT':'শেয়ার করা রিপোর্ট'}</span><h1>{r.title}</h1>{r.summary&&<p>{r.summary}</p>}<small>{en?'Link valid until':'লিংক কার্যকর'}: {fmtDateLang(r.expires_at,lang)}</small></div>
+      <div className="shared-report-actions">
+        <button className="primary" onClick={()=>downloadA4Html(r.report_html,r.filename)}><Save/>{en?'Download PDF':'PDF ডাউনলোড'}</button>
+        <ReportShareActions html={r.report_html} filename={r.filename} title={r.title} summary={r.summary||''} lang={lang} existingUrl={currentUrl} compact={true}/>
+      </div>
+      <div className="shared-report-paper" dangerouslySetInnerHTML={{__html:r.report_html}}/>
+    </main>
+  </div>
+}
+
 function promotionReportHtml(r,lang='bn'){
   const en=lang==='en', f=r.input||{};
   const edu=en?{masters:'Masters',bachelor:"Bachelor's",hsc:'HSC',diploma:'Diploma',bsceng:'BSc Engineering',mbbs:'MBBS'}:eduBn;
