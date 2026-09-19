@@ -804,18 +804,6 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
       <HeroDevice/>
     </section>
 
-    <section className="public-live-stats" aria-label={en?'Live visitor statistics':'লাইভ ভিজিটর পরিসংখ্যান'}>
-      <div className="public-live-stats-inner">
-        <div className="live-stats-intro"><span className="live-dot"></span><div><small>{en?'LIVE WEBSITE STATS':'লাইভ ওয়েবসাইট পরিসংখ্যান'}</small><b>{en?'People are using this service now':'কতজন এই সেবা ব্যবহার করছেন'}</b></div></div>
-        <div className="live-stats-grid">
-          <article><Activity/><div><small>{en?"Today's visitors":'আজকের ভিজিটর'}</small><strong>{visitorStats.today_unique==null?'—':numLang(visitorStats.today_unique,lang,0)}</strong></div></article>
-          <article><CalendarDays/><div><small>{en?'This month':'এই মাসে'}</small><strong>{visitorStats.month_unique==null?'—':numLang(visitorStats.month_unique,lang,0)}</strong></div></article>
-          <article><Eye/><div><small>{en?'Total visitors':'মোট ভিজিটর'}</small><strong>{visitorStats.total_unique==null?'—':numLang(visitorStats.total_unique,lang,0)}</strong></div></article>
-        </div>
-        <div className="live-stats-foot"><span>{en?'Anonymous browser/device estimate':'অ্যানোনিমাস ব্রাউজার/ডিভাইসভিত্তিক আনুমানিক হিসাব'}</span><b>{en?'Total page views':'মোট পেজ ভিউ'}: {visitorStats.total_views==null?'—':numLang(visitorStats.total_views,lang,0)}</b></div>
-      </div>
-    </section>
-
     <section className="approved-section public-calculator-center" id="public-calculator-center">
       <div className="calculator-hub-head">
         <span>{en?'NO LOGIN REQUIRED':'লগইন লাগবে না'}</span>
@@ -917,6 +905,11 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
         <button onClick={()=>go('policies')}>{en?'Policies':'নীতিমালা'}</button>
         <button onClick={()=>go('benefits')}>{en?'Privacy':'গোপনীয়তা'}</button>
         <a href={`https://wa.me/8801759084692?text=${whatsappText}`} target="_blank" rel="noreferrer">{en?'WhatsApp':'হোয়াটসঅ্যাপ'}</a>
+      </div>
+      <div className="footer-visitor-counter" title={en?'Anonymous browser/device estimate':'অ্যানোনিমাস ব্রাউজার/ডিভাইসভিত্তিক আনুমানিক হিসাব'}>
+        <Eye/>
+        <div className="footer-visitor-main"><small>{en?'Total Visitors':'মোট ভিজিটর'}</small><b>{visitorStats.total_unique==null?'—':numLang(visitorStats.total_unique,lang,0)}</b></div>
+        <div className="footer-visitor-more"><span>{en?'Today':'আজ'} <b>{visitorStats.today_unique==null?'—':numLang(visitorStats.today_unique,lang,0)}</b></span><i>·</i><span>{en?'This month':'এই মাস'} <b>{visitorStats.month_unique==null?'—':numLang(visitorStats.month_unique,lang,0)}</b></span></div>
       </div>
       <small>{en?'Developer Support via WhatsApp':'ডেভেলপার সহায়তা — শুধু হোয়াটসঅ্যাপ'}<br/><b>মোঃ মশিউর রহমান · 01759084692</b></small>
     </footer>
