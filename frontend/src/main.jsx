@@ -156,34 +156,96 @@ function loadJsPdf(){
 const eduBn={masters:'মাস্টার্স',bachelor:'স্নাতক',hsc:'এইচএসসি',diploma:'ডিপ্লোমা',bsceng:'বিএসসি ইঞ্জিনিয়ারিং',mbbs:'এমবিবিএস'};
 const categoryBn={officer:'কর্মকর্তা',class3:'তৃতীয় শ্রেণি',class4:'চতুর্থ শ্রেণি'};
 const PDF_BRAND={website:'dhakau.pages.dev',developerBn:'মোঃ মশিউর রহমান',developerEn:'Md. Moshiur Rahman',phone:'01759084692'};
+function pdfSafe(v){return escapeHtml(v==null?'—':String(v))}
+function pdfMoneyCell(v){return `<span style="font-family:'Inter','Hind Siliguri',sans-serif;font-variant-numeric:tabular-nums;font-weight:800;white-space:nowrap">${pdfSafe(v)}</span>`}
+function pdfSummaryCards(items=[],columns=4){
+  const cols=Math.max(2,Math.min(4,Number(columns)||4));
+  return `<div style="display:grid;grid-template-columns:repeat(${cols},minmax(0,1fr));gap:8px;margin:0 0 12px">${items.map((x,i)=>`
+    <div style="border:1px solid ${x.accent?'#d5c08b':'#dbe5e1'};border-radius:10px;padding:10px 11px;background:${x.accent?'linear-gradient(145deg,#fffaf0,#fff)':'linear-gradient(145deg,#f8fcfa,#fff)'};min-height:54px;box-sizing:border-box">
+      <div style="font-size:8.8px;color:#66756d;font-weight:700;line-height:1.25">${pdfSafe(x.label)}</div>
+      <div style="margin-top:4px;font-size:${x.accent?'16px':'14px'};color:${x.accent?'#71551d':'#173f31'};font-weight:900;line-height:1.15;font-family:'Inter','Hind Siliguri',sans-serif;font-variant-numeric:tabular-nums">${pdfSafe(x.value)}</div>
+      ${x.note?`<div style="margin-top:3px;font-size:7.8px;color:#8a948e;line-height:1.25">${pdfSafe(x.note)}</div>`:''}
+    </div>`).join('')}</div>`;
+}
+function pdfTable(rows=[],opts={}){
+  const head1=opts.head1||'বিষয়',head2=opts.head2||'বিবরণ/হার',head3=opts.head3||'অংক';
+  const three=opts.three===true;
+  const compact=opts.compact===true;
+  return `<div style="border:1px solid #dbe4e9;border-radius:10px;overflow:hidden;background:#fff">
+    <table style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:${compact?'9.6px':'10.6px'};line-height:1.38">
+      <thead><tr style="background:linear-gradient(90deg,#eef5f2,#f4f7fb);color:#23473a">
+        <th style="width:${three?'46%':'60%'};padding:8px 9px;text-align:left;font-weight:900;border-bottom:1px solid #d6e1dc">${pdfSafe(head1)}</th>
+        ${three?`<th style="width:24%;padding:8px 9px;text-align:center;font-weight:900;border-bottom:1px solid #d6e1dc">${pdfSafe(head2)}</th>`:''}
+        <th style="width:${three?'30%':'40%'};padding:8px 9px;text-align:right;font-weight:900;border-bottom:1px solid #d6e1dc">${pdfSafe(head3)}</th>
+      </tr></thead>
+      <tbody>${rows.map((r,i)=>{
+        const bg=i%2===0?'#ffffff':'#fbfcfd';
+        const emphasis=r.emphasis===true;
+        return `<tr style="background:${emphasis?'#f1f8f4':bg}">
+          <td style="padding:${compact?'6px 8px':'7px 9px'};border-bottom:1px solid #e9eef1;color:${emphasis?'#164c35':'#425466'};font-weight:${emphasis?800:650}">${pdfSafe(r.label)}</td>
+          ${three?`<td style="padding:${compact?'6px 8px':'7px 9px'};border-bottom:1px solid #e9eef1;text-align:center;color:#65746c">${pdfSafe(r.detail||'—')}</td>`:''}
+          <td style="padding:${compact?'6px 8px':'7px 9px'};border-bottom:1px solid #e9eef1;text-align:right;color:${emphasis?'#0f5f3a':'#172c3d'};font-weight:${emphasis?900:800};font-family:'Inter','Hind Siliguri',sans-serif;font-variant-numeric:tabular-nums">${pdfSafe(r.value)}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>
+  </div>`;
+}
 function reportShell(title,subtitle,body,lang='bn',meta={}){
   const en=lang==='en';
   const pageNo=Number(meta.pageNo||1),totalPages=Number(meta.totalPages||1);
   const fixed=meta.fixedPage===true,breakAfter=meta.breakAfter===true;
-  const generated=new Date().toLocaleString(en?'en-GB':'bn-BD-u-nu-latn');
-  return `<div class="pdf-page" data-pdf-page="${pageNo}" data-break-after="${breakAfter?'true':'false'}" style="width:194mm;${fixed?'height:285mm;':'min-height:270mm;'}box-sizing:border-box;font-family:'Hind Siliguri','Noto Sans Bengali','Inter',Arial,sans-serif;color:#172033;background:#fff;line-height:1.45;font-size:10.8px;${breakAfter?'page-break-after:always;break-after:page;':''}">
-    <div style="height:100%;box-sizing:border-box;border:1px solid #d5dee9;border-radius:12px;overflow:hidden;background:#fff;display:flex;flex-direction:column">
-      <div style="background:linear-gradient(120deg,#0b2f58 0%,#155d79 62%,#177454 100%);color:#fff;padding:13px 17px 12px;display:flex;align-items:center;justify-content:space-between;gap:16px">
-        <div style="display:flex;align-items:center;gap:10px;min-width:0">
-          <div style="width:34px;height:34px;border-radius:9px;background:#fff;color:#0d4968;display:grid;place-items:center;font-family:'Inter',Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.4px;flex:0 0 auto">EDS</div>
-          <div style="min-width:0"><div style="font-size:9px;font-weight:700;opacity:.86">${en?'Employee Digital Service Platform':'কর্মকর্তা-কর্মচারী ডিজিটাল সেবা'}</div><div style="font-size:18px;font-weight:800;margin-top:1px;line-height:1.15">${escapeHtml(title)}</div><div style="font-size:9.2px;opacity:.84;margin-top:3px">${escapeHtml(subtitle)}</div></div>
+  const now=new Date();
+  const generated=now.toLocaleString(en?'en-GB':'bn-BD-u-nu-latn');
+  const reportId=`EDS-${String(now.getFullYear()).slice(-2)}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+  return `<div class="pdf-page premium-pdf-page" data-pdf-page="${pageNo}" data-break-after="${breakAfter?'true':'false'}" style="width:194mm;${fixed?'height:285mm;':'min-height:270mm;'}box-sizing:border-box;font-family:'Hind Siliguri','Noto Sans Bengali','Inter',Arial,sans-serif;color:#172033;background:#fff;line-height:1.5;font-size:11.25px;${breakAfter?'page-break-after:always;break-after:page;':''}">
+    <div style="height:100%;box-sizing:border-box;border:1px solid #ccd8df;border-radius:13px;overflow:hidden;background:linear-gradient(180deg,#fff 0%,#fff 92%,#fbfcfd 100%);display:flex;flex-direction:column;box-shadow:0 0 0 1px #f1f4f6 inset">
+      <div style="height:4px;background:linear-gradient(90deg,#c7a34e,#e6cf86,#1d7a5a,#174f77)"></div>
+      <div style="background:linear-gradient(118deg,#092b50 0%,#124b6b 57%,#176346 100%);color:#fff;padding:15px 18px 14px;display:flex;align-items:center;justify-content:space-between;gap:16px">
+        <div style="display:flex;align-items:center;gap:11px;min-width:0">
+          <div style="width:38px;height:38px;border-radius:10px;background:linear-gradient(145deg,#fff,#eef5f2);color:#0d4968;display:grid;place-items:center;font-family:'Inter',Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.5px;flex:0 0 auto;box-shadow:0 4px 14px rgba(0,0,0,.16)">EDS</div>
+          <div style="min-width:0">
+            <div style="font-size:9.5px;font-weight:800;opacity:.9;letter-spacing:.1px">${en?'Employee Digital Service Platform':'কর্মকর্তা-কর্মচারী ডিজিটাল সেবা'}</div>
+            <div style="font-size:19.5px;font-weight:900;margin-top:2px;line-height:1.18;letter-spacing:-.1px">${pdfSafe(title)}</div>
+            <div style="font-size:9.7px;opacity:.88;margin-top:4px;line-height:1.35">${pdfSafe(subtitle)}</div>
+          </div>
         </div>
-        <div style="text-align:right;white-space:nowrap"><div style="font-family:'Inter',Arial,sans-serif;font-size:10px;font-weight:800">A4 REPORT</div><div style="font-family:'Inter',Arial,sans-serif;font-size:9px;opacity:.78;margin-top:3px">${PDF_BRAND.website}</div></div>
+        <div style="text-align:right;white-space:nowrap;border:1px solid rgba(255,255,255,.22);border-radius:9px;padding:7px 9px;background:rgba(255,255,255,.08)">
+          <div style="font-family:'Inter',Arial,sans-serif;font-size:9.5px;font-weight:900;letter-spacing:.6px">A4 REPORT</div>
+          <div style="font-family:'Inter',Arial,sans-serif;font-size:8.7px;opacity:.85;margin-top:2px">${PDF_BRAND.website}</div>
+        </div>
       </div>
-      <div style="flex:1;padding:12px 16px 9px;box-sizing:border-box;${fixed?'overflow:hidden;':''}">${body}</div>
-      <div style="border-top:1px solid #dce4ec;background:#f7fafc;padding:7px 16px 8px;color:#657283;font-size:8.2px;line-height:1.35">
-        <div style="margin-bottom:5px">${en?'Independent/unofficial digital service report. Verify applicable rules/orders before any final administrative or financial decision.':'স্বাধীন ও অনানুষ্ঠানিক ডিজিটাল সেবা প্রতিবেদন। চূড়ান্ত প্রশাসনিক/আর্থিক সিদ্ধান্তের আগে প্রযোজ্য বিধি/আদেশ যাচাই করুন।'}</div>
-        <div style="display:grid;grid-template-columns:1fr 1.35fr auto;gap:10px;align-items:center;border-top:1px dashed #d5dde5;padding-top:5px">
-          <span style="font-family:'Inter','Hind Siliguri',sans-serif"><b>${PDF_BRAND.website}</b><br>${en?'Generated':'তৈরি'}: ${generated}</span>
+      <div style="padding:7px 18px;background:linear-gradient(90deg,#fffaf0,#fbfdfc);border-bottom:1px solid #e4e9e6;display:flex;justify-content:space-between;gap:12px;color:#6d735f;font-size:8.5px">
+        <span><b style="color:#725a26">${en?'Report ID':'রিপোর্ট আইডি'}:</b> <span style="font-family:'Inter',Arial,sans-serif">${reportId}</span></span>
+        <span><b style="color:#3b6252">${en?'Generated':'তৈরি'}:</b> ${generated}</span>
+      </div>
+      <div style="flex:1;padding:13px 17px 10px;box-sizing:border-box;${fixed?'overflow:hidden;':''}">${body}</div>
+      <div style="border-top:1px solid #d9e2e7;background:linear-gradient(90deg,#f7fafc,#f5f9f7);padding:7px 17px 8px;color:#5f6f7b;font-size:8.35px;line-height:1.42">
+        <div style="margin-bottom:5px;color:#6a756f">${en?'Independent/unofficial digital service report. Verify applicable rules/orders before any final administrative or financial decision.':'স্বাধীন ও অনানুষ্ঠানিক ডিজিটাল সেবা প্রতিবেদন। চূড়ান্ত প্রশাসনিক/আর্থিক সিদ্ধান্তের আগে প্রযোজ্য বিধি/আদেশ যাচাই করুন।'}</div>
+        <div style="display:grid;grid-template-columns:1fr 1.2fr auto;gap:10px;align-items:center;border-top:1px dashed #cfd9dd;padding-top:5px">
+          <span><b style="font-family:'Inter','Hind Siliguri',sans-serif;color:#24465d">${PDF_BRAND.website}</b></span>
           <span style="text-align:center"><b>${en?'Design & Development':'ডিজাইন ও ডেভেলপমেন্ট'}:</b> ${en?PDF_BRAND.developerEn:PDF_BRAND.developerBn} · <span style="font-family:'Inter',Arial,sans-serif">${PDF_BRAND.phone}</span></span>
-          <span style="font-family:'Inter',Arial,sans-serif;font-weight:800">${en?'Page':'পৃষ্ঠা'} ${pageNo} / ${totalPages}</span>
+          <span style="font-family:'Inter','Hind Siliguri',sans-serif;font-weight:900;color:#23465c">${en?'Page':'পৃষ্ঠা'} ${pageNo} / ${totalPages}</span>
         </div>
       </div>
     </div>
   </div>`;
 }
-function kv(label,value){return `<div style="display:flex;justify-content:space-between;gap:16px;padding:7px 0;border-bottom:1px dashed #dfe4ec"><span style="color:#667085">${escapeHtml(label)}</span><b style="text-align:right;color:#182230">${escapeHtml(value)}</b></div>`}
-function section(title,content){return `<div style="margin:14px 0 0;page-break-inside:avoid"><div style="font-size:13px;font-weight:800;color:#1d3263;margin-bottom:5px">${escapeHtml(title)}</div><div style="border:1px solid #e1e6ef;border-radius:10px;padding:9px 12px;background:#fff">${content}</div></div>`}
+function kv(label,value,opts={}){
+  const emphasis=opts.emphasis===true;
+  return `<div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;padding:8px 2px;border-bottom:1px solid #e5ebef;align-items:center">
+    <span style="color:${emphasis?'#174a36':'#53636f'};font-size:10.8px;font-weight:${emphasis?800:650};line-height:1.35">${pdfSafe(label)}</span>
+    <b style="text-align:right;color:${emphasis?'#0d603a':'#172b3b'};font-size:${emphasis?'12.5px':'11.2px'};font-family:'Inter','Hind Siliguri',sans-serif;font-variant-numeric:tabular-nums;line-height:1.3">${pdfSafe(value)}</b>
+  </div>`;
+}
+function section(title,content,opts={}){
+  return `<div style="margin:${opts.tight?'10px':'12px'} 0 0;page-break-inside:avoid">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <span style="width:4px;height:18px;border-radius:4px;background:linear-gradient(180deg,#c6a14a,#176c4c)"></span>
+      <div style="font-size:13.5px;font-weight:900;color:#163a56;line-height:1.2">${pdfSafe(title)}</div>
+    </div>
+    <div style="border:1px solid #dce5e9;border-radius:10px;padding:${opts.table?'0':'9px 12px'};background:#fff">${content}</div>
+  </div>`;
+}
 async function buildA4Pdf(element,{coverText='PDF তৈরি হচ্ছে...'}={}){
   if(!element)throw new Error('PDF preview is not available');
   const [html2canvas,JsPDF]=await Promise.all([loadHtml2Canvas(),loadJsPdf()]);
