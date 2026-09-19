@@ -555,12 +555,22 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
 
   const go=(id)=>{
     setPublicMenu(false);
-    window.requestAnimationFrame(()=>document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'}));
+    setActivePublicTool(null);
+    window.requestAnimationFrame(()=>window.requestAnimationFrame(()=>document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'})));
   };
   const openPublicTool=(tool)=>{
     setPublicMenu(false);
     setActivePublicTool(tool);
-    window.requestAnimationFrame(()=>document.getElementById('public-calculator-center')?.scrollIntoView({behavior:'smooth',block:'start'}));
+    window.requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'smooth'}));
+  };
+  const toolLabels={
+    salary:en?'Pay Scale 2026–2028':'পে-স্কেল ২০২৬–২০২৮',
+    promotion:en?'Promotion Calculator':'পদোন্নতি ক্যালকুলেটর',
+    house:en?'House Allocation Points':'বাসা বরাদ্দ পয়েন্ট',
+    service:en?'Service Length Calculator':'চাকরিকাল ক্যালকুলেটর',
+    age:en?'Age Calculator':'বয়স ক্যালকুলেটর',
+    gap:en?'Date Difference Calculator':'তারিখের ব্যবধান',
+    retire:en?'Retirement Date Calculator':'অবসর তারিখ ক্যালকুলেটর'
   };
 
   const quick=[
@@ -667,7 +677,18 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
 
       <nav className={publicMenu?'open':''} aria-label={en?'Main navigation':'প্রধান মেনু'}>
         <button onClick={()=>go('home')}>{en?'Home':'হোম'}</button>
-        <button className="pay-nav-link" onClick={()=>go('public-calculator-center')}>{en?'Calculators':'ক্যালকুলেটর'}</button>
+        <button className="pay-scale-main-nav" onClick={()=>openPublicTool('salary')}><WalletCards size={16}/><span>{en?'Pay Scale 2026–2028':'পে-স্কেল ২০২৬–২০২৮'}</span><em>{en?'NEW':'নতুন'}</em></button>
+        <details className="public-nav-dropdown">
+          <summary><Calculator size={16}/><span>{en?'Calculators':'ক্যালকুলেটর'}</span><ChevronDown size={14}/></summary>
+          <div className="public-nav-submenu">
+            <button onClick={()=>openPublicTool('promotion')}><TrendingUp/><div><b>{en?'Promotion':'পদোন্নতি'}</b><small>{en?'Eligibility & roadmap':'যোগ্যতা ও রোডম্যাপ'}</small></div></button>
+            <button onClick={()=>openPublicTool('house')}><Home/><div><b>{en?'House Allocation':'বাসা বরাদ্দ'}</b><small>{en?'Point calculation':'পয়েন্ট হিসাব'}</small></div></button>
+            <button onClick={()=>openPublicTool('service')}><Clock3/><div><b>{en?'Service Length':'চাকরিকাল'}</b><small>{en?'Years, months & days':'বছর, মাস ও দিন'}</small></div></button>
+            <button onClick={()=>openPublicTool('age')}><UserRound/><div><b>{en?'Age Calculator':'বয়স হিসাব'}</b><small>{en?'Exact current age':'সঠিক বর্তমান বয়স'}</small></div></button>
+            <button onClick={()=>openPublicTool('gap')}><CalendarDays/><div><b>{en?'Date Difference':'তারিখের ব্যবধান'}</b><small>{en?'Between two dates':'দুই তারিখের মধ্যে'}</small></div></button>
+            <button onClick={()=>openPublicTool('retire')}><FileClock/><div><b>{en?'Retirement Date':'অবসর তারিখ'}</b><small>{en?'Estimate by age':'বয়স অনুযায়ী হিসাব'}</small></div></button>
+          </div>
+        </details>
         <button onClick={()=>go('services')}>{en?'Services':'সেবাসমূহ'}</button>
         <button onClick={()=>go('notices')}>{en?'Notices':'নোটিশ'}</button>
         <button onClick={()=>go('policies')}>{en?'Policies':'নীতিমালা'}</button>
@@ -683,6 +704,7 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
       </div>
     </header>
 
+    {!activePublicTool&&<>
     <section className="approved-hero">
       <div className="approved-hero-copy">
         <span className="approved-kicker"><Sparkles/>{en?'PERSONAL · SMART · SELF-SERVICE':'ব্যক্তিগত · স্মার্ট · স্ব-সেবামূলক'}</span>
@@ -723,10 +745,6 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
       </div>
       {!activePublicTool&&<div className="calculator-hub-guide"><Calculator/><div><b>{en?'Start here':'এখান থেকেই শুরু করুন'}</b><span>{en?'Click any one of the three cards above. No account is needed.':'উপরের ৩টি কার্ডের যেকোনো একটিতে ক্লিক করুন। কোনো অ্যাকাউন্ট লাগবে না।'}</span></div></div>}
     </section>
-
-    {activePublicTool==='salary'&&<div className="active-public-tool-wrap"><div className="active-tool-bar"><b>{en?'Salary & Pay Scale 2026–2028':'বেতন ও পে-স্কেল ২০২৬–২০২৮'}</b><button onClick={()=>setActivePublicTool(null)}>{en?'Close calculator':'ক্যালকুলেটর বন্ধ করুন'}<X size={16}/></button></div><PublicPayScaleHub lang={lang}/></div>}
-    {activePublicTool==='promotion'&&<section className="approved-section public-career-tool active-public-tool-wrap"><div className="active-tool-bar"><b>{en?'Promotion Calculator':'পদোন্নতি ক্যালকুলেটর'}</b><button onClick={()=>setActivePublicTool(null)}>{en?'Close calculator':'ক্যালকুলেটর বন্ধ করুন'}<X size={16}/></button></div><div className="public-tool-shell"><PromotionCenter lang={lang} publicMode={true}/></div></section>}
-    {activePublicTool==='house'&&<section className="approved-section public-career-tool alt active-public-tool-wrap"><div className="active-tool-bar"><b>{en?'House Allocation Point Calculator':'বাসা বরাদ্দ পয়েন্ট ক্যালকুলেটর'}</b><button onClick={()=>setActivePublicTool(null)}>{en?'Close calculator':'ক্যালকুলেটর বন্ধ করুন'}<X size={16}/></button></div><div className="public-tool-shell"><HouseAllocationPoints lang={lang} publicMode={true}/></div></section>}
 
     <section className="approved-section approved-quick" id="services">
       <div className="approved-section-title"><span>{en?'POPULAR SERVICES':'গুরুত্বপূর্ণ সেবা'}</span><h2>{en?'Important services, organized for one-click access':'গুরুত্বপূর্ণ সব সেবা, এক ক্লিকে ব্যবহারের জন্য সাজানো'}</h2><p>{en?'Career, salary, leave, promotion, points and useful information — all within easy reach.':'ক্যারিয়ার, বেতন, ছুটি, পদোন্নতি ও প্রয়োজনীয় তথ্য—সব সহজেই হাতের মুঠোয়।'}</p></div>
@@ -782,6 +800,20 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
       <div><span><MessageCircle/></span><div><h2>{en?'Need help?':'সহায়তা প্রয়োজন?'}</h2><p>{en?'For platform or technical help, send a WhatsApp message.':'প্ল্যাটফর্ম বা কারিগরি সহায়তার জন্য শুধু হোয়াটসঅ্যাপে মেসেজ করুন।'}</p></div></div>
       <a href={`https://wa.me/8801759084692?text=${whatsappText}`} target="_blank" rel="noreferrer"><MessageCircle/>{en?'Message on WhatsApp':'হোয়াটসঅ্যাপে মেসেজ করুন'}</a>
     </section>
+
+
+    </>}
+
+    {activePublicTool&&<main className="public-dedicated-calculator" id="public-tool-view">
+      <div className="public-tool-page-head">
+        <button className="back-home-tool" onClick={()=>go('home')}><ArrowLeft size={16}/>{en?'Back to Home':'হোমে ফিরুন'}</button>
+        <div><span>{activePublicTool==='salary'?(en?'PAY SCALE':'পে-স্কেল'):(en?'CALCULATOR':'ক্যালকুলেটর')}</span><h1>{toolLabels[activePublicTool]||''}</h1><p>{en?'Only the selected tool is shown here. Choose another calculator from the top menu at any time.':'এখানে শুধু নির্বাচিত হিসাবটিই দেখানো হচ্ছে। অন্য হিসাবের জন্য উপরের ক্যালকুলেটর মেনু ব্যবহার করুন।'}</p></div>
+      </div>
+      {activePublicTool==='salary'&&<PublicPayScaleHub lang={lang}/>}
+      {activePublicTool==='promotion'&&<section className="public-tool-only-shell"><PromotionCenter lang={lang} publicMode={true}/></section>}
+      {activePublicTool==='house'&&<section className="public-tool-only-shell"><HouseAllocationPoints lang={lang} publicMode={true}/></section>}
+      {['service','age','gap','retire'].includes(activePublicTool)&&<section className="public-tool-only-shell"><CalculatorCenter lang={lang} publicMode={true} initialTool={activePublicTool} singleTool={true}/></section>}
+    </main>}
 
     <footer className="approved-footer">
       <button className="approved-brand brand-button footer-brand" onClick={()=>go('home')}><span><Landmark/></span><div><b>{en?'Employee Digital Service':'কর্মকর্তা-কর্মচারী ডিজিটাল সেবা'}</b><small>{en?'Personal Career & Service Management':'ব্যক্তিগত ক্যারিয়ার ও সেবা ব্যবস্থাপনা'}</small></div></button>
