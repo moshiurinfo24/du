@@ -701,7 +701,7 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
           <div><small>{en?'HOUSING':'বাসা বরাদ্দ'}</small><h3>{en?'House Allocation Points':'বাসা বরাদ্দ পয়েন্ট'}</h3><p>{en?'Calculate supported house-allocation points and download the result as PDF.':'সমর্থিত বাসা বরাদ্দ পয়েন্ট হিসাব করুন এবং PDF নিন।'}</p><b>{en?'Open house calculator':'বাসা বরাদ্দ হিসাব খুলুন'}<ArrowRight/></b></div>
         </button>
       </div>
-      {!activePublicTool&&<div className="calculator-hub-guide"><MousePointerClick/><div><b>{en?'Start here':'এখান থেকেই শুরু করুন'}</b><span>{en?'Click any one of the three cards above. No account is needed.':'উপরের ৩টি কার্ডের যেকোনো একটিতে ক্লিক করুন। কোনো অ্যাকাউন্ট লাগবে না।'}</span></div></div>}
+      {!activePublicTool&&<div className="calculator-hub-guide"><Calculator/><div><b>{en?'Start here':'এখান থেকেই শুরু করুন'}</b><span>{en?'Click any one of the three cards above. No account is needed.':'উপরের ৩টি কার্ডের যেকোনো একটিতে ক্লিক করুন। কোনো অ্যাকাউন্ট লাগবে না।'}</span></div></div>}
     </section>
 
     {activePublicTool==='salary'&&<div className="active-public-tool-wrap"><div className="active-tool-bar"><b>{en?'Salary & Pay Scale 2026–2028':'বেতন ও পে-স্কেল ২০২৬–২০২৮'}</b><button onClick={()=>setActivePublicTool(null)}>{en?'Close calculator':'ক্যালকুলেটর বন্ধ করুন'}<X size={16}/></button></div><PublicPayScaleHub lang={lang}/></div>}
