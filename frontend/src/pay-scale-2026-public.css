@@ -1,0 +1,188 @@
+/* Public National Pay Scale 2026 calculator */
+.public-pay-hub{
+  position:relative;
+  overflow:hidden;
+  margin-top:0;
+  background:
+    radial-gradient(circle at 90% 0%,rgba(25,135,84,.11),transparent 30%),
+    linear-gradient(180deg,#f8fbff 0%,#ffffff 54%,#f7faf9 100%);
+  border-top:1px solid #e7edf3;
+  border-bottom:1px solid #e7edf3;
+}
+.public-pay-hub::before{
+  content:"";
+  position:absolute;
+  inset:0 auto auto 0;
+  width:100%;
+  height:4px;
+  background:linear-gradient(90deg,#0f5132,#198754,#c99a3d);
+}
+.public-pay-hub>.approved-section-title{max-width:880px}
+.public-pay-facts{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:12px;
+  max-width:1180px;
+  margin:28px auto 24px;
+}
+.public-pay-facts article{
+  min-height:122px;
+  padding:18px;
+  border:1px solid #dfe8e4;
+  border-radius:18px;
+  background:rgba(255,255,255,.92);
+  box-shadow:0 10px 34px rgba(16,42,33,.07);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.public-pay-facts b{
+  color:#0f5132;
+  font-size:17px;
+  line-height:1.25;
+}
+.public-pay-facts span{
+  color:#53625c;
+  font-size:13px;
+  line-height:1.55;
+}
+.public-salary-calculator{
+  max-width:1180px;
+  margin:0 auto;
+}
+.public-salary-calculator .page-head{
+  margin:0 0 14px;
+}
+.public-salary-calculator .calc-card,
+.public-salary-calculator .result-stack{
+  max-width:none;
+}
+.pay-calc-head h2{color:#16243d}
+.pay-calc-head p{max-width:900px}
+.public-pay-hub .calc-card{
+  border:1px solid #dce7e2;
+  box-shadow:0 18px 55px rgba(19,55,43,.08);
+  background:#fff;
+}
+.public-pay-hub .form-grid label{
+  min-width:0;
+}
+.public-pay-hub input[type="date"],
+.public-pay-hub input[type="number"],
+.public-pay-hub select{
+  width:100%;
+}
+.pay-phase-chip{
+  display:inline-flex;
+  align-items:center;
+  width:max-content;
+  max-width:100%;
+  margin-top:10px;
+  padding:7px 11px;
+  border-radius:999px;
+  background:#eaf7f0;
+  color:#13633f;
+  border:1px solid #cce9da;
+  font-weight:800;
+  font-size:12px;
+}
+.official-pay-note{
+  border-color:#b9dfca!important;
+  background:#f0fbf5!important;
+}
+.official-extra-options summary{
+  color:#1c5e42;
+}
+.source-row,.annual-row{background:#fafcfb}
+.public-pay-table{
+  max-width:1180px;
+  margin:24px auto 0;
+  border:1px solid #dce5e1;
+  background:#fff;
+  border-radius:16px;
+  overflow:hidden;
+  box-shadow:0 10px 34px rgba(16,42,33,.05);
+}
+.public-pay-table summary{
+  cursor:pointer;
+  list-style:none;
+  font-weight:800;
+  padding:16px 18px;
+  color:#173f31;
+  background:#f5faf7;
+}
+.public-pay-table summary::-webkit-details-marker{display:none}
+.public-pay-table summary::after{
+  content:"+";
+  float:right;
+  font-size:20px;
+}
+.public-pay-table[open] summary::after{content:"−"}
+.public-pay-table .table-wrap{
+  max-height:560px;
+  overflow:auto;
+  border-top:1px solid #e4ebe7;
+}
+.public-pay-table table{
+  width:100%;
+  border-collapse:collapse;
+}
+.public-pay-table th{
+  position:sticky;
+  top:0;
+  z-index:1;
+  background:#f8faf9;
+  color:#34483f;
+}
+.public-pay-table th,.public-pay-table td{
+  padding:12px 14px;
+  border-bottom:1px solid #edf1ef;
+  text-align:left;
+}
+.public-pay-table tbody tr:hover{background:#f9fcfa}
+.public-pay-source{
+  max-width:1180px;
+  margin:16px auto 0;
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  padding:13px 15px;
+  border-radius:14px;
+  background:#f7f9fc;
+  border:1px solid #e1e6ee;
+  color:#4b5668;
+}
+.public-pay-source svg{color:#198754;flex:0 0 auto}
+.public-pay-source div{display:flex;flex-direction:column;gap:3px}
+.public-pay-source b{color:#283448}
+.public-pay-source span{font-size:12px}
+.pay-nav-link{
+  font-weight:800!important;
+  color:#12693f!important;
+}
+.pay-nav-link::after{
+  content:"নতুন";
+  display:inline-flex;
+  margin-left:5px;
+  padding:2px 5px;
+  border-radius:999px;
+  background:#e9f7ef;
+  color:#127444;
+  font-size:8px;
+  line-height:1;
+  vertical-align:middle;
+}
+html[lang="en"] .pay-nav-link::after{content:"NEW"}
+@media(max-width:980px){
+  .public-pay-facts{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:720px){
+  .public-pay-hub{padding-left:14px!important;padding-right:14px!important}
+  .public-pay-facts{grid-template-columns:1fr;gap:9px;margin-top:20px}
+  .public-pay-facts article{min-height:auto;padding:14px 15px}
+  .public-salary-calculator .page-head h2{font-size:22px}
+  .public-pay-hub .calc-card{padding:14px}
+  .public-pay-table th,.public-pay-table td{padding:10px 9px;font-size:12px}
+  .public-pay-source{font-size:12px}
+  .pay-phase-chip{white-space:normal}
+}
