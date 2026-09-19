@@ -2043,7 +2043,6 @@ function SalaryCalculator({lang='bn',publicMode=false}){
     {r&&<div id="salary-result" className="salary-result-anchor"><SalaryResult r={r} lang={lang}/></div>}
   </div>
 }
-}
 function SalaryResult({r,lang='bn'}){
   const en=lang==='en';
   const [activeYear,setActiveYear]=useState(2026);
