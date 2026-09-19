@@ -6,3 +6,93 @@
 @media(max-width:900px){.knowledge-tools{align-items:stretch;flex-direction:column}.knowledge-tabs{justify-content:flex-start}.knowledge-list article{grid-template-columns:1fr auto}.knowledge-type{grid-column:1}.knowledge-body{grid-column:1/-1}.report-kpis{grid-template-columns:1fr 1fr}.privacy-grid{grid-template-columns:1fr}.release-grid{grid-template-columns:1fr}}
 @media(max-width:620px){.final-hero{padding:19px}.final-hero>svg{display:none}.final-hero h2{font-size:24px}.report-kpis,.report-grid{grid-template-columns:1fr}.report-row{flex-direction:column;gap:3px}.report-row span{text-align:left}.report-sheet{padding:15px}}
 @media print{body *{visibility:hidden!important}.report-sheet,.report-sheet *{visibility:visible!important}.report-sheet{position:absolute;left:0;top:0;width:100%;border:0;border-radius:0}.sidebar,.topbar,.report-actions{display:none!important}}
+
+
+/* Premium personal report print/PDF */
+.report-sheet{
+  background:linear-gradient(180deg,#fff,#fbfcfd);
+  border-color:#d5e0e6;
+  box-shadow:0 18px 50px rgba(18,45,66,.08);
+}
+.report-title{
+  text-align:left;
+  padding:18px 20px;
+  border:0;
+  border-radius:14px;
+  background:linear-gradient(118deg,#092b50 0%,#124b6b 57%,#176346 100%);
+  color:#fff;
+  position:relative;
+  overflow:hidden;
+}
+.report-title:before{
+  content:"";
+  position:absolute;
+  left:0;right:0;top:0;height:4px;
+  background:linear-gradient(90deg,#c7a34e,#e6cf86,#1d7a5a,#174f77);
+}
+.report-title small,.report-title p{color:rgba(255,255,255,.82)}
+.report-title h1{font-weight:900;letter-spacing:-.2px}
+.report-kpis article{
+  border-color:#dce6e1;
+  background:linear-gradient(145deg,#f8fcfa,#fff);
+  box-shadow:none;
+}
+.report-kpis article:nth-child(1){border-top:3px solid #1c6c4e}
+.report-kpis article:nth-child(2){border-top:3px solid #345f8d}
+.report-kpis article:nth-child(3){border-top:3px solid #b89442}
+.report-kpis article:nth-child(4){border-top:3px solid #6a7d91}
+.report-sections>section{border-color:#dce5e9;background:#fff}
+.report-sections h3{
+  color:#173d58;
+  padding-bottom:8px;
+  border-bottom:2px solid #edf2ef;
+}
+.report-grid span,.report-row{border-bottom-style:solid;border-bottom-color:#e9eef1}
+.report-disclaimer{
+  border-left:4px solid #c69b3e;
+  background:#fffaf0;
+}
+
+@media print{
+  @page{size:A4 portrait;margin:10mm}
+  html,body{background:#fff!important}
+  body *{visibility:hidden!important}
+  .report-sheet,.report-sheet *{visibility:visible!important}
+  .report-sheet{
+    position:absolute!important;
+    left:0!important;
+    top:0!important;
+    width:190mm!important;
+    min-height:277mm!important;
+    box-sizing:border-box!important;
+    border:1px solid #ccd8df!important;
+    border-radius:10px!important;
+    padding:14mm 12mm 11mm!important;
+    box-shadow:none!important;
+    font-family:"Hind Siliguri","Inter",sans-serif!important;
+    color:#172033!important;
+  }
+  .report-title{
+    -webkit-print-color-adjust:exact!important;
+    print-color-adjust:exact!important;
+    margin:-14mm -12mm 8mm!important;
+    padding:12mm 12mm 8mm!important;
+    border-radius:9px 9px 0 0!important;
+  }
+  .report-title h1{font-size:20pt!important;line-height:1.2!important}
+  .report-title small,.report-title p{font-size:9pt!important}
+  .report-kpis{gap:7px!important;margin:9mm 0 6mm!important}
+  .report-kpis article{
+    padding:9px!important;
+    -webkit-print-color-adjust:exact!important;
+    print-color-adjust:exact!important;
+  }
+  .report-kpis small,.report-kpis span{font-size:8.5pt!important}
+  .report-kpis b{font-size:11pt!important}
+  .report-sections{gap:7px!important}
+  .report-sections>section{padding:10px 12px!important;break-inside:avoid!important}
+  .report-sections h3{font-size:11.5pt!important}
+  .report-grid span,.report-row{padding:7px 0!important;font-size:9.5pt!important;line-height:1.4!important}
+  .report-disclaimer{font-size:8.7pt!important;line-height:1.45!important}
+  .sidebar,.topbar,.app-topbar,.mobile-bottom-nav,.floating-whatsapp,.report-actions,.final-hero{display:none!important}
+}
