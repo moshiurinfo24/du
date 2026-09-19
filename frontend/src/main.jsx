@@ -157,13 +157,13 @@ const eduBn={masters:'মাস্টার্স',bachelor:'স্নাতক'
 const categoryBn={officer:'কর্মকর্তা',class3:'তৃতীয় শ্রেণি',class4:'চতুর্থ শ্রেণি'};
 const PDF_BRAND={website:'dhakau.pages.dev',developerBn:'মোঃ মশিউর রহমান',developerEn:'Md. Moshiur Rahman',phone:'01759084692'};
 function pdfSafe(v){return escapeHtml(v==null?'—':String(v))}
-function pdfMoneyCell(v){return `<span style="font-family:'Inter','Hind Siliguri',sans-serif;font-variant-numeric:tabular-nums;font-weight:800;white-space:nowrap">${pdfSafe(v)}</span>`}
+function pdfMoneyCell(v){return `<span style="font-family:'Hind Siliguri','Noto Sans Bengali','Inter',sans-serif;font-variant-numeric:tabular-nums;font-weight:800;white-space:nowrap">${pdfSafe(v)}</span>`}
 function pdfSummaryCards(items=[],columns=4){
   const cols=Math.max(2,Math.min(4,Number(columns)||4));
   return `<div class="pdf-summary-grid" style="display:grid;grid-template-columns:repeat(${cols},minmax(0,1fr));gap:9px;margin:0 0 12px">${items.map((x,i)=>`
     <div class="pdf-summary-card" style="border:1px solid ${x.accent?'#d5bd7d':'#d8e3df'};border-radius:11px;padding:11px 12px;background:${x.accent?'linear-gradient(145deg,#fffaf0,#fffdf8)':'linear-gradient(145deg,#f8fcfa,#ffffff)'};min-height:58px;box-sizing:border-box;overflow:hidden">
-      <div style="font-size:10.2px;color:#53665d;font-weight:800;line-height:1.3;overflow-wrap:anywhere">${pdfSafe(x.label)}</div>
-      <div style="margin-top:5px;font-size:${x.accent?'18.2px':'16.2px'};color:${x.accent?'#72551b':'#153f30'};font-weight:900;line-height:1.18;font-family:'Inter','Hind Siliguri',sans-serif;font-variant-numeric:tabular-nums;overflow-wrap:anywhere">${pdfSafe(x.value)}</div>
+      <div style="font-size:10.6px;color:#4d6258;font-weight:700;line-height:1.3;overflow-wrap:anywhere">${pdfSafe(x.label)}</div>
+      <div style="margin-top:5px;font-size:${x.accent?'18.2px':'16.2px'};color:${x.accent?'#72551b':'#153f30'};font-weight:700;line-height:1.2;font-family:'Hind Siliguri','Noto Sans Bengali','Inter',sans-serif;font-variant-numeric:tabular-nums;overflow-wrap:anywhere">${pdfSafe(x.value)}</div>
       ${x.note?`<div style="margin-top:4px;font-size:9px;color:#74827a;line-height:1.3;overflow-wrap:anywhere">${pdfSafe(x.note)}</div>`:''}
     </div>`).join('')}</div>`;
 }
@@ -173,23 +173,23 @@ function pdfTable(rows=[],opts={}){
   const compact=opts.compact===true;
   const sizes=three?['42%','25%','33%']:['47%','53%'];
   return `<div class="pdf-table-wrap" style="width:100%;max-width:100%;border:1px solid #d8e2e7;border-radius:11px;overflow:hidden;background:#fff">
-    <table class="pdf-table" style="width:100%;max-width:100%;border-collapse:collapse;table-layout:fixed;font-size:${compact?'10.9px':'11.75px'};line-height:1.42">
+    <table class="pdf-table" style="width:100%;max-width:100%;border-collapse:collapse;table-layout:fixed;font-size:${compact?'11.2px':'12px'};line-height:1.44">
       <colgroup>
         <col style="width:${sizes[0]}">
         ${three?`<col style="width:${sizes[1]}"><col style="width:${sizes[2]}">`:`<col style="width:${sizes[1]}">`}
       </colgroup>
       <thead><tr style="background:linear-gradient(90deg,#edf5f1,#f4f7fb);color:#23473a">
-        <th style="padding:8px 9px;text-align:left;font-weight:900;border-bottom:1px solid #d3ded8;box-sizing:border-box;white-space:normal;overflow-wrap:anywhere;word-break:normal">${pdfSafe(head1)}</th>
-        ${three?`<th style="padding:8px 9px;text-align:center;font-weight:900;border-bottom:1px solid #d3ded8;box-sizing:border-box;white-space:normal;overflow-wrap:anywhere;word-break:normal">${pdfSafe(head2)}</th>`:''}
-        <th style="padding:8px 9px;text-align:right;font-weight:900;border-bottom:1px solid #d3ded8;box-sizing:border-box;white-space:normal;overflow-wrap:anywhere;word-break:normal">${pdfSafe(head3)}</th>
+        <th style="padding:8px 9px;text-align:left;font-weight:700;border-bottom:1px solid #d3ded8;box-sizing:border-box;white-space:normal;overflow-wrap:anywhere;word-break:normal">${pdfSafe(head1)}</th>
+        ${three?`<th style="padding:8px 9px;text-align:center;font-weight:700;border-bottom:1px solid #d3ded8;box-sizing:border-box;white-space:normal;overflow-wrap:anywhere;word-break:normal">${pdfSafe(head2)}</th>`:''}
+        <th style="padding:8px 9px;text-align:right;font-weight:700;border-bottom:1px solid #d3ded8;box-sizing:border-box;white-space:normal;overflow-wrap:anywhere;word-break:normal">${pdfSafe(head3)}</th>
       </tr></thead>
       <tbody>${rows.map((r,i)=>{
         const bg=i%2===0?'#ffffff':'#fbfcfd';
         const emphasis=r.emphasis===true;
         return `<tr style="background:${emphasis?'#edf7f1':bg}">
-          <td style="padding:${compact?'6.1px 8px':'7.1px 9px'};border-bottom:1px solid #e7edf0;color:${emphasis?'#164c35':'#405463'};font-weight:${emphasis?850:650};box-sizing:border-box;white-space:normal;overflow-wrap:anywhere;word-break:normal;vertical-align:middle">${pdfSafe(r.label)}</td>
+          <td style="padding:${compact?'6.1px 8px':'7.1px 9px'};border-bottom:1px solid #e7edf0;color:${emphasis?'#164c35':'#405463'};font-weight:${emphasis?700:600};box-sizing:border-box;white-space:normal;overflow-wrap:anywhere;word-break:normal;vertical-align:middle">${pdfSafe(r.label)}</td>
           ${three?`<td style="padding:${compact?'6.1px 8px':'7.1px 9px'};border-bottom:1px solid #e7edf0;text-align:center;color:#63736b;box-sizing:border-box;white-space:normal;overflow-wrap:anywhere;word-break:normal;vertical-align:middle">${pdfSafe(r.detail||'—')}</td>`:''}
-          <td style="padding:${compact?'6.1px 8px':'7.1px 9px'};border-bottom:1px solid #e7edf0;text-align:right;color:${emphasis?'#0f5f3a':'#172c3d'};font-weight:${emphasis?900:800};font-family:'Inter','Hind Siliguri',sans-serif;font-variant-numeric:tabular-nums;box-sizing:border-box;white-space:normal;overflow-wrap:anywhere;word-break:normal;vertical-align:middle">${pdfSafe(r.value)}</td>
+          <td style="padding:${compact?'6.1px 8px':'7.1px 9px'};border-bottom:1px solid #e7edf0;text-align:right;color:${emphasis?'#0f5f3a':'#172c3d'};font-weight:${emphasis?700:700};font-family:'Hind Siliguri','Noto Sans Bengali','Inter',sans-serif;font-variant-numeric:tabular-nums;box-sizing:border-box;white-space:normal;overflow-wrap:anywhere;word-break:normal;vertical-align:middle">${pdfSafe(r.value)}</td>
         </tr>`;
       }).join('')}</tbody>
     </table>
@@ -207,11 +207,11 @@ function reportShell(title,subtitle,body,lang='bn',meta={}){
     <style>
       .premium-pdf-page,.premium-pdf-page *{box-sizing:border-box}
       .premium-pdf-page{overflow:visible!important}
-      .premium-pdf-page table{width:100%!important;max-width:100%!important}
+      .premium-pdf-page table{width:100%!important;max-width:100%!important;min-width:0!important;table-layout:fixed!important}
       .premium-pdf-page th,.premium-pdf-page td{max-width:100%;white-space:normal!important;overflow-wrap:anywhere!important;word-break:normal!important}
       .premium-pdf-page b,.premium-pdf-page span,.premium-pdf-page div{overflow-wrap:anywhere;word-break:normal}
-      .premium-pdf-page .pdf-table-wrap{break-inside:avoid;page-break-inside:avoid}
-      .premium-pdf-page .pdf-summary-card{break-inside:avoid;page-break-inside:avoid}
+      .premium-pdf-page .pdf-table-wrap{width:100%!important;max-width:100%!important;min-width:0!important;overflow:hidden!important;break-inside:avoid;page-break-inside:avoid}
+      .premium-pdf-page .pdf-summary-grid,.premium-pdf-page .pdf-body,.premium-pdf-page .pdf-section{width:100%!important;max-width:100%!important;min-width:0!important}.premium-pdf-page .pdf-summary-card{min-width:0!important;break-inside:avoid;page-break-inside:avoid}
     </style>
     <div class="pdf-frame" style="min-height:${pageMinHeight};height:auto;box-sizing:border-box;border:1px solid #c7d4dc;border-radius:13px;overflow:hidden;background:linear-gradient(180deg,#fff 0%,#fff 92%,#fbfcfd 100%);display:flex;flex-direction:column;box-shadow:0 0 0 1px #eef3f5 inset">
       <div style="height:4px;background:linear-gradient(90deg,#c7a34e,#ead58f,#1b7d58,#174f77)"></div>
@@ -249,7 +249,7 @@ function kv(label,value,opts={}){
   const emphasis=opts.emphasis===true;
   return `<div style="display:grid;grid-template-columns:minmax(0,45%) minmax(0,55%);gap:10px;padding:8px 2px;border-bottom:1px solid #e4eaee;align-items:center;min-width:0">
     <span style="min-width:0;color:${emphasis?'#174a36':'#4d606c'};font-size:11.6px;font-weight:${emphasis?700:600};line-height:1.42;white-space:normal;overflow-wrap:anywhere">${pdfSafe(label)}</span>
-    <b style="min-width:0;text-align:right;color:${emphasis?'#0d603a':'#172b3b'};font-size:${emphasis?'13.3px':'12.1px'};font-family:'Inter','Hind Siliguri',sans-serif;font-variant-numeric:tabular-nums;line-height:1.4;white-space:normal;overflow-wrap:anywhere">${pdfSafe(value)}</b>
+    <b style="min-width:0;text-align:right;color:${emphasis?'#0d603a':'#172b3b'};font-size:${emphasis?'13.3px':'12.1px'};font-family:'Hind Siliguri','Noto Sans Bengali','Inter',sans-serif;font-variant-numeric:tabular-nums;line-height:1.4;white-space:normal;overflow-wrap:anywhere">${pdfSafe(value)}</b>
   </div>`;
 }
 function section(title,content,opts={}){
@@ -302,7 +302,18 @@ async function buildA4Pdf(element,{coverText='PDF তৈরি হচ্ছে..
         frame.style.overflow='hidden';
       }
       const body=page.querySelector('.pdf-body');
-      if(body)body.style.overflow='visible';
+      if(body){body.style.overflow='visible';body.style.width='100%';body.style.maxWidth='100%';body.style.minWidth='0';}
+      page.querySelectorAll('table').forEach(t=>{
+        t.style.width='100%';
+        t.style.maxWidth='100%';
+        t.style.minWidth='0';
+        t.style.tableLayout='fixed';
+      });
+      page.querySelectorAll('.pdf-table-wrap,.pdf-section,.pdf-summary-grid').forEach(el=>{
+        el.style.width='100%';
+        el.style.maxWidth='100%';
+        el.style.minWidth='0';
+      });
 
       await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
       const canvas=await html2canvas(page,{
@@ -464,7 +475,7 @@ function PdfPreviewModal({html,filename,onClose,lang='bn',shareTitle='',shareSum
       </div>
     </div>
     <div className="pdf-preview-sharebar"><ReportShareActions html={html} filename={filename} title={title} summary={shareSummary} lang={lang}/></div>
-    <div className="pdf-preview-scroll"><div className="pdf-preview-paper"><div ref={reportRef} style={{background:'#fff'}} dangerouslySetInnerHTML={{__html:html}}/></div></div>
+    <div className="pdf-preview-scroll"><div className="pdf-preview-paper" style={{overflowX:'hidden'}}><div ref={reportRef} style={{background:'#fff',width:'100%',maxWidth:'100%',overflowX:'hidden'}} dangerouslySetInnerHTML={{__html:html}}/></div></div>
   </div>
 }
 
@@ -642,7 +653,7 @@ function salaryOctoberArrearReportHtml(base,lang='bn'){
     section(en?'Arrear settlement':'বকেয়া নিষ্পত্তি',pdfTable(settlementRows,{three:true,head1:en?'Settlement item':'সমন্বয়ের বিষয়',head2:en?'Period / basis':'সময়/ভিত্তি',head3:en?'Amount':'অংক'}),{table:true})+
     `<div style="margin-top:11px;border:2px solid #b9994d;border-radius:11px;padding:12px 14px;background:linear-gradient(120deg,#fffaf0,#f1faf5);display:flex;justify-content:space-between;align-items:center;gap:14px;min-width:0">
       <div><div style="font-size:9.7px;color:#6d795f;font-weight:700">${en?'OCTOBER 2026 FINAL ESTIMATE':'অক্টোবর ২০২৬ চূড়ান্ত আনুমানিক হিসাব'}</div><div style="font-size:14px;font-weight:700;color:#244b3a;margin-top:2px">${en?'Estimated total receivable':'আনুমানিক মোট প্রাপ্য'}</div></div>
-      <div style="font-size:24px;font-weight:900;color:#76591e;font-family:'Inter','Hind Siliguri',sans-serif;font-variant-numeric:tabular-nums">${pdfSafe(amt(a.octoberBillNet||0))}</div>
+      <div style="font-size:24px;font-weight:900;color:#76591e;font-family:'Hind Siliguri','Noto Sans Bengali','Inter',sans-serif;font-variant-numeric:tabular-nums">${pdfSafe(amt(a.octoberBillNet||0))}</div>
     </div>
     <div style="margin-top:8px;padding:9px 11px;background:#fff8e8;border-radius:8px;font-size:9.8px;color:#6b5728;line-height:1.48">${en?'Net figures are estimates based on the deduction inputs. Tax, loan or payroll-specific deductions may change the final office bill.':'নিট অংকগুলো দেওয়া কর্তনের তথ্য অনুযায়ী আনুমানিক। আয়কর, ঋণ বা অফিসভিত্তিক অন্য কর্তনের কারণে চূড়ান্ত বিল ভিন্ন হতে পারে।'}</div>`;
 
@@ -768,7 +779,7 @@ function salaryReportHtml(r,lang='bn',pdfMeta={}){
     </div>
     <div style="margin-top:10px;border:2px solid #b89a51;border-radius:11px;padding:11px 14px;background:linear-gradient(120deg,#fffaf0,#eff9f4);display:flex;justify-content:space-between;align-items:center;gap:14px;min-width:0">
       <div><div style="font-size:9.5px;color:#65745f;font-weight:800">${en?'FINAL MONTHLY ESTIMATE':'চূড়ান্ত মাসিক আনুমানিক হিসাব'}</div><div style="font-size:13px;font-weight:900;color:#244b3a;margin-top:2px">${en?'Estimated net payable salary':'আনুমানিক নিট প্রাপ্য বেতন'}</div></div>
-      <div style="font-size:24px;font-weight:900;color:#76591e;font-family:'Inter','Hind Siliguri',sans-serif;font-variant-numeric:tabular-nums">${pdfSafe(amt(r.net))}</div>
+      <div style="font-size:24px;font-weight:900;color:#76591e;font-family:'Hind Siliguri','Noto Sans Bengali','Inter',sans-serif;font-variant-numeric:tabular-nums">${pdfSafe(amt(r.net))}</div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px">
       <div style="padding:8px 10px;border-left:4px solid #1f6d4d;background:#effaf5;border-radius:8px;font-size:9.5px;color:#38594a;line-height:1.4"><b>${en?'Gazette rule:':'গেজেটের নিয়ম:'}</b> ${pdfSafe(ruleNote)}</div>
