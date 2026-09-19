@@ -186,7 +186,6 @@ function promotionReportHtml(r,lang='bn'){
 }
 function salaryReportHtml(r,lang='bn'){
   const en=lang==='en',f=r.input||{};
-  const cat=en?{officer:'Officer',class3:'Class III',class4:'Class IV'}:{officer:'কর্মকর্তা',class3:'তৃতীয় শ্রেণি',class4:'চতুর্থ শ্রেণি'};
   const amt=v=>`${en?'Tk':'৳'} ${moneyLang(v,lang)}`;
   const row=(label,value,bold=false)=>`<div style="display:grid;grid-template-columns:1fr auto;gap:18px;padding:7px 0;border-bottom:1px solid #e8ebf1"><span style="color:#4b5565">${escapeHtml(label)}</span><span style="font-weight:${bold?800:650};color:#172033;text-align:right">${escapeHtml(value)}</span></div>`;
   const rate=r.phase?.rate??r.rate??0;
@@ -202,11 +201,14 @@ function salaryReportHtml(r,lang='bn'){
     [en?'Laundry allowance':'ধোলাই ভাতা',r.laundry],
     [en?'Special-needs child allowance':'বিশেষ চাহিদাসম্পন্ন সন্তান ভাতা',r.disabledChild],
     [en?'Special area allowance':'বিশেষ এলাকা ভাতা',r.area],
-    [en?'Training allowance':'প্রশিক্ষণ ভাতা',r.training]
+    [en?'Training allowance':'প্রশিক্ষণ ভাতা',r.training],
+    [en?'Charge allowance':'কার্যভার ভাতা',r.charge],
+    [en?'Entertainment allowance':'আপ্যায়ন ভাতা',r.entertainment],
+    [en?'Other verified special allowance':'অন্যান্য যাচাইকৃত বিশেষ ভাতা',r.otherSpecial]
   ].filter(([,v],i)=>i===0||Number(v)>0);
   const deductionRows=[
-    [en?'Provident fund subscription (10%)':'ভবিষ্য তহবিল সাবস্ক্রিপশন (১০%)',r.pf],
-    [en?'Benevolent fund':'কল্যাণ তহবিল',r.bene],
+    [en?`GPF subscription (${numLang(r.gpfRate||0,'en',0)}%)`:`GPF সাবস্ক্রিপশন (${numLang(r.gpfRate||0,'bn',0)}%)`,r.pf],
+    [en?'Benevolent fund (entered)':'কল্যাণ তহবিল (প্রদত্ত অংক)',r.bene],
     [en?'Health insurance':'স্বাস্থ্য বীমা',r.health],
     [en?'Group insurance':'গ্রুপ বীমা',r.group],
     [en?'Revenue stamp':'রাজস্ব স্ট্যাম্প',r.stamp],
@@ -223,7 +225,7 @@ function salaryReportHtml(r,lang='bn'){
     ${row(en?'2026 fixed basic before annual increment':'২০২৬ নির্ধারিত মূল বেতন (বার্ষিক ইনক্রিমেন্টের আগে)',amt(r.fixed))}
     ${row(en?'Implementation phase':'বাস্তবায়ন ধাপ',r.phase?.label||`${numLang(rate*100,lang,0)}%`)}
     ${row(en?'Annual increments included':'অন্তর্ভুক্ত বার্ষিক ইনক্রিমেন্ট',numLang(r.dueIncrementCount||0,lang,0))}
-    ${row(en?'Employee category':'কর্মচারী শ্রেণি',cat[f.category]||'—')}
+    ${row(en?'GPF rate selected':'নির্বাচিত GPF হার',`${numLang(r.gpfRate||0,lang,0)}%`)}
     ${row(en?'Work location':'কর্মস্থল',zoneLabel)}
   </div>`;
   const earn=earningRows.map(([l,v])=>row(l,amt(v))).join('')+row(en?'Gross monthly salary':'মোট মাসিক প্রাপ্য',amt(r.gross),true);
@@ -244,7 +246,7 @@ function salaryReportHtml(r,lang='bn'){
       <span style="font-size:24px;font-weight:900;color:#111936">${amt(r.net)}</span>
     </div>
     <div style="margin-top:12px;padding:10px 12px;border-left:4px solid #1f6d4d;background:#effaf5;border-radius:8px;font-size:10.5px"><b>${en?'Gazette rule:':'গেজেটের নিয়ম:'}</b> ${escapeHtml(ruleNote)}</div>
-    <div style="margin-top:9px;padding:10px 12px;border-left:4px solid #d59b35;background:#fff8e8;border-radius:8px;font-size:10.5px"><b>${en?'Deduction note:':'কর্তন নোট:'}</b> ${en?'Provident/benevolent and user-entered deductions use the platform’s existing settings and should be checked against the employee’s actual payroll deductions.':'ভবিষ্য তহবিল/কল্যাণ তহবিল ও ব্যবহারকারী-প্রদত্ত কর্তন প্ল্যাটফর্মের বিদ্যমান সেটিং অনুযায়ী দেখানো হয়েছে; ব্যক্তির প্রকৃত পে-রোল কর্তনের সঙ্গে মিলিয়ে দেখুন।'}</div>`;
+    <div style="margin-top:9px;padding:10px 12px;border-left:4px solid #d59b35;background:#fff8e8;border-radius:8px;font-size:10.5px"><b>${en?'Deduction note:':'কর্তন নোট:'}</b> ${en?'GPF uses the selected rate; other deductions are user-entered employee-specific amounts and should be checked against the actual payroll.':'GPF নির্বাচিত হার অনুযায়ী; অন্যান্য কর্তন ব্যবহারকারী-প্রদত্ত ব্যক্তিভেদে অংক এবং প্রকৃত পে-রোলের সঙ্গে মিলিয়ে দেখা প্রয়োজন।'}</div>`;
   return reportShell(title,en?'A4 payslip-style statement based on the 17 September 2026 gazette':'১৭ সেপ্টেম্বর ২০২৬-এর গেজেটভিত্তিক এ-ফোর বেতন বিবরণী',body,lang);
 }
 
@@ -1259,9 +1261,10 @@ function SalaryCalculator({lang='bn',publicMode=false}){
   const en=lang==='en',today=todayLocalIso();
   const [f,setF]=useState({
     grade:'13',currentStage:'0',date:today,housing:'no',children:'0',tiffin:'yes',zone:'dhaka',
-    category:'class3',ageBand:'under50',incrementEligible2026:'yes',mobile:'yes',laundry:'no',
-    disabledChildren:'0',areaType:'none',trainingInstructor:'no',
-    health:'149.34',group:'192.50',stamp:'10',association:'10',tax:'0',loan:'0',other:'0'
+    ageBand:'under50',incrementEligible2026:'yes',mobile:'yes',laundry:'no',
+    disabledChildren:'0',areaType:'none',trainingInstructor:'no',chargeAllowance:'no',
+    entertainmentTier:'none',otherSpecialAllowance:'0',
+    gpfRate:'10',benevolent:'0',health:'0',group:'0',stamp:'0',association:'0',tax:'0',loan:'0',other:'0'
   });
   const [r,setR]=useState(null);
   const stages=PAY2015[f.grade]||[];
@@ -1272,22 +1275,23 @@ function SalaryCalculator({lang='bn',publicMode=false}){
       grade,currentBasic,date:f.date||today,incrementEligible2026:f.incrementEligible2026==='yes',
       housing:f.housing,zone:f.zone,ageBand:f.ageBand,children:f.children,tiffin:f.tiffin==='yes',
       conveyance:true,mobile:f.mobile==='yes',laundry:f.laundry==='yes',disabledChildren:f.disabledChildren,
-      areaType:f.areaType,trainingInstructor:f.trainingInstructor==='yes'
+      areaType:f.areaType,trainingInstructor:f.trainingInstructor==='yes',chargeAllowance:f.chargeAllowance==='yes',
+      entertainmentTier:f.entertainmentTier,otherSpecialAllowance:f.otherSpecialAllowance
     });
     const payable=snap.payableBasic,house=snap.allowances.house,medical=snap.allowances.medical,
       education=snap.allowances.education,tiffin=snap.allowances.tiffin,conveyance=snap.allowances.conveyance,
       mobile=snap.allowances.mobile,laundry=snap.allowances.laundry,disabledChild=snap.allowances.disabledChild,
-      area=snap.allowances.area,training=snap.allowances.training,gross=snap.gross;
-    const pf=Math.round(payable*.10*100)/100,
-      beneRate=f.category==='officer'?.05:f.category==='class4'?.0275:.04,
-      bene=Math.round(payable*beneRate*100)/100,
+      area=snap.allowances.area,training=snap.allowances.training,charge=snap.allowances.charge,
+      entertainment=snap.allowances.entertainment,otherSpecial=snap.allowances.otherSpecial,gross=snap.gross;
+    const gpfRate=Math.max(0,Math.min(25,Number(f.gpfRate||0))),
+      pf=Math.round(payable*(gpfRate/100)*100)/100,
+      bene=Number(f.benevolent||0),
       health=Number(f.health||0),group=Number(f.group||0),stamp=Number(f.stamp||0),
       association=Number(f.association||0),tax=Number(f.tax||0),loan=Number(f.loan||0),other=Number(f.other||0);
     const deductions=pf+bene+health+group+stamp+association+tax+loan+other;
-    setR({...snap,currentIndex,currentBasic,payable,house,medical,education,tiffin,conveyance,mobile,laundry,disabledChild,area,training,gross,pf,bene,health,group,stamp,association,tax,loan,other,deductions,net:gross-deductions,input:{...f}});
+    setR({...snap,currentIndex,currentBasic,payable,house,medical,education,tiffin,conveyance,mobile,laundry,disabledChild,area,training,charge,entertainment,otherSpecial,gross,gpfRate,pf,bene,health,group,stamp,association,tax,loan,other,deductions,net:gross-deductions,input:{...f}});
   }
   useEffect(()=>{setF(x=>({...x,currentStage:'0'}));setR(null)},[f.grade]);
-  const catOpts=en?[['officer','Officer'],['class3','Class III'],['class4','Class IV']]:[['officer','কর্মকর্তা'],['class3','তৃতীয় শ্রেণি'],['class4','চতুর্থ শ্রেণি']];
   const zoneOpts=en?[
     ['dhaka','Dhaka North/South City Corporation'],
     ['major','Other listed City Corporations'],
@@ -1310,7 +1314,6 @@ function SalaryCalculator({lang='bn',publicMode=false}){
       <label>{en?'Government housing facility':'সরকারি বাসা সুবিধা'}<select value={f.housing} onChange={e=>setF({...f,housing:e.target.value})}><option value="no">{en?'No':'না'}</option><option value="yes">{en?'Yes':'হ্যাঁ'}</option></select></label>
       <label>{en?'Age for medical allowance':'চিকিৎসা ভাতার বয়স'}<select value={f.ageBand} onChange={e=>setF({...f,ageBand:e.target.value})}><option value="under50">{en?'Up to 50 years':'৫০ বছর পর্যন্ত'}</option><option value="over50">{en?'Above 50 years':'৫০ বছরের বেশি'}</option></select></label>
       <label>{en?'Children for education allowance':'শিক্ষা সহায়ক ভাতার সন্তান'}<select value={f.children} onChange={e=>setF({...f,children:e.target.value})}><option value="0">{numLang(0,lang,0)}</option><option value="1">{numLang(1,lang,0)}</option><option value="2">{numLang(2,lang,0)}</option></select></label>
-      <label>{en?'Employee category':'কর্মচারী শ্রেণি'}<select value={f.category} onChange={e=>setF({...f,category:e.target.value})}>{catOpts.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
       <label>{en?'Tiffin allowance applicable':'টিফিন ভাতা প্রযোজ্য'}<select value={f.tiffin} onChange={e=>setF({...f,tiffin:e.target.value})}><option value="yes">{en?'Yes':'হ্যাঁ'}</option><option value="no">{en?'No / free meal provided':'না / বিনামূল্যে খাবার পাই'}</option></select></label>
     </div>
     <details className="deduction-box official-extra-options"><summary>{en?'Optional 2028 allowances & special-area benefits':'ঐচ্ছিক ২০২৮ ভাতা ও বিশেষ এলাকার সুবিধা'}</summary><div className="form-grid compact">
@@ -1319,8 +1322,14 @@ function SalaryCalculator({lang='bn',publicMode=false}){
       <label>{en?'Children with special needs':'বিশেষ চাহিদাসম্পন্ন সন্তান'}<select value={f.disabledChildren} onChange={e=>setF({...f,disabledChildren:e.target.value})}><option value="0">0</option><option value="1">1</option><option value="2">2</option></select></label>
       <label>{en?'Special area allowance':'বিশেষ এলাকা ভাতা'}<select value={f.areaType} onChange={e=>setF({...f,areaType:e.target.value})}><option value="none">{en?'None':'নেই'}</option><option value="hill_district">{en?'Hill district HQ / Sadar Upazila':'পার্বত্য জেলার সদর/সদর উপজেলা'}</option><option value="hill_upazila">{en?'Other hill Upazila':'অন্যান্য পার্বত্য উপজেলা'}</option><option value="haor_island_char">{en?'Haor / island / char area':'হাওড় / দ্বীপ / চর এলাকা'}</option></select></label>
       <label>{en?'Instructor in training institution (Grade 1–9)':'প্রশিক্ষণ প্রতিষ্ঠানে প্রশিক্ষক (গ্রেড ১–৯)'}<select value={f.trainingInstructor} onChange={e=>setF({...f,trainingInstructor:e.target.value})}><option value="no">{en?'No':'না'}</option><option value="yes">{en?'Yes':'হ্যাঁ'}</option></select></label>
+      <label>{en?'Charge allowance':'কার্যভার ভাতা'}<select value={f.chargeAllowance} onChange={e=>setF({...f,chargeAllowance:e.target.value})}><option value="no">{en?'Not applicable':'প্রযোজ্য নয়'}</option><option value="yes">{en?'Applicable — Tk 1,500/month':'প্রযোজ্য — মাসিক ৳১,৫০০'}</option></select></label>
+      <label>{en?'Entertainment allowance tier':'আপ্যায়ন ভাতার স্তর'}<select value={f.entertainmentTier} onChange={e=>setF({...f,entertainmentTier:e.target.value})}><option value="none">{en?'Not applicable':'প্রযোজ্য নয়'}</option><option value="cabinet">{en?'Cabinet/Principal Secretary — Tk 2,000':'মন্ত্রিপরিষদ/মুখ্য সচিব — ৳২,০০০'}</option><option value="secretary">{en?'Senior Secretary/Secretary — Tk 1,000':'সিনিয়র সচিব/সচিব — ৳১,০০০'}</option><option value="additional_secretary">{en?'Additional Secretary — Tk 900':'অতিরিক্ত সচিব — ৳৯০০'}</option><option value="joint_secretary">{en?'Joint Secretary / entitled officer — Tk 600':'যুগ্মসচিব/অন্যান্য অধিকারপ্রাপ্ত — ৳৬০০'}</option></select></label>
+      <label>{en?'Other verified special allowance (monthly)':'অন্যান্য যাচাইকৃত বিশেষ ভাতা (মাসিক)'}<input type="number" min="0" step="1" value={f.otherSpecialAllowance} onChange={e=>setF({...f,otherSpecialAllowance:e.target.value})} placeholder="0"/></label>
     </div></details>
-    <details className="deduction-box"><summary>{en?'Edit current/user-specific deductions':'বর্তমান/ব্যক্তিভেদে কর্তন সম্পাদনা'}</summary><div className="form-grid compact">{(en?[['health','Health insurance'],['group','Group insurance'],['stamp','Revenue stamp'],['association','Association'],['tax','Income tax'],['loan','Loan'],['other','Other']]:[['health','স্বাস্থ্য বীমা'],['group','গ্রুপ বীমা'],['stamp','রাজস্ব স্ট্যাম্প'],['association','সমিতি'],['tax','আয়কর'],['loan','ঋণ'],['other','অন্যান্য']]).map(([k,l])=><label key={k}>{l}<input type="number" step="0.01" value={f[k]} onChange={e=>setF({...f,[k]:e.target.value})}/></label>)}</div></details>
+    <details className="deduction-box"><summary>{en?'Edit GPF and employee-specific deductions':'GPF ও ব্যক্তিভেদে কর্তন সম্পাদনা'}</summary><div className="form-grid compact">
+      <label>{en?'GPF subscription rate':'GPF সাবস্ক্রিপশন হার'}<select value={f.gpfRate} onChange={e=>setF({...f,gpfRate:e.target.value})}><option value="0">{en?'Not applicable':'প্রযোজ্য নয়'}</option>{Array.from({length:21},(_,i)=>i+5).map(x=><option value={x} key={x}>{numLang(x,lang,0)}%</option>)}</select></label>
+      {(en?[['benevolent','Benevolent fund (actual amount)'],['health','Health insurance (actual amount)'],['group','Group insurance (actual amount)'],['stamp','Revenue stamp'],['association','Association'],['tax','Income tax'],['loan','Loan/advance installment'],['other','Other deduction']]:[['benevolent','কল্যাণ তহবিল (প্রকৃত অংক)'],['health','স্বাস্থ্য বীমা (প্রকৃত অংক)'],['group','গ্রুপ বীমা (প্রকৃত অংক)'],['stamp','রাজস্ব স্ট্যাম্প'],['association','সমিতি'],['tax','আয়কর'],['loan','ঋণ/অগ্রিম কিস্তি'],['other','অন্যান্য কর্তন']]).map(([k,l])=><label key={k}>{l}<input type="number" min="0" step="0.01" value={f[k]} onChange={e=>setF({...f,[k]:e.target.value})}/></label>)}
+    </div><div className="notice compact-notice">{en?'GPF subscription is selectable from 5% to 25% of basic pay when applicable; other deductions vary by employee and must be entered from the actual payroll.':'GPF প্রযোজ্য হলে মূল বেতনের ৫%–২৫% হার নির্বাচন করা যাবে; অন্যান্য কর্তন ব্যক্তিভেদে ভিন্ন, তাই প্রকৃত পে-রোল অনুযায়ী অংক দিন।'}</div></details>
     <button className="primary wide" onClick={calc}>{en?'Calculate official pay':'সরকারি নিয়মে হিসাব করুন'}</button></section>
     {r&&<SalaryResult r={r} lang={lang}/>}
   </div>
@@ -1331,13 +1340,15 @@ function SalaryResult({r,lang='bn'}){
   const allowances=en?[
     ['House rent',r.house],['Medical allowance',r.medical],['Education allowance',r.education],['Tiffin allowance',r.tiffin],
     ['Conveyance allowance',r.conveyance],['Mobile allowance',r.mobile],['Laundry allowance',r.laundry],
-    ['Special-needs child allowance',r.disabledChild],['Special area allowance',r.area],['Training allowance',r.training]
+    ['Special-needs child allowance',r.disabledChild],['Special area allowance',r.area],['Training allowance',r.training],
+    ['Charge allowance',r.charge],['Entertainment allowance',r.entertainment],['Other verified special allowance',r.otherSpecial]
   ]:[
     ['বাড়িভাড়া',r.house],['চিকিৎসা ভাতা',r.medical],['শিক্ষা সহায়ক ভাতা',r.education],['টিফিন ভাতা',r.tiffin],
     ['যাতায়াত ভাতা',r.conveyance],['মোবাইল ভাতা',r.mobile],['ধোলাই ভাতা',r.laundry],
-    ['বিশেষ চাহিদাসম্পন্ন সন্তান ভাতা',r.disabledChild],['বিশেষ এলাকা ভাতা',r.area],['প্রশিক্ষণ ভাতা',r.training]
+    ['বিশেষ চাহিদাসম্পন্ন সন্তান ভাতা',r.disabledChild],['বিশেষ এলাকা ভাতা',r.area],['প্রশিক্ষণ ভাতা',r.training],
+    ['কার্যভার ভাতা',r.charge],['আপ্যায়ন ভাতা',r.entertainment],['অন্যান্য যাচাইকৃত বিশেষ ভাতা',r.otherSpecial]
   ];
-  const deds=en?[['Provident fund subscription 10%',r.pf],['Benevolent fund',r.bene],['Health insurance',r.health],['Group insurance',r.group],['Revenue stamp',r.stamp],['Association',r.association],['Income tax',r.tax],['Loan',r.loan],['Other',r.other]]:[['ভবিষ্য তহবিল সাবস্ক্রিপশন ১০%',r.pf],['কল্যাণ তহবিল',r.bene],['স্বাস্থ্য বীমা',r.health],['গ্রুপ বীমা',r.group],['রাজস্ব স্ট্যাম্প',r.stamp],['সমিতি',r.association],['আয়কর',r.tax],['ঋণ',r.loan],['অন্যান্য',r.other]];
+  const deds=en?[[`GPF subscription ${numLang(r.gpfRate||0,'en',0)}%`,r.pf],['Benevolent fund (entered)',r.bene],['Health insurance (entered)',r.health],['Group insurance (entered)',r.group],['Revenue stamp',r.stamp],['Association',r.association],['Income tax',r.tax],['Loan/advance',r.loan],['Other',r.other]]:[[`GPF সাবস্ক্রিপশন ${numLang(r.gpfRate||0,'bn',0)}%`,r.pf],['কল্যাণ তহবিল (প্রদত্ত অংক)',r.bene],['স্বাস্থ্য বীমা (প্রদত্ত অংক)',r.health],['গ্রুপ বীমা (প্রদত্ত অংক)',r.group],['রাজস্ব স্ট্যাম্প',r.stamp],['সমিতি',r.association],['আয়কর',r.tax],['ঋণ/অগ্রিম',r.loan],['অন্যান্য',r.other]];
   return <div className="result-stack">
     <section className="result-panel ok"><small>{en?'Payable basic on selected date':'নির্বাচিত তারিখে প্রাপ্য মূল বেতন'}</small><h3>{amt(r.payableBasic)}</h3><p>{en?`2015 basic ${amt(r.currentBasic)} · 2026 fixation (before annual increment) ${amt(r.fixed)}`:`২০১৫ মূল বেতন ${amt(r.currentBasic)} · ২০২৬-এ নির্ধারিত মূল বেতন (বার্ষিক ইনক্রিমেন্টের আগে) ${amt(r.fixed)}`}</p><div className="pay-phase-chip">{r.phase.label}</div></section>
     <section className="salary-summary">
@@ -1352,7 +1363,7 @@ function SalaryResult({r,lang='bn'}){
     <div className="split-grid"><section className="breakdown-card"><h3>{en?'Monthly allowances':'মাসিক ভাতা'}</h3>{allowances.filter(([,v])=>Number(v)>0).map(([l,v])=><div className="money-row" key={l}><span>{l}</span><b>{amt(v)}</b></div>)}{r.allowance2026&&r.houseRate>0&&<div className="money-row source-row"><span>{en?'House-rent rate':'বাড়িভাড়া হার'}</span><b>{numLang(r.houseRate,lang,0)}%</b></div>}{r.allowance2026&&<div className="money-row annual-row"><span>{en?'Bangla New Year allowance (annual)':'বাংলা নববর্ষ ভাতা (বার্ষিক)'}</span><b>{amt(r.banglaNewYear)}</b></div>}</section>
       <section className="breakdown-card"><h3>{en?'Deductions':'কর্তনসমূহ'}</h3>{deds.map(([l,v])=><div className="money-row" key={l}><span>{l}</span><b>{amt(v)}</b></div>)}</section></div>
     <div className="notice official-pay-note"><b>{en?'Official rule status:':'সরকারি নিয়ম:'}</b> {r.allowance2026?(en?'The new allowance rates are applied because the selected date is on/after 1 January 2028.':'নির্বাচিত তারিখ ১ জানুয়ারি ২০২৮ বা পরের হওয়ায় নতুন ভাতার হার প্রয়োগ হয়েছে।'):(en?'Until 31 December 2027 the pre-existing allowance amounts/rates remain in force; new 2028 allowances are not applied.':'৩১ ডিসেম্বর ২০২৭ পর্যন্ত আগের ভাতার অংক/হার বহাল; ২০২৮-এর নতুন ভাতা এখনো প্রয়োগ হয়নি।')}</div>
-    <div className="notice"><b>{en?'Deduction note:':'কর্তন নোট:'}</b> {en?'Provident/benevolent and user-entered deductions are shown using the platform’s existing deduction settings; verify account-specific deductions with the drawing/disbursing office.':'ভবিষ্য তহবিল/কল্যাণ তহবিল ও ব্যবহারকারী-প্রদত্ত কর্তন প্ল্যাটফর্মের বিদ্যমান সেটিং অনুযায়ী দেখানো হয়েছে; ব্যক্তিভেদে কর্তন সংশ্লিষ্ট হিসাবরক্ষণ/ডিডিও অফিসে যাচাই করুন।'}</div>
+    <div className="notice"><b>{en?'Deduction note:':'কর্তন নোট:'}</b> {en?'GPF uses the rate you selected (5%–25% when applicable). All other deduction fields are employee-specific manual amounts; they are not presented as fixed gazette rates.':'GPF আপনার নির্বাচিত হার অনুযায়ী (প্রযোজ্য হলে ৫%–২৫%) হিসাব করা হয়। অন্য সব কর্তন ব্যক্তিভেদে ম্যানুয়াল অংক; এগুলোকে গেজেটের নির্দিষ্ট স্থির হার হিসেবে দেখানো হচ্ছে না।'}</div>
     <button className="primary wide" onClick={()=>setPreview(true)}><FileText size={17}/> {en?'A4 Payslip Preview':'এ-ফোর পে-স্লিপ প্রিভিউ'}</button>{preview&&<PdfPreviewModal html={report} filename={filename} onClose={()=>setPreview(false)} lang={lang}/>}
   </div>
 }
