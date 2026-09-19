@@ -1,0 +1,744 @@
+/* Mobile Premium Public Experience v1
+   Mobile-first calculator UX without changing desktop layouts. */
+
+.public-mobile-dock,
+.mobile-calc-sheet-backdrop{display:none}
+
+@media(max-width:760px){
+  html{
+    scroll-padding-top:72px;
+  }
+  body{
+    padding-bottom:78px;
+    background:#f3f7fb;
+  }
+
+  /* Compact, premium public header */
+  .approved-header{
+    position:sticky!important;
+    top:0!important;
+    z-index:9500!important;
+    min-height:62px!important;
+    padding:8px 12px!important;
+    gap:8px!important;
+    background:rgba(255,255,255,.96)!important;
+    -webkit-backdrop-filter:blur(16px);
+    backdrop-filter:blur(16px);
+    border-bottom:1px solid #e2eaf1!important;
+    box-shadow:0 8px 26px rgba(15,39,66,.07)!important;
+  }
+  .approved-header .approved-brand{
+    min-width:0!important;
+    flex:1!important;
+  }
+  .approved-header .approved-brand>span{
+    width:38px!important;
+    height:38px!important;
+    border-radius:11px!important;
+  }
+  .approved-header .approved-brand b{
+    display:block!important;
+    max-width:185px!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+    font-size:13px!important;
+    line-height:1.2!important;
+  }
+  .approved-header .approved-brand small{
+    display:none!important;
+  }
+  .approved-actions{
+    gap:5px!important;
+    flex:0 0 auto!important;
+  }
+  .approved-actions .sign-in,
+  .approved-actions .new-account{
+    display:none!important;
+  }
+  .approved-actions .lang-btn{
+    min-width:50px!important;
+    height:38px!important;
+    padding:0 9px!important;
+    border-radius:10px!important;
+    font-size:10px!important;
+    font-weight:900!important;
+  }
+  .approved-actions .menu{
+    display:flex!important;
+    min-width:54px!important;
+    height:38px!important;
+    padding:0 9px!important;
+    align-items:center!important;
+    justify-content:center!important;
+    border-radius:10px!important;
+    font-size:10px!important;
+  }
+  .approved-header>nav{
+    position:absolute!important;
+    top:calc(100% + 1px)!important;
+    left:10px!important;
+    right:10px!important;
+    display:none!important;
+    max-height:calc(100vh - 150px)!important;
+    overflow:auto!important;
+    padding:8px!important;
+    border:1px solid #dbe5ed!important;
+    border-radius:16px!important;
+    background:#fff!important;
+    box-shadow:0 24px 60px rgba(15,37,61,.2)!important;
+  }
+  .approved-header>nav.open{
+    display:flex!important;
+    flex-direction:column!important;
+  }
+  .approved-header>nav>button,
+  .public-nav-dropdown>summary{
+    min-height:48px!important;
+    border-radius:11px!important;
+    border-bottom:0!important;
+    padding:0 12px!important;
+    font-size:13px!important;
+  }
+  .pay-scale-main-nav{
+    margin:0!important;
+  }
+
+  /* Homepage: faster and less visual noise */
+  .approved-hero{
+    min-height:auto!important;
+    padding:34px 16px 32px!important;
+    grid-template-columns:1fr!important;
+    border-radius:0!important;
+  }
+  .approved-hero-copy{
+    max-width:none!important;
+  }
+  .approved-kicker{
+    font-size:9px!important;
+  }
+  .approved-hero h1{
+    margin-top:10px!important;
+    font-size:29px!important;
+    line-height:1.22!important;
+    letter-spacing:-.3px!important;
+  }
+  .approved-hero-copy>p{
+    font-size:13px!important;
+    line-height:1.65!important;
+  }
+  .approved-hero-buttons{
+    grid-template-columns:1fr!important;
+    gap:9px!important;
+  }
+  .approved-hero-buttons button{
+    min-height:50px!important;
+    border-radius:14px!important;
+    font-size:13px!important;
+  }
+  .approved-trust{
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    gap:7px!important;
+  }
+  .approved-trust span{
+    font-size:10px!important;
+  }
+  .native-device-stage{
+    display:none!important;
+  }
+
+  .approved-section{
+    padding-left:12px!important;
+    padding-right:12px!important;
+  }
+  .approved-section-title{
+    text-align:left!important;
+  }
+  .approved-section-title h2{
+    font-size:22px!important;
+    line-height:1.25!important;
+  }
+  .approved-section-title p{
+    font-size:12px!important;
+    line-height:1.55!important;
+  }
+  .calculator-hub-grid{
+    gap:9px!important;
+  }
+  .calculator-hub-grid>button{
+    min-height:auto!important;
+    padding:14px!important;
+    border-radius:17px!important;
+    box-shadow:0 8px 24px rgba(18,51,78,.06)!important;
+  }
+  .hub-icon{
+    width:42px!important;
+    height:42px!important;
+  }
+  .calculator-hub-grid h3{
+    font-size:16px!important;
+  }
+  .calculator-hub-grid p{
+    font-size:11px!important;
+    line-height:1.45!important;
+  }
+
+  /* Dedicated calculator page */
+  .public-dedicated-calculator{
+    padding:12px 0 98px!important;
+    background:linear-gradient(180deg,#f7fafc 0,#eef4f8 100%)!important;
+  }
+  .public-tool-page-head{
+    margin-bottom:10px!important;
+    padding:0 12px!important;
+  }
+  .back-home-tool{
+    min-height:38px!important;
+    border-radius:10px!important;
+    font-size:11px!important;
+  }
+  .public-tool-page-head>div{
+    margin-top:12px!important;
+  }
+  .public-tool-page-head h1{
+    font-size:23px!important;
+    line-height:1.2!important;
+  }
+  .public-tool-page-head p{
+    display:none!important;
+  }
+  .public-tool-only-shell{
+    padding:0 10px!important;
+  }
+  .public-tool-only-shell .points-panel,
+  .public-tool-only-shell .calculator-tool-card{
+    padding:14px!important;
+    border-radius:18px!important;
+    box-shadow:0 12px 34px rgba(19,45,69,.07)!important;
+  }
+  .public-tool-only-shell .form-grid,
+  .public-single-calculator .form-grid{
+    grid-template-columns:1fr!important;
+    gap:11px!important;
+  }
+
+  /* Salary page: short intro, quick facts carousel */
+  .public-dedicated-calculator>.public-pay-hub,
+  .public-pay-hub{
+    padding:16px 10px 24px!important;
+    background:transparent!important;
+  }
+  .public-pay-hub>.approved-section-title{
+    margin-bottom:12px!important;
+    padding:0 2px!important;
+  }
+  .public-pay-hub>.approved-section-title>span{
+    display:inline-flex!important;
+    padding:5px 8px!important;
+    border-radius:999px!important;
+    background:#e8f5ee!important;
+    color:#116b43!important;
+    font-size:8px!important;
+    font-weight:900!important;
+  }
+  .public-pay-hub>.approved-section-title h2{
+    margin:7px 0 4px!important;
+    font-size:21px!important;
+  }
+  .public-pay-hub>.approved-section-title p{
+    font-size:11px!important;
+    line-height:1.45!important;
+  }
+  .public-pay-facts{
+    display:flex!important;
+    grid-template-columns:none!important;
+    gap:9px!important;
+    margin:12px 0 14px!important;
+    padding:0 1px 5px!important;
+    overflow-x:auto!important;
+    scroll-snap-type:x mandatory;
+    scrollbar-width:none;
+  }
+  .public-pay-facts::-webkit-scrollbar{display:none}
+  .public-pay-facts article{
+    flex:0 0 76%!important;
+    min-height:92px!important;
+    padding:13px!important;
+    border-radius:15px!important;
+    scroll-snap-align:start;
+    box-shadow:0 7px 20px rgba(17,56,41,.05)!important;
+  }
+  .public-pay-facts b{
+    font-size:14px!important;
+  }
+  .public-pay-facts span{
+    font-size:10.5px!important;
+    line-height:1.45!important;
+  }
+
+  /* Main salary form */
+  .public-salary-calculator .page-head{
+    display:none!important;
+  }
+  .public-pay-hub .calc-card{
+    padding:13px!important;
+    border-radius:18px!important;
+    border-color:#dbe6e1!important;
+    box-shadow:0 14px 36px rgba(16,58,42,.07)!important;
+  }
+  .public-pay-hub .form-grid{
+    grid-template-columns:1fr!important;
+    gap:10px!important;
+  }
+  .public-pay-hub label{
+    color:#304b40!important;
+    font-size:11px!important;
+    font-weight:800!important;
+    line-height:1.35!important;
+  }
+  .public-pay-hub select,
+  .public-pay-hub input[type="date"],
+  .public-pay-hub input[type="number"]{
+    min-height:50px!important;
+    margin-top:5px!important;
+    padding:0 13px!important;
+    border:1px solid #cfddd6!important;
+    border-radius:13px!important;
+    background:#fff!important;
+    color:#142f24!important;
+    font-size:13px!important;
+    box-shadow:0 3px 10px rgba(26,58,45,.025)!important;
+  }
+  .public-pay-hub select:focus,
+  .public-pay-hub input:focus{
+    outline:none!important;
+    border-color:#57a57d!important;
+    box-shadow:0 0 0 3px rgba(28,133,86,.1)!important;
+  }
+  .deduction-box{
+    border-radius:14px!important;
+    margin-top:10px!important;
+  }
+  .deduction-box>summary{
+    min-height:48px!important;
+    padding:10px 12px!important;
+    font-size:11.5px!important;
+  }
+  .du-deduction-summary.simple{
+    min-height:50px!important;
+  }
+  .du-auto-deduction-card{
+    min-height:70px!important;
+    padding:10px 12px!important;
+    border-radius:12px!important;
+  }
+  .du-auto-deduction-card small{
+    font-size:9.5px!important;
+  }
+  .du-auto-deduction-card b{
+    font-size:15px!important;
+  }
+  .du-auto-deduction-card span{
+    font-size:9px!important;
+  }
+  .public-pay-hub .calc-card>.primary.wide{
+    position:sticky!important;
+    bottom:76px!important;
+    z-index:50!important;
+    min-height:54px!important;
+    margin-top:12px!important;
+    border-radius:14px!important;
+    box-shadow:0 14px 34px rgba(64,66,235,.25)!important;
+    font-size:14px!important;
+  }
+
+  /* Result opens immediately after submit */
+  .salary-result-anchor{
+    scroll-margin-top:74px;
+  }
+  .result-stack{
+    gap:11px!important;
+  }
+  .result-year-tabs{
+    position:sticky!important;
+    top:66px!important;
+    z-index:45!important;
+    grid-template-columns:repeat(3,1fr)!important;
+    gap:6px!important;
+    padding:7px!important;
+    margin:0 -2px!important;
+    border:1px solid #dce6e1!important;
+    border-radius:15px!important;
+    background:rgba(255,255,255,.94)!important;
+    -webkit-backdrop-filter:blur(12px);
+    backdrop-filter:blur(12px);
+    box-shadow:0 7px 22px rgba(21,57,43,.08)!important;
+  }
+  .result-year-tabs button{
+    min-height:54px!important;
+    padding:7px 6px!important;
+    border-radius:10px!important;
+    text-align:center!important;
+    box-shadow:none!important;
+  }
+  .result-year-tabs button span{
+    font-size:15px!important;
+  }
+  .result-year-tabs button small{
+    display:none!important;
+  }
+  .selected-year-panel{
+    border-radius:16px!important;
+  }
+  .selected-year-head{
+    padding:12px 13px!important;
+    flex-direction:column!important;
+    align-items:flex-start!important;
+    gap:4px!important;
+  }
+  .selected-year-head h3{
+    font-size:16px!important;
+  }
+  .selected-year-head small{
+    text-align:left!important;
+    font-size:9.5px!important;
+  }
+  .selected-year-stages,
+  .selected-year-stages.stages-2{
+    grid-template-columns:1fr!important;
+  }
+  .selected-year-stages article{
+    padding:13px!important;
+    border-right:0!important;
+    border-bottom:1px solid #e7eeea!important;
+  }
+  .selected-year-stages article:last-child{
+    border-bottom:0!important;
+  }
+  .selected-year-stages article>b{
+    font-size:22px!important;
+  }
+  .selected-year-main{
+    border-radius:16px!important;
+    padding:15px!important;
+  }
+  .selected-year-main h3{
+    font-size:25px!important;
+  }
+  .salary-summary{
+    grid-template-columns:1fr 1fr!important;
+    gap:8px!important;
+  }
+  .salary-summary article{
+    min-height:86px!important;
+    padding:12px!important;
+    border-radius:14px!important;
+  }
+  .salary-summary article small{
+    font-size:9px!important;
+    line-height:1.35!important;
+  }
+  .salary-summary article b{
+    font-size:16px!important;
+  }
+  .split-grid{
+    grid-template-columns:1fr!important;
+    gap:10px!important;
+  }
+  .breakdown-card{
+    padding:13px!important;
+    border-radius:15px!important;
+  }
+  .breakdown-card h3{
+    font-size:15px!important;
+  }
+  .money-row{
+    padding:9px 0!important;
+    font-size:11px!important;
+  }
+  .official-pay-note,
+  .notice{
+    border-radius:13px!important;
+    padding:11px!important;
+    font-size:10px!important;
+    line-height:1.5!important;
+  }
+
+  /* PDF download: large touch targets, combined download emphasized */
+  .year-download-center{
+    border-radius:17px!important;
+    box-shadow:0 14px 36px rgba(18,60,44,.08)!important;
+  }
+  .year-download-head{
+    padding:13px!important;
+    flex-direction:column!important;
+    align-items:flex-start!important;
+    gap:3px!important;
+  }
+  .year-download-head h3{
+    font-size:16px!important;
+  }
+  .year-download-head small{
+    text-align:left!important;
+    font-size:9.5px!important;
+  }
+  .year-download-grid{
+    grid-template-columns:1fr!important;
+    gap:7px!important;
+    padding:10px!important;
+  }
+  .year-download-grid button{
+    min-height:58px!important;
+    border-radius:12px!important;
+    padding:9px 11px!important;
+  }
+  .year-download-grid button b{
+    font-size:12px!important;
+  }
+  .download-all-years{
+    width:calc(100% - 20px)!important;
+    margin:0 10px 10px!important;
+    min-height:64px!important;
+    border-radius:13px!important;
+    padding:11px 13px!important;
+    box-shadow:0 12px 28px rgba(20,96,65,.23)!important;
+  }
+  .download-all-years b{
+    font-size:13px!important;
+  }
+
+  /* House / Promotion / utility calculators */
+  .house-allocation-module,
+  .public-tool-only-shell .points-panel{
+    border-radius:18px!important;
+  }
+  .house-category-grid{
+    grid-template-columns:1fr!important;
+    gap:8px!important;
+  }
+  .calculator-tool-card .tool-head{
+    margin-bottom:12px!important;
+  }
+  .calculator-tool-card .tool-head>svg{
+    width:38px!important;
+    height:38px!important;
+  }
+  .calculator-tool-card .tool-head h3{
+    font-size:17px!important;
+  }
+  .calculator-tool-card .tool-head p{
+    font-size:10.5px!important;
+    line-height:1.45!important;
+  }
+  .calculator-tool-card .primary,
+  .public-tool-only-shell .primary{
+    min-height:50px!important;
+    border-radius:13px!important;
+    font-size:13px!important;
+  }
+  .calculator-result{
+    padding:14px!important;
+    border-radius:16px!important;
+  }
+  .calculator-result h3{
+    font-size:19px!important;
+  }
+
+  /* Mobile calculator bottom sheet */
+  .mobile-calc-sheet-backdrop{
+    position:fixed;
+    inset:0;
+    z-index:9900;
+    display:flex;
+    align-items:flex-end;
+    background:rgba(4,17,30,.48);
+    -webkit-backdrop-filter:blur(4px);
+    backdrop-filter:blur(4px);
+  }
+  .mobile-calc-sheet{
+    width:100%;
+    max-height:76vh;
+    overflow:auto;
+    padding:10px 12px calc(92px + env(safe-area-inset-bottom));
+    border-radius:24px 24px 0 0;
+    background:#f8fbfd;
+    box-shadow:0 -22px 60px rgba(5,26,43,.22);
+  }
+  .mobile-calc-sheet:before{
+    content:"";
+    display:block;
+    width:42px;
+    height:4px;
+    margin:0 auto 10px;
+    border-radius:999px;
+    background:#c9d4dc;
+  }
+  .mobile-calc-sheet-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:3px 2px 11px;
+  }
+  .mobile-calc-sheet-head small{
+    display:block;
+    color:#14734a;
+    font-size:9px;
+    font-weight:900;
+    letter-spacing:.7px;
+  }
+  .mobile-calc-sheet-head h3{
+    margin:2px 0 0;
+    color:#142b43;
+    font-size:18px;
+  }
+  .mobile-calc-sheet-head>button{
+    width:38px;
+    height:38px;
+    border:1px solid #d9e3e9;
+    border-radius:11px;
+    background:#fff;
+    color:#526570;
+    display:grid;
+    place-items:center;
+  }
+  .mobile-calc-sheet-head>button svg{
+    width:18px;
+    height:18px;
+  }
+  .mobile-calc-sheet-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+  .mobile-calc-sheet-grid>button{
+    min-height:86px;
+    padding:11px;
+    border:1px solid #dce6eb;
+    border-radius:15px;
+    background:#fff;
+    display:grid;
+    grid-template-columns:36px 1fr;
+    grid-template-rows:1fr;
+    gap:9px;
+    align-items:center;
+    text-align:left;
+    color:#17344d;
+    box-shadow:0 6px 20px rgba(16,43,66,.05);
+  }
+  .mobile-calc-sheet-grid>button>span{
+    width:36px;
+    height:36px;
+    border-radius:11px;
+    display:grid;
+    place-items:center;
+    background:#eaf5ef;
+    color:#176b48;
+  }
+  .mobile-calc-sheet-grid>button>span svg{
+    width:17px;
+    height:17px;
+  }
+  .mobile-calc-sheet-grid>button>b,
+  .mobile-calc-sheet-grid>button>svg:last-child{
+    display:none;
+  }
+  .mobile-calc-sheet-grid b{
+    display:block;
+    font-size:12px;
+  }
+  .mobile-calc-sheet-grid small{
+    display:block;
+    margin-top:2px;
+    color:#798792;
+    font-size:8.5px;
+    line-height:1.3;
+  }
+
+  /* Fixed one-hand dock */
+  .public-mobile-dock{
+    position:fixed;
+    left:8px;
+    right:8px;
+    bottom:calc(8px + env(safe-area-inset-bottom));
+    z-index:9800;
+    min-height:64px;
+    padding:6px;
+    border:1px solid rgba(208,220,228,.9);
+    border-radius:19px;
+    background:rgba(255,255,255,.96);
+    -webkit-backdrop-filter:blur(18px);
+    backdrop-filter:blur(18px);
+    box-shadow:0 18px 48px rgba(8,30,48,.2);
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:4px;
+  }
+  .public-mobile-dock button{
+    min-width:0;
+    min-height:52px;
+    padding:5px 2px;
+    border:0;
+    border-radius:13px;
+    background:transparent;
+    color:#61727f;
+    font-family:inherit;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:3px;
+    font-size:9px;
+    font-weight:800;
+  }
+  .public-mobile-dock button svg{
+    width:19px;
+    height:19px;
+  }
+  .public-mobile-dock button.active{
+    background:linear-gradient(180deg,#eaf7f0,#f2faf6);
+    color:#126a43;
+  }
+
+  .floating-whatsapp{
+    right:12px!important;
+    bottom:calc(84px + env(safe-area-inset-bottom))!important;
+    width:44px!important;
+    height:44px!important;
+    padding:0!important;
+    justify-content:center!important;
+    border-radius:50%!important;
+    box-shadow:0 12px 28px rgba(20,128,74,.25)!important;
+  }
+  .floating-whatsapp span{
+    display:none!important;
+  }
+  .floating-whatsapp svg{
+    width:19px!important;
+    height:19px!important;
+  }
+
+  .approved-footer{
+    padding-bottom:100px!important;
+  }
+}
+
+@media(max-width:390px){
+  .approved-header .approved-brand b{
+    max-width:150px!important;
+    font-size:12px!important;
+  }
+  .approved-trust{
+    grid-template-columns:1fr!important;
+  }
+  .mobile-calc-sheet-grid{
+    grid-template-columns:1fr!important;
+  }
+  .mobile-calc-sheet-grid>button{
+    min-height:66px;
+  }
+  .salary-summary{
+    grid-template-columns:1fr!important;
+  }
+}
