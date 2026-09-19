@@ -1,0 +1,61 @@
+/* October 2026 bill + July-September arrears */
+.arrear-adjustment-options{margin-top:12px}
+.october-arrear-card{
+  border:1px solid #d7e5dd;border-radius:18px;background:linear-gradient(145deg,#fbfefd,#f5faf7);padding:16px;box-shadow:0 12px 30px rgba(22,72,48,.06)
+}
+.october-arrear-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.october-arrear-head>div:first-child>span{display:block;font-size:9px;font-weight:900;letter-spacing:.8px;color:#13784a}
+.october-arrear-head h3{margin:3px 0 4px;color:#173d2c;font-size:19px}
+.october-arrear-head p{margin:0;max-width:760px;color:#6d7c73;font-size:10.5px;line-height:1.55}
+.arrear-month-badge{
+  min-width:94px;padding:10px 12px;border-radius:14px;background:#176947;color:#fff;text-align:center
+}
+.arrear-month-badge b{display:block;font-family:"Inter","Hind Siliguri",sans-serif;font-size:24px;line-height:1}
+.arrear-month-badge small{display:block;margin-top:4px;font-size:8px;opacity:.84}
+.arrear-kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:14px}
+.arrear-kpi-grid article{padding:12px;border:1px solid #e0e9e4;border-radius:13px;background:#fff}
+.arrear-kpi-grid article.highlight{background:linear-gradient(135deg,#173e2e,#1f7753);border-color:#1f7753;color:#fff}
+.arrear-kpi-grid small{display:block;font-size:9px;color:#748078}
+.arrear-kpi-grid b{display:block;margin-top:3px;font-family:"Inter","Hind Siliguri",sans-serif;font-size:18px;color:#16392a;font-variant-numeric:tabular-nums}
+.arrear-kpi-grid span{display:block;margin-top:3px;font-size:8px;color:#8a958e}
+.arrear-kpi-grid article.highlight small,.arrear-kpi-grid article.highlight span{color:rgba(255,255,255,.72)}
+.arrear-kpi-grid article.highlight b{color:#fff}
+.arrear-flow{
+  display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:center;gap:8px;margin-top:12px;padding:12px;border:1px dashed #cfe0d7;border-radius:13px;background:#fff
+}
+.arrear-flow>div{min-width:0}
+.arrear-flow small{display:block;font-size:8.5px;color:#748078}
+.arrear-flow b{display:block;margin-top:2px;font-family:"Inter","Hind Siliguri",sans-serif;font-size:14px;color:#274c3b}
+.arrear-flow>i{font-style:normal;font-weight:900;color:#6e8176}
+.arrear-flow .total{padding:8px 10px;border-radius:10px;background:#eef8f2}
+.arrear-flow .total b{font-size:16px;color:#136642}
+.arrear-month-table{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:12px}
+.arrear-month-table>div{padding:10px;border:1px solid #e1e9e4;border-radius:11px;background:#fff}
+.arrear-month-table>div.current{border-color:#70b58f;background:#f2faf5}
+.arrear-month-table span{display:block;font-size:9px;color:#64736a;font-weight:800}
+.arrear-month-table b{display:block;margin:3px 0;font-family:"Inter","Hind Siliguri",sans-serif;font-size:14px;color:#244d39}
+.arrear-month-table small{font-size:8px;color:#8b958f}
+.arrear-actions{display:grid;grid-template-columns:minmax(220px,.55fr) 1.45fr;gap:10px;align-items:center;margin-top:12px}
+.arrear-actions>button{min-height:48px;padding:8px 12px;border:0;border-radius:11px;background:#173f70;color:#fff;display:flex;align-items:center;gap:9px;font-family:inherit;text-align:left;cursor:pointer}
+.arrear-actions>button>svg{width:18px}
+.arrear-actions>button span{flex:1}
+.arrear-actions>button b{display:block;font-size:11px}
+.arrear-actions>button small{display:block;margin-top:1px;font-size:8px;opacity:.76}
+.arrear-note{margin-top:10px}
+
+@media(max-width:760px){
+  .october-arrear-card{padding:12px;border-radius:15px}
+  .october-arrear-head{gap:9px}
+  .october-arrear-head h3{font-size:16px}
+  .october-arrear-head p{font-size:9.5px}
+  .arrear-month-badge{min-width:72px;padding:9px 8px}
+  .arrear-month-badge b{font-size:20px}
+  .arrear-kpi-grid{grid-template-columns:repeat(2,1fr);gap:6px}
+  .arrear-kpi-grid article{padding:10px}
+  .arrear-kpi-grid b{font-size:15px}
+  .arrear-flow{grid-template-columns:1fr auto 1fr;gap:6px}
+  .arrear-flow .total{grid-column:1/-1}
+  .arrear-month-table{grid-template-columns:repeat(2,1fr)}
+  .arrear-actions{grid-template-columns:1fr}
+  .arrear-actions>button{width:100%}
+}

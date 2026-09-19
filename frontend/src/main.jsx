@@ -40,6 +40,7 @@ import './pay-scale-2026-public.css';
 import './mobile-premium-public-v1.css';
 import './public-visitor-stats.css';
 import './public-report-share.css';
+import './october-arrear.css';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import {
   PAY2015,PAY2026,PAY_SCALE_2026_META,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
@@ -434,6 +435,34 @@ function houseAllocationReportHtml(r,lang='bn'){
     kv(en?'Total house-allocation point':'মোট বাসা বরাদ্দ পয়েন্ট',fmt(r.totalPoint))
   );
   return reportShell(en?'House Allocation Point Calculation':'বাসা বরাদ্দ পয়েন্ট হিসাব',en?'Public calculator result · A4 PDF':'পাবলিক ক্যালকুলেটরের ফলাফল · A4 PDF',body,lang);
+}
+
+function salaryOctoberArrearReportHtml(base,lang='bn'){
+  const en=lang==='en',a=base?.arrear2026||{},f=base?.input||{};
+  const amt=v=>`${en?'Tk':'৳'} ${moneyLang(v,lang)}`;
+  const rows=[
+    [en?'Arrear period':'বকেয়া/সমন্বয় সময়কাল',en?'1 July–31 October 2026 (4 months)':'১ জুলাই–৩১ অক্টোবর ২০২৬ (৪ মাস)'],
+    [en?'2015 basic before implementation':'বাস্তবায়নের আগের ২০১৫ মূল বেতন',amt(a.legacyBasic||base.currentBasic||0)],
+    [en?'October 2026 payable basic':'অক্টোবর ২০২৬ প্রাপ্য মূল বেতন',amt(a.octoberBasic||0)],
+    [en?'Monthly implemented basic increase':'মাসিক বাস্তবায়িত মূল বেতন বৃদ্ধি',amt(a.monthlyBasicArrear||0)],
+    [en?'July–September previous arrear (3 months)':'জুলাই–সেপ্টেম্বর পূর্বের বকেয়া (৩ মাস)',amt(a.priorThreeBasicArrear||0)],
+    [en?'October increase (current month)':'অক্টোবর মাসের বৃদ্ধি',amt(a.monthlyBasicArrear||0)],
+    [en?'Total July–October basic adjustment':'জুলাই–অক্টোবর মোট মূল বেতন সমন্বয়',amt(a.totalBasicArrear||0)],
+    [en?'Already paid special benefit to adjust':'ইতোমধ্যে পাওয়া সমন্বয়যোগ্য বিশেষ সুবিধা',amt(a.specialBenefitPaid||0)],
+    [en?'Previous arrear payable with October bill':'অক্টোবর বিলের সাথে পূর্বের বকেয়া',amt(a.priorArrearAfterAdjustment||0)],
+    [en?'October current estimated net':'অক্টোবর চলতি আনুমানিক নিট',amt(a.octoberCurrentNet||0)],
+    [en?'Estimated total receivable in October':'অক্টোবরে আনুমানিক মোট প্রাপ্য',amt(a.octoberBillNet||0)]
+  ];
+  const body=section(en?'October 2026 settlement':'অক্টোবর ২০২৬ বেতন ও বকেয়া সমন্বয়',
+    rows.map(([l,v])=>kv(l,v)).join('')
+  )+`<div style="margin-top:12px;padding:10px 12px;border-left:4px solid #1a7a50;background:#f1fbf6;border-radius:8px;font-size:10.2px">
+    <b>${en?'How the October bill is treated:':'অক্টোবর বিল যেভাবে ধরা হয়েছে:'}</b>
+    ${en?'October current salary is calculated at the applicable 2026 rate. Only the previous three months (July–September) are added on top as arrear, so October is not counted twice.':'অক্টোবরের চলতি বেতন ২০২৬-এর প্রযোজ্য হারে ধরা হয়েছে। এর সাথে শুধু আগের ৩ মাসের (জুলাই–সেপ্টেম্বর) বকেয়া যোগ হয়েছে—তাই অক্টোবরের অংশ দুইবার গণনা করা হয়নি।'}
+  </div>
+  <div style="margin-top:8px;padding:9px 12px;background:#fff8e8;border-radius:8px;font-size:9.6px;color:#6b5728">
+    ${en?'Net amount is an estimate based on the deduction inputs in this calculator. Tax, loan, special-benefit adjustment or payroll-specific deductions may change the final office bill.':'নিট অংকটি এই ক্যালকুলেটরে দেওয়া কর্তনের তথ্য অনুযায়ী আনুমানিক। আয়কর, ঋণ, বিশেষ সুবিধা সমন্বয় বা অফিসভিত্তিক অন্য কর্তনের কারণে চূড়ান্ত বিল ভিন্ন হতে পারে।'}
+  </div>`;
+  return reportShell(en?'October 2026 Salary & Arrear Statement':'অক্টোবর ২০২৬ বেতন ও বকেয়া বিবরণী',en?'July–October 2026 pay-scale adjustment · October bill settlement':'জুলাই–অক্টোবর ২০২৬ পে-স্কেল সমন্বয় · অক্টোবর বিল নিষ্পত্তি',body,lang);
 }
 
 function salaryProjectionReportResult(base,p,projections,year){
@@ -1649,7 +1678,7 @@ function SalaryCalculator({lang='bn',publicMode=false}){
     grade:'13',currentStage:'0',date:today,housing:'no',children:'0',tiffin:'yes',zone:'dhaka',
     ageBand:'under50',incrementEligible2026:'yes',mobile:'yes',laundry:'no',
     disabledChildren:'0',areaType:'none',trainingInstructor:'no',chargeAllowance:'no',
-    entertainmentTier:'none',otherSpecialAllowance:'0',
+    entertainmentTier:'none',otherSpecialAllowance:'0',specialBenefitPaid:'0',
     deductionMode:'du_auto',category:'class3',gpfRate:'10',benevolent:'0',
     health:'149.34',group:'192.50',stamp:'10',association:'10',tax:'0',loan:'0',other:'0'
   });
@@ -1686,13 +1715,37 @@ function SalaryCalculator({lang='bn',publicMode=false}){
       make('2027-07-01',en?'2027 · 1 July':'২০২৭ · ১ জুলাই'),
       make('2028-01-01',en?'2028 · 1 January':'২০২৮ · ১ জানুয়ারি')
     ];
+    const legacyJune=make('2026-06-30',en?'Legacy June 2026':'জুন ২০২৬ পুরোনো হার');
+    const october=make('2026-10-01',en?'October 2026':'অক্টোবর ২০২৬');
+    const monthlyBasicArrear=Math.max(0,Number(october.payableBasic||0)-Number(legacyJune.payableBasic||0));
+    const monthlyGrossArrear=Math.max(0,Number(october.gross||0)-Number(legacyJune.gross||0));
+    const monthlyDeductionIncrease=Number(october.deductions||0)-Number(legacyJune.deductions||0);
+    const monthlyNetArrear=Number(october.net||0)-Number(legacyJune.net||0);
+    const specialBenefitPaid=Math.max(0,Number(f.specialBenefitPaid||0));
+    const priorThreeBasicArrear=monthlyBasicArrear*3;
+    const priorThreeGrossArrear=monthlyGrossArrear*3;
+    const priorThreeDeductionIncrease=monthlyDeductionIncrease*3;
+    const priorThreeNetArrear=monthlyNetArrear*3;
+    const priorArrearAfterAdjustment=Math.max(0,priorThreeNetArrear-specialBenefitPaid);
+    const arrear2026={
+      startDate:'2026-07-01',endDate:'2026-10-31',months:4,previousMonths:3,
+      legacyBasic:legacyJune.payableBasic,legacyGross:legacyJune.gross,legacyNet:legacyJune.net,
+      octoberBasic:october.payableBasic,octoberGross:october.gross,octoberCurrentNet:october.net,
+      monthlyBasicArrear,monthlyGrossArrear,monthlyDeductionIncrease,monthlyNetArrear,
+      priorThreeBasicArrear,priorThreeGrossArrear,priorThreeDeductionIncrease,priorThreeNetArrear,
+      totalBasicArrear:monthlyBasicArrear*4,totalGrossArrear:monthlyGrossArrear*4,
+      totalDeductionIncrease:monthlyDeductionIncrease*4,totalNetAdjustment:monthlyNetArrear*4,
+      specialBenefitPaid,priorArrearAfterAdjustment,
+      octoberBillGross:october.gross+priorThreeGrossArrear,
+      octoberBillNet:october.net+priorArrearAfterAdjustment
+    };
     const house=chosen.allowances.house,medical=chosen.allowances.medical,education=chosen.allowances.education,
       tiffin=chosen.allowances.tiffin,conveyance=chosen.allowances.conveyance,mobile=chosen.allowances.mobile,
       laundry=chosen.allowances.laundry,disabledChild=chosen.allowances.disabledChild,area=chosen.allowances.area,
       training=chosen.allowances.training,charge=chosen.allowances.charge,entertainment=chosen.allowances.entertainment,
       otherSpecial=chosen.allowances.otherSpecial,gross=chosen.gross;
     setR({...chosen,currentIndex,currentBasic,payable:chosen.payableBasic,house,medical,education,tiffin,conveyance,mobile,laundry,
-      disabledChild,area,training,charge,entertainment,otherSpecial,gross,projections,input});
+      disabledChild,area,training,charge,entertainment,otherSpecial,gross,projections,arrear2026,input});
   }
   useEffect(()=>{setF(x=>({...x,currentStage:'0'}));setR(null)},[f.grade]);
   useEffect(()=>{
@@ -1752,6 +1805,15 @@ function SalaryCalculator({lang='bn',publicMode=false}){
         {(en?[['tax','Income tax'],['loan','Loan/advance installment'],['other','Other deduction']]:[['tax','আয়কর'],['loan','ঋণ/অগ্রিম কিস্তি'],['other','অন্যান্য কর্তন']]).map(([k,l])=><label key={k}>{l}<input type="number" min="0" step="0.01" value={f[k]} onChange={e=>setF({...f,[k]:e.target.value})}/></label>)}
       </div>
     </details>
+    <details className="deduction-box arrear-adjustment-options">
+      <summary>{en?'October 2026 arrear adjustment (optional)':'অক্টোবর ২০২৬ বকেয়া সমন্বয় (ঐচ্ছিক)'}</summary>
+      <div className="form-grid compact">
+        <label>{en?'Special benefit already paid during July–September 2026 (total)':'জুলাই–সেপ্টেম্বর ২০২৬-এ ইতোমধ্যে পাওয়া সমন্বয়যোগ্য বিশেষ সুবিধা (মোট)'}
+          <input type="number" min="0" step="1" value={f.specialBenefitPaid} onChange={e=>setF({...f,specialBenefitPaid:e.target.value})}/>
+        </label>
+      </div>
+      <div className="notice">{en?'Leave this as 0 if no such adjustable special benefit was paid.':'এ ধরনের সমন্বয়যোগ্য বিশেষ সুবিধা না পেয়ে থাকলে ০ রাখুন।'}</div>
+    </details>
     <button className="primary wide" onClick={calc}>{en?'Submit':'সাবমিট করুন'}</button></section>
     {r&&<div id="salary-result" className="salary-result-anchor"><SalaryResult r={r} lang={lang}/></div>}
   </div>
@@ -1796,11 +1858,13 @@ function SalaryResult({r,lang='bn'}){
     year,html:salaryYearReportHtml(r,year,lang,{pageNo:1,totalPages:1}),filename:`pay-scale-${year}-${stamp}.pdf`
   }));
   const combinedReport={html:salaryCombinedReportHtml(r,lang),filename:`pay-scale-2026-2028-three-page-${stamp}.pdf`};
+  const arrear=r.arrear2026||{};
+  const arrearReport={html:salaryOctoberArrearReportHtml(r,lang),filename:`october-2026-arrear-${stamp}.pdf`};
   const activeYearReport=yearReports.find(x=>x.year===activeYear)||yearReports[0];
   const activeShareTitle=en?`Pay Scale ${activeYear} Salary Report`:`পে-স্কেল ${numLang(activeYear,lang,0)} বেতন রিপোর্ট`;
   const activeShareSummary=en?`${activeYear} salary calculation, allowances, deductions and net payable.`:`${numLang(activeYear,lang,0)} সালের বেতন, ভাতা, কর্তন ও নিট প্রাপ্যের হিসাব।`;
   async function directPdf(item,key){
-    try{setPdfBusy(key);await downloadA4Html(item.html,item.filename);trackPublic('download',key==='all'?'salary_2026_2028_pdf':`salary_${key}_pdf`)}
+    try{setPdfBusy(key);await downloadA4Html(item.html,item.filename);trackPublic('download',key==='all'?'salary_2026_2028_pdf':key==='arrear'?'october_2026_arrear_pdf':`salary_${key}_pdf`)}
     catch(e){alert((en?'PDF could not be created: ':'PDF তৈরি করা যায়নি: ')+e.message)}
     finally{setPdfBusy('')}
   }
@@ -1845,6 +1909,44 @@ function SalaryResult({r,lang='bn'}){
       <article><small>{en?'Total deductions':'মোট কর্তন'}</small><b>{amt(current.deductions??0)}</b></article>
       <article className="net"><small>{en?'Estimated net payable':'আনুমানিক নিট প্রাপ্য'}</small><b>{amt(current.net??0)}</b></article>
     </section>
+
+    {activeYear===2026&&<section className="october-arrear-card">
+      <div className="october-arrear-head">
+        <div><span>{en?'OCTOBER BILL + ARREAR':'অক্টোবর বিল + বকেয়া'}</span><h3>{en?'October 2026 bill with July–September arrears':'অক্টোবর ২০২৬ বিলের সাথে জুলাই–সেপ্টেম্বরের বকেয়া'}</h3><p>{en?'The full July–October adjustment covers 4 months, but only July–September is added on top of the October current bill so October is not counted twice.':'জুলাই–অক্টোবর মোট সমন্বয় ৪ মাসের; তবে অক্টোবরের চলতি বিলের সাথে শুধু জুলাই–সেপ্টেম্বরের ৩ মাসের বকেয়া যোগ হবে—অক্টোবর দুইবার ধরা হবে না।'}</p></div>
+        <div className="arrear-month-badge"><b>{numLang(4,lang,0)}</b><small>{en?'months total adjustment':'মাস মোট সমন্বয়'}</small></div>
+      </div>
+
+      <div className="arrear-kpi-grid">
+        <article><small>{en?'Monthly basic increase':'মাসিক মূল বেতন বৃদ্ধি'}</small><b>{amt(arrear.monthlyBasicArrear||0)}</b><span>{en?'Applicable Jul–Oct 2026':'জুলাই–অক্টোবর ২০২৬'}</span></article>
+        <article><small>{en?'July–September arrear':'জুলাই–সেপ্টেম্বর বকেয়া'}</small><b>{amt(arrear.priorThreeBasicArrear||0)}</b><span>{en?'3 previous months':'আগের ৩ মাস'}</span></article>
+        <article><small>{en?'July–October total adjustment':'জুলাই–অক্টোবর মোট সমন্বয়'}</small><b>{amt(arrear.totalBasicArrear||0)}</b><span>{en?'4 months including October':'অক্টোবরসহ ৪ মাস'}</span></article>
+        <article className="highlight"><small>{en?'Estimated total receivable in October':'অক্টোবরে আনুমানিক মোট প্রাপ্য'}</small><b>{amt(arrear.octoberBillNet||0)}</b><span>{en?'October current net + previous arrear':'অক্টোবর চলতি নিট + পূর্বের বকেয়া'}</span></article>
+      </div>
+
+      <div className="arrear-flow">
+        <div><small>{en?'October current estimated net':'অক্টোবর চলতি আনুমানিক নিট'}</small><b>{amt(arrear.octoberCurrentNet||0)}</b></div>
+        <i>+</i>
+        <div><small>{en?'July–September estimated net arrear':'জুলাই–সেপ্টেম্বর আনুমানিক নিট বকেয়া'}</small><b>{amt(arrear.priorThreeNetArrear||0)}</b></div>
+        {(arrear.specialBenefitPaid||0)>0&&<><i>−</i><div><small>{en?'Special benefit adjustment':'বিশেষ সুবিধা সমন্বয়'}</small><b>{amt(arrear.specialBenefitPaid||0)}</b></div></>}
+        <i>=</i>
+        <div className="total"><small>{en?'October total':'অক্টোবর মোট'}</small><b>{amt(arrear.octoberBillNet||0)}</b></div>
+      </div>
+
+      <div className="arrear-month-table">
+        {[
+          [en?'July':'জুলাই',arrear.monthlyBasicArrear],
+          [en?'August':'আগস্ট',arrear.monthlyBasicArrear],
+          [en?'September':'সেপ্টেম্বর',arrear.monthlyBasicArrear],
+          [en?'October':'অক্টোবর',arrear.monthlyBasicArrear]
+        ].map(([m,v],i)=><div key={m} className={i===3?'current':''}><span>{m} 2026</span><b>{amt(v||0)}</b><small>{i===3?(en?'Current month adjustment':'চলতি মাসের সমন্বয়'):(en?'Arrear month':'বকেয়া মাস')}</small></div>)}
+      </div>
+
+      <div className="arrear-actions">
+        <button disabled={!!pdfBusy} onClick={()=>directPdf(arrearReport,'arrear')}><FileText/><span><b>{en?'Arrear PDF':'বকেয়া PDF'}</b><small>{en?'Download A4 statement':'A4 বিবরণী ডাউনলোড'}</small></span><Save/></button>
+        <ReportShareActions html={arrearReport.html} filename={arrearReport.filename} title={en?'October 2026 Salary & Arrear Statement':'অক্টোবর ২০২৬ বেতন ও বকেয়া বিবরণী'} summary={en?'October current salary with July–September arrears; July–October total adjustment shown separately.':'অক্টোবরের চলতি বেতনের সাথে জুলাই–সেপ্টেম্বর বকেয়া; জুলাই–অক্টোবর মোট সমন্বয় আলাদাভাবে দেখানো হয়েছে।'} lang={lang} compact={true}/>
+      </div>
+      <div className="notice arrear-note"><b>{en?'Important:':'গুরুত্বপূর্ণ:'}</b> {en?'The net amount is an estimate using the deduction inputs above. Final payroll may differ because of tax, loan, special-benefit adjustment or other office deductions.':'উপরের কর্তনের তথ্য ধরে নিট অংকটি আনুমানিক। আয়কর, ঋণ, বিশেষ সুবিধা সমন্বয় বা অফিসভিত্তিক অন্য কর্তনের কারণে চূড়ান্ত বিল ভিন্ন হতে পারে।'}</div>
+    </section>}
 
     <div className="split-grid">
       <section className="breakdown-card"><h3>{en?'Monthly allowances':'মাসিক ভাতা'}</h3>
