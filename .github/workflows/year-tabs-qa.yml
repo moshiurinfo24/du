@@ -1,0 +1,24 @@
+name: Year Tab Result QA
+on:
+  push:
+    branches:
+      - fix/year-tab-result-flow
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install
+      - run: npm run build
+      - name: Verify year-tab flow
+        working-directory: .
+        run: |
+          grep -q "setActiveYear(2026)" frontend/src/main.jsx
+          grep -q "২০২৬–২০২৮ একসাথে — ৩-পৃষ্ঠার PDF" frontend/src/main.jsx
+          grep -q "year-download-grid" frontend/src/main.jsx
