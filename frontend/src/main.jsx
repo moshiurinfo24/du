@@ -105,9 +105,9 @@ const I18N={
 function LangToggle({lang,setLang}){return <button className="lang-btn" onClick={()=>setLang(lang==='bn'?'en':'bn')}>{I18N[lang].language}</button>}
 
 function todayLocalIso(){const d=new Date();const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,'0');const day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`}
-function fmtDateLang(d,lang='bn'){if(!d||isNaN(new Date(d)))return '—';return new Intl.DateTimeFormat(lang==='en'?'en-GB':'bn-BD',{day:'2-digit',month:'long',year:'numeric'}).format(new Date(d))}
-function numLang(v,lang='bn',digits=2){return Number(v||0).toLocaleString(lang==='en'?'en-US':'bn-BD',{maximumFractionDigits:digits})}
-function moneyLang(v,lang='bn'){return Math.round(Number(v||0)).toLocaleString(lang==='en'?'en-US':'bn-BD',{maximumFractionDigits:0})}
+function fmtDateLang(d,lang='bn'){if(!d||isNaN(new Date(d)))return '—';return new Intl.DateTimeFormat(lang==='en'?'en-GB':'bn-BD-u-nu-latn',{day:'2-digit',month:'long',year:'numeric'}).format(new Date(d))}
+function numLang(v,lang='bn',digits=2){return Number(v||0).toLocaleString(lang==='en'?'en-US':'bn-BD-u-nu-latn',{maximumFractionDigits:digits})}
+function moneyLang(v,lang='bn'){return Math.round(Number(v||0)).toLocaleString(lang==='en'?'en-US':'bn-BD-u-nu-latn',{maximumFractionDigits:0})}
 
 
 function escapeHtml(v){return String(v??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#039;'}[c]))}
@@ -1407,8 +1407,8 @@ function SalaryCalculator({lang='bn',publicMode=false}){
   return <div className={publicMode?'public-salary-calculator':''}>
     <div className="page-head pay-calc-head"><div><h2>{en?'Salary & Pay Scale 2026 Calculator':'বেতন ও পে-স্কেল ২০২৬ হিসাব'}</h2><p>{en?'Uses the official 17 September 2026 gazette. Select the 2015 pay stage held on 30 June 2026 and the date you want to calculate.':'১৭ সেপ্টেম্বর ২০২৬-এর সরকারি গেজেট অনুযায়ী হিসাব। ৩০ জুন ২০২৬-এ প্রাপ্য ২০১৫ বেতন ধাপ এবং যে তারিখের হিসাব চান তা নির্বাচন করুন।'}</p></div></div>
     <section className="calc-card"><div className="form-grid">
-      <label>{en?'Grade':'গ্রেড'}<select value={f.grade} onChange={e=>setF({...f,grade:e.target.value})}>{Array.from({length:20},(_,i)=>i+1).map(g=><option key={g} value={g}>{en?`Grade ${g}`:`গ্রেড ${g.toLocaleString('bn-BD')}`}</option>)}</select></label>
-      <label>{en?'2015 basic on 30 June 2026':'৩০ জুন ২০২৬-এর ২০১৫ মূল বেতন'}<select value={f.currentStage} onChange={e=>setF({...f,currentStage:e.target.value})}>{stages.map((v,i)=><option value={i} key={i}>{en?`Stage ${i+1} — Tk ${moneyLang(v,'en')}`:`ধাপ ${(i+1).toLocaleString('bn-BD')} — ৳${moneyLang(v,'bn')}`}</option>)}</select></label>
+      <label>{en?'Grade':'গ্রেড'}<select value={f.grade} onChange={e=>setF({...f,grade:e.target.value})}>{Array.from({length:20},(_,i)=>i+1).map(g=><option key={g} value={g}>{en?`Grade ${g}`:`গ্রেড ${numLang(g,'bn',0)}`}</option>)}</select></label>
+      <label>{en?'2015 basic on 30 June 2026':'৩০ জুন ২০২৬-এর ২০১৫ মূল বেতন'}<select value={f.currentStage} onChange={e=>setF({...f,currentStage:e.target.value})}>{stages.map((v,i)=><option value={i} key={i}>{en?`Stage ${i+1} — Tk ${moneyLang(v,'en')}`:`ধাপ ${numLang(i+1,'bn',0)} — ৳${moneyLang(v,'bn')}`}</option>)}</select></label>
       <label>{en?'Calculation date':'হিসাবের তারিখ'}<input type="date" min="2026-07-01" value={f.date} onChange={e=>setF({...f,date:e.target.value})}/></label>
       <label>{en?'1 July 2026 annual increment eligibility':'১ জুলাই ২০২৬ বার্ষিক ইনক্রিমেন্ট'}<select value={f.incrementEligible2026} onChange={e=>setF({...f,incrementEligible2026:e.target.value})}><option value="yes">{en?'Eligible (6+ months service)':'প্রাপ্য (কমপক্ষে ৬ মাস চাকরি)'}</option><option value="no">{en?'Not eligible':'প্রাপ্য নয়'}</option></select></label>
       <label>{en?'DU employee category':'ঢাকা বিশ্ববিদ্যালয়ের কর্মচারী শ্রেণি'}<select value={f.category} onChange={e=>setF({...f,category:e.target.value})}>{categoryOpts.map(([v,l])=><option value={v} key={v}>{l}</option>)}</select></label>
@@ -1434,10 +1434,10 @@ function SalaryCalculator({lang='bn',publicMode=false}){
         {f.deductionMode==='du_auto'?<>
           <div className="du-auto-deduction-card"><small>{en?'Provident Fund':'ভবিষ্য তহবিল (PF)'}</small><b>10%</b><span>{en?'Automatic from payable basic':'প্রাপ্য মূল বেতন থেকে অটো'}</span></div>
           <div className="du-auto-deduction-card"><small>{en?'Benevolent Fund':'কল্যাণ তহবিল'}</small><b>{f.category==='officer'?'5%':f.category==='class4'?'2.75%':'4%'}</b><span>{en?'Automatic by DU employee category':'DU কর্মচারী শ্রেণি অনুযায়ী অটো'}</span></div>
-          <div className="du-auto-deduction-card"><small>{en?'Health insurance':'স্বাস্থ্য বীমা'}</small><b>{en?'Tk 149.34':'৳ ১৪৯.৩৪'}</b><span>{en?'Previous platform payroll preset':'আগের সিস্টেমের পে-রোল ডিফল্ট'}</span></div>
-          <div className="du-auto-deduction-card"><small>{en?'Group insurance':'গ্রুপ বীমা'}</small><b>{en?'Tk 192.50':'৳ ১৯২.৫০'}</b><span>{en?'Previous platform payroll preset':'আগের সিস্টেমের পে-রোল ডিফল্ট'}</span></div>
-          <div className="du-auto-deduction-card"><small>{en?'Revenue stamp':'রাজস্ব স্ট্যাম্প'}</small><b>{en?'Tk 10':'৳ ১০'}</b><span>{en?'Automatic default':'অটো ডিফল্ট'}</span></div>
-          <div className="du-auto-deduction-card"><small>{en?'Association':'সমিতি'}</small><b>{en?'Tk 10':'৳ ১০'}</b><span>{en?'Automatic default':'অটো ডিফল্ট'}</span></div>
+          <div className="du-auto-deduction-card"><small>{en?'Health insurance':'স্বাস্থ্য বীমা'}</small><b>{en?'Tk 149.34':'৳ 149.34'}</b><span>{en?'Previous platform payroll preset':'আগের সিস্টেমের পে-রোল ডিফল্ট'}</span></div>
+          <div className="du-auto-deduction-card"><small>{en?'Group insurance':'গ্রুপ বীমা'}</small><b>{en?'Tk 192.50':'৳ 192.50'}</b><span>{en?'Previous platform payroll preset':'আগের সিস্টেমের পে-রোল ডিফল্ট'}</span></div>
+          <div className="du-auto-deduction-card"><small>{en?'Revenue stamp':'রাজস্ব স্ট্যাম্প'}</small><b>{en?'Tk 10':'৳ 10'}</b><span>{en?'Automatic default':'অটো ডিফল্ট'}</span></div>
+          <div className="du-auto-deduction-card"><small>{en?'Association':'সমিতি'}</small><b>{en?'Tk 10':'৳ 10'}</b><span>{en?'Automatic default':'অটো ডিফল্ট'}</span></div>
         </>:<>
           <label>{en?'PF subscription rate':'PF সাবস্ক্রিপশন হার'}<select value={f.gpfRate} onChange={e=>setF({...f,gpfRate:e.target.value})}><option value="0">{en?'Not applicable':'প্রযোজ্য নয়'}</option>{Array.from({length:21},(_,i)=>i+5).map(x=><option value={x} key={x}>{numLang(x,lang,0)}%</option>)}</select></label>
           {(en?[['benevolent','Benevolent fund'],['health','Health insurance'],['group','Group insurance'],['stamp','Revenue stamp'],['association','Association']]:[['benevolent','কল্যাণ তহবিল'],['health','স্বাস্থ্য বীমা'],['group','গ্রুপ বীমা'],['stamp','রাজস্ব স্ট্যাম্প'],['association','সমিতি']]).map(([k,l])=><label key={k}>{l}<input type="number" min="0" step="0.01" value={f[k]} onChange={e=>setF({...f,[k]:e.target.value})}/></label>)}
