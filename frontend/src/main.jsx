@@ -1565,7 +1565,7 @@ function PromotionResult({r,lang='bn'}){
   const en=lang==='en',[preview,setPreview]=useState(false);
   if(r.error)return <section className="result-panel warn"><h3>{en?'Unable to calculate':'হিসাব করা যায়নি'}</h3><p>{r.error}</p></section>;
   const report=promotionReportHtml(r,lang),filename=`promotion-report-${Date.now()}.pdf`;
-  if(r.stop)return <div className="result-stack"><section className="result-panel warn"><h3>{r.rule.target}</h3><p>{en?'Reference':'রেফারেন্স'}: {r.rule.ref||r.rule.page||'—'}</p></section><button className="primary wide" onClick={()=>setPreview(true)}><FileText size={17}/> {en?'A4 PDF Preview':'বিস্তারিত A4 PDF প্রিভিউ'}</button>{preview&&<PdfPreviewModal html={report} filename={filename} onClose={()=>setPreview(false)} lang={lang}/>}</div>;
+  if(r.stop)return <div className="result-stack"><section className="result-panel warn"><h3>{r.rule.target}</h3><p>{en?'Reference':'রেফারেন্স'}: {r.rule.ref||r.rule.page||'—'}</p></section><button className="primary wide" onClick={()=>setPreview(true)}><FileText size={17}/> {en?'A4 PDF Preview':'বিস্তারিত A4 PDF প্রিভিউ'}</button>{preview&&<PdfPreviewModal html={report} filename={filename} onClose={()=>setPreview(false)} lang={lang} shareTitle={en?'Promotion Calculation Report':'পদোন্নতি হিসাবের রিপোর্ট'} shareSummary={en?'Promotion eligibility, service points and roadmap report.':'পদোন্নতির যোগ্যতা, সার্ভিস পয়েন্ট ও রোডম্যাপের রিপোর্ট।'}/>}</div>;
 
   const e=r.exp||{}, pe=r.projectedExp||{};
   const dur=x=>en?`${x.y} years ${x.m} months ${x.d} days`:durationBn(x);
@@ -2666,7 +2666,7 @@ function HouseAllocationPoints({lang='bn',publicMode=false}){
         <div className="house-detail-row"><span>{en?'Point based on Gender':'লিঙ্গভিত্তিক পয়েন্ট'} <small>({en?'female +3, male 0':'নারী +৩, পুরুষ ০'})</small></span><b>{numLang(genderPoint,lang,0)}</b></div>
         <div className="house-detail-row total"><span>{en?'Total Point':'মোট বাসা বরাদ্দ পয়েন্ট'}</span><b>{totalPoint?fmtYmd(totalPoint):'—'}</b></div>
       </div>
-      {houseResult&&<><button className="primary wide house-pdf-btn" onClick={()=>setPreview(true)}><FileText size={17}/>{en?'A4 PDF Preview & Download':'A4 PDF প্রিভিউ ও ডাউনলোড'}</button>{preview&&<PdfPreviewModal html={houseReport} filename={houseFilename} onClose={()=>setPreview(false)} lang={lang}/>}</>}
+      {houseResult&&<><button className="primary wide house-pdf-btn" onClick={()=>setPreview(true)}><FileText size={17}/>{en?'A4 PDF Preview & Download':'A4 PDF প্রিভিউ ও ডাউনলোড'}</button>{preview&&<PdfPreviewModal html={houseReport} filename={houseFilename} onClose={()=>setPreview(false)} lang={lang} shareTitle={en?'House Allocation Point Report':'বাসা বরাদ্দ পয়েন্ট রিপোর্ট'} shareSummary={en?'House allocation point calculation report.':'বাসা বরাদ্দ পয়েন্ট হিসাবের রিপোর্ট।'}/>}</>}
     </div>:<div className="house-pending-panel">
       <div className="house-coming-icon"><Clock3/></div>
       <span>{en?'COMING SOON':'শীঘ্রই আসছে'}</span>
@@ -3246,10 +3246,11 @@ function App(){
   const params=new URLSearchParams(window.location.search);
   const queryAuth=params.get('auth')||'';
   const queryToken=params.get('token')||'';
+  const sharedReportToken=params.get('shared_report')||'';
   const[user,setUser]=useState(null),[loading,setLoading]=useState(true),[page,setPage]=useState('dashboard'),
     [showLogin,setShowLogin]=useState(()=>!!queryAuth),[authMode,setAuthMode]=useState(()=>queryAuth||'login'),[authToken,setAuthToken]=useState(()=>queryToken),
     [lang,setLang]=useState('bn'),[mobileMenu,setMobileMenu]=useState(false);
-  useEffect(()=>{api('/api/me').then(x=>setUser(x.user)).catch(()=>{}).finally(()=>setLoading(false))},[]);
+  useEffect(()=>{if(sharedReportToken){setLoading(false);return}api('/api/me').then(x=>setUser(x.user)).catch(()=>{}).finally(()=>setLoading(false))},[sharedReportToken]);
   useEffect(()=>{setMobileMenu(false)},[page]);
   useEffect(()=>{
     document.body.classList.toggle('mobile-drawer-open',mobileMenu);
@@ -3257,6 +3258,7 @@ function App(){
   },[mobileMenu]);
   async function logout(){try{await api('/api/logout',{method:'POST'})}catch{}setLang('bn');setUser(null);setShowLogin(false);setPage('dashboard')}
   useEffect(()=>{if(user&&page)api('/api/usage',{method:'POST',body:JSON.stringify({module:page})}).catch(()=>{})},[user?.id,page]);
+  if(sharedReportToken)return <SharedReportViewer token={sharedReportToken} lang={lang} setLang={setLang}/>;
   if(loading)return <div className="loading">Loading...</div>;
   if(!user)return showLogin?<AuthPortal onLogin={u=>{setLang('bn');setUser(u);window.history.replaceState({},'',window.location.pathname)}} onBack={()=>{setShowLogin(false);setAuthMode('login');setAuthToken('');window.history.replaceState({},'',window.location.pathname)}} lang={lang} setLang={setLang} initialMode={authMode} initialToken={authToken}/>:<PublicHome onLogin={()=>{setAuthMode('login');setShowLogin(true)}} onSignup={()=>{setAuthMode('register');setShowLogin(true)}} lang={lang} setLang={setLang}/>;
   const admin=['super_admin','admin','department_admin'].includes(user.role);
