@@ -38,6 +38,7 @@ import './exact-mockup-v16-7-1.css';
 import './approved-home-v16-8.css';
 import './pay-scale-2026-public.css';
 import './mobile-premium-public-v1.css';
+import './public-visitor-stats.css';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import {
   PAY2015,PAY2026,PAY_SCALE_2026_META,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
@@ -611,16 +612,22 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
   const [activePublicTool,setActivePublicTool]=useState(null);
   const [notices,setNotices]=useState([]);
   const [policies,setPolicies]=useState([]);
+  const [visitorStats,setVisitorStats]=useState({today_unique:null,month_unique:null,total_unique:null,total_views:null});
 
   useEffect(()=>{
-    trackPublic('page_view','home');
+    let alive=true;
+    const loadStats=()=>api('/api/public/stats').then(x=>{if(alive)setVisitorStats(x)}).catch(()=>{});
+    trackPublic('page_view','home').finally(loadStats);
     Promise.allSettled([
       api('/api/public/notices?limit=4'),
       api('/api/public/policies?limit=4')
     ]).then(([n,p])=>{
+      if(!alive)return;
       if(n.status==='fulfilled')setNotices(n.value.items||n.value.notices||[]);
       if(p.status==='fulfilled')setPolicies(p.value.items||p.value.policies||[]);
     });
+    const timer=setInterval(loadStats,60000);
+    return ()=>{alive=false;clearInterval(timer)};
   },[]);
 
   const go=(id)=>{
@@ -633,6 +640,8 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
     setPublicMenu(false);
     setMobileCalcOpen(false);
     setActivePublicTool(tool);
+    const sectionMap={salary:'pay_scale_calculator',promotion:'promotion_calculator',house:'house_allocation_calculator',service:'service_calculator',age:'age_calculator',gap:'date_gap_calculator',retire:'retirement_calculator'};
+    trackPublic('calculator_view',sectionMap[tool]||'calculator');
     window.requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'smooth'}));
   };
   const toolLabels={
@@ -793,6 +802,18 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
         </div>
       </div>
       <HeroDevice/>
+    </section>
+
+    <section className="public-live-stats" aria-label={en?'Live visitor statistics':'লাইভ ভিজিটর পরিসংখ্যান'}>
+      <div className="public-live-stats-inner">
+        <div className="live-stats-intro"><span className="live-dot"></span><div><small>{en?'LIVE WEBSITE STATS':'লাইভ ওয়েবসাইট পরিসংখ্যান'}</small><b>{en?'People are using this service now':'কতজন এই সেবা ব্যবহার করছেন'}</b></div></div>
+        <div className="live-stats-grid">
+          <article><Activity/><div><small>{en?"Today's visitors":'আজকের ভিজিটর'}</small><strong>{visitorStats.today_unique==null?'—':numLang(visitorStats.today_unique,lang,0)}</strong></div></article>
+          <article><CalendarDays/><div><small>{en?'This month':'এই মাসে'}</small><strong>{visitorStats.month_unique==null?'—':numLang(visitorStats.month_unique,lang,0)}</strong></div></article>
+          <article><Eye/><div><small>{en?'Total visitors':'মোট ভিজিটর'}</small><strong>{visitorStats.total_unique==null?'—':numLang(visitorStats.total_unique,lang,0)}</strong></div></article>
+        </div>
+        <div className="live-stats-foot"><span>{en?'Anonymous browser/device estimate':'অ্যানোনিমাস ব্রাউজার/ডিভাইসভিত্তিক আনুমানিক হিসাব'}</span><b>{en?'Total page views':'মোট পেজ ভিউ'}: {visitorStats.total_views==null?'—':numLang(visitorStats.total_views,lang,0)}</b></div>
+      </div>
     </section>
 
     <section className="approved-section public-calculator-center" id="public-calculator-center">
