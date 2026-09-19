@@ -39,6 +39,7 @@ import './approved-home-v16-8.css';
 import './pay-scale-2026-public.css';
 import './mobile-premium-public-v1.css';
 import './public-visitor-stats.css';
+import './public-report-share.css';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import {
   PAY2015,PAY2026,PAY_SCALE_2026_META,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
@@ -1638,7 +1639,7 @@ function PromotionResult({r,lang='bn'}){
     <section className="roadmap-card"><h3>{en?'Full future promotion roadmap':'সম্পূর্ণ সম্ভাব্য পদোন্নতি রোডম্যাপ'}</h3>{r.roadmap.map((x,i)=>x.stop?<div className="roadmap-row stop" key={i}><b>{en?'After grade':'গ্রেড'} {x.fromGrade}</b><span>{x.label}</span></div>:<div className="roadmap-row" key={i}><div><b>{x.fromGrade} → {x.toGrade} · {x.title}</b><small>{x.years} {en?'years':'বছর'}</small></div><div><b>{fmtDateLang(x.completionDeadline,lang)}</b><small>{en?'Projected final promotion':'সম্ভাব্য চূড়ান্ত পদোন্নতি'}</small></div></div>)}</section>
 
     <button className="primary wide" onClick={()=>setPreview(true)}><FileText size={17}/> {en?'A4 PDF Preview':'বিস্তারিত A4 PDF প্রিভিউ'}</button>
-    {preview&&<PdfPreviewModal html={report} filename={filename} onClose={()=>setPreview(false)} lang={lang}/>}
+    {preview&&<PdfPreviewModal html={report} filename={filename} onClose={()=>setPreview(false)} lang={lang} shareTitle={en?'Promotion Calculation Report':'পদোন্নতি হিসাবের রিপোর্ট'} shareSummary={en?'Promotion eligibility, service points and roadmap report.':'পদোন্নতির যোগ্যতা, সার্ভিস পয়েন্ট ও রোডম্যাপের রিপোর্ট।'}/>}
   </div>
 }
 
