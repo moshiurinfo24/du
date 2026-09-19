@@ -162,9 +162,9 @@ function pdfSummaryCards(items=[],columns=4){
   const cols=Math.max(2,Math.min(4,Number(columns)||4));
   return `<div class="pdf-summary-grid" style="display:grid;grid-template-columns:repeat(${cols},minmax(0,1fr));gap:9px;margin:0 0 12px">${items.map((x,i)=>`
     <div class="pdf-summary-card" style="border:1px solid ${x.accent?'#d5bd7d':'#d8e3df'};border-radius:11px;padding:11px 12px;background:${x.accent?'linear-gradient(145deg,#fffaf0,#fffdf8)':'linear-gradient(145deg,#f8fcfa,#ffffff)'};min-height:58px;box-sizing:border-box;overflow:hidden">
-      <div style="font-size:9.4px;color:#617069;font-weight:800;line-height:1.3;overflow-wrap:anywhere">${pdfSafe(x.label)}</div>
-      <div style="margin-top:5px;font-size:${x.accent?'17px':'15px'};color:${x.accent?'#72551b':'#153f30'};font-weight:900;line-height:1.18;font-family:'Inter','Hind Siliguri',sans-serif;font-variant-numeric:tabular-nums;overflow-wrap:anywhere">${pdfSafe(x.value)}</div>
-      ${x.note?`<div style="margin-top:4px;font-size:8.2px;color:#859089;line-height:1.3;overflow-wrap:anywhere">${pdfSafe(x.note)}</div>`:''}
+      <div style="font-size:10.2px;color:#53665d;font-weight:800;line-height:1.3;overflow-wrap:anywhere">${pdfSafe(x.label)}</div>
+      <div style="margin-top:5px;font-size:${x.accent?'18.2px':'16.2px'};color:${x.accent?'#72551b':'#153f30'};font-weight:900;line-height:1.18;font-family:'Inter','Hind Siliguri',sans-serif;font-variant-numeric:tabular-nums;overflow-wrap:anywhere">${pdfSafe(x.value)}</div>
+      ${x.note?`<div style="margin-top:4px;font-size:9px;color:#74827a;line-height:1.3;overflow-wrap:anywhere">${pdfSafe(x.note)}</div>`:''}
     </div>`).join('')}</div>`;
 }
 function pdfTable(rows=[],opts={}){
@@ -173,7 +173,7 @@ function pdfTable(rows=[],opts={}){
   const compact=opts.compact===true;
   const sizes=three?['42%','25%','33%']:['47%','53%'];
   return `<div class="pdf-table-wrap" style="width:100%;max-width:100%;border:1px solid #d8e2e7;border-radius:11px;overflow:hidden;background:#fff">
-    <table class="pdf-table" style="width:100%;max-width:100%;border-collapse:collapse;table-layout:fixed;font-size:${compact?'10.35px':'11.15px'};line-height:1.46">
+    <table class="pdf-table" style="width:100%;max-width:100%;border-collapse:collapse;table-layout:fixed;font-size:${compact?'10.9px':'11.75px'};line-height:1.42">
       <colgroup>
         <col style="width:${sizes[0]}">
         ${three?`<col style="width:${sizes[1]}"><col style="width:${sizes[2]}">`:`<col style="width:${sizes[1]}">`}
@@ -187,9 +187,9 @@ function pdfTable(rows=[],opts={}){
         const bg=i%2===0?'#ffffff':'#fbfcfd';
         const emphasis=r.emphasis===true;
         return `<tr style="background:${emphasis?'#edf7f1':bg}">
-          <td style="padding:${compact?'6.5px 8px':'7.5px 9px'};border-bottom:1px solid #e7edf0;color:${emphasis?'#164c35':'#405463'};font-weight:${emphasis?850:650};box-sizing:border-box;white-space:normal;overflow-wrap:anywhere;word-break:normal;vertical-align:middle">${pdfSafe(r.label)}</td>
-          ${three?`<td style="padding:${compact?'6.5px 8px':'7.5px 9px'};border-bottom:1px solid #e7edf0;text-align:center;color:#63736b;box-sizing:border-box;white-space:normal;overflow-wrap:anywhere;word-break:normal;vertical-align:middle">${pdfSafe(r.detail||'—')}</td>`:''}
-          <td style="padding:${compact?'6.5px 8px':'7.5px 9px'};border-bottom:1px solid #e7edf0;text-align:right;color:${emphasis?'#0f5f3a':'#172c3d'};font-weight:${emphasis?900:800};font-family:'Inter','Hind Siliguri',sans-serif;font-variant-numeric:tabular-nums;box-sizing:border-box;white-space:normal;overflow-wrap:anywhere;word-break:normal;vertical-align:middle">${pdfSafe(r.value)}</td>
+          <td style="padding:${compact?'6.1px 8px':'7.1px 9px'};border-bottom:1px solid #e7edf0;color:${emphasis?'#164c35':'#405463'};font-weight:${emphasis?850:650};box-sizing:border-box;white-space:normal;overflow-wrap:anywhere;word-break:normal;vertical-align:middle">${pdfSafe(r.label)}</td>
+          ${three?`<td style="padding:${compact?'6.1px 8px':'7.1px 9px'};border-bottom:1px solid #e7edf0;text-align:center;color:#63736b;box-sizing:border-box;white-space:normal;overflow-wrap:anywhere;word-break:normal;vertical-align:middle">${pdfSafe(r.detail||'—')}</td>`:''}
+          <td style="padding:${compact?'6.1px 8px':'7.1px 9px'};border-bottom:1px solid #e7edf0;text-align:right;color:${emphasis?'#0f5f3a':'#172c3d'};font-weight:${emphasis?900:800};font-family:'Inter','Hind Siliguri',sans-serif;font-variant-numeric:tabular-nums;box-sizing:border-box;white-space:normal;overflow-wrap:anywhere;word-break:normal;vertical-align:middle">${pdfSafe(r.value)}</td>
         </tr>`;
       }).join('')}</tbody>
     </table>
@@ -199,41 +199,44 @@ function reportShell(title,subtitle,body,lang='bn',meta={}){
   const en=lang==='en';
   const pageNo=Number(meta.pageNo||1),totalPages=Number(meta.totalPages||1);
   const fixed=meta.fixedPage===true,breakAfter=meta.breakAfter===true;
+  const pageMinHeight=fixed?'285mm':'270mm';
   const now=new Date();
   const generated=now.toLocaleString(en?'en-GB':'bn-BD-u-nu-latn');
   const reportId=`EDS-${String(now.getFullYear()).slice(-2)}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
-  return `<div class="pdf-page premium-pdf-page" data-pdf-page="${pageNo}" data-break-after="${breakAfter?'true':'false'}" style="width:194mm;${fixed?'height:285mm;':'min-height:270mm;'}box-sizing:border-box;font-family:'Hind Siliguri','Noto Sans Bengali','Inter',Arial,sans-serif;color:#172033;background:#fff;line-height:1.52;font-size:11.6px;${breakAfter?'page-break-after:always;break-after:page;':''}">
+  return `<div class="pdf-page premium-pdf-page" data-pdf-page="${pageNo}" data-break-after="${breakAfter?'true':'false'}" style="width:194mm;min-height:${pageMinHeight};box-sizing:border-box;font-family:'Hind Siliguri','Noto Sans Bengali','Inter',Arial,sans-serif;color:#162433;background:#fff;line-height:1.5;font-size:12.2px;${breakAfter?'page-break-after:always;break-after:page;':''}">
     <style>
       .premium-pdf-page,.premium-pdf-page *{box-sizing:border-box}
-      .premium-pdf-page{overflow:hidden}
+      .premium-pdf-page{overflow:visible!important}
       .premium-pdf-page table{width:100%!important;max-width:100%!important}
       .premium-pdf-page th,.premium-pdf-page td{max-width:100%;white-space:normal!important;overflow-wrap:anywhere!important;word-break:normal!important}
       .premium-pdf-page b,.premium-pdf-page span,.premium-pdf-page div{overflow-wrap:anywhere;word-break:normal}
+      .premium-pdf-page .pdf-table-wrap{break-inside:avoid;page-break-inside:avoid}
+      .premium-pdf-page .pdf-summary-card{break-inside:avoid;page-break-inside:avoid}
     </style>
-    <div style="height:100%;box-sizing:border-box;border:1px solid #ccd8df;border-radius:13px;overflow:hidden;background:linear-gradient(180deg,#fff 0%,#fff 92%,#fbfcfd 100%);display:flex;flex-direction:column;box-shadow:0 0 0 1px #f1f4f6 inset">
-      <div style="height:4px;background:linear-gradient(90deg,#c7a34e,#e6cf86,#1d7a5a,#174f77)"></div>
-      <div style="background:linear-gradient(118deg,#092b50 0%,#124b6b 57%,#176346 100%);color:#fff;padding:15px 18px 14px;display:flex;align-items:center;justify-content:space-between;gap:16px">
+    <div class="pdf-frame" style="min-height:${pageMinHeight};height:auto;box-sizing:border-box;border:1px solid #c7d4dc;border-radius:13px;overflow:hidden;background:linear-gradient(180deg,#fff 0%,#fff 92%,#fbfcfd 100%);display:flex;flex-direction:column;box-shadow:0 0 0 1px #eef3f5 inset">
+      <div style="height:4px;background:linear-gradient(90deg,#c7a34e,#ead58f,#1b7d58,#174f77)"></div>
+      <div style="background:linear-gradient(118deg,#082c52 0%,#124e6d 57%,#176346 100%);color:#fff;padding:14px 18px 13px;display:flex;align-items:center;justify-content:space-between;gap:16px">
         <div style="display:flex;align-items:center;gap:11px;min-width:0">
-          <div style="width:38px;height:38px;border-radius:10px;background:linear-gradient(145deg,#fff,#eef5f2);color:#0d4968;display:grid;place-items:center;font-family:'Inter',Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.5px;flex:0 0 auto;box-shadow:0 4px 14px rgba(0,0,0,.16)">EDS</div>
+          <div style="width:39px;height:39px;border-radius:10px;background:linear-gradient(145deg,#fff,#edf5f2);color:#0c4a67;display:grid;place-items:center;font-family:'Inter',Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.5px;flex:0 0 auto;box-shadow:0 4px 14px rgba(0,0,0,.16)">EDS</div>
           <div style="min-width:0">
-            <div style="font-size:9.5px;font-weight:800;opacity:.9;letter-spacing:.1px">${en?'Employee Digital Service Platform':'কর্মকর্তা-কর্মচারী ডিজিটাল সেবা'}</div>
-            <div style="font-size:19.5px;font-weight:900;margin-top:2px;line-height:1.18;letter-spacing:-.1px">${pdfSafe(title)}</div>
-            <div style="font-size:9.7px;opacity:.88;margin-top:4px;line-height:1.35">${pdfSafe(subtitle)}</div>
+            <div style="font-size:10.1px;font-weight:700;opacity:.92;letter-spacing:.1px">${en?'Employee Digital Service Platform':'কর্মকর্তা-কর্মচারী ডিজিটাল সেবা'}</div>
+            <div style="font-size:20.6px;font-weight:700;margin-top:2px;line-height:1.22;letter-spacing:-.1px">${pdfSafe(title)}</div>
+            <div style="font-size:10.4px;opacity:.9;margin-top:4px;line-height:1.38">${pdfSafe(subtitle)}</div>
           </div>
         </div>
-        <div style="text-align:right;white-space:nowrap;border:1px solid rgba(255,255,255,.22);border-radius:9px;padding:7px 9px;background:rgba(255,255,255,.08)">
-          <div style="font-family:'Inter',Arial,sans-serif;font-size:9.5px;font-weight:900;letter-spacing:.6px">A4 REPORT</div>
-          <div style="font-family:'Inter',Arial,sans-serif;font-size:8.7px;opacity:.85;margin-top:2px">${PDF_BRAND.website}</div>
+        <div style="text-align:right;white-space:nowrap;border:1px solid rgba(255,255,255,.24);border-radius:9px;padding:7px 9px;background:rgba(255,255,255,.08)">
+          <div style="font-family:'Inter',Arial,sans-serif;font-size:9.7px;font-weight:900;letter-spacing:.6px">A4 REPORT</div>
+          <div style="font-family:'Inter',Arial,sans-serif;font-size:8.9px;opacity:.88;margin-top:2px">${PDF_BRAND.website}</div>
         </div>
       </div>
-      <div style="padding:7px 18px;background:linear-gradient(90deg,#fffaf0,#fbfdfc);border-bottom:1px solid #e4e9e6;display:flex;justify-content:space-between;gap:12px;color:#6d735f;font-size:8.5px">
+      <div style="padding:7px 18px;background:linear-gradient(90deg,#fffaf0,#fbfdfc);border-bottom:1px solid #e2e8e5;display:flex;justify-content:space-between;gap:12px;color:#66736b;font-size:9px">
         <span><b style="color:#725a26">${en?'Report ID':'রিপোর্ট আইডি'}:</b> <span style="font-family:'Inter',Arial,sans-serif">${reportId}</span></span>
         <span><b style="color:#3b6252">${en?'Generated':'তৈরি'}:</b> ${generated}</span>
       </div>
-      <div class="pdf-body" style="flex:1;min-width:0;padding:12px 16px 10px;box-sizing:border-box;${fixed?'overflow:hidden;':''}">${body}</div>
-      <div style="border-top:1px solid #d9e2e7;background:linear-gradient(90deg,#f7fafc,#f5f9f7);padding:7px 17px 8px;color:#5f6f7b;font-size:8.35px;line-height:1.42">
-        <div style="margin-bottom:5px;color:#6a756f">${en?'Independent/unofficial digital service report. Verify applicable rules/orders before any final administrative or financial decision.':'স্বাধীন ও অনানুষ্ঠানিক ডিজিটাল সেবা প্রতিবেদন। চূড়ান্ত প্রশাসনিক/আর্থিক সিদ্ধান্তের আগে প্রযোজ্য বিধি/আদেশ যাচাই করুন।'}</div>
-        <div style="display:grid;grid-template-columns:1fr 1.2fr auto;gap:10px;align-items:center;border-top:1px dashed #cfd9dd;padding-top:5px">
+      <div class="pdf-body" style="flex:1;min-width:0;padding:11px 15px 10px;box-sizing:border-box;overflow:visible">${body}</div>
+      <div class="pdf-footer" style="border-top:1px solid #d7e1e6;background:linear-gradient(90deg,#f7fafc,#f5f9f7);padding:7px 16px 8px;color:#596b78;font-size:8.8px;line-height:1.42">
+        <div style="margin-bottom:5px;color:#65736d">${en?'Independent/unofficial digital service report. Verify applicable rules/orders before any final administrative or financial decision.':'স্বাধীন ও অনানুষ্ঠানিক ডিজিটাল সেবা প্রতিবেদন। চূড়ান্ত প্রশাসনিক/আর্থিক সিদ্ধান্তের আগে প্রযোজ্য বিধি/আদেশ যাচাই করুন।'}</div>
+        <div style="display:grid;grid-template-columns:1fr 1.2fr auto;gap:10px;align-items:center;border-top:1px dashed #cbd6db;padding-top:5px">
           <span><b style="font-family:'Inter','Hind Siliguri',sans-serif;color:#24465d">${PDF_BRAND.website}</b></span>
           <span style="text-align:center"><b>${en?'Design & Development':'ডিজাইন ও ডেভেলপমেন্ট'}:</b> ${en?PDF_BRAND.developerEn:PDF_BRAND.developerBn} · <span style="font-family:'Inter',Arial,sans-serif">${PDF_BRAND.phone}</span></span>
           <span style="font-family:'Inter','Hind Siliguri',sans-serif;font-weight:900;color:#23465c">${en?'Page':'পৃষ্ঠা'} ${pageNo} / ${totalPages}</span>
@@ -244,18 +247,18 @@ function reportShell(title,subtitle,body,lang='bn',meta={}){
 }
 function kv(label,value,opts={}){
   const emphasis=opts.emphasis===true;
-  return `<div style="display:grid;grid-template-columns:minmax(0,46%) minmax(0,54%);gap:10px;padding:8px 2px;border-bottom:1px solid #e5ebef;align-items:center;min-width:0">
-    <span style="min-width:0;color:${emphasis?'#174a36':'#53636f'};font-size:11px;font-weight:${emphasis?800:650};line-height:1.4;white-space:normal;overflow-wrap:anywhere">${pdfSafe(label)}</span>
-    <b style="min-width:0;text-align:right;color:${emphasis?'#0d603a':'#172b3b'};font-size:${emphasis?'12.8px':'11.5px'};font-family:'Inter','Hind Siliguri',sans-serif;font-variant-numeric:tabular-nums;line-height:1.38;white-space:normal;overflow-wrap:anywhere">${pdfSafe(value)}</b>
+  return `<div style="display:grid;grid-template-columns:minmax(0,45%) minmax(0,55%);gap:10px;padding:8px 2px;border-bottom:1px solid #e4eaee;align-items:center;min-width:0">
+    <span style="min-width:0;color:${emphasis?'#174a36':'#4d606c'};font-size:11.6px;font-weight:${emphasis?700:600};line-height:1.42;white-space:normal;overflow-wrap:anywhere">${pdfSafe(label)}</span>
+    <b style="min-width:0;text-align:right;color:${emphasis?'#0d603a':'#172b3b'};font-size:${emphasis?'13.3px':'12.1px'};font-family:'Inter','Hind Siliguri',sans-serif;font-variant-numeric:tabular-nums;line-height:1.4;white-space:normal;overflow-wrap:anywhere">${pdfSafe(value)}</b>
   </div>`;
 }
 function section(title,content,opts={}){
-  return `<div style="margin:${opts.tight?'10px':'12px'} 0 0;page-break-inside:avoid">
+  return `<div class="pdf-section" style="margin:${opts.tight?'9px':'11px'} 0 0;page-break-inside:avoid;break-inside:avoid">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
       <span style="width:4px;height:18px;border-radius:4px;background:linear-gradient(180deg,#c6a14a,#176c4c)"></span>
-      <div style="font-size:14.2px;font-weight:900;color:#143b57;line-height:1.25">${pdfSafe(title)}</div>
+      <div style="font-size:14.7px;font-weight:700;color:#143b57;line-height:1.28">${pdfSafe(title)}</div>
     </div>
-    <div style="border:1px solid #dce5e9;border-radius:10px;padding:${opts.table?'0':'9px 12px'};background:#fff">${content}</div>
+    <div style="border:1px solid #d9e3e8;border-radius:10px;padding:${opts.table?'0':'9px 12px'};background:#fff">${content}</div>
   </div>`;
 }
 async function buildA4Pdf(element,{coverText='PDF তৈরি হচ্ছে...'}={}){
@@ -264,7 +267,7 @@ async function buildA4Pdf(element,{coverText='PDF তৈরি হচ্ছে..
   await document.fonts?.ready?.catch?.(()=>{});
 
   const cover=document.createElement('div');
-  cover.style.cssText='position:fixed;inset:0;z-index:2147483647;background:rgba(12,24,39,.96);color:#fff;display:grid;place-items:center;font-family:"Hind Siliguri","Inter",sans-serif;font-size:16px;font-weight:800';
+  cover.style.cssText='position:fixed;inset:0;z-index:2147483647;background:rgba(12,24,39,.96);color:#fff;display:grid;place-items:center;font-family:"Hind Siliguri","Inter",sans-serif;font-size:16px;font-weight:700';
   cover.innerHTML=`<div style="padding:16px 22px;border:1px solid rgba(255,255,255,.2);border-radius:14px;background:rgba(255,255,255,.06)">${escapeHtml(coverText)}</div>`;
 
   const stage=document.createElement('div');
@@ -285,22 +288,43 @@ async function buildA4Pdf(element,{coverText='PDF তৈরি হচ্ছে..
       page.style.display='block';
       page.style.position='relative';
       page.style.width='194mm';
-      page.style.height='285mm';
+      page.style.height='auto';
       page.style.minHeight='285mm';
-      page.style.maxHeight='285mm';
-      page.style.overflow='hidden';
+      page.style.maxHeight='none';
+      page.style.overflow='visible';
       page.style.background='#fff';
       page.style.margin='0';
 
-      await new Promise(r=>requestAnimationFrame(r));
+      const frame=page.querySelector('.pdf-frame');
+      if(frame){
+        frame.style.height='auto';
+        frame.style.minHeight='285mm';
+        frame.style.overflow='hidden';
+      }
+      const body=page.querySelector('.pdf-body');
+      if(body)body.style.overflow='visible';
+
+      await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
       const canvas=await html2canvas(page,{
-        scale:2.6,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',logging:false,
-        scrollX:0,scrollY:0,windowWidth:Math.max(page.scrollWidth,734),windowHeight:Math.max(page.scrollHeight,1078)
+        scale:2.7,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',logging:false,
+        scrollX:0,scrollY:0,
+        windowWidth:Math.max(page.scrollWidth,734),
+        windowHeight:Math.max(page.scrollHeight,1078)
       });
       if(!canvas.width||!canvas.height)throw new Error('PDF page capture failed');
       if(i>0)pdf.addPage('a4','portrait');
-      const img=canvas.toDataURL('image/jpeg',0.985);
-      pdf.addImage(img,'JPEG',8,6,194,285,undefined,'MEDIUM');
+
+      const maxW=194,maxH=285;
+      let drawW=maxW;
+      let drawH=drawW*(canvas.height/canvas.width);
+      if(drawH>maxH){
+        drawH=maxH;
+        drawW=drawH*(canvas.width/canvas.height);
+      }
+      const x=(210-drawW)/2;
+      const y=(297-drawH)/2;
+      const img=canvas.toDataURL('image/jpeg',0.99);
+      pdf.addImage(img,'JPEG',x,y,drawW,drawH,undefined,'MEDIUM');
     }
     return pdf;
   }finally{
@@ -604,18 +628,27 @@ function salaryOctoberArrearReportHtml(base,lang='bn'){
     {label:en?'October current estimated net':'অক্টোবর চলতি আনুমানিক নিট',detail:en?'Current month':'চলতি মাস',value:amt(a.octoberCurrentNet||0)},
     {label:en?'Estimated total receivable in October':'অক্টোবরে আনুমানিক মোট প্রাপ্য',detail:en?'Current + previous arrear':'চলতি + পূর্বের বকেয়া',value:amt(a.octoberBillNet||0),emphasis:true}
   ];
-  const body=summary+
-    section(en?'Salary & special-benefit basis':'বেতন ও বিশেষ সুবিধার ভিত্তি',pdfTable(coreRows,{three:true,head1:en?'Item':'বিষয়',head2:en?'Basis':'ভিত্তি/হার',head3:en?'Amount / value':'অংক/মান',compact:true}),{table:true,tight:true})+
-    section(en?'Arrear settlement':'বকেয়া নিষ্পত্তি',pdfTable(settlementRows,{three:true,head1:en?'Settlement item':'সমন্বয়ের বিষয়',head2:en?'Period / basis':'সময়/ভিত্তি',head3:en?'Amount':'অংক',compact:true}),{table:true,tight:true})+
-    `<div style="margin-top:10px;border:2px solid #b9994d;border-radius:11px;padding:11px 14px;background:linear-gradient(120deg,#fffaf0,#f1faf5);display:flex;justify-content:space-between;align-items:center;gap:14px;min-width:0">
-      <div><div style="font-size:9px;color:#6d795f;font-weight:700">${en?'OCTOBER 2026 FINAL ESTIMATE':'অক্টোবর ২০২৬ চূড়ান্ত আনুমানিক হিসাব'}</div><div style="font-size:13px;font-weight:900;color:#244b3a;margin-top:2px">${en?'Estimated total receivable':'আনুমানিক মোট প্রাপ্য'}</div></div>
-      <div style="font-size:22px;font-weight:900;color:#76591e;font-family:'Inter','Hind Siliguri',sans-serif;font-variant-numeric:tabular-nums">${pdfSafe(amt(a.octoberBillNet||0))}</div>
-    </div>
-    <div style="margin-top:8px;padding:8px 10px;border-left:4px solid #1a7a50;background:#f1fbf6;border-radius:8px;font-size:9.4px;color:#38594a;line-height:1.45"><b>${en?'Method:':'পদ্ধতি:'}</b> ${en?'October current salary is counted once. July–September arrears are calculated against the old-scale July payroll and the special benefit already received for those three months is deducted automatically.':'অক্টোবরের চলতি বেতন একবারই ধরা হয়েছে। জুলাই–সেপ্টেম্বরের বকেয়া ১ জুলাইয়ের পুরোনো স্কেলের প্রাপ্য বেতনের বিপরীতে হিসাব করে ওই ৩ মাসের বিশেষ সুবিধা স্বয়ংক্রিয়ভাবে বাদ দেওয়া হয়েছে।'}</div>
-    <div style="margin-top:6px;padding:8px 10px;background:#fff8e8;border-radius:8px;font-size:8.9px;color:#6b5728;line-height:1.4">${en?'Net figures are estimates based on the deduction inputs. Tax, loan or payroll-specific deductions may change the final office bill.':'নিট অংকগুলো দেওয়া কর্তনের তথ্য অনুযায়ী আনুমানিক। আয়কর, ঋণ বা অফিসভিত্তিক অন্য কর্তনের কারণে চূড়ান্ত বিল ভিন্ন হতে পারে।'}</div>`;
-  return reportShell(en?'October 2026 Salary & Arrear Statement':'অক্টোবর ২০২৬ বেতন ও বকেয়া বিবরণী',en?'July–October 2026 adjustment · October bill settlement':'জুলাই–অক্টোবর ২০২৬ সমন্বয় · অক্টোবর বিল নিষ্পত্তি',body,lang);
-}
 
+  const page1Body=summary+
+    section(en?'Salary & special-benefit basis':'বেতন ও বিশেষ সুবিধার ভিত্তি',pdfTable(coreRows,{three:true,head1:en?'Item':'বিষয়',head2:en?'Basis':'ভিত্তি/হার',head3:en?'Amount / value':'অংক/মান'}),{table:true})+
+    `<div style="margin-top:10px;padding:10px 12px;border-left:4px solid #1a7a50;background:#f1fbf6;border-radius:8px;font-size:10.2px;color:#38594a;line-height:1.5"><b>${en?'Method:':'পদ্ধতি:'}</b> ${en?'October current salary is counted once. July–September arrears are calculated against the old-scale July payroll and the special benefit already received for those three months is deducted automatically.':'অক্টোবরের চলতি বেতন একবারই ধরা হয়েছে। জুলাই–সেপ্টেম্বরের বকেয়া ১ জুলাইয়ের পুরোনো স্কেলের প্রাপ্য বেতনের বিপরীতে হিসাব করে ওই ৩ মাসের বিশেষ সুবিধা স্বয়ংক্রিয়ভাবে বাদ দেওয়া হয়েছে।'}</div>`;
+
+  const page2Summary=pdfSummaryCards([
+    {label:en?'Prior 3-month net arrear':'আগের ৩ মাসের নিট বকেয়া',value:amt(a.priorThreeNetArrear||0)},
+    {label:en?'Special benefit adjustment':'বিশেষ সুবিধা সমন্বয়',value:`− ${amt(a.specialBenefitThreeMonths||0)}`},
+    {label:en?'Final previous arrear':'চূড়ান্ত পূর্বের বকেয়া',value:amt(a.priorNetAfterSpecial||0),accent:true}
+  ],3);
+  const page2Body=page2Summary+
+    section(en?'Arrear settlement':'বকেয়া নিষ্পত্তি',pdfTable(settlementRows,{three:true,head1:en?'Settlement item':'সমন্বয়ের বিষয়',head2:en?'Period / basis':'সময়/ভিত্তি',head3:en?'Amount':'অংক'}),{table:true})+
+    `<div style="margin-top:11px;border:2px solid #b9994d;border-radius:11px;padding:12px 14px;background:linear-gradient(120deg,#fffaf0,#f1faf5);display:flex;justify-content:space-between;align-items:center;gap:14px;min-width:0">
+      <div><div style="font-size:9.7px;color:#6d795f;font-weight:700">${en?'OCTOBER 2026 FINAL ESTIMATE':'অক্টোবর ২০২৬ চূড়ান্ত আনুমানিক হিসাব'}</div><div style="font-size:14px;font-weight:700;color:#244b3a;margin-top:2px">${en?'Estimated total receivable':'আনুমানিক মোট প্রাপ্য'}</div></div>
+      <div style="font-size:24px;font-weight:900;color:#76591e;font-family:'Inter','Hind Siliguri',sans-serif;font-variant-numeric:tabular-nums">${pdfSafe(amt(a.octoberBillNet||0))}</div>
+    </div>
+    <div style="margin-top:8px;padding:9px 11px;background:#fff8e8;border-radius:8px;font-size:9.8px;color:#6b5728;line-height:1.48">${en?'Net figures are estimates based on the deduction inputs. Tax, loan or payroll-specific deductions may change the final office bill.':'নিট অংকগুলো দেওয়া কর্তনের তথ্য অনুযায়ী আনুমানিক। আয়কর, ঋণ বা অফিসভিত্তিক অন্য কর্তনের কারণে চূড়ান্ত বিল ভিন্ন হতে পারে।'}</div>`;
+
+  return reportShell(en?'October 2026 Salary & Arrear Statement':'অক্টোবর ২০২৬ বেতন ও বকেয়া বিবরণী',en?'Salary basis and special-benefit adjustment':'বেতনভিত্তি ও বিশেষ সুবিধা সমন্বয়',page1Body,lang,{pageNo:1,totalPages:2,fixedPage:true,breakAfter:true})+
+    reportShell(en?'October 2026 Arrear Settlement':'অক্টোবর ২০২৬ বকেয়া নিষ্পত্তি',en?'Final July–September arrear with October bill':'অক্টোবর বিলের সাথে জুলাই–সেপ্টেম্বরের চূড়ান্ত বকেয়া',page2Body,lang,{pageNo:2,totalPages:2,fixedPage:true});
+}
 function salaryProjectionReportResult(base,p,projections,year){
   const a=p?.allowances||{};
   return {
@@ -734,12 +767,12 @@ function salaryReportHtml(r,lang='bn',pdfMeta={}){
       <div>${section(en?'Deductions':'কর্তনসমূহ',pdfTable(dedRows,{head1:en?'Deduction':'কর্তন',head3:en?'Amount':'অংক',compact:true}),{table:true,tight:true})}</div>
     </div>
     <div style="margin-top:10px;border:2px solid #b89a51;border-radius:11px;padding:11px 14px;background:linear-gradient(120deg,#fffaf0,#eff9f4);display:flex;justify-content:space-between;align-items:center;gap:14px;min-width:0">
-      <div><div style="font-size:8.8px;color:#6e785f;font-weight:800">${en?'FINAL MONTHLY ESTIMATE':'চূড়ান্ত মাসিক আনুমানিক হিসাব'}</div><div style="font-size:13px;font-weight:900;color:#244b3a;margin-top:2px">${en?'Estimated net payable salary':'আনুমানিক নিট প্রাপ্য বেতন'}</div></div>
-      <div style="font-size:22px;font-weight:900;color:#76591e;font-family:'Inter','Hind Siliguri',sans-serif;font-variant-numeric:tabular-nums">${pdfSafe(amt(r.net))}</div>
+      <div><div style="font-size:9.5px;color:#65745f;font-weight:800">${en?'FINAL MONTHLY ESTIMATE':'চূড়ান্ত মাসিক আনুমানিক হিসাব'}</div><div style="font-size:13px;font-weight:900;color:#244b3a;margin-top:2px">${en?'Estimated net payable salary':'আনুমানিক নিট প্রাপ্য বেতন'}</div></div>
+      <div style="font-size:24px;font-weight:900;color:#76591e;font-family:'Inter','Hind Siliguri',sans-serif;font-variant-numeric:tabular-nums">${pdfSafe(amt(r.net))}</div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px">
-      <div style="padding:8px 10px;border-left:4px solid #1f6d4d;background:#effaf5;border-radius:8px;font-size:8.9px;color:#38594a;line-height:1.4"><b>${en?'Gazette rule:':'গেজেটের নিয়ম:'}</b> ${pdfSafe(ruleNote)}</div>
-      <div style="padding:8px 10px;border-left:4px solid #c69b3e;background:#fff8e8;border-radius:8px;font-size:8.9px;color:#6b5728;line-height:1.4"><b>${en?'Deduction note:':'কর্তন নোট:'}</b> ${r.deductionMode!=='custom'?(en?'DU Auto uses rule-based PF/Benevolent Fund and existing platform payroll presets for supported fixed deductions.':'DU Auto-তে PF/কল্যাণ তহবিল নিয়মভিত্তিক এবং সমর্থিত নির্দিষ্ট কর্তনে আগের পে-রোল প্রিসেট ব্যবহৃত হয়েছে।'):(en?'Custom deductions should be verified against actual payroll.':'কাস্টম কর্তন প্রকৃত পে-রোলের সঙ্গে যাচাই করুন।')}</div>
+      <div style="padding:8px 10px;border-left:4px solid #1f6d4d;background:#effaf5;border-radius:8px;font-size:9.5px;color:#38594a;line-height:1.4"><b>${en?'Gazette rule:':'গেজেটের নিয়ম:'}</b> ${pdfSafe(ruleNote)}</div>
+      <div style="padding:8px 10px;border-left:4px solid #c69b3e;background:#fff8e8;border-radius:8px;font-size:9.5px;color:#6b5728;line-height:1.4"><b>${en?'Deduction note:':'কর্তন নোট:'}</b> ${r.deductionMode!=='custom'?(en?'DU Auto uses rule-based PF/Benevolent Fund and existing platform payroll presets for supported fixed deductions.':'DU Auto-তে PF/কল্যাণ তহবিল নিয়মভিত্তিক এবং সমর্থিত নির্দিষ্ট কর্তনে আগের পে-রোল প্রিসেট ব্যবহৃত হয়েছে।'):(en?'Custom deductions should be verified against actual payroll.':'কাস্টম কর্তন প্রকৃত পে-রোলের সঙ্গে যাচাই করুন।')}</div>
     </div>`;
   return reportShell(title,subtitle,body,lang,pdfMeta);
 }
