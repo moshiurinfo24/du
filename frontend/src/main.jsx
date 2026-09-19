@@ -132,7 +132,7 @@ function reportShell(title,subtitle,body,lang='bn',meta={}){
   const pageNo=Number(meta.pageNo||1),totalPages=Number(meta.totalPages||1);
   const fixed=meta.fixedPage===true,breakAfter=meta.breakAfter===true;
   const generated=new Date().toLocaleString(en?'en-GB':'bn-BD-u-nu-latn');
-  return `<div class="pdf-page" data-pdf-page="${pageNo}" style="width:194mm;${fixed?'height:285mm;':'min-height:270mm;'}box-sizing:border-box;font-family:'Hind Siliguri','Noto Sans Bengali','Inter',Arial,sans-serif;color:#172033;background:#fff;line-height:1.45;font-size:10.8px;${breakAfter?'page-break-after:always;break-after:page;':''}">
+  return `<div class="pdf-page" data-pdf-page="${pageNo}" data-break-after="${breakAfter?'true':'false'}" style="width:194mm;${fixed?'height:285mm;':'min-height:270mm;'}box-sizing:border-box;font-family:'Hind Siliguri','Noto Sans Bengali','Inter',Arial,sans-serif;color:#172033;background:#fff;line-height:1.45;font-size:10.8px;${breakAfter?'page-break-after:always;break-after:page;':''}">
     <div style="height:100%;box-sizing:border-box;border:1px solid #d5dee9;border-radius:12px;overflow:hidden;background:#fff;display:flex;flex-direction:column">
       <div style="background:linear-gradient(120deg,#0b2f58 0%,#155d79 62%,#177454 100%);color:#fff;padding:13px 17px 12px;display:flex;align-items:center;justify-content:space-between;gap:16px">
         <div style="display:flex;align-items:center;gap:10px;min-width:0">
@@ -159,21 +159,31 @@ async function saveA4Pdf(element,filename){
   if(!element)throw new Error('PDF preview is not available');
   const html2pdf=await loadHtml2Pdf();
   await document.fonts?.ready?.catch?.(()=>{});
-  await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
-  await html2pdf().set({
-    margin:[6,6,6,6],filename,
-    image:{type:'jpeg',quality:.98},
-    html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false,scrollX:0,scrollY:0},
-    jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
-    pagebreak:{mode:['css','legacy'],avoid:['.pdf-keep']}
-  }).from(element).save();
+  const stage=document.createElement('div');
+  stage.setAttribute('data-pdf-stage','true');
+  stage.style.cssText='position:absolute;left:0;top:0;width:194mm;background:#fff;z-index:-2147483647;pointer-events:none;overflow:visible';
+  stage.innerHTML=element.innerHTML;
+  document.body.appendChild(stage);
+  try{
+    await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+    const pages=[...stage.querySelectorAll('.pdf-page')];
+    const source=pages.length?stage:stage;
+    await html2pdf().set({
+      margin:[6,6,6,6],filename,
+      image:{type:'jpeg',quality:.98},
+      html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false,scrollX:0,scrollY:0,windowWidth:stage.scrollWidth||794},
+      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+      pagebreak:{mode:['css','legacy'],before:[],after:['.pdf-page[data-break-after="true"]'],avoid:['.pdf-keep']}
+    }).from(source).save();
+  }finally{
+    stage.remove();
+  }
 }
 async function downloadA4Html(html,filename){
-  const host=document.createElement('div');
-  host.style.cssText='position:fixed;left:-12000px;top:0;width:194mm;background:#fff;z-index:-1;pointer-events:none';
-  host.innerHTML=html;
-  document.body.appendChild(host);
-  try{await saveA4Pdf(host,filename)}finally{host.remove()}
+  const source=document.createElement('div');
+  source.style.cssText='width:194mm;background:#fff';
+  source.innerHTML=html;
+  await saveA4Pdf(source,filename);
 }
 function PdfPreviewModal({html,filename,onClose,lang='bn'}){
   const reportRef=useRef(null); const[busy,setBusy]=useState(false); const en=lang==='en';
@@ -1481,7 +1491,7 @@ function SalaryCalculator({lang='bn',publicMode=false}){
       <label>{en?'Entertainment allowance tier':'আপ্যায়ন ভাতার স্তর'}<select value={f.entertainmentTier} onChange={e=>setF({...f,entertainmentTier:e.target.value})}><option value="none">{en?'Not applicable':'প্রযোজ্য নয়'}</option><option value="cabinet">{en?'Cabinet/Principal Secretary — Tk 2,000':'মন্ত্রিপরিষদ/মুখ্য সচিব — ৳২,০০০'}</option><option value="secretary">{en?'Senior Secretary/Secretary — Tk 1,000':'সিনিয়র সচিব/সচিব — ৳১,০০০'}</option><option value="additional_secretary">{en?'Additional Secretary — Tk 900':'অতিরিক্ত সচিব — ৳৯০০'}</option><option value="joint_secretary">{en?'Joint Secretary / entitled officer — Tk 600':'যুগ্মসচিব/অন্যান্য অধিকারপ্রাপ্ত — ৳৬০০'}</option></select></label>
       <label>{en?'Other verified special allowance (monthly)':'অন্যান্য যাচাইকৃত বিশেষ ভাতা (মাসিক)'}<input type="number" min="0" step="1" value={f.otherSpecialAllowance} onChange={e=>setF({...f,otherSpecialAllowance:e.target.value})} placeholder="0"/></label>
     </div></details>
-    <details className="deduction-box du-deduction-box" open><summary className="du-deduction-summary"><span className={f.deductionMode==='du_auto'?'du-status-icon active':'du-status-icon manual'}>{f.deductionMode==='du_auto'?<CheckCircle2/>:<Edit3/>}</span><span className="du-summary-copy"><b>{en?'Dhaka University automatic deductions':'ঢাকা বিশ্ববিদ্যালয়ের অটো কর্তন'}</b><small>{f.deductionMode==='du_auto'?(en?'PF, benevolent fund and preset deductions are active':'PF, কল্যাণ তহবিল ও প্রিসেট কর্তন অটো চালু'):(en?'Custom deduction mode is active':'কাস্টম কর্তন মোড চালু')}</small></span><em className={f.deductionMode==='du_auto'?'du-status-badge active':'du-status-badge manual'}>{f.deductionMode==='du_auto'?(en?'ACTIVE':'সক্রিয়'):(en?'MANUAL':'ম্যানুয়াল')}</em></summary>
+    <details className="deduction-box du-deduction-box" open><summary className="du-deduction-summary simple"><span className={f.deductionMode==='du_auto'?'du-status-icon active':'du-status-icon manual'}>{f.deductionMode==='du_auto'?<CheckCircle2/>:<Edit3/>}</span><span className="du-summary-copy"><b>{en?'Dhaka University automatic deductions':'ঢাকা বিশ্ববিদ্যালয়ের অটো কর্তন'}</b></span></summary>
       <div className="form-grid compact">
         <label>{en?'Deduction mode':'কর্তনের ধরন'}<select value={f.deductionMode} onChange={e=>setF({...f,deductionMode:e.target.value})}><option value="du_auto">{en?'DU Auto (previous payroll preset)':'DU Auto (আগের পে-রোল সেটিং)'}</option><option value="custom">{en?'Custom / manual':'কাস্টম / ম্যানুয়াল'}</option></select></label>
         {f.deductionMode==='du_auto'?<>
@@ -1497,9 +1507,8 @@ function SalaryCalculator({lang='bn',publicMode=false}){
         </>}
         {(en?[['tax','Income tax'],['loan','Loan/advance installment'],['other','Other deduction']]:[['tax','আয়কর'],['loan','ঋণ/অগ্রিম কিস্তি'],['other','অন্যান্য কর্তন']]).map(([k,l])=><label key={k}>{l}<input type="number" min="0" step="0.01" value={f[k]} onChange={e=>setF({...f,[k]:e.target.value})}/></label>)}
       </div>
-      <div className="notice compact-notice">{en?'DU Auto restores the calculator’s previous payroll behavior: PF 10%, Benevolent Fund by employee category, plus the previous health/group insurance, stamp and association defaults. Tax, loan/advance and other deductions remain employee-specific.':'DU Auto আগের ক্যালকুলেটরের পে-রোল আচরণ ফিরিয়ে দেয়: PF ১০%, কর্মচারী শ্রেণিভেদে কল্যাণ তহবিল, সঙ্গে আগের স্বাস্থ্য/গ্রুপ বীমা, স্ট্যাম্প ও সমিতির ডিফল্ট। আয়কর, ঋণ/অগ্রিম ও অন্যান্য কর্তন ব্যক্তিভেদে থাকবে।'}</div>
     </details>
-    <button className="primary wide" onClick={calc}>{en?'Calculate official pay':'সরকারি নিয়মে হিসাব করুন'}</button></section>
+    <button className="primary wide" onClick={calc}>{en?'Submit':'সাবমিট করুন'}</button></section>
     {r&&<SalaryResult r={r} lang={lang}/>}
   </div>
 }
