@@ -442,14 +442,20 @@ function salaryOctoberArrearReportHtml(base,lang='bn'){
   const amt=v=>`${en?'Tk':'৳'} ${moneyLang(v,lang)}`;
   const rows=[
     [en?'Arrear period':'বকেয়া/সমন্বয় সময়কাল',en?'1 July–31 October 2026 (4 months)':'১ জুলাই–৩১ অক্টোবর ২০২৬ (৪ মাস)'],
-    [en?'2015 basic before implementation':'বাস্তবায়নের আগের ২০১৫ মূল বেতন',amt(a.legacyBasic||base.currentBasic||0)],
+    [en?'30 June 2026 basic':'৩০ জুন ২০২৬ মূল বেতন',amt(a.oldJuneBasic||base.currentBasic||0)],
+    [en?'1 July 2026 old-scale basic':'১ জুলাই ২০২৬ পুরোনো স্কেলের প্রাপ্য মূল বেতন',amt(a.oldJulyBasic||a.legacyBasic||0)],
+    [en?'Selected grade for special benefit':'বিশেষ সুবিধার জন্য নির্বাচিত গ্রেড',(en?'Grade ':'গ্রেড ')+numLang(a.selectedGrade||base.grade||0,lang,0)],
+    [en?'Special-benefit rate':'বিশেষ সুবিধার হার',numLang((a.specialBenefitRate||0)*100,lang,0)+'%'],
+    [en?'Monthly special benefit':'মাসিক বিশেষ সুবিধা',amt(a.specialBenefitMonthly||0)],
+    [en?'July–September special benefit (3 months)':'জুলাই–সেপ্টেম্বর বিশেষ সুবিধা (৩ মাস)',amt(a.specialBenefitThreeMonths||0)],
     [en?'October 2026 payable basic':'অক্টোবর ২০২৬ প্রাপ্য মূল বেতন',amt(a.octoberBasic||0)],
     [en?'Monthly implemented basic increase':'মাসিক বাস্তবায়িত মূল বেতন বৃদ্ধি',amt(a.monthlyBasicArrear||0)],
     [en?'July–September previous arrear (3 months)':'জুলাই–সেপ্টেম্বর পূর্বের বকেয়া (৩ মাস)',amt(a.priorThreeBasicArrear||0)],
     [en?'October increase (current month)':'অক্টোবর মাসের বৃদ্ধি',amt(a.monthlyBasicArrear||0)],
     [en?'Total July–October basic adjustment':'জুলাই–অক্টোবর মোট মূল বেতন সমন্বয়',amt(a.totalBasicArrear||0)],
-    [en?'Already paid special benefit to adjust':'ইতোমধ্যে পাওয়া সমন্বয়যোগ্য বিশেষ সুবিধা',amt(a.specialBenefitPaid||0)],
-    [en?'Previous arrear payable with October bill':'অক্টোবর বিলের সাথে পূর্বের বকেয়া',amt(a.priorArrearAfterAdjustment||0)],
+    [en?'July–September net arrear before special-benefit adjustment':'বিশেষ সুবিধা সমন্বয়ের আগে জুলাই–সেপ্টেম্বর নিট বকেয়া',amt(a.priorThreeNetArrear||0)],
+    [en?'Special benefit deducted automatically':'অটো বিয়োগকৃত বিশেষ সুবিধা',amt(a.specialBenefitThreeMonths||0)],
+    [en?'Previous arrear payable with October bill':'অক্টোবর বিলের সাথে চূড়ান্ত পূর্বের বকেয়া',amt(a.priorNetAfterSpecial||0)],
     [en?'October current estimated net':'অক্টোবর চলতি আনুমানিক নিট',amt(a.octoberCurrentNet||0)],
     [en?'Estimated total receivable in October':'অক্টোবরে আনুমানিক মোট প্রাপ্য',amt(a.octoberBillNet||0)]
   ];
@@ -457,7 +463,7 @@ function salaryOctoberArrearReportHtml(base,lang='bn'){
     rows.map(([l,v])=>kv(l,v)).join('')
   )+`<div style="margin-top:12px;padding:10px 12px;border-left:4px solid #1a7a50;background:#f1fbf6;border-radius:8px;font-size:10.2px">
     <b>${en?'How the October bill is treated:':'অক্টোবর বিল যেভাবে ধরা হয়েছে:'}</b>
-    ${en?'October current salary is calculated at the applicable 2026 rate. Only the previous three months (July–September) are added on top as arrear, so October is not counted twice.':'অক্টোবরের চলতি বেতন ২০২৬-এর প্রযোজ্য হারে ধরা হয়েছে। এর সাথে শুধু আগের ৩ মাসের (জুলাই–সেপ্টেম্বর) বকেয়া যোগ হয়েছে—তাই অক্টোবরের অংশ দুইবার গণনা করা হয়নি।'}
+    ${en?'October current salary is calculated at the applicable 2026 rate. July–September arrears are calculated against the old-scale July payroll, the special benefit already received for those three months is deducted automatically, and October is not counted twice.':'অক্টোবরের চলতি বেতন ২০২৬-এর প্রযোজ্য হারে ধরা হয়েছে। জুলাই–সেপ্টেম্বরের বকেয়া ১ জুলাইয়ের পুরোনো স্কেলের প্রাপ্য বেতনের বিপরীতে হিসাব করে ওই ৩ মাসে পাওয়া বিশেষ সুবিধা স্বয়ংক্রিয়ভাবে বাদ দেওয়া হয়েছে; অক্টোবর দুইবার গণনা করা হয়নি।'}
   </div>
   <div style="margin-top:8px;padding:9px 12px;background:#fff8e8;border-radius:8px;font-size:9.6px;color:#6b5728">
     ${en?'Net amount is an estimate based on the deduction inputs in this calculator. Tax, loan, special-benefit adjustment or payroll-specific deductions may change the final office bill.':'নিট অংকটি এই ক্যালকুলেটরে দেওয়া কর্তনের তথ্য অনুযায়ী আনুমানিক। আয়কর, ঋণ, বিশেষ সুবিধা সমন্বয় বা অফিসভিত্তিক অন্য কর্তনের কারণে চূড়ান্ত বিল ভিন্ন হতে পারে।'}
@@ -1920,16 +1926,25 @@ function SalaryResult({r,lang='bn'}){
 
       <div className="arrear-kpi-grid">
         <article><small>{en?'Monthly basic increase':'মাসিক মূল বেতন বৃদ্ধি'}</small><b>{amt(arrear.monthlyBasicArrear||0)}</b><span>{en?'Applicable Jul–Oct 2026':'জুলাই–অক্টোবর ২০২৬'}</span></article>
-        <article><small>{en?'July–September arrear':'জুলাই–সেপ্টেম্বর বকেয়া'}</small><b>{amt(arrear.priorThreeBasicArrear||0)}</b><span>{en?'3 previous months':'আগের ৩ মাস'}</span></article>
+        <article><small>{en?'Final July–September arrear':'চূড়ান্ত জুলাই–সেপ্টেম্বর বকেয়া'}</small><b>{amt(arrear.priorNetAfterSpecial||0)}</b><span>{en?'After special-benefit adjustment':'বিশেষ সুবিধা বিয়োগের পর'}</span></article>
         <article><small>{en?'July–October total adjustment':'জুলাই–অক্টোবর মোট সমন্বয়'}</small><b>{amt(arrear.totalBasicArrear||0)}</b><span>{en?'4 months including October':'অক্টোবরসহ ৪ মাস'}</span></article>
         <article className="highlight"><small>{en?'Estimated total receivable in October':'অক্টোবরে আনুমানিক মোট প্রাপ্য'}</small><b>{amt(arrear.octoberBillNet||0)}</b><span>{en?'October current net + previous arrear':'অক্টোবর চলতি নিট + পূর্বের বকেয়া'}</span></article>
+      </div>
+
+      <div className="auto-special-benefit-summary">
+        <div><small>{en?'Selected grade':'নির্বাচিত গ্রেড'}</small><b>{en?'Grade ':'গ্রেড '}{numLang(arrear.selectedGrade||r.grade||0,lang,0)}</b></div>
+        <div><small>{en?'1 July old-scale basic':'১ জুলাই পুরোনো স্কেলের মূল বেতন'}</small><b>{amt(arrear.oldJulyBasic||0)}</b></div>
+        <div><small>{en?'Special-benefit rate':'বিশেষ সুবিধার হার'}</small><b>{numLang((arrear.specialBenefitRate||0)*100,lang,0)}%</b></div>
+        <div><small>{en?'Monthly special benefit':'মাসিক বিশেষ সুবিধা'}</small><b>{amt(arrear.specialBenefitMonthly||0)}</b></div>
+        <div className="total"><small>{en?'July–September total':'জুলাই–সেপ্টেম্বর মোট'}</small><b>{amt(arrear.specialBenefitThreeMonths||0)}</b></div>
       </div>
 
       <div className="arrear-flow">
         <div><small>{en?'October current estimated net':'অক্টোবর চলতি আনুমানিক নিট'}</small><b>{amt(arrear.octoberCurrentNet||0)}</b></div>
         <i>+</i>
-        <div><small>{en?'July–September estimated net arrear':'জুলাই–সেপ্টেম্বর আনুমানিক নিট বকেয়া'}</small><b>{amt(arrear.priorThreeNetArrear||0)}</b></div>
-        {(arrear.specialBenefitPaid||0)>0&&<><i>−</i><div><small>{en?'Special benefit adjustment':'বিশেষ সুবিধা সমন্বয়'}</small><b>{amt(arrear.specialBenefitPaid||0)}</b></div></>}
+        <div><small>{en?'July–September net arrear before adjustment':'সমন্বয়ের আগে জুলাই–সেপ্টেম্বর নিট বকেয়া'}</small><b>{amt(arrear.priorThreeNetArrear||0)}</b></div>
+        <i>−</i>
+        <div><small>{en?'Special benefit (3 months)':'বিশেষ সুবিধা (৩ মাস)'}</small><b>{amt(arrear.specialBenefitThreeMonths||0)}</b></div>
         <i>=</i>
         <div className="total"><small>{en?'October total':'অক্টোবর মোট'}</small><b>{amt(arrear.octoberBillNet||0)}</b></div>
       </div>
