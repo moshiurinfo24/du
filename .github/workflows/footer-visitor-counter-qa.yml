@@ -1,0 +1,39 @@
+name: Footer Visitor Counter QA
+on:
+  push:
+    branches:
+      - fix/footer-visitor-counter
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install
+      - run: npm run build
+  worker:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: worker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install
+      - run: npx wrangler deploy --dry-run
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          ! grep -q 'section className="public-live-stats"' frontend/src/main.jsx
+          grep -q "footer-visitor-counter" frontend/src/main.jsx
+          grep -q "public_traffic_baseline" worker/src/index.js
+          grep -q "/api/admin/public-traffic-baseline" worker/src/index.js
