@@ -1,146 +1,77 @@
-/* Public live visitor stats */
-.public-live-stats{
-  padding:0 20px 24px;
-  background:#f8fbfd;
-}
-.public-live-stats-inner{
-  max-width:1180px;
-  margin:0 auto;
-  border:1px solid #dfe8ee;
-  border-radius:18px;
-  background:linear-gradient(135deg,#ffffff,#f5faf8);
-  box-shadow:0 12px 34px rgba(17,46,70,.06);
-  overflow:hidden;
-}
-.live-stats-intro{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:14px 16px 10px;
-}
-.live-dot{
-  width:10px;
-  height:10px;
-  border-radius:50%;
-  background:#19a15f;
-  box-shadow:0 0 0 6px rgba(25,161,95,.11);
-  flex:0 0 auto;
-}
-.live-stats-intro small{
-  display:block;
-  color:#188052;
-  font-size:9px;
-  font-weight:900;
-  letter-spacing:.75px;
-}
-.live-stats-intro b{
-  display:block;
-  margin-top:2px;
-  color:#18364f;
-  font-size:14px;
-}
-.live-stats-grid{
+/* Compact public visitor counter — footer only */
+.footer-visitor-counter{
+  min-width:225px;
+  min-height:54px;
+  padding:8px 11px;
+  border:1px solid rgba(255,255,255,.16);
+  border-radius:12px;
   display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:10px;
-  padding:0 14px 14px;
-}
-.live-stats-grid article{
-  min-height:78px;
-  padding:12px 14px;
-  border:1px solid #e0e8ed;
-  border-radius:14px;
-  background:#fff;
-  display:flex;
+  grid-template-columns:auto auto 1fr;
   align-items:center;
-  gap:11px;
+  gap:8px;
+  background:rgba(255,255,255,.055);
+  color:rgba(255,255,255,.86);
 }
-.live-stats-grid article>svg{
-  width:34px;
-  height:34px;
-  padding:8px;
-  box-sizing:border-box;
-  border-radius:10px;
-  background:#ebf6f0;
-  color:#167b4d;
-  flex:0 0 auto;
+.footer-visitor-counter>svg{
+  width:18px;
+  height:18px;
+  color:#69d39e;
 }
-.live-stats-grid small{
-  display:block;
-  color:#71808a;
-  font-size:10px;
+.footer-visitor-main{
+  display:flex;
+  align-items:baseline;
+  gap:6px;
+  white-space:nowrap;
+}
+.footer-visitor-main small{
+  color:rgba(255,255,255,.65);
+  font-size:9px;
   font-weight:700;
 }
-.live-stats-grid strong{
-  display:block;
-  margin-top:2px;
-  color:#17334b;
+.footer-visitor-main b{
+  color:#fff;
   font-family:"Inter","Hind Siliguri",sans-serif;
-  font-size:23px;
-  line-height:1;
+  font-size:17px;
   font-weight:900;
   font-variant-numeric:tabular-nums;
 }
-.live-stats-foot{
-  min-height:36px;
-  padding:8px 14px;
-  border-top:1px solid #e7edf1;
-  background:#f8fbfc;
-  color:#74828b;
+.footer-visitor-more{
   display:flex;
   align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  font-size:9.5px;
+  justify-content:flex-end;
+  gap:6px;
+  font-size:8.5px;
+  color:rgba(255,255,255,.58);
+  white-space:nowrap;
 }
-.live-stats-foot b{
-  color:#4a6258;
+.footer-visitor-more b{
+  color:rgba(255,255,255,.88);
   font-family:"Inter","Hind Siliguri",sans-serif;
+  font-weight:800;
+}
+.footer-visitor-more i{
+  opacity:.45;
+  font-style:normal;
 }
 @media(max-width:760px){
-  .public-live-stats{
-    padding:0 10px 14px;
-  }
-  .public-live-stats-inner{
-    border-radius:16px;
-  }
-  .live-stats-intro{
-    padding:12px 12px 9px;
-  }
-  .live-stats-intro b{
-    font-size:12px;
-  }
-  .live-stats-grid{
-    grid-template-columns:repeat(3,minmax(0,1fr));
-    gap:6px;
-    padding:0 9px 9px;
-  }
-  .live-stats-grid article{
-    min-height:72px;
-    padding:9px 7px;
-    border-radius:12px;
-    flex-direction:column;
-    align-items:flex-start;
-    gap:5px;
-  }
-  .live-stats-grid article>svg{
-    width:27px;
-    height:27px;
-    padding:6px;
-    border-radius:8px;
-  }
-  .live-stats-grid small{
-    font-size:8.5px;
-    line-height:1.2;
-  }
-  .live-stats-grid strong{
-    font-size:18px;
-  }
-  .live-stats-foot{
-    align-items:flex-start;
-    flex-direction:column;
-    gap:3px;
+  .footer-visitor-counter{
+    min-width:0;
+    width:100%;
+    box-sizing:border-box;
+    min-height:46px;
     padding:7px 10px;
-    font-size:8px;
+    grid-template-columns:auto 1fr;
+  }
+  .footer-visitor-main{
+    justify-content:flex-start;
+  }
+  .footer-visitor-main small{
+    font-size:9px;
+  }
+  .footer-visitor-main b{
+    font-size:16px;
+  }
+  .footer-visitor-more{
+    display:none;
   }
 }
