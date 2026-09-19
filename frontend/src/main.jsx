@@ -5,7 +5,7 @@ import {
   LayoutDashboard,TrendingUp,WalletCards,Users,ShieldCheck,LogOut,Plus,Search,
   UserRound,Building2,IdCard,Activity,ChevronRight,ChevronDown,ArrowLeft,X,Save,Trash2,RefreshCw,
   Settings,Database,LockKeyhole,Home,BookOpen,Calculator,HelpCircle,Phone,
-  Bell,ArrowRight,CalendarDays,CheckCircle2,AlertTriangle,Landmark,FileText,Camera,Briefcase,MapPin,Mail,PhoneCall,MessageCircle,Edit3,UserCircle2,History,ArrowRightLeft,GraduationCap,BadgeDollarSign,Clock3,FileClock,ServerCog,Gauge,UserCog,ScrollText,SlidersHorizontal,ShieldAlert,Link2,Eye,Power,BookUser,NotebookTabs,Milestone,Award,BarChart3,PieChart,LineChart,MonitorCheck,Sparkles,UserCheck,UserX,Boxes,Command,DatabaseZap,ShieldEllipsis,Radio,TrendingDown,ReceiptText,ChartNoAxesCombined,Route,Flag,Target
+  Bell,ArrowRight,CalendarDays,CheckCircle2,AlertTriangle,Landmark,FileText,Camera,Briefcase,MapPin,Mail,PhoneCall,MessageCircle,Edit3,UserCircle2,History,ArrowRightLeft,GraduationCap,BadgeDollarSign,Clock3,FileClock,ServerCog,Gauge,UserCog,ScrollText,SlidersHorizontal,ShieldAlert,Link2,Eye,Power,BookUser,NotebookTabs,Milestone,Award,BarChart3,PieChart,LineChart,MonitorCheck,Sparkles,UserCheck,UserX,Boxes,Command,DatabaseZap,ShieldEllipsis,Radio,TrendingDown,ReceiptText,ChartNoAxesCombined,Route,Flag,Target,Share2,Copy,Send
 } from 'lucide-react';
 import './styles.css';
 import './auth-phase8.css';
@@ -39,6 +39,7 @@ import './approved-home-v16-8.css';
 import './pay-scale-2026-public.css';
 import './mobile-premium-public-v1.css';
 import './public-visitor-stats.css';
+import './public-report-share.css';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import {
   PAY2015,PAY2026,PAY_SCALE_2026_META,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
@@ -182,14 +183,14 @@ function reportShell(title,subtitle,body,lang='bn',meta={}){
 }
 function kv(label,value){return `<div style="display:flex;justify-content:space-between;gap:16px;padding:7px 0;border-bottom:1px dashed #dfe4ec"><span style="color:#667085">${escapeHtml(label)}</span><b style="text-align:right;color:#182230">${escapeHtml(value)}</b></div>`}
 function section(title,content){return `<div style="margin:14px 0 0;page-break-inside:avoid"><div style="font-size:13px;font-weight:800;color:#1d3263;margin-bottom:5px">${escapeHtml(title)}</div><div style="border:1px solid #e1e6ef;border-radius:10px;padding:9px 12px;background:#fff">${content}</div></div>`}
-async function saveA4Pdf(element,filename){
+async function buildA4Pdf(element,{coverText='PDF তৈরি হচ্ছে...'}={}){
   if(!element)throw new Error('PDF preview is not available');
   const [html2canvas,JsPDF]=await Promise.all([loadHtml2Canvas(),loadJsPdf()]);
   await document.fonts?.ready?.catch?.(()=>{});
 
   const cover=document.createElement('div');
   cover.style.cssText='position:fixed;inset:0;z-index:2147483647;background:rgba(12,24,39,.96);color:#fff;display:grid;place-items:center;font-family:"Hind Siliguri","Inter",sans-serif;font-size:16px;font-weight:800';
-  cover.innerHTML='<div style="padding:16px 22px;border:1px solid rgba(255,255,255,.2);border-radius:14px;background:rgba(255,255,255,.06)">PDF তৈরি হচ্ছে...</div>';
+  cover.innerHTML=`<div style="padding:16px 22px;border:1px solid rgba(255,255,255,.2);border-radius:14px;background:rgba(255,255,255,.06)">${escapeHtml(coverText)}</div>`;
 
   const stage=document.createElement('div');
   stage.setAttribute('data-pdf-stage','true');
@@ -218,26 +219,32 @@ async function saveA4Pdf(element,filename){
 
       await new Promise(r=>requestAnimationFrame(r));
       const canvas=await html2canvas(page,{
-        scale:2,
-        useCORS:true,
-        allowTaint:false,
-        backgroundColor:'#ffffff',
-        logging:false,
-        scrollX:0,
-        scrollY:0,
-        windowWidth:Math.max(page.scrollWidth,734),
-        windowHeight:Math.max(page.scrollHeight,1078)
+        scale:2,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',logging:false,
+        scrollX:0,scrollY:0,windowWidth:Math.max(page.scrollWidth,734),windowHeight:Math.max(page.scrollHeight,1078)
       });
       if(!canvas.width||!canvas.height)throw new Error('PDF page capture failed');
       if(i>0)pdf.addPage('a4','portrait');
       const img=canvas.toDataURL('image/jpeg',0.96);
       pdf.addImage(img,'JPEG',8,6,194,285,undefined,'FAST');
     }
-    pdf.save(filename);
+    return pdf;
   }finally{
     cover.remove();
     stage.remove();
   }
+}
+async function saveA4Pdf(element,filename){
+  const pdf=await buildA4Pdf(element);
+  pdf.save(filename);
+}
+async function a4PdfFileFromHtml(html,filename,lang='bn'){
+  const source=document.createElement('div');
+  source.style.cssText='width:194mm;background:#fff';
+  source.innerHTML=html;
+  const pdf=await buildA4Pdf(source,{coverText:lang==='en'?'Preparing PDF for sharing...':'শেয়ারের জন্য PDF তৈরি হচ্ছে...'});
+  const blob=pdf.output('blob');
+  try{return new File([blob],filename,{type:'application/pdf',lastModified:Date.now()})}
+  catch{return blob}
 }
 async function downloadA4Html(html,filename){
   const source=document.createElement('div');
@@ -245,21 +252,157 @@ async function downloadA4Html(html,filename){
   source.innerHTML=html;
   await saveA4Pdf(source,filename);
 }
-function PdfPreviewModal({html,filename,onClose,lang='bn'}){
-  const reportRef=useRef(null); const[busy,setBusy]=useState(false); const en=lang==='en';
-  async function download(){try{setBusy(true);await saveA4Pdf(reportRef.current,filename)}catch(e){alert((en?'PDF could not be created: ':'PDF তৈরি করা যায়নি: ')+e.message)}finally{setBusy(false)}}
-  useEffect(()=>{const onKey=e=>{if(e.key==='Escape')onClose?.()};document.addEventListener('keydown',onKey);const prev=document.body.style.overflow;document.body.style.overflow='hidden';return()=>{document.removeEventListener('keydown',onKey);document.body.style.overflow=prev}},[onClose]);
-  return <div style={{position:'fixed',inset:0,zIndex:99999,background:'rgba(7,12,28,.78)',backdropFilter:'blur(8px)',display:'flex',flexDirection:'column'}}>
-    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,padding:'12px 18px',background:'#101936',color:'#fff',boxShadow:'0 8px 28px rgba(0,0,0,.24)'}}>
-      <div><b style={{fontSize:16}}>{en?'A4 PDF Preview':'A4 PDF প্রিভিউ'}</b><div style={{fontSize:12,opacity:.78}}>{en?'Check the information first, then download the PDF.':'তথ্য যাচাই করে তারপর PDF ডাউনলোড করুন।'}</div></div>
-      <div style={{display:'flex',gap:10,flexWrap:'wrap',justifyContent:'flex-end'}}>
-        <button onClick={onClose} style={{border:'1px solid rgba(255,255,255,.28)',background:'transparent',color:'#fff',padding:'9px 14px',borderRadius:10,cursor:'pointer'}}>{en?'Close':'বন্ধ করুন'}</button>
-        <button onClick={download} disabled={busy} style={{border:0,background:'linear-gradient(135deg,#d7a84f,#f0c86e)',color:'#17120a',fontWeight:800,padding:'9px 15px',borderRadius:10,cursor:busy?'wait':'pointer',opacity:busy?.7:1}}>{busy?(en?'Creating PDF...':'PDF তৈরি হচ্ছে...'):(en?'Download PDF':'PDF ডাউনলোড')}</button>
-      </div>
-    </div>
-    <div style={{flex:1,overflow:'auto',padding:'24px 12px 40px'}}><div style={{width:'210mm',minHeight:'297mm',margin:'0 auto',background:'#fff',boxShadow:'0 18px 60px rgba(0,0,0,.34)',padding:'8mm',boxSizing:'border-box'}}><div ref={reportRef} style={{background:'#fff'}} dangerouslySetInnerHTML={{__html:html}}/></div></div>
+function sanitizeSharedReportHtml(html){
+  const doc=new DOMParser().parseFromString(String(html||''),'text/html');
+  doc.querySelectorAll('script,iframe,object,embed,link,meta').forEach(x=>x.remove());
+  doc.body.querySelectorAll('*').forEach(el=>{
+    [...el.attributes].forEach(a=>{
+      if(/^on/i.test(a.name))el.removeAttribute(a.name);
+      if((a.name==='href'||a.name==='src')&&/^\s*javascript:/i.test(a.value))el.removeAttribute(a.name);
+    });
+  });
+  return doc.body.innerHTML;
+}
+async function copyToClipboard(text){
+  if(navigator.clipboard?.writeText)return navigator.clipboard.writeText(text);
+  const t=document.createElement('textarea');t.value=text;t.style.cssText='position:fixed;left:-9999px;top:0';document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();
+}
+async function createReportShareLink({html,filename,title,summary='',lang='bn'}){
+  const x=await api('/api/public/report-share',{method:'POST',body:JSON.stringify({html,title,filename,summary,lang})});
+  const url=new URL(window.location.href);url.search='';url.hash='';url.searchParams.set('shared_report',x.token);
+  return url.toString();
+}
+async function nativeShareReport({html,filename,title,summary='',url='',lang='bn'}){
+  if(!navigator.share)throw new Error(lang==='en'?'Native sharing is not supported on this browser.':'এই ব্রাউজারে সরাসরি শেয়ার সুবিধা নেই।');
+  let file=null;
+  try{file=await a4PdfFileFromHtml(html,filename,lang)}catch{}
+  const data={title,text:summary||title,url};
+  if(file instanceof File&&navigator.canShare?.({files:[file]}))data.files=[file];
+  await navigator.share(data);
+}
+
+function ReportShareActions({html,filename,title,summary='',lang='bn',existingUrl='',compact=false}){
+  const en=lang==='en';
+  const [busy,setBusy]=useState(''),[shareUrl,setShareUrl]=useState(existingUrl||''),[copied,setCopied]=useState(false);
+  const shareTitle=title||(en?'Employee Digital Service Report':'কর্মকর্তা-কর্মচারী ডিজিটাল সেবা রিপোর্ট');
+  const shareSummary=summary||(en?'View this calculation report from Employee Digital Service.':'কর্মকর্তা-কর্মচারী ডিজিটাল সেবার এই হিসাবের রিপোর্টটি দেখুন।');
+
+  async function ensureUrl(){
+    if(existingUrl)return existingUrl;
+    if(shareUrl)return shareUrl;
+    const url=await createReportShareLink({html,filename,title:shareTitle,summary:shareSummary,lang});
+    setShareUrl(url);
+    return url;
+  }
+  async function copyLink(){
+    try{setBusy('copy');const url=await ensureUrl();await copyToClipboard(url);setCopied(true);setTimeout(()=>setCopied(false),1800);trackPublic('share','report_copy_link')}
+    catch(e){alert((en?'Could not copy link: ':'লিংক কপি করা যায়নি: ')+e.message)}
+    finally{setBusy('')}
+  }
+  async function whatsapp(){
+    try{setBusy('whatsapp');const url=await ensureUrl();const text=`${shareTitle}\n${shareSummary}\n${url}`;window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank','noopener,noreferrer');trackPublic('share','report_whatsapp')}
+    catch(e){alert((en?'Could not prepare WhatsApp share: ':'হোয়াটসঅ্যাপ শেয়ার প্রস্তুত করা যায়নি: ')+e.message)}
+    finally{setBusy('')}
+  }
+  async function messenger(){
+    try{
+      setBusy('messenger');const url=await ensureUrl();
+      if(navigator.share&&/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)){
+        await navigator.share({title:shareTitle,text:shareSummary,url});
+      }else{
+        await copyToClipboard(url);
+        window.open('https://www.messenger.com/','_blank','noopener,noreferrer');
+      }
+      trackPublic('share','report_messenger');
+    }catch(e){if(e?.name!=='AbortError')alert((en?'Could not open Messenger share: ':'মেসেঞ্জার শেয়ার খোলা যায়নি: ')+e.message)}
+    finally{setBusy('')}
+  }
+  async function moreShare(){
+    try{
+      setBusy('more');const url=await ensureUrl();
+      if(navigator.share)await navigator.share({title:shareTitle,text:shareSummary,url});
+      else{await copyToClipboard(url);setCopied(true);setTimeout(()=>setCopied(false),1800)}
+      trackPublic('share','report_native');
+    }catch(e){if(e?.name!=='AbortError')alert((en?'Sharing is not available: ':'শেয়ার করা যাচ্ছে না: ')+e.message)}
+    finally{setBusy('')}
+  }
+  async function sharePdfFile(){
+    try{
+      setBusy('pdf');
+      if(!navigator.share)throw new Error(en?'PDF file sharing is available on supported mobile browsers.':'PDF ফাইল শেয়ার সমর্থিত মোবাইল ব্রাউজারে পাওয়া যায়।');
+      const url=await ensureUrl();
+      const file=await a4PdfFileFromHtml(html,filename,lang);
+      if(!(file instanceof File)||!navigator.canShare?.({files:[file]}))throw new Error(en?'This browser cannot share PDF files directly.':'এই ব্রাউজার সরাসরি PDF ফাইল শেয়ার করতে পারে না।');
+      await navigator.share({title:shareTitle,text:`${shareSummary}\n${url}`,files:[file]});
+      trackPublic('share','report_pdf_file');
+    }catch(e){
+      if(e?.name!=='AbortError'){
+        try{const url=await ensureUrl();await copyToClipboard(url)}catch{}
+        alert((en?'Direct PDF file sharing is not available here. The report link has been copied instead.':'এখানে সরাসরি PDF ফাইল শেয়ার সম্ভব নয়। বিকল্প হিসেবে রিপোর্টের লিংক কপি করা হয়েছে।'));
+      }
+    }finally{setBusy('')}
+  }
+  return <div className={`report-share-actions ${compact?'compact':''}`}>
+    <button className="share-whatsapp" disabled={!!busy} onClick={whatsapp}><MessageCircle/>{busy==='whatsapp'?(en?'Preparing...':'প্রস্তুত হচ্ছে'):'WhatsApp'}</button>
+    <button className="share-messenger" disabled={!!busy} onClick={messenger}><Send/>{en?'Messenger':'Messenger'}</button>
+    <button disabled={!!busy} onClick={copyLink}><Copy/>{copied?(en?'Copied':'কপি হয়েছে'):(en?'Copy Link':'লিংক কপি')}</button>
+    <button disabled={!!busy} onClick={moreShare}><Share2/>{en?'All Apps':'সব অ্যাপ'}</button>
+    <button className="share-pdf-file" disabled={!!busy} onClick={sharePdfFile}><FileText/>{en?'Share PDF':'PDF শেয়ার'}</button>
   </div>
 }
+
+function PdfPreviewModal({html,filename,onClose,lang='bn',shareTitle='',shareSummary=''}) {
+  const reportRef=useRef(null); const[busy,setBusy]=useState(false); const en=lang==='en';
+  async function download(){try{setBusy(true);await saveA4Pdf(reportRef.current,filename);trackPublic('download','report_pdf')}catch(e){alert((en?'PDF could not be created: ':'PDF তৈরি করা যায়নি: ')+e.message)}finally{setBusy(false)}}
+  useEffect(()=>{const onKey=e=>{if(e.key==='Escape')onClose?.()};document.addEventListener('keydown',onKey);const prev=document.body.style.overflow;document.body.style.overflow='hidden';return()=>{document.removeEventListener('keydown',onKey);document.body.style.overflow=prev}},[onClose]);
+  const title=shareTitle||(en?'Calculation Report':'হিসাবের রিপোর্ট');
+  return <div className="pdf-preview-modal">
+    <div className="pdf-preview-topbar">
+      <div><b>{en?'A4 PDF Preview':'A4 PDF প্রিভিউ'}</b><div>{en?'Check, download or share this report.':'রিপোর্ট যাচাই করুন, ডাউনলোড বা শেয়ার করুন।'}</div></div>
+      <div className="pdf-preview-top-actions">
+        <button className="pdf-close-btn" onClick={onClose}>{en?'Close':'বন্ধ করুন'}</button>
+        <button className="pdf-download-btn" onClick={download} disabled={busy}><Save/>{busy?(en?'Creating...':'তৈরি হচ্ছে'):(en?'Download PDF':'PDF ডাউনলোড')}</button>
+      </div>
+    </div>
+    <div className="pdf-preview-sharebar"><ReportShareActions html={html} filename={filename} title={title} summary={shareSummary} lang={lang}/></div>
+    <div className="pdf-preview-scroll"><div className="pdf-preview-paper"><div ref={reportRef} style={{background:'#fff'}} dangerouslySetInnerHTML={{__html:html}}/></div></div>
+  </div>
+}
+
+function SharedReportViewer({token,lang='bn',setLang}){
+  const en=lang==='en';
+  const [state,setState]=useState({loading:true,report:null,error:''});
+  useEffect(()=>{
+    let alive=true;
+    api('/api/public/report-share/'+encodeURIComponent(token)).then(x=>{
+      if(!alive)return;
+      const r=x.report||{};
+      r.report_html=sanitizeSharedReportHtml(r.report_html||'');
+      if(!r.report_html)throw new Error(en?'This shared report is invalid.':'শেয়ার করা রিপোর্টটি সঠিক নয়।');
+      setState({loading:false,report:r,error:''});
+    }).catch(e=>alive&&setState({loading:false,report:null,error:e.message||String(e)}));
+    return()=>{alive=false};
+  },[token]);
+  if(state.loading)return <div className="shared-report-loading">{en?'Loading shared report...':'শেয়ার করা রিপোর্ট লোড হচ্ছে...'}</div>;
+  if(state.error||!state.report)return <div className="shared-report-error"><AlertTriangle/><h2>{en?'Report unavailable':'রিপোর্ট পাওয়া যাচ্ছে না'}</h2><p>{state.error|| (en?'The link may have expired.':'লিংকের মেয়াদ শেষ হয়ে থাকতে পারে।')}</p><a href="/">{en?'Go to Home':'হোমে যান'}</a></div>;
+  const r=state.report;
+  const currentUrl=window.location.href;
+  return <div className="shared-report-page">
+    <header className="shared-report-header">
+      <a className="shared-report-brand" href="/"><Landmark/><div><b>{en?'Employee Digital Service':'কর্মকর্তা-কর্মচারী ডিজিটাল সেবা'}</b><small>{en?'Shared Report':'শেয়ার করা রিপোর্ট'}</small></div></a>
+      <div className="shared-report-header-actions"><LangToggle lang={lang} setLang={setLang}/><a href="/">{en?'Home':'হোম'}</a></div>
+    </header>
+    <main className="shared-report-main">
+      <div className="shared-report-title"><span>{en?'SHARED REPORT':'শেয়ার করা রিপোর্ট'}</span><h1>{r.title}</h1>{r.summary&&<p>{r.summary}</p>}<small>{en?'Link valid until':'লিংক কার্যকর'}: {fmtDateLang(r.expires_at,lang)}</small></div>
+      <div className="shared-report-actions">
+        <button className="primary" onClick={()=>downloadA4Html(r.report_html,r.filename)}><Save/>{en?'Download PDF':'PDF ডাউনলোড'}</button>
+        <ReportShareActions html={r.report_html} filename={r.filename} title={r.title} summary={r.summary||''} lang={lang} existingUrl={currentUrl} compact={true}/>
+      </div>
+      <div className="shared-report-paper" dangerouslySetInnerHTML={{__html:r.report_html}}/>
+    </main>
+  </div>
+}
+
 function promotionReportHtml(r,lang='bn'){
   const en=lang==='en', f=r.input||{};
   const edu=en?{masters:'Masters',bachelor:"Bachelor's",hsc:'HSC',diploma:'Diploma',bsceng:'BSc Engineering',mbbs:'MBBS'}:eduBn;
@@ -1423,7 +1566,7 @@ function PromotionResult({r,lang='bn'}){
   const en=lang==='en',[preview,setPreview]=useState(false);
   if(r.error)return <section className="result-panel warn"><h3>{en?'Unable to calculate':'হিসাব করা যায়নি'}</h3><p>{r.error}</p></section>;
   const report=promotionReportHtml(r,lang),filename=`promotion-report-${Date.now()}.pdf`;
-  if(r.stop)return <div className="result-stack"><section className="result-panel warn"><h3>{r.rule.target}</h3><p>{en?'Reference':'রেফারেন্স'}: {r.rule.ref||r.rule.page||'—'}</p></section><button className="primary wide" onClick={()=>setPreview(true)}><FileText size={17}/> {en?'A4 PDF Preview':'বিস্তারিত A4 PDF প্রিভিউ'}</button>{preview&&<PdfPreviewModal html={report} filename={filename} onClose={()=>setPreview(false)} lang={lang}/>}</div>;
+  if(r.stop)return <div className="result-stack"><section className="result-panel warn"><h3>{r.rule.target}</h3><p>{en?'Reference':'রেফারেন্স'}: {r.rule.ref||r.rule.page||'—'}</p></section><button className="primary wide" onClick={()=>setPreview(true)}><FileText size={17}/> {en?'A4 PDF Preview':'বিস্তারিত A4 PDF প্রিভিউ'}</button>{preview&&<PdfPreviewModal html={report} filename={filename} onClose={()=>setPreview(false)} lang={lang} shareTitle={en?'Promotion Calculation Report':'পদোন্নতি হিসাবের রিপোর্ট'} shareSummary={en?'Promotion eligibility, service points and roadmap report.':'পদোন্নতির যোগ্যতা, সার্ভিস পয়েন্ট ও রোডম্যাপের রিপোর্ট।'}/>}</div>;
 
   const e=r.exp||{}, pe=r.projectedExp||{};
   const dur=x=>en?`${x.y} years ${x.m} months ${x.d} days`:durationBn(x);
@@ -1496,7 +1639,7 @@ function PromotionResult({r,lang='bn'}){
     <section className="roadmap-card"><h3>{en?'Full future promotion roadmap':'সম্পূর্ণ সম্ভাব্য পদোন্নতি রোডম্যাপ'}</h3>{r.roadmap.map((x,i)=>x.stop?<div className="roadmap-row stop" key={i}><b>{en?'After grade':'গ্রেড'} {x.fromGrade}</b><span>{x.label}</span></div>:<div className="roadmap-row" key={i}><div><b>{x.fromGrade} → {x.toGrade} · {x.title}</b><small>{x.years} {en?'years':'বছর'}</small></div><div><b>{fmtDateLang(x.completionDeadline,lang)}</b><small>{en?'Projected final promotion':'সম্ভাব্য চূড়ান্ত পদোন্নতি'}</small></div></div>)}</section>
 
     <button className="primary wide" onClick={()=>setPreview(true)}><FileText size={17}/> {en?'A4 PDF Preview':'বিস্তারিত A4 PDF প্রিভিউ'}</button>
-    {preview&&<PdfPreviewModal html={report} filename={filename} onClose={()=>setPreview(false)} lang={lang}/>}
+    {preview&&<PdfPreviewModal html={report} filename={filename} onClose={()=>setPreview(false)} lang={lang} shareTitle={en?'Promotion Calculation Report':'পদোন্নতি হিসাবের রিপোর্ট'} shareSummary={en?'Promotion eligibility, service points and roadmap report.':'পদোন্নতির যোগ্যতা, সার্ভিস পয়েন্ট ও রোডম্যাপের রিপোর্ট।'}/>}
   </div>
 }
 
@@ -1653,8 +1796,11 @@ function SalaryResult({r,lang='bn'}){
     year,html:salaryYearReportHtml(r,year,lang,{pageNo:1,totalPages:1}),filename:`pay-scale-${year}-${stamp}.pdf`
   }));
   const combinedReport={html:salaryCombinedReportHtml(r,lang),filename:`pay-scale-2026-2028-three-page-${stamp}.pdf`};
+  const activeYearReport=yearReports.find(x=>x.year===activeYear)||yearReports[0];
+  const activeShareTitle=en?`Pay Scale ${activeYear} Salary Report`:`পে-স্কেল ${numLang(activeYear,lang,0)} বেতন রিপোর্ট`;
+  const activeShareSummary=en?`${activeYear} salary calculation, allowances, deductions and net payable.`:`${numLang(activeYear,lang,0)} সালের বেতন, ভাতা, কর্তন ও নিট প্রাপ্যের হিসাব।`;
   async function directPdf(item,key){
-    try{setPdfBusy(key);await downloadA4Html(item.html,item.filename)}
+    try{setPdfBusy(key);await downloadA4Html(item.html,item.filename);trackPublic('download',key==='all'?'salary_2026_2028_pdf':`salary_${key}_pdf`)}
     catch(e){alert((en?'PDF could not be created: ':'PDF তৈরি করা যায়নি: ')+e.message)}
     finally{setPdfBusy('')}
   }
@@ -1709,6 +1855,11 @@ function SalaryResult({r,lang='bn'}){
       <section className="breakdown-card"><h3>{en?'Deductions':'কর্তনসমূহ'}</h3>{deds.map(([l,v])=><div className="money-row" key={l}><span>{l}</span><b>{amt(v)}</b></div>)}</section>
     </div>
 
+    <section className="selected-year-share-card">
+      <div><span>{en?'SHARE REPORT':'রিপোর্ট শেয়ার'}</span><h3>{en?`Share ${activeYear} report`:`${numLang(activeYear,lang,0)} সালের রিপোর্ট শেয়ার করুন`}</h3><p>{en?'Send the report by WhatsApp, Messenger, copy link, or use your phone share sheet.':'WhatsApp, Messenger, লিংক কপি বা ফোনের সব অ্যাপে রিপোর্টটি শেয়ার করুন।'}</p></div>
+      <ReportShareActions html={activeYearReport.html} filename={activeYearReport.filename} title={activeShareTitle} summary={activeShareSummary} lang={lang} compact={true}/>
+    </section>
+
     <div className="notice official-pay-note"><b>{en?'Year status:':'বছরের অবস্থা:'}</b> {activeYear===2028?(en?'New allowance rates are applied from 1 January 2028.':'১ জানুয়ারি ২০২৮ থেকে নতুন ভাতার হার প্রয়োগ হয়েছে।'):(en?'Pre-2028 allowance rules remain in force for this year.':'এই বছরে ২০২৮-এর আগের ভাতার নিয়ম/হার কার্যকর থাকবে।')}</div>
 
     <section className="year-download-center">
@@ -1717,6 +1868,10 @@ function SalaryResult({r,lang='bn'}){
         {yearReports.map(x=><button key={x.year} disabled={!!pdfBusy} onClick={()=>directPdf(x,String(x.year))}><FileText/><span><b>{numLang(x.year,lang,0)} PDF</b><small>{en?'Download':'ডাউনলোড'}</small></span><Save size={17}/></button>)}
       </div>
       <button className="download-all-years" disabled={!!pdfBusy} onClick={()=>directPdf(combinedReport,'all')}><FileText size={19}/><span><b>{en?'2026–2028 together — 3-page PDF':'২০২৬–২০২৮ একসাথে — ৩-পৃষ্ঠার PDF'}</b><small>{en?'One file containing all three years':'একটি ফাইলে তিন বছরের সব হিসাব'}</small></span><Save size={19}/></button>
+      <div className="combined-report-share">
+        <b>{en?'Share the complete 3-page report':'সম্পূর্ণ ৩-পৃষ্ঠার রিপোর্ট শেয়ার করুন'}</b>
+        <ReportShareActions html={combinedReport.html} filename={combinedReport.filename} title={en?'Pay Scale 2026–2028 Complete Salary Report':'পে-স্কেল ২০২৬–২০২৮ সম্পূর্ণ বেতন রিপোর্ট'} summary={en?'Complete 2026, 2027 and 2028 salary calculation report in three pages.':'২০২৬, ২০২৭ ও ২০২৮ সালের সম্পূর্ণ বেতন হিসাব—৩ পৃষ্ঠার রিপোর্ট।'} lang={lang} compact={true}/>
+      </div>
     </section>
   </div>
 }
@@ -2524,7 +2679,7 @@ function HouseAllocationPoints({lang='bn',publicMode=false}){
         <div className="house-detail-row"><span>{en?'Point based on Gender':'লিঙ্গভিত্তিক পয়েন্ট'} <small>({en?'female +3, male 0':'নারী +৩, পুরুষ ০'})</small></span><b>{numLang(genderPoint,lang,0)}</b></div>
         <div className="house-detail-row total"><span>{en?'Total Point':'মোট বাসা বরাদ্দ পয়েন্ট'}</span><b>{totalPoint?fmtYmd(totalPoint):'—'}</b></div>
       </div>
-      {houseResult&&<><button className="primary wide house-pdf-btn" onClick={()=>setPreview(true)}><FileText size={17}/>{en?'A4 PDF Preview & Download':'A4 PDF প্রিভিউ ও ডাউনলোড'}</button>{preview&&<PdfPreviewModal html={houseReport} filename={houseFilename} onClose={()=>setPreview(false)} lang={lang}/>}</>}
+      {houseResult&&<><button className="primary wide house-pdf-btn" onClick={()=>setPreview(true)}><FileText size={17}/>{en?'A4 PDF Preview & Download':'A4 PDF প্রিভিউ ও ডাউনলোড'}</button>{preview&&<PdfPreviewModal html={houseReport} filename={houseFilename} onClose={()=>setPreview(false)} lang={lang} shareTitle={en?'House Allocation Point Report':'বাসা বরাদ্দ পয়েন্ট রিপোর্ট'} shareSummary={en?'House allocation point calculation report.':'বাসা বরাদ্দ পয়েন্ট হিসাবের রিপোর্ট।'}/>}</>}
     </div>:<div className="house-pending-panel">
       <div className="house-coming-icon"><Clock3/></div>
       <span>{en?'COMING SOON':'শীঘ্রই আসছে'}</span>
@@ -3104,10 +3259,11 @@ function App(){
   const params=new URLSearchParams(window.location.search);
   const queryAuth=params.get('auth')||'';
   const queryToken=params.get('token')||'';
+  const sharedReportToken=params.get('shared_report')||'';
   const[user,setUser]=useState(null),[loading,setLoading]=useState(true),[page,setPage]=useState('dashboard'),
     [showLogin,setShowLogin]=useState(()=>!!queryAuth),[authMode,setAuthMode]=useState(()=>queryAuth||'login'),[authToken,setAuthToken]=useState(()=>queryToken),
     [lang,setLang]=useState('bn'),[mobileMenu,setMobileMenu]=useState(false);
-  useEffect(()=>{api('/api/me').then(x=>setUser(x.user)).catch(()=>{}).finally(()=>setLoading(false))},[]);
+  useEffect(()=>{if(sharedReportToken){setLoading(false);return}api('/api/me').then(x=>setUser(x.user)).catch(()=>{}).finally(()=>setLoading(false))},[sharedReportToken]);
   useEffect(()=>{setMobileMenu(false)},[page]);
   useEffect(()=>{
     document.body.classList.toggle('mobile-drawer-open',mobileMenu);
@@ -3115,6 +3271,7 @@ function App(){
   },[mobileMenu]);
   async function logout(){try{await api('/api/logout',{method:'POST'})}catch{}setLang('bn');setUser(null);setShowLogin(false);setPage('dashboard')}
   useEffect(()=>{if(user&&page)api('/api/usage',{method:'POST',body:JSON.stringify({module:page})}).catch(()=>{})},[user?.id,page]);
+  if(sharedReportToken)return <SharedReportViewer token={sharedReportToken} lang={lang} setLang={setLang}/>;
   if(loading)return <div className="loading">Loading...</div>;
   if(!user)return showLogin?<AuthPortal onLogin={u=>{setLang('bn');setUser(u);window.history.replaceState({},'',window.location.pathname)}} onBack={()=>{setShowLogin(false);setAuthMode('login');setAuthToken('');window.history.replaceState({},'',window.location.pathname)}} lang={lang} setLang={setLang} initialMode={authMode} initialToken={authToken}/>:<PublicHome onLogin={()=>{setAuthMode('login');setShowLogin(true)}} onSignup={()=>{setAuthMode('register');setShowLogin(true)}} lang={lang} setLang={setLang}/>;
   const admin=['super_admin','admin','department_admin'].includes(user.role);
