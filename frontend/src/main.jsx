@@ -124,6 +124,31 @@ function loadHtml2Pdf(){
   });
   return html2pdfLoader;
 }
+let html2canvasLoader=null,jsPdfLoader=null;
+function loadHtml2Canvas(){
+  if(window.html2canvas)return Promise.resolve(window.html2canvas);
+  if(html2canvasLoader)return html2canvasLoader;
+  html2canvasLoader=new Promise((resolve,reject)=>{
+    const sc=document.createElement('script');
+    sc.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    sc.onload=()=>window.html2canvas?resolve(window.html2canvas):reject(new Error('Canvas library load failed'));
+    sc.onerror=()=>reject(new Error('Canvas library load failed'));
+    document.head.appendChild(sc);
+  });
+  return html2canvasLoader;
+}
+function loadJsPdf(){
+  if(window.jspdf?.jsPDF)return Promise.resolve(window.jspdf.jsPDF);
+  if(jsPdfLoader)return jsPdfLoader;
+  jsPdfLoader=new Promise((resolve,reject)=>{
+    const sc=document.createElement('script');
+    sc.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    sc.onload=()=>window.jspdf?.jsPDF?resolve(window.jspdf.jsPDF):reject(new Error('jsPDF library load failed'));
+    sc.onerror=()=>reject(new Error('jsPDF library load failed'));
+    document.head.appendChild(sc);
+  });
+  return jsPdfLoader;
+}
 const eduBn={masters:'মাস্টার্স',bachelor:'স্নাতক',hsc:'এইচএসসি',diploma:'ডিপ্লোমা',bsceng:'বিএসসি ইঞ্জিনিয়ারিং',mbbs:'এমবিবিএস'};
 const categoryBn={officer:'কর্মকর্তা',class3:'তৃতীয় শ্রেণি',class4:'চতুর্থ শ্রেণি'};
 const PDF_BRAND={website:'dhakau.pages.dev',developerBn:'মোঃ মশিউর রহমান',developerEn:'Md. Moshiur Rahman',phone:'01759084692'};
@@ -157,16 +182,16 @@ function kv(label,value){return `<div style="display:flex;justify-content:space-
 function section(title,content){return `<div style="margin:14px 0 0;page-break-inside:avoid"><div style="font-size:13px;font-weight:800;color:#1d3263;margin-bottom:5px">${escapeHtml(title)}</div><div style="border:1px solid #e1e6ef;border-radius:10px;padding:9px 12px;background:#fff">${content}</div></div>`}
 async function saveA4Pdf(element,filename){
   if(!element)throw new Error('PDF preview is not available');
-  const html2pdf=await loadHtml2Pdf();
+  const [html2canvas,JsPDF]=await Promise.all([loadHtml2Canvas(),loadJsPdf()]);
   await document.fonts?.ready?.catch?.(()=>{});
 
   const cover=document.createElement('div');
-  cover.style.cssText='position:fixed;inset:0;z-index:2147483647;background:rgba(12,24,39,.96);color:#fff;display:grid;place-items:center;font-family:"Hind Siliguri","Inter",sans-serif;font-size:16px;font-weight:800;letter-spacing:.2px';
+  cover.style.cssText='position:fixed;inset:0;z-index:2147483647;background:rgba(12,24,39,.96);color:#fff;display:grid;place-items:center;font-family:"Hind Siliguri","Inter",sans-serif;font-size:16px;font-weight:800';
   cover.innerHTML='<div style="padding:16px 22px;border:1px solid rgba(255,255,255,.2);border-radius:14px;background:rgba(255,255,255,.06)">PDF তৈরি হচ্ছে...</div>';
 
   const stage=document.createElement('div');
   stage.setAttribute('data-pdf-stage','true');
-  stage.style.cssText='position:absolute;left:0;top:0;width:194mm;background:#fff;z-index:2147483646;pointer-events:none;overflow:visible;opacity:1;visibility:visible';
+  stage.style.cssText='position:fixed;left:0;top:0;width:194mm;background:#fff;z-index:2147483646;pointer-events:none;overflow:visible;opacity:1;visibility:visible';
   stage.innerHTML=element.innerHTML;
 
   document.body.appendChild(stage);
@@ -176,38 +201,37 @@ async function saveA4Pdf(element,filename){
     const pages=[...stage.querySelectorAll('.pdf-page')];
     if(!pages.length)throw new Error('No PDF pages were generated');
 
-    pages.forEach((p,i)=>{
-      p.style.display='block';
-      p.style.position='relative';
-      p.style.background='#fff';
-      p.style.margin='0';
-      p.style.pageBreakAfter=i<pages.length-1?'always':'auto';
-      p.style.breakAfter=i<pages.length-1?'page':'auto';
-    });
+    const pdf=new JsPDF({orientation:'portrait',unit:'mm',format:'a4',compress:true});
+    for(let i=0;i<pages.length;i++){
+      const page=pages[i];
+      page.style.display='block';
+      page.style.position='relative';
+      page.style.width='194mm';
+      page.style.height='285mm';
+      page.style.minHeight='285mm';
+      page.style.maxHeight='285mm';
+      page.style.overflow='hidden';
+      page.style.background='#fff';
+      page.style.margin='0';
 
-    const rect=stage.getBoundingClientRect();
-    await html2pdf().set({
-      margin:[6,6,6,6],
-      filename,
-      image:{type:'jpeg',quality:.98},
-      html2canvas:{
+      await new Promise(r=>requestAnimationFrame(r));
+      const canvas=await html2canvas(page,{
         scale:2,
         useCORS:true,
+        allowTaint:false,
         backgroundColor:'#ffffff',
         logging:false,
         scrollX:0,
         scrollY:0,
-        windowWidth:Math.ceil(rect.width||794),
-        windowHeight:Math.ceil(stage.scrollHeight||1123)
-      },
-      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
-      pagebreak:{
-        mode:['css','legacy'],
-        before:[],
-        after:['.pdf-page[data-break-after="true"]'],
-        avoid:['.pdf-keep']
-      }
-    }).from(stage).save();
+        windowWidth:Math.max(page.scrollWidth,734),
+        windowHeight:Math.max(page.scrollHeight,1078)
+      });
+      if(!canvas.width||!canvas.height)throw new Error('PDF page capture failed');
+      if(i>0)pdf.addPage('a4','portrait');
+      const img=canvas.toDataURL('image/jpeg',0.96);
+      pdf.addImage(img,'JPEG',8,6,194,285,undefined,'FAST');
+    }
+    pdf.save(filename);
   }finally{
     cover.remove();
     stage.remove();
