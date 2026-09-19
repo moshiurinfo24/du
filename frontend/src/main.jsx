@@ -632,9 +632,9 @@ function salaryCombinedReportHtml(base,lang='bn'){
 function salaryReportHtml(r,lang='bn',pdfMeta={}){
   const en=lang==='en',f=r.input||{};
   const amt=v=>`${en?'Tk':'৳'} ${moneyLang(v,lang)}`;
-  const row=(label,value,bold=false)=>`<div style="display:grid;grid-template-columns:1fr auto;gap:18px;padding:7px 0;border-bottom:1px solid #e8ebf1"><span style="color:#4b5565">${escapeHtml(label)}</span><span style="font-weight:${bold?800:650};color:#172033;text-align:right">${escapeHtml(value)}</span></div>`;
   const rate=r.phase?.rate??r.rate??0;
   const zoneLabel=en?({dhaka:'Dhaka North/South City Corporation',major:'Listed City Corporation',savar:'Savar / Keraniganj listed area',other:'Other area'}[f.zone]||'Other area'):({dhaka:'ঢাকা উত্তর/দক্ষিণ সিটি কর্পোরেশন',major:'তালিকাভুক্ত সিটি কর্পোরেশন',savar:'সাভার / কেরানীগঞ্জ তালিকাভুক্ত এলাকা',other:'অন্যান্য এলাকা'}[f.zone]||'অন্যান্য এলাকা');
+  const categoryLabel=r.category==='officer'?(en?'Teacher / Officer':'শিক্ষক / কর্মকর্তা'):r.category==='class4'?(en?'Class IV employee':'৪র্থ শ্রেণির কর্মচারী'):(en?'Class III employee':'৩য় শ্রেণির কর্মচারী');
   const earningRows=[
     [en?'Payable basic':'প্রাপ্য মূল বেতন',r.payableBasic??r.payable],
     [en?'House rent':'বাড়িভাড়া',r.house],
@@ -650,7 +650,7 @@ function salaryReportHtml(r,lang='bn',pdfMeta={}){
     [en?'Charge allowance':'কার্যভার ভাতা',r.charge],
     [en?'Entertainment allowance':'আপ্যায়ন ভাতা',r.entertainment],
     [en?'Other verified special allowance':'অন্যান্য যাচাইকৃত বিশেষ ভাতা',r.otherSpecial]
-  ].filter(([,v],i)=>i===0||Number(v)>0);
+  ].filter(([,v],i)=>i===0||Number(v)>0).map(([label,v],i)=>({label,value:amt(v),emphasis:i===0}));
   const deductionRows=[
     [en?`Provident Fund (${numLang(r.gpfRate||0,'en',0)}%)`:`ভবিষ্য তহবিল (PF) (${numLang(r.gpfRate||0,'bn',0)}%)`,r.pf],
     [en?`Benevolent Fund${r.deductionMode!=='custom'?` (${numLang((r.beneRate||0)*100,'en',2)}%)`:''}`:`কল্যাণ তহবিল${r.deductionMode!=='custom'?` (${numLang((r.beneRate||0)*100,'bn',2)}%)`:''}`,r.bene],
@@ -659,49 +659,75 @@ function salaryReportHtml(r,lang='bn',pdfMeta={}){
     [en?'Revenue stamp':'রাজস্ব স্ট্যাম্প',r.stamp],
     [en?'Association':'সমিতি',r.association],
     [en?'Income tax':'আয়কর',r.tax],
-    [en?'Loan':'ঋণ',r.loan],
+    [en?'Loan / advance':'ঋণ / অগ্রিম',r.loan],
     [en?'Other':'অন্যান্য',r.other]
+  ].filter(([,v])=>Number(v)>0).map(([label,v])=>({label,value:amt(v)}));
+  const metaRows=[
+    {label:en?'Calculation date':'হিসাবের তারিখ',value:fmtDateLang(f.date||todayLocalIso(),lang)},
+    {label:en?'Grade':'গ্রেড',value:`${en?'Grade':'গ্রেড'} ${numLang(r.grade,lang,0)}`},
+    {label:en?'2015 pay stage on 30 June 2026':'৩০ জুন ২০২৬-এর ২০১৫ বেতন ধাপ',value:`${en?'Stage':'ধাপ'} ${numLang(r.currentIndex+1,lang,0)}`},
+    {label:en?'2015 basic':'২০১৫ মূল বেতন',value:amt(r.currentBasic)},
+    {label:en?'2026 fixed basic':'২০২৬ নির্ধারিত মূল বেতন',value:amt(r.fixed),emphasis:true},
+    {label:en?'First eligible increment included':'প্রাপ্য প্রথম ইনক্রিমেন্টসহ মূল বেতন',value:amt(r.fixedWithFirstIncrement??r.fixed)},
+    {label:en?'Implementation phase':'বাস্তবায়ন ধাপ',value:r.phase?.label||`${numLang(rate*100,lang,0)}%`},
+    {label:en?'Employee category':'কর্মচারী শ্রেণি',value:categoryLabel},
+    {label:en?'Work location':'কর্মস্থল',value:zoneLabel},
+    {label:en?'PF rate':'PF হার',value:`${numLang(r.gpfRate||0,lang,0)}%`}
   ];
-  const meta=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 26px">
-    ${row(en?'Calculation date':'হিসাবের তারিখ',fmtDateLang(f.date||todayLocalIso(),lang))}
-    ${row(en?'Grade':'গ্রেড',`${en?'Grade':'গ্রেড'} ${numLang(r.grade,lang,0)}`)}
-    ${row(en?'2015 pay stage on 30 June 2026':'৩০ জুন ২০২৬-এর ২০১৫ বেতন ধাপ',`${en?'Stage':'ধাপ'} ${numLang(r.currentIndex+1,lang,0)}`)}
-    ${row(en?'2015 basic':'২০১৫ মূল বেতন',amt(r.currentBasic))}
-    ${row(en?'2026 fixed basic':'২০২৬ নির্ধারিত মূল বেতন',amt(r.fixed))}
-    ${row(en?'2026 basic after first eligible increment':'প্রাপ্য প্রথম ইনক্রিমেন্টসহ ২০২৬ মূল বেতন',amt(r.fixedWithFirstIncrement??r.fixed))}
-    ${row(en?'Implementation phase':'বাস্তবায়ন ধাপ',r.phase?.label||`${numLang(rate*100,lang,0)}%`)}
-    ${row(en?'Annual increments included':'অন্তর্ভুক্ত বার্ষিক ইনক্রিমেন্ট',numLang(r.dueIncrementCount||0,lang,0))}
-    ${row(en?'Deduction mode':'কর্তনের ধরন',r.deductionMode!=='custom'?(en?'Dhaka University Auto':'ঢাকা বিশ্ববিদ্যালয় অটো'):(en?'Custom / manual':'কাস্টম / ম্যানুয়াল'))}
-    ${row(en?'DU employee category':'DU কর্মচারী শ্রেণি',r.category==='officer'?(en?'Teacher / Officer':'শিক্ষক / কর্মকর্তা'):r.category==='class4'?(en?'Class IV employee':'৪র্থ শ্রেণির কর্মচারী'):(en?'Class III employee':'৩য় শ্রেণির কর্মচারী'))}
-    ${row(en?'PF rate':'PF হার',`${numLang(r.gpfRate||0,lang,0)}%`)}
-    ${row(en?'Work location':'কর্মস্থল',zoneLabel)}
-  </div>`;
-  const earn=earningRows.map(([l,v])=>row(l,amt(v))).join('')+row(en?'Gross monthly salary':'মোট মাসিক প্রাপ্য',amt(r.gross),true);
-  const ded=deductionRows.map(([l,v])=>row(l,amt(v))).join('')+row(en?'Total deductions':'মোট কর্তন',amt(r.deductions),true);
-  const annual=r.allowance2026&&r.banglaNewYear!=null?row(en?'Bangla New Year allowance (annual)':'বাংলা নববর্ষ ভাতা (বার্ষিক)',amt(r.banglaNewYear),true):'';
   const reportYear=r.reportYear||null;
   const title=reportYear
     ?(en?('National Pay Scale '+reportYear+' Salary Statement'):('জাতীয় বেতনস্কেল '+numLang(reportYear,lang,0)+' বেতন বিবরণী'))
     :(en?'National Pay Scale 2026–2028 Salary Calculation':'জাতীয় বেতনস্কেল ২০২৬–২০২৮ বেতন হিসাব');
-  const ruleNote=r.allowance2026
-    ?(en?'New allowance rates are applied because the selected date is on or after 1 January 2028.':'নির্বাচিত তারিখ ১ জানুয়ারি ২০২৮ বা পরের হওয়ায় নতুন ভাতার হার প্রয়োগ করা হয়েছে।')
-    :(en?'Until 31 December 2027 the pre-existing allowance amounts/rates remain in force; the new allowance rates start from 1 January 2028.':'৩১ ডিসেম্বর ২০২৭ পর্যন্ত পূর্ববর্তী ভাতার অংক/হার বহাল থাকবে; নতুন ভাতার হার ১ জানুয়ারি ২০২৮ থেকে কার্যকর।');
-  const body=`
-    <div style="border:1px solid #dce2ec;border-radius:12px;padding:14px 16px;background:#fafbfe">${meta}</div>
-    ${r.projections?.length?`<div style="margin-top:14px;border:1px solid #dce2ec;border-radius:12px;overflow:hidden;page-break-inside:avoid"><div style="padding:10px 12px;background:#f3f8f5;font-size:13px;font-weight:800;color:#174b34">${reportYear?(en?(reportYear+' implementation stages'):(numLang(reportYear,lang,0)+' সালের বাস্তবায়ন ধাপ')):(en?'2026–2028 implementation projection':'২০২৬–২০২৮ বাস্তবায়ন প্রক্ষেপণ')}</div><table style="width:100%;border-collapse:collapse;font-size:10.5px"><thead><tr style="background:#fafcfb"><th style="padding:7px;text-align:left">${en?'Stage':'ধাপ'}</th><th style="padding:7px;text-align:right">${en?'Basic':'মূল বেতন'}</th><th style="padding:7px;text-align:right">${en?'Allowances':'ভাতা'}</th><th style="padding:7px;text-align:right">${en?'Gross':'মোট'}</th><th style="padding:7px;text-align:right">${en?'Est. net':'আনু. নিট'}</th></tr></thead><tbody>${r.projections.map(p=>`<tr><td style="padding:7px;border-top:1px solid #edf0f3">${escapeHtml(p.label)}</td><td style="padding:7px;border-top:1px solid #edf0f3;text-align:right">${amt(p.payableBasic)}</td><td style="padding:7px;border-top:1px solid #edf0f3;text-align:right">${amt(p.totalAllowances)}</td><td style="padding:7px;border-top:1px solid #edf0f3;text-align:right">${amt(p.gross)}</td><td style="padding:7px;border-top:1px solid #edf0f3;text-align:right">${amt(p.net)}</td></tr>`).join('')}</tbody></table></div>`:''}
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;align-items:start">
-      <div style="border:1px solid #dce2ec;border-radius:12px;padding:12px 14px"><div style="font-size:13px;font-weight:800;color:#1d3263;margin-bottom:4px">${en?'Earnings':'প্রাপ্যসমূহ'}</div>${earn}${annual}</div>
-      <div style="border:1px solid #dce2ec;border-radius:12px;padding:12px 14px"><div style="font-size:13px;font-weight:800;color:#1d3263;margin-bottom:4px">${en?'Deductions':'কর্তনসমূহ'}</div>${ded}</div>
-    </div>
-    <div style="margin-top:14px;border:2px solid #1f3568;border-radius:12px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;background:#f4f7ff">
-      <span style="font-size:14px;font-weight:800;color:#1f3568">${en?'Estimated net payable salary':'আনুমানিক নিট প্রাপ্য বেতন'}</span>
-      <span style="font-size:24px;font-weight:900;color:#111936">${amt(r.net)}</span>
-    </div>
-    <div style="margin-top:12px;padding:10px 12px;border-left:4px solid #1f6d4d;background:#effaf5;border-radius:8px;font-size:10.5px"><b>${en?'Gazette rule:':'গেজেটের নিয়ম:'}</b> ${escapeHtml(ruleNote)}</div>
-    <div style="margin-top:9px;padding:10px 12px;border-left:4px solid #d59b35;background:#fff8e8;border-radius:8px;font-size:10.5px"><b>${en?'Deduction note:':'কর্তন নোট:'}</b> ${r.deductionMode!=='custom'?(en?'DU Auto: PF 10% and Benevolent Fund are rule-based; health/group insurance, stamp and association use the platform’s previous DU payroll preset. Tax, loan/advance and other deductions remain employee-specific.':'DU Auto: PF ১০% ও কল্যাণ তহবিল নিয়মভিত্তিক; স্বাস্থ্য/গ্রুপ বীমা, স্ট্যাম্প ও সমিতি আগের DU পে-রোল প্রিসেট অনুযায়ী। আয়কর, ঋণ/অগ্রিম ও অন্যান্য কর্তন ব্যক্তিভেদে।'):(en?'Custom mode: verify all entered deductions against the actual payroll.':'কাস্টম মোড: সব কর্তন প্রকৃত পে-রোলের সঙ্গে মিলিয়ে দেখুন।')}</div>`;
   const subtitle=reportYear
-    ?(en?('A4 year statement · '+reportYear+' · based on the 17 September 2026 gazette'):('A4 বার্ষিক বিবরণী · '+numLang(reportYear,lang,0)+' · ১৭ সেপ্টেম্বর ২০২৬-এর গেজেটভিত্তিক'))
-    :(en?'A4 combined statement · 2026–2028 · based on the 17 September 2026 gazette':'A4 সমন্বিত বিবরণী · ২০২৬–২০২৮ · ১৭ সেপ্টেম্বর ২০২৬-এর গেজেটভিত্তিক');
+    ?(en?('Premium A4 statement · '+reportYear+' · 17 September 2026 gazette based'):('প্রিমিয়াম A4 বিবরণী · '+numLang(reportYear,lang,0)+' · ১৭ সেপ্টেম্বর ২০২৬-এর গেজেটভিত্তিক'))
+    :(en?'Premium A4 combined statement · 2026–2028':'প্রিমিয়াম A4 সমন্বিত বিবরণী · ২০২৬–২০২৮');
+  const ruleNote=r.allowance2026
+    ?(en?'New allowance rates are applied from 1 January 2028.':'১ জানুয়ারি ২০২৮ থেকে নতুন ভাতার হার প্রয়োগ হয়েছে।')
+    :(en?'Until 31 December 2027 the pre-existing allowance amounts/rates remain in force; new allowance rates start from 1 January 2028.':'৩১ ডিসেম্বর ২০২৭ পর্যন্ত পূর্ববর্তী ভাতার অংক/হার বহাল থাকবে; নতুন ভাতার হার ১ জানুয়ারি ২০২৮ থেকে কার্যকর।');
+
+  const summary=pdfSummaryCards([
+    {label:en?'Payable basic':'প্রাপ্য মূল বেতন',value:amt(r.payableBasic??r.payable)},
+    {label:en?'Monthly allowances':'মাসিক মোট ভাতা',value:amt(r.totalAllowances||0)},
+    {label:en?'Total deductions':'মোট কর্তন',value:amt(r.deductions||0)},
+    {label:en?'Estimated net payable':'আনুমানিক নিট প্রাপ্য',value:amt(r.net||0),accent:true}
+  ],4);
+
+  const stageHtml=r.projections?.length?`<div style="border:1px solid #dbe4e9;border-radius:10px;overflow:hidden;background:#fff">
+    <table style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:9.8px;line-height:1.35">
+      <thead><tr style="background:linear-gradient(90deg,#eef5f2,#f4f7fb);color:#23473a">
+        <th style="width:34%;padding:7px 8px;text-align:left;border-bottom:1px solid #d6e1dc">${en?'Stage':'ধাপ'}</th>
+        <th style="width:22%;padding:7px 8px;text-align:right;border-bottom:1px solid #d6e1dc">${en?'Basic':'মূল বেতন'}</th>
+        <th style="width:22%;padding:7px 8px;text-align:right;border-bottom:1px solid #d6e1dc">${en?'Gross':'মোট'}</th>
+        <th style="width:22%;padding:7px 8px;text-align:right;border-bottom:1px solid #d6e1dc">${en?'Est. net':'আনু. নিট'}</th>
+      </tr></thead>
+      <tbody>${r.projections.map((p,i)=>`<tr style="background:${i%2?'#fbfcfd':'#fff'}">
+        <td style="padding:7px 8px;border-bottom:1px solid #e9eef1;color:#425466;font-weight:700">${pdfSafe(p.label)}</td>
+        <td style="padding:7px 8px;border-bottom:1px solid #e9eef1;text-align:right;font-family:'Inter','Hind Siliguri',sans-serif;font-weight:800">${pdfSafe(amt(p.payableBasic))}</td>
+        <td style="padding:7px 8px;border-bottom:1px solid #e9eef1;text-align:right;font-family:'Inter','Hind Siliguri',sans-serif;font-weight:800">${pdfSafe(amt(p.gross))}</td>
+        <td style="padding:7px 8px;border-bottom:1px solid #e9eef1;text-align:right;font-family:'Inter','Hind Siliguri',sans-serif;font-weight:900;color:#0f5f3a">${pdfSafe(amt(p.net))}</td>
+      </tr>`).join('')}</tbody>
+    </table>
+  </div>`:''; 
+
+  const earnRows=[...earningRows,{label:en?'Gross monthly salary':'মোট মাসিক প্রাপ্য',value:amt(r.gross),emphasis:true}];
+  if(r.allowance2026&&r.banglaNewYear!=null)earnRows.push({label:en?'Bangla New Year allowance (annual)':'বাংলা নববর্ষ ভাতা (বার্ষিক)',value:amt(r.banglaNewYear)});
+  const dedRows=[...deductionRows,{label:en?'Total deductions':'মোট কর্তন',value:amt(r.deductions),emphasis:true}];
+
+  const body=summary+
+    section(en?'Fixation & salary basis':'ফিক্সেশন ও বেতনের ভিত্তি',pdfTable(metaRows,{head1:en?'Information':'তথ্য',head3:en?'Value':'মান',compact:true}),{table:true,tight:true})+
+    (stageHtml?section(reportYear?(en?`${reportYear} implementation stages`:`${numLang(reportYear,lang,0)} সালের বাস্তবায়ন ধাপ`):(en?'Implementation projection':'বাস্তবায়ন প্রক্ষেপণ'),stageHtml,{table:true,tight:true}):'')+
+    `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;align-items:start">
+      <div>${section(en?'Earnings':'প্রাপ্যসমূহ',pdfTable(earnRows,{head1:en?'Earning':'প্রাপ্য',head3:en?'Amount':'অংক',compact:true}),{table:true,tight:true})}</div>
+      <div>${section(en?'Deductions':'কর্তনসমূহ',pdfTable(dedRows,{head1:en?'Deduction':'কর্তন',head3:en?'Amount':'অংক',compact:true}),{table:true,tight:true})}</div>
+    </div>
+    <div style="margin-top:10px;border:2px solid #b89a51;border-radius:11px;padding:11px 14px;background:linear-gradient(120deg,#fffaf0,#eff9f4);display:flex;justify-content:space-between;align-items:center">
+      <div><div style="font-size:8.8px;color:#6e785f;font-weight:800">${en?'FINAL MONTHLY ESTIMATE':'চূড়ান্ত মাসিক আনুমানিক হিসাব'}</div><div style="font-size:13px;font-weight:900;color:#244b3a;margin-top:2px">${en?'Estimated net payable salary':'আনুমানিক নিট প্রাপ্য বেতন'}</div></div>
+      <div style="font-size:22px;font-weight:900;color:#76591e;font-family:'Inter','Hind Siliguri',sans-serif;font-variant-numeric:tabular-nums">${pdfSafe(amt(r.net))}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px">
+      <div style="padding:8px 10px;border-left:4px solid #1f6d4d;background:#effaf5;border-radius:8px;font-size:8.9px;color:#38594a;line-height:1.4"><b>${en?'Gazette rule:':'গেজেটের নিয়ম:'}</b> ${pdfSafe(ruleNote)}</div>
+      <div style="padding:8px 10px;border-left:4px solid #c69b3e;background:#fff8e8;border-radius:8px;font-size:8.9px;color:#6b5728;line-height:1.4"><b>${en?'Deduction note:':'কর্তন নোট:'}</b> ${r.deductionMode!=='custom'?(en?'DU Auto uses rule-based PF/Benevolent Fund and existing platform payroll presets for supported fixed deductions.':'DU Auto-তে PF/কল্যাণ তহবিল নিয়মভিত্তিক এবং সমর্থিত নির্দিষ্ট কর্তনে আগের পে-রোল প্রিসেট ব্যবহৃত হয়েছে।'):(en?'Custom deductions should be verified against actual payroll.':'কাস্টম কর্তন প্রকৃত পে-রোলের সঙ্গে যাচাই করুন।')}</div>
+    </div>`;
   return reportShell(title,subtitle,body,lang,pdfMeta);
 }
 
