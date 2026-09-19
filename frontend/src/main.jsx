@@ -518,6 +518,7 @@ function PublicPayScaleHub({lang='bn'}){
 function PublicHome({onLogin,onSignup,lang,setLang}){
   const en=lang==='en';
   const [publicMenu,setPublicMenu]=useState(false);
+  const [activePublicTool,setActivePublicTool]=useState(null);
   const [notices,setNotices]=useState([]);
   const [policies,setPolicies]=useState([]);
 
@@ -535,6 +536,11 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
   const go=(id)=>{
     setPublicMenu(false);
     window.requestAnimationFrame(()=>document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'}));
+  };
+  const openPublicTool=(tool)=>{
+    setPublicMenu(false);
+    setActivePublicTool(tool);
+    window.requestAnimationFrame(()=>document.getElementById('public-calculator-center')?.scrollIntoView({behavior:'smooth',block:'start'}));
   };
 
   const quick=[
@@ -641,13 +647,8 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
 
       <nav className={publicMenu?'open':''} aria-label={en?'Main navigation':'প্রধান মেনু'}>
         <button onClick={()=>go('home')}>{en?'Home':'হোম'}</button>
+        <button className="pay-nav-link" onClick={()=>go('public-calculator-center')}>{en?'Calculators':'ক্যালকুলেটর'}</button>
         <button onClick={()=>go('services')}>{en?'Services':'সেবাসমূহ'}</button>
-        <button onClick={()=>go('benefits')}>{en?'Benefits':'সুবিধাসমূহ'}</button>
-        <button onClick={()=>go('points')}>{en?'Points':'পয়েন্ট'}</button>
-        <button className="pay-nav-link" onClick={()=>go('pay-scale-2026')}>{en?'Pay Scale 2026':'পে-স্কেল ২০২৬'}</button>
-        <button onClick={()=>go('public-promotion')}>{en?'Promotion Calc':'পদোন্নতি হিসাব'}</button>
-        <button onClick={()=>go('public-house')}>{en?'House Points':'বাসা বরাদ্দ'}</button>
-        <button onClick={()=>go('calculators')}>{en?'Calculators':'ক্যালকুলেটর'}</button>
         <button onClick={()=>go('notices')}>{en?'Notices':'নোটিশ'}</button>
         <button onClick={()=>go('policies')}>{en?'Policies':'নীতিমালা'}</button>
       </nav>
@@ -668,8 +669,8 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
         <h1>{en?'Your career, salary, promotion and points — all in one place':'আপনার ক্যারিয়ার, বেতন, পদোন্নতি ও পয়েন্ট—সব হিসাব এক জায়গায়'}</h1>
         <p>{en?'A modern self-service platform where you can easily manage career, salary, promotion, points, leave and essential services.':'একটি আধুনিক স্ব-সেবামূলক প্ল্যাটফর্ম যেখানে নিজের চাকরি, বেতন, পদোন্নতি, পয়েন্ট, ছুটি ও প্রয়োজনীয় সেবা সহজে ব্যবহার করতে পারবেন।'}</p>
         <div className="approved-hero-buttons">
-          <button className="primary" onClick={onLogin}>{en?'Sign in now':'সাইন ইন করুন'}<ArrowRight/></button>
-          <button className="secondary" onClick={onSignup}>{en?'Create new account':'নতুন অ্যাকাউন্ট তৈরি করুন'}<ArrowRight/></button>
+          <button className="primary" onClick={()=>go('public-calculator-center')}>{en?'Start a calculation':'হিসাব শুরু করুন'}<ArrowRight/></button>
+          <button className="secondary" onClick={onLogin}>{en?'Sign in':'লগইন করুন'}<ArrowRight/></button>
         </div>
         <div className="approved-trust">
           <span><CheckCircle2/>{en?'Simple & secure':'সহজ ও নিরাপদ'}</span>
@@ -680,21 +681,36 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
       <HeroDevice/>
     </section>
 
-    <PublicPayScaleHub lang={lang}/>
-
-    <section className="approved-section public-career-tool" id="public-promotion">
-      <div className="approved-section-title"><span>{en?'PUBLIC TOOL · NO LOGIN':'পাবলিক টুল · লগইন লাগবে না'}</span><h2>{en?'Promotion Calculator':'পদোন্নতি ক্যালকুলেটর'}</h2><p>{en?'Use the platform’s existing rule-based promotion eligibility and roadmap calculator, then download the result as A4 PDF.':'বিদ্যমান নীতিমালাভিত্তিক পদোন্নতির যোগ্যতা ও রোডম্যাপ হিসাব করুন এবং ফলাফল A4 PDF হিসেবে ডাউনলোড করুন।'}</p></div>
-      <div className="public-tool-shell"><PromotionCenter lang={lang} publicMode={true}/></div>
+    <section className="approved-section public-calculator-center" id="public-calculator-center">
+      <div className="calculator-hub-head">
+        <span>{en?'NO LOGIN REQUIRED':'লগইন লাগবে না'}</span>
+        <h2>{en?'What do you want to calculate?':'আপনি কী হিসাব করতে চান?'}</h2>
+        <p>{en?'Choose one tool. Only the selected calculator will open below, so you always know where to start.':'নিচের ৩টির মধ্যে একটি নির্বাচন করুন। শুধু নির্বাচিত ক্যালকুলেটরটিই নিচে খুলবে—কোথা থেকে শুরু করবেন তা পরিষ্কার থাকবে।'}</p>
+      </div>
+      <div className="calculator-hub-grid">
+        <button className={activePublicTool==='salary'?'active':''} onClick={()=>openPublicTool('salary')}>
+          <span className="hub-icon salary"><WalletCards/></span>
+          <div><small>{en?'SALARY':'বেতন'}</small><h3>{en?'Pay Scale 2026–2028':'পে-স্কেল ২০২৬–২০২৮'}</h3><p>{en?'Basic, allowances, DU deductions, 2026/2027/2028 projections and PDFs.':'মূল বেতন, ভাতা, DU কর্তন, ২০২৬/২০২৭/২০২৮ হিসাব ও PDF।'}</p><b>{en?'Open salary calculator':'বেতন ক্যালকুলেটর খুলুন'}<ArrowRight/></b></div>
+        </button>
+        <button className={activePublicTool==='promotion'?'active':''} onClick={()=>openPublicTool('promotion')}>
+          <span className="hub-icon promotion"><TrendingUp/></span>
+          <div><small>{en?'CAREER':'পদোন্নতি'}</small><h3>{en?'Promotion Calculator':'পদোন্নতি ক্যালকুলেটর'}</h3><p>{en?'Check eligibility date, remaining service time, roadmap and PDF.':'যোগ্যতার তারিখ, বাকি চাকরিকাল, রোডম্যাপ ও PDF দেখুন।'}</p><b>{en?'Open promotion calculator':'পদোন্নতি হিসাব খুলুন'}<ArrowRight/></b></div>
+        </button>
+        <button className={activePublicTool==='house'?'active':''} onClick={()=>openPublicTool('house')}>
+          <span className="hub-icon house"><Home/></span>
+          <div><small>{en?'HOUSING':'বাসা বরাদ্দ'}</small><h3>{en?'House Allocation Points':'বাসা বরাদ্দ পয়েন্ট'}</h3><p>{en?'Calculate supported house-allocation points and download the result as PDF.':'সমর্থিত বাসা বরাদ্দ পয়েন্ট হিসাব করুন এবং PDF নিন।'}</p><b>{en?'Open house calculator':'বাসা বরাদ্দ হিসাব খুলুন'}<ArrowRight/></b></div>
+        </button>
+      </div>
+      {!activePublicTool&&<div className="calculator-hub-guide"><Calculator/><div><b>{en?'Start here':'এখান থেকেই শুরু করুন'}</b><span>{en?'Click any one of the three cards above. No account is needed.':'উপরের ৩টি কার্ডের যেকোনো একটিতে ক্লিক করুন। কোনো অ্যাকাউন্ট লাগবে না।'}</span></div></div>}
     </section>
 
-    <section className="approved-section public-career-tool alt" id="public-house">
-      <div className="approved-section-title"><span>{en?'PUBLIC TOOL · NO LOGIN':'পাবলিক টুল · লগইন লাগবে না'}</span><h2>{en?'House Allocation Point Calculator':'বাসা বরাদ্দ পয়েন্ট ক্যালকুলেটর'}</h2><p>{en?'Calculate the currently supported house-allocation point rule without an account and download the result as A4 PDF.':'অ্যাকাউন্ট ছাড়াই বর্তমানে সমর্থিত বাসা বরাদ্দ পয়েন্টের হিসাব করুন এবং ফলাফল A4 PDF হিসেবে ডাউনলোড করুন।'}</p></div>
-      <div className="public-tool-shell"><HouseAllocationPoints lang={lang} publicMode={true}/></div>
-    </section>
+    {activePublicTool==='salary'&&<div className="active-public-tool-wrap"><div className="active-tool-bar"><b>{en?'Salary & Pay Scale 2026–2028':'বেতন ও পে-স্কেল ২০২৬–২০২৮'}</b><button onClick={()=>setActivePublicTool(null)}>{en?'Close calculator':'ক্যালকুলেটর বন্ধ করুন'}<X size={16}/></button></div><PublicPayScaleHub lang={lang}/></div>}
+    {activePublicTool==='promotion'&&<section className="approved-section public-career-tool active-public-tool-wrap"><div className="active-tool-bar"><b>{en?'Promotion Calculator':'পদোন্নতি ক্যালকুলেটর'}</b><button onClick={()=>setActivePublicTool(null)}>{en?'Close calculator':'ক্যালকুলেটর বন্ধ করুন'}<X size={16}/></button></div><div className="public-tool-shell"><PromotionCenter lang={lang} publicMode={true}/></div></section>}
+    {activePublicTool==='house'&&<section className="approved-section public-career-tool alt active-public-tool-wrap"><div className="active-tool-bar"><b>{en?'House Allocation Point Calculator':'বাসা বরাদ্দ পয়েন্ট ক্যালকুলেটর'}</b><button onClick={()=>setActivePublicTool(null)}>{en?'Close calculator':'ক্যালকুলেটর বন্ধ করুন'}<X size={16}/></button></div><div className="public-tool-shell"><HouseAllocationPoints lang={lang} publicMode={true}/></div></section>}
 
     <section className="approved-section approved-quick" id="services">
       <div className="approved-section-title"><span>{en?'POPULAR SERVICES':'গুরুত্বপূর্ণ সেবা'}</span><h2>{en?'Important services, organized for one-click access':'গুরুত্বপূর্ণ সব সেবা, এক ক্লিকে ব্যবহারের জন্য সাজানো'}</h2><p>{en?'Career, salary, leave, promotion, points and useful information — all within easy reach.':'ক্যারিয়ার, বেতন, ছুটি, পদোন্নতি ও প্রয়োজনীয় তথ্য—সব সহজেই হাতের মুঠোয়।'}</p></div>
-      <div className="approved-quick-grid">{quick.map(([I,t,c,action])=><button key={t} className={c} onClick={action?()=>go(action==='public-pay'?'pay-scale-2026':action):onLogin}><span><I/></span><b>{t}</b><ChevronRight/></button>)}</div>
+      <div className="approved-quick-grid">{quick.map(([I,t,c,action])=><button key={t} className={c} onClick={action==='public-pay'?()=>openPublicTool('salary'):action==='public-promotion'?()=>openPublicTool('promotion'):action==='public-house'?()=>openPublicTool('house'):onLogin}><span><I/></span><b>{t}</b><ChevronRight/></button>)}</div>
     </section>
 
     <section className="approved-section approved-benefits" id="benefits">
@@ -715,16 +731,13 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
       <div className="approved-points-grid">
         <article><span className="green"><Award/></span><div><h3>{en?'Service Points':'সার্ভিস পয়েন্ট'}</h3><p>{en?'Calculate points based on service experience.':'চাকরিকাল ভিত্তিক পয়েন্ট হিসাব করুন।'}</p></div></article>
         <article><span className="purple"><GraduationCap/></span><div><h3>{en?'Education Points':'শিক্ষাগত যোগ্যতার পয়েন্ট'}</h3><p>{en?'Calculate points from supported academic results.':'শিক্ষাগত যোগ্যতা অনুযায়ী পয়েন্ট হিসাব করুন।'}</p></div></article>
-        <article><span className="pink"><Home/></span><div><h3>{en?'House Allocation Points':'বাসা বরাদ্দ পয়েন্ট'}</h3><p>{en?'Calculate supported house-allocation points.':'সমর্থিত শ্রেণির বাসা বরাদ্দ পয়েন্ট হিসাব করুন।'}</p></div></article>
+        <article className="clickable-point-card" onClick={()=>openPublicTool('house')}><span className="pink"><Home/></span><div><h3>{en?'House Allocation Points':'বাসা বরাদ্দ পয়েন্ট'}</h3><p>{en?'Calculate supported house-allocation points.':'সমর্থিত শ্রেণির বাসা বরাদ্দ পয়েন্ট হিসাব করুন।'}</p></div><ArrowRight/></article>
       </div>
     </section>
 
     <section className="approved-section approved-calculators" id="calculators">
-      <div className="approved-section-title"><span>{en?'QUICK CALCULATORS':'দ্রুত ক্যালকুলেটর'}</span><h2>{en?'Useful calculations without unnecessary complexity':'প্রয়োজনীয় হিসাব, সহজ ও পরিষ্কারভাবে'}</h2><p>{en?'Pay Scale 2026, promotion and house-allocation calculators are open to everyone. Other personal tools remain available after sign-in.':'পে-স্কেল ২০২৬, পদোন্নতি ও বাসা বরাদ্দ ক্যালকুলেটর সবার জন্য উন্মুক্ত। অন্যান্য ব্যক্তিগত টুল লগইনের পর ব্যবহার করা যাবে।'}</p></div>
+      <div className="approved-section-title"><span>{en?'MORE TOOLS':'আরও টুল'}</span><h2>{en?'Personal calculators after sign-in':'লগইনের পর ব্যক্তিগত ক্যালকুলেটর'}</h2><p>{en?'For salary, promotion or house-allocation calculations, use the public Calculator Center above.':'বেতন, পদোন্নতি বা বাসা বরাদ্দ হিসাবের জন্য উপরের পাবলিক Calculator Center ব্যবহার করুন।'}</p></div>
       <div className="approved-calc-grid">
-        <button className="public-calc-highlight" onClick={()=>go('pay-scale-2026')}><span><WalletCards/></span><div><b>{en?'Pay Scale 2026':'পে-স্কেল ২০২৬'}</b><small>{en?'2026–2028 pay projection + PDF':'২০২৬–২০২৮ বেতন প্রক্ষেপণ + PDF'}</small></div><ArrowRight/></button>
-        <button className="public-calc-highlight" onClick={()=>go('public-promotion')}><span><TrendingUp/></span><div><b>{en?'Promotion Calculator':'পদোন্নতি ক্যালকুলেটর'}</b><small>{en?'Eligibility, roadmap + PDF':'যোগ্যতা, রোডম্যাপ + PDF'}</small></div><ArrowRight/></button>
-        <button className="public-calc-highlight" onClick={()=>go('public-house')}><span><Home/></span><div><b>{en?'House Allocation Points':'বাসা বরাদ্দ পয়েন্ট'}</b><small>{en?'Automatic points + PDF':'অটোমেটিক পয়েন্ট + PDF'}</small></div><ArrowRight/></button>
         <button onClick={onLogin}><span><Clock3/></span><div><b>{en?'Service Length':'চাকরিকাল হিসাব'}</b><small>{en?'Years, months and days':'বছর, মাস ও দিন'}</small></div><ArrowRight/></button>
         <button onClick={onLogin}><span><UserRound/></span><div><b>{en?'Age Calculator':'বয়স হিসাব'}</b><small>{en?'Exact age from date of birth':'জন্মতারিখ থেকে সঠিক বয়স'}</small></div><ArrowRight/></button>
         <button onClick={onLogin}><span><CalendarDays/></span><div><b>{en?'Date Difference':'তারিখের ব্যবধান'}</b><small>{en?'Difference between two dates':'দুই তারিখের ব্যবধান'}</small></div><ArrowRight/></button>
