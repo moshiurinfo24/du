@@ -119,6 +119,37 @@ async function ensurePublicEvents(env){
   await env.DB.prepare(`INSERT OR IGNORE INTO public_traffic_baseline(id,unique_visitors,page_views,source,source_period) VALUES(1,0,0,'none','')`).run();
   publicEventsReady=true;
 }
+function randomShareToken(bytes=18){
+  const a=crypto.getRandomValues(new Uint8Array(bytes));
+  return Array.from(a,x=>x.toString(16).padStart(2,'0')).join('');
+}
+let sharedReportsReady=false;
+async function ensureSharedReports(env){
+  if(sharedReportsReady)return;
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS public_shared_reports(
+    token TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    report_html TEXT NOT NULL,
+    filename TEXT NOT NULL,
+    summary TEXT,
+    lang TEXT NOT NULL DEFAULT 'bn',
+    views INTEGER NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at DATETIME NOT NULL
+  )`).run();
+  await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_public_shared_reports_expires_at ON public_shared_reports(expires_at)`).run();
+  sharedReportsReady=true;
+}
+function safeSharedReportHtml(v){
+  const html=String(v||'').trim();
+  if(!html||html.length>350000)return '';
+  if(!/class=["'][^"']*pdf-page/.test(html))return '';
+  if(/<\s*(script|iframe|object|embed|link|meta)\b/i.test(html))return '';
+  if(/\son[a-z]+\s*=/i.test(html))return '';
+  if(/javascript\s*:/i.test(html))return '';
+  return html;
+}
+
 async function publicTrafficStats(env){
   await ensurePublicEvents(env);
   const [x,b]=await Promise.all([
@@ -176,6 +207,38 @@ export default{async fetch(req,env){
     if(u.pathname==='/api/public/stats'&&req.method==='GET'){
       const stats=await publicTrafficStats(env);
       return json({ok:true,...stats,timezone:'Asia/Dhaka',note:'Unique visitors are an anonymous browser/device estimate.'},200,C);
+    }
+
+    if(u.pathname==='/api/public/report-share'&&req.method==='POST'){
+      await ensureSharedReports(env);
+      const b=await req.json().catch(()=>({}));
+      const html=safeSharedReportHtml(b.html);
+      if(!html)return json({error:'Invalid report content'},400,C);
+      const title=String(b.title||'Shared Report').trim().slice(0,180)||'Shared Report';
+      const filename=String(b.filename||'report.pdf').replace(/[^a-zA-Z0-9._-]/g,'-').slice(0,140)||'report.pdf';
+      const summary=String(b.summary||'').trim().slice(0,1200);
+      const lang=b.lang==='en'?'en':'bn';
+      let token=randomShareToken();
+      for(let i=0;i<3;i++){
+        const exists=await env.DB.prepare('SELECT token FROM public_shared_reports WHERE token=?').bind(token).first();
+        if(!exists)break;
+        token=randomShareToken();
+      }
+      await env.DB.prepare(`INSERT INTO public_shared_reports(token,title,report_html,filename,summary,lang,expires_at)
+        VALUES(?,?,?,?,?,?,datetime('now','+30 days'))`)
+        .bind(token,title,html,filename,summary,lang).run();
+      return json({ok:true,token,expires_in_days:30},201,C);
+    }
+
+    if(u.pathname.startsWith('/api/public/report-share/')&&req.method==='GET'){
+      await ensureSharedReports(env);
+      const token=u.pathname.split('/').pop()||'';
+      if(!/^[a-f0-9]{36}$/.test(token))return json({error:'Invalid share link'},400,C);
+      const row=await env.DB.prepare(`SELECT token,title,report_html,filename,summary,lang,views,created_at,expires_at
+        FROM public_shared_reports WHERE token=? AND expires_at>CURRENT_TIMESTAMP`).bind(token).first();
+      if(!row)return json({error:'Shared report not found or expired'},404,C);
+      env.DB.prepare('UPDATE public_shared_reports SET views=views+1 WHERE token=?').bind(token).run().catch(()=>{});
+      return json({ok:true,report:row},200,C);
     }
 
     // Phase 8 FREE: self-service registration and recovery code password reset
