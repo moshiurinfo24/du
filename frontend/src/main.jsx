@@ -467,70 +467,141 @@ function SharedReportViewer({token,lang='bn',setLang}){
 }
 
 function promotionReportHtml(r,lang='bn'){
-  const en=lang==='en', f=r.input||{};
+  const en=lang==='en',f=r.input||{};
   const edu=en?{masters:'Masters',bachelor:"Bachelor's",hsc:'HSC',diploma:'Diploma',bsceng:'BSc Engineering',mbbs:'MBBS'}:eduBn;
-  let overview=kv(en?'Current grade':'বর্তমান গ্রেড',`${en?'Grade':'গ্রেড'} ${f.grade||'—'}`)+kv(en?'Education':'শিক্ষাগত যোগ্যতা',edu[f.edu]||f.edu||'—')+kv(en?'Current post joining date':'বর্তমান পদে যোগদান',f.currentDate?fmtDateLang(f.currentDate,lang):'—')+kv(en?'First joining date':'প্রথম যোগদান',f.firstJoinDate?fmtDateLang(f.firstJoinDate,lang):'—')+kv(en?'Calculation date':'হিসাবের তারিখ',fmtDateLang(f.calcDate||todayLocalIso(),lang))+kv(en?'Computer skill/training':'কম্পিউটার দক্ষতা/প্রশিক্ষণ',f.computer==='yes'?(en?'Yes':'আছে'):(en?'No':'নেই'))+kv(en?'ACR condition':'ACR শর্ত',f.acr==='yes'?(en?'Satisfactory':'সন্তোষজনক'):(en?'Incomplete / No':'অসম্পূর্ণ/না'));
-  let result='';
-  if(r.stop) result=kv(en?'Result':'ফলাফল',r.rule.target)+kv(en?'Reference':'রেফারেন্স',r.rule.ref||r.rule.page||'—');
-  else result=kv(en?'Next promotion level':'সম্ভাব্য পরবর্তী পদ/ধাপ',`${r.rule.target} - ${en?'Grade':'গ্রেড'} ${r.rule.targetGrade}`)+kv(en?'Eligibility date':'নীতিগত যোগ্যতার তারিখ',fmtDateLang(r.eligible,lang))+kv(en?'Application/circular deadline':'আবেদন/সার্কুলার সময়সীমা',fmtDateLang(r.cycle.circularDeadline,lang))+kv(en?'Projected final promotion date':'পদোন্নতির সম্ভাব্য চূড়ান্ত তারিখ',fmtDateLang(r.cycle.completionDeadline,lang))+kv(en?'Required service':'প্রয়োজনীয় অভিজ্ঞতা',`${numLang(r.req,lang,0)} ${en?'years':'বছর'}`)+kv(en?'Service in current post':'বর্তমান পদে চাকরি',en?`${r.elapsed.y} years ${r.elapsed.m} months ${r.elapsed.d} days`:durationBn(r.elapsed))+kv(en?'Remaining time':'অবশিষ্ট সময়',(r.remaining.y||r.remaining.m||r.remaining.d)?(en?`${r.remaining.y} years ${r.remaining.m} months ${r.remaining.d} days`:durationBn(r.remaining)):(en?'Completed':'সময় পূর্ণ'))+kv(en?'Total service points':'মোট সার্ভিস পয়েন্ট',numLang(r.points,lang))+kv(en?'Current post points':'বর্তমান পদের পয়েন্ট',numLang(r.exp?.currentPoints||0,lang))+kv(en?'Previous service points':'পূর্ববর্তী মোট চাকরিকালের পয়েন্ট',numLang(r.exp?.priorServicePoints||0,lang))+kv(en?'Primary conditions':'প্রাথমিক শর্তের অবস্থা',r.prelim?(en?'Satisfied':'যোগ্যতার মূল শর্ত পূর্ণ'):(en?'One or more conditions incomplete':'এক বা একাধিক শর্ত অসম্পূর্ণ'));
-  let roadmap=''; if(!r.stop&&r.roadmap?.length) roadmap=r.roadmap.map((x,i)=>x.stop?kv(`${i+1}. ${en?'After grade':'গ্রেড'} ${x.fromGrade}`,x.label):kv(`${i+1}. ${en?'Grade':'গ্রেড'} ${x.fromGrade} → ${x.toGrade}`,`${x.title} | ${x.years} ${en?'years':'বছর'} | ${en?'Projected final promotion':'সম্ভাব্য চূড়ান্ত পদোন্নতি'}: ${fmtDateLang(x.completionDeadline,lang)}`)).join('');
-  const body=section(en?'Input information':'প্রদত্ত তথ্য',overview)+section(en?'Detailed calculation':'হিসাবের বিস্তারিত ফলাফল',result)+(roadmap?section(en?'Future promotion roadmap':'ভবিষ্যৎ সম্ভাব্য পদোন্নতি রোডম্যাপ',roadmap):'')+`<div style="margin-top:14px;padding:10px 12px;border-left:4px solid #d59b35;background:#fff8e8;border-radius:8px;font-size:10.5px"><b>${en?'Important:':'গুরুত্বপূর্ণ:'}</b> ${en?'After eligibility is achieved, the application, scrutiny and approval process is calculated as one full year. The displayed final date is therefore one year after the eligibility date and is a projected date, not a guaranteed administrative order date.':'যোগ্যতা অর্জনের পর আবেদন দাখিল, যাচাই-বাছাই ও অনুমোদনসহ সম্পূর্ণ পদোন্নতি প্রক্রিয়ার জন্য ১ পূর্ণ বছর ধরা হয়েছে। তাই সম্ভাব্য চূড়ান্ত পদোন্নতির তারিখ যোগ্যতার তারিখের ১ বছর পরে দেখানো হয়; এটি প্রশাসনিক আদেশের নিশ্চিত তারিখ নয়।'}</div>`;
-  return reportShell(en?'Detailed Promotion Calculation Report':'পদোন্নতি হিসাবের বিস্তারিত প্রতিবেদন',en?'A4 PDF · eligibility, service points, one-year promotion process and future roadmap':'A4 PDF · যোগ্যতা, অভিজ্ঞতা পয়েন্ট, ১ বছরের পদোন্নতি প্রক্রিয়া ও ভবিষ্যৎ রোডম্যাপ',body,lang);
+  const remaining=(r.remaining?.y||r.remaining?.m||r.remaining?.d)
+    ?(en?`${r.remaining.y}y ${r.remaining.m}m ${r.remaining.d}d`:durationBn(r.remaining))
+    :(en?'Completed':'সময় পূর্ণ');
+  const inputRows=[
+    {label:en?'Current grade':'বর্তমান গ্রেড',value:`${en?'Grade':'গ্রেড'} ${f.grade||'—'}`},
+    {label:en?'Education':'শিক্ষাগত যোগ্যতা',value:edu[f.edu]||f.edu||'—'},
+    {label:en?'Current post joining':'বর্তমান পদে যোগদান',value:f.currentDate?fmtDateLang(f.currentDate,lang):'—'},
+    {label:en?'First joining':'প্রথম যোগদান',value:f.firstJoinDate?fmtDateLang(f.firstJoinDate,lang):'—'},
+    {label:en?'Calculation date':'হিসাবের তারিখ',value:fmtDateLang(f.calcDate||todayLocalIso(),lang)},
+    {label:en?'Computer skill / training':'কম্পিউটার দক্ষতা/প্রশিক্ষণ',value:f.computer==='yes'?(en?'Yes':'আছে'):(en?'No':'নেই')},
+    {label:en?'ACR condition':'ACR শর্ত',value:f.acr==='yes'?(en?'Satisfactory':'সন্তোষজনক'):(en?'Incomplete / No':'অসম্পূর্ণ/না')}
+  ];
+  if(r.stop){
+    const body=pdfSummaryCards([
+      {label:en?'Current grade':'বর্তমান গ্রেড',value:`${en?'Grade':'গ্রেড'} ${f.grade||'—'}`},
+      {label:en?'Result':'ফলাফল',value:r.rule.target||'—',accent:true}
+    ],2)+section(en?'Input information':'প্রদত্ত তথ্য',pdfTable(inputRows,{head1:en?'Information':'তথ্য',head3:en?'Value':'মান'}),{table:true})+
+    section(en?'Rule result':'নীতিগত ফলাফল',pdfTable([
+      {label:en?'Result':'ফলাফল',value:r.rule.target||'—',emphasis:true},
+      {label:en?'Reference':'রেফারেন্স',value:r.rule.ref||r.rule.page||'—'}
+    ],{head1:en?'Item':'বিষয়',head3:en?'Result':'ফলাফল'}),{table:true});
+    return reportShell(en?'Promotion Calculation Report':'পদোন্নতি হিসাব প্রতিবেদন',en?'Eligibility and rule-based assessment':'যোগ্যতা ও নীতিমালাভিত্তিক মূল্যায়ন',body,lang);
+  }
+  const summary=pdfSummaryCards([
+    {label:en?'Next promotion':'পরবর্তী পদোন্নতি',value:`${r.rule.target} · ${en?'Grade':'গ্রেড'} ${r.rule.targetGrade}`,accent:true},
+    {label:en?'Eligibility date':'যোগ্যতার তারিখ',value:fmtDateLang(r.eligible,lang)},
+    {label:en?'Remaining time':'অবশিষ্ট সময়',value:remaining},
+    {label:en?'Service points':'সার্ভিস পয়েন্ট',value:numLang(r.points,lang)}
+  ],4);
+  const resultRows=[
+    {label:en?'Required service':'প্রয়োজনীয় অভিজ্ঞতা',value:`${numLang(r.req,lang,0)} ${en?'years':'বছর'}`},
+    {label:en?'Service in current post':'বর্তমান পদে চাকরি',value:en?`${r.elapsed.y}y ${r.elapsed.m}m ${r.elapsed.d}d`:durationBn(r.elapsed)},
+    {label:en?'Eligibility date':'নীতিগত যোগ্যতার তারিখ',value:fmtDateLang(r.eligible,lang),emphasis:true},
+    {label:en?'Application/circular deadline':'আবেদন/সার্কুলার সময়সীমা',value:fmtDateLang(r.cycle.circularDeadline,lang)},
+    {label:en?'Projected final promotion':'সম্ভাব্য চূড়ান্ত পদোন্নতি',value:fmtDateLang(r.cycle.completionDeadline,lang),emphasis:true},
+    {label:en?'Current post points':'বর্তমান পদের পয়েন্ট',value:numLang(r.exp?.currentPoints||0,lang)},
+    {label:en?'Previous service points':'পূর্ববর্তী চাকরিকালের পয়েন্ট',value:numLang(r.exp?.priorServicePoints||0,lang)},
+    {label:en?'Primary conditions':'প্রাথমিক শর্ত',value:r.prelim?(en?'Satisfied':'মূল শর্ত পূর্ণ'):(en?'Incomplete':'অসম্পূর্ণ')}
+  ];
+  const mainBody=summary+
+    section(en?'Input information':'প্রদত্ত তথ্য',pdfTable(inputRows,{head1:en?'Information':'তথ্য',head3:en?'Value':'মান',compact:true}),{table:true,tight:true})+
+    section(en?'Eligibility & calculation':'যোগ্যতা ও হিসাব',pdfTable(resultRows,{head1:en?'Calculation item':'হিসাবের বিষয়',head3:en?'Result':'ফলাফল',compact:true}),{table:true,tight:true})+
+    `<div style="margin-top:10px;padding:9px 11px;border:1px solid #ead8a9;border-left:4px solid #c49a3d;background:#fffaf0;border-radius:8px;font-size:9.5px;color:#685626;line-height:1.45"><b>${en?'Important:':'গুরুত্বপূর্ণ:'}</b> ${en?'The final promotion date is a projection based on a one-year application, scrutiny and approval process after eligibility; it is not a guaranteed administrative order date.':'যোগ্যতা অর্জনের পর আবেদন, যাচাই-বাছাই ও অনুমোদনের জন্য ১ বছর ধরে সম্ভাব্য চূড়ান্ত তারিখ দেখানো হয়েছে; এটি প্রশাসনিক আদেশের নিশ্চিত তারিখ নয়।'}</div>`;
+  const roadmap=(r.roadmap||[]).filter(x=>!x.stop);
+  if(!roadmap.length)return reportShell(en?'Detailed Promotion Calculation Report':'পদোন্নতি হিসাবের বিস্তারিত প্রতিবেদন',en?'Eligibility, service points and projected completion':'যোগ্যতা, সার্ভিস পয়েন্ট ও সম্ভাব্য সমাপ্তি',mainBody,lang);
+  const page1=reportShell(en?'Detailed Promotion Calculation Report':'পদোন্নতি হিসাবের বিস্তারিত প্রতিবেদন',en?'Eligibility, service points and projected completion':'যোগ্যতা, সার্ভিস পয়েন্ট ও সম্ভাব্য সমাপ্তি',mainBody,lang,{pageNo:1,totalPages:2,fixedPage:true,breakAfter:true});
+  const roadRows=roadmap.map((x,i)=>({
+    label:`${numLang(i+1,lang,0)}. ${en?'Grade':'গ্রেড'} ${x.fromGrade} → ${x.toGrade}`,
+    detail:`${x.years} ${en?'years':'বছর'} · ${x.title}`,
+    value:fmtDateLang(x.completionDeadline,lang),
+    emphasis:i===0
+  }));
+  const page2Body=pdfSummaryCards([
+    {label:en?'Current grade':'বর্তমান গ্রেড',value:`${en?'Grade':'গ্রেড'} ${f.grade||'—'}`},
+    {label:en?'First eligibility':'প্রথম যোগ্যতা',value:fmtDateLang(r.eligible,lang)},
+    {label:en?'Roadmap steps':'রোডম্যাপ ধাপ',value:numLang(roadRows.length,lang,0),accent:true}
+  ],3)+section(en?'Future promotion roadmap':'ভবিষ্যৎ সম্ভাব্য পদোন্নতি রোডম্যাপ',pdfTable(roadRows,{three:true,head1:en?'Step':'ধাপ',head2:en?'Requirement':'শর্ত/সময়',head3:en?'Projected date':'সম্ভাব্য তারিখ'}),{table:true});
+  const page2=reportShell(en?'Promotion Career Roadmap':'পদোন্নতি ক্যারিয়ার রোডম্যাপ',en?'Projected future progression based on current rules':'বর্তমান নিয়মের ভিত্তিতে ভবিষ্যৎ সম্ভাব্য অগ্রগতি',page2Body,lang,{pageNo:2,totalPages:2,fixedPage:true});
+  return page1+page2;
 }
 function houseAllocationReportHtml(r,lang='bn'){
   const en=lang==='en';
   const fmt=x=>x?(en?`${x.y}y ${x.m}m ${x.d}d`:`${numLang(x.y,lang,0)} বছর ${numLang(x.m,lang,0)} মাস ${numLang(x.d,lang,0)} দিন`):'—';
-  const body=section(en?'Input information':'প্রদত্ত তথ্য',
-    kv(en?'Employee category':'কর্মচারীর শ্রেণি',r.categoryLabel)+
-    kv(en?'First joining date':'প্রথম যোগদানের তারিখ',fmtDateLang(r.input.firstJoin,lang))+
-    kv(en?'Entered 3rd Class':'৩য় শ্রেণিতে প্রবেশ',fmtDateLang(r.input.thirdClassStart||r.input.firstJoin,lang))+
-    kv(en?'Calculation date':'হিসাবের তারিখ',fmtDateLang(r.input.calcDate,lang))+
-    kv(en?'Current basic salary':'বর্তমান মূল বেতন',`${en?'Tk':'৳'} ${moneyLang(r.basic,lang)}`)
-  )+section(en?'Point calculation':'পয়েন্ট হিসাব',
-    kv(en?'3rd Class service':'৩য় শ্রেণিতে চাকরিকাল',fmt(r.thirdService))+
-    kv(en?'Previous 4th Class service':'৪র্থ শ্রেণিতে পূর্ববর্তী চাকরিকাল',fmt(r.fourthService))+
-    kv(en?'Total service':'মোট চাকরিকাল',fmt(r.totalService))+
-    kv(en?'Basic salary points':'মূল বেতনভিত্তিক পয়েন্ট',numLang(r.basicPoint,lang))+
-    kv(en?'Designation points':'পদবিভিত্তিক পয়েন্ট',numLang(r.designationPoint,lang,0))+
-    kv(en?'Marital-status points':'বৈবাহিক অবস্থাভিত্তিক পয়েন্ট',numLang(r.maritalPoint,lang,0))+
-    kv(en?'Gender points':'লিঙ্গভিত্তিক পয়েন্ট',numLang(r.genderPoint,lang,0))+
-    kv(en?'Total house-allocation point':'মোট বাসা বরাদ্দ পয়েন্ট',fmt(r.totalPoint))
-  );
-  return reportShell(en?'House Allocation Point Calculation':'বাসা বরাদ্দ পয়েন্ট হিসাব',en?'Public calculator result · A4 PDF':'পাবলিক ক্যালকুলেটরের ফলাফল · A4 PDF',body,lang);
+  const inputRows=[
+    {label:en?'Employee category':'কর্মচারীর শ্রেণি',value:r.categoryLabel},
+    {label:en?'First joining date':'প্রথম যোগদানের তারিখ',value:fmtDateLang(r.input.firstJoin,lang)},
+    {label:en?'Entered 3rd Class':'৩য় শ্রেণিতে প্রবেশ',value:fmtDateLang(r.input.thirdClassStart||r.input.firstJoin,lang)},
+    {label:en?'Calculation date':'হিসাবের তারিখ',value:fmtDateLang(r.input.calcDate,lang)},
+    {label:en?'Current basic salary':'বর্তমান মূল বেতন',value:`${en?'Tk':'৳'} ${moneyLang(r.basic,lang)}`}
+  ];
+  const pointRows=[
+    {label:en?'3rd Class service':'৩য় শ্রেণিতে চাকরিকাল',detail:fmt(r.thirdService),value:'—'},
+    {label:en?'Previous 4th Class service':'৪র্থ শ্রেণিতে পূর্ববর্তী চাকরিকাল',detail:fmt(r.fourthService),value:'—'},
+    {label:en?'Total service':'মোট চাকরিকাল',detail:fmt(r.totalService),value:'—'},
+    {label:en?'Basic salary points':'মূল বেতনভিত্তিক পয়েন্ট',detail:en?'Rule-based':'নিয়ম অনুযায়ী',value:numLang(r.basicPoint,lang)},
+    {label:en?'Designation points':'পদবিভিত্তিক পয়েন্ট',detail:en?'Applicable score':'প্রযোজ্য স্কোর',value:numLang(r.designationPoint,lang,0)},
+    {label:en?'Marital-status points':'বৈবাহিক অবস্থাভিত্তিক পয়েন্ট',detail:en?'Applicable score':'প্রযোজ্য স্কোর',value:numLang(r.maritalPoint,lang,0)},
+    {label:en?'Gender points':'লিঙ্গভিত্তিক পয়েন্ট',detail:en?'Applicable score':'প্রযোজ্য স্কোর',value:numLang(r.genderPoint,lang,0)},
+    {label:en?'Total house-allocation point':'মোট বাসা বরাদ্দ পয়েন্ট',detail:en?'Final total':'চূড়ান্ত মোট',value:fmt(r.totalPoint),emphasis:true}
+  ];
+  const body=pdfSummaryCards([
+    {label:en?'Employee category':'কর্মচারীর শ্রেণি',value:r.categoryLabel},
+    {label:en?'Basic salary':'মূল বেতন',value:`${en?'Tk':'৳'} ${moneyLang(r.basic,lang)}`},
+    {label:en?'Total allocation point':'মোট বরাদ্দ পয়েন্ট',value:fmt(r.totalPoint),accent:true}
+  ],3)+
+  section(en?'Input information':'প্রদত্ত তথ্য',pdfTable(inputRows,{head1:en?'Information':'তথ্য',head3:en?'Value':'মান'}),{table:true})+
+  section(en?'Point calculation':'পয়েন্ট হিসাব',pdfTable(pointRows,{three:true,head1:en?'Point item':'পয়েন্টের বিষয়',head2:en?'Basis':'ভিত্তি',head3:en?'Point':'পয়েন্ট'}),{table:true})+
+  `<div style="margin-top:12px;border:2px solid #b79a53;border-radius:11px;padding:12px 14px;background:linear-gradient(120deg,#fffaf0,#f7fbf8);display:flex;justify-content:space-between;align-items:center">
+    <span style="font-size:13px;font-weight:900;color:#254d3c">${en?'Final house-allocation point':'চূড়ান্ত বাসা বরাদ্দ পয়েন্ট'}</span>
+    <span style="font-family:'Inter','Hind Siliguri',sans-serif;font-size:22px;font-weight:900;color:#75591e">${pdfSafe(fmt(r.totalPoint))}</span>
+  </div>`;
+  return reportShell(en?'House Allocation Point Calculation':'বাসা বরাদ্দ পয়েন্ট হিসাব',en?'Premium A4 calculation statement':'প্রিমিয়াম A4 হিসাব বিবরণী',body,lang);
 }
 
 function salaryOctoberArrearReportHtml(base,lang='bn'){
-  const en=lang==='en',a=base?.arrear2026||{},f=base?.input||{};
+  const en=lang==='en',a=base?.arrear2026||{};
   const amt=v=>`${en?'Tk':'৳'} ${moneyLang(v,lang)}`;
-  const rows=[
-    [en?'Arrear period':'বকেয়া/সমন্বয় সময়কাল',en?'1 July–31 October 2026 (4 months)':'১ জুলাই–৩১ অক্টোবর ২০২৬ (৪ মাস)'],
-    [en?'30 June 2026 basic':'৩০ জুন ২০২৬ মূল বেতন',amt(a.oldJuneBasic||base.currentBasic||0)],
-    [en?'1 July 2026 old-scale basic':'১ জুলাই ২০২৬ পুরোনো স্কেলের প্রাপ্য মূল বেতন',amt(a.oldJulyBasic||a.legacyBasic||0)],
-    [en?'Selected grade for special benefit':'বিশেষ সুবিধার জন্য নির্বাচিত গ্রেড',(en?'Grade ':'গ্রেড ')+numLang(a.selectedGrade||base.grade||0,lang,0)],
-    [en?'Special-benefit rate':'বিশেষ সুবিধার হার',numLang((a.specialBenefitRate||0)*100,lang,0)+'%'],
-    [en?'Monthly special benefit':'মাসিক বিশেষ সুবিধা',amt(a.specialBenefitMonthly||0)],
-    [en?'July–September special benefit (3 months)':'জুলাই–সেপ্টেম্বর বিশেষ সুবিধা (৩ মাস)',amt(a.specialBenefitThreeMonths||0)],
-    [en?'October 2026 payable basic':'অক্টোবর ২০২৬ প্রাপ্য মূল বেতন',amt(a.octoberBasic||0)],
-    [en?'Monthly implemented basic increase':'মাসিক বাস্তবায়িত মূল বেতন বৃদ্ধি',amt(a.monthlyBasicArrear||0)],
-    [en?'July–September previous arrear (3 months)':'জুলাই–সেপ্টেম্বর পূর্বের বকেয়া (৩ মাস)',amt(a.priorThreeBasicArrear||0)],
-    [en?'October increase (current month)':'অক্টোবর মাসের বৃদ্ধি',amt(a.monthlyBasicArrear||0)],
-    [en?'Total July–October basic adjustment':'জুলাই–অক্টোবর মোট মূল বেতন সমন্বয়',amt(a.totalBasicArrear||0)],
-    [en?'July–September net arrear before special-benefit adjustment':'বিশেষ সুবিধা সমন্বয়ের আগে জুলাই–সেপ্টেম্বর নিট বকেয়া',amt(a.priorThreeNetArrear||0)],
-    [en?'Special benefit deducted automatically':'অটো বিয়োগকৃত বিশেষ সুবিধা',amt(a.specialBenefitThreeMonths||0)],
-    [en?'Previous arrear payable with October bill':'অক্টোবর বিলের সাথে চূড়ান্ত পূর্বের বকেয়া',amt(a.priorNetAfterSpecial||0)],
-    [en?'October current estimated net':'অক্টোবর চলতি আনুমানিক নিট',amt(a.octoberCurrentNet||0)],
-    [en?'Estimated total receivable in October':'অক্টোবরে আনুমানিক মোট প্রাপ্য',amt(a.octoberBillNet||0)]
+  const summary=pdfSummaryCards([
+    {label:en?'October current net':'অক্টোবর চলতি নিট',value:amt(a.octoberCurrentNet||0)},
+    {label:en?'July–September final arrear':'জুলাই–সেপ্টেম্বর চূড়ান্ত বকেয়া',value:amt(a.priorNetAfterSpecial||0)},
+    {label:en?'Special benefit deducted':'বিশেষ সুবিধা বিয়োগ',value:amt(a.specialBenefitThreeMonths||0)},
+    {label:en?'Estimated October total':'অক্টোবরে আনুমানিক মোট',value:amt(a.octoberBillNet||0),accent:true}
+  ],4);
+  const coreRows=[
+    {label:en?'Arrear period':'বকেয়া/সমন্বয় সময়কাল',detail:en?'4 months':'৪ মাস',value:en?'1 Jul–31 Oct 2026':'১ জুলাই–৩১ অক্টোবর ২০২৬'},
+    {label:en?'30 June 2026 basic':'৩০ জুন ২০২৬ মূল বেতন',detail:en?'Old scale':'পুরোনো স্কেল',value:amt(a.oldJuneBasic||base.currentBasic||0)},
+    {label:en?'1 July 2026 old-scale basic':'১ জুলাই ২০২৬ পুরোনো স্কেলের মূল বেতন',detail:en?'Increment included if eligible':'প্রাপ্য হলে ইনক্রিমেন্টসহ',value:amt(a.oldJulyBasic||a.legacyBasic||0)},
+    {label:en?'Selected grade':'নির্বাচিত গ্রেড',detail:`${numLang((a.specialBenefitRate||0)*100,lang,0)}% ${en?'special benefit':'বিশেষ সুবিধা'}`,value:`${en?'Grade':'গ্রেড'} ${numLang(a.selectedGrade||base.grade||0,lang,0)}`},
+    {label:en?'Monthly special benefit':'মাসিক বিশেষ সুবিধা',detail:en?'Minimum Tk 1,500 applies':'ন্যূনতম ৳১,৫০০ প্রযোজ্য',value:amt(a.specialBenefitMonthly||0)},
+    {label:en?'July–September special benefit':'জুলাই–সেপ্টেম্বর বিশেষ সুবিধা',detail:en?'3 months':'৩ মাস',value:amt(a.specialBenefitThreeMonths||0)},
+    {label:en?'October payable basic':'অক্টোবর প্রাপ্য মূল বেতন',detail:en?'2026 implemented rate':'২০২৬ বাস্তবায়িত হার',value:amt(a.octoberBasic||0)},
+    {label:en?'Monthly implemented increase':'মাসিক বাস্তবায়িত বৃদ্ধি',detail:en?'Old vs new payable basic':'পুরোনো বনাম নতুন মূল বেতন',value:amt(a.monthlyBasicArrear||0)}
   ];
-  const body=section(en?'October 2026 settlement':'অক্টোবর ২০২৬ বেতন ও বকেয়া সমন্বয়',
-    rows.map(([l,v])=>kv(l,v)).join('')
-  )+`<div style="margin-top:12px;padding:10px 12px;border-left:4px solid #1a7a50;background:#f1fbf6;border-radius:8px;font-size:10.2px">
-    <b>${en?'How the October bill is treated:':'অক্টোবর বিল যেভাবে ধরা হয়েছে:'}</b>
-    ${en?'October current salary is calculated at the applicable 2026 rate. July–September arrears are calculated against the old-scale July payroll, the special benefit already received for those three months is deducted automatically, and October is not counted twice.':'অক্টোবরের চলতি বেতন ২০২৬-এর প্রযোজ্য হারে ধরা হয়েছে। জুলাই–সেপ্টেম্বরের বকেয়া ১ জুলাইয়ের পুরোনো স্কেলের প্রাপ্য বেতনের বিপরীতে হিসাব করে ওই ৩ মাসে পাওয়া বিশেষ সুবিধা স্বয়ংক্রিয়ভাবে বাদ দেওয়া হয়েছে; অক্টোবর দুইবার গণনা করা হয়নি।'}
-  </div>
-  <div style="margin-top:8px;padding:9px 12px;background:#fff8e8;border-radius:8px;font-size:9.6px;color:#6b5728">
-    ${en?'Net amount is an estimate based on the deduction inputs in this calculator. Tax, loan, special-benefit adjustment or payroll-specific deductions may change the final office bill.':'নিট অংকটি এই ক্যালকুলেটরে দেওয়া কর্তনের তথ্য অনুযায়ী আনুমানিক। আয়কর, ঋণ, বিশেষ সুবিধা সমন্বয় বা অফিসভিত্তিক অন্য কর্তনের কারণে চূড়ান্ত বিল ভিন্ন হতে পারে।'}
-  </div>`;
-  return reportShell(en?'October 2026 Salary & Arrear Statement':'অক্টোবর ২০২৬ বেতন ও বকেয়া বিবরণী',en?'July–October 2026 pay-scale adjustment · October bill settlement':'জুলাই–অক্টোবর ২০২৬ পে-স্কেল সমন্বয় · অক্টোবর বিল নিষ্পত্তি',body,lang);
+  const settlementRows=[
+    {label:en?'July–September basic arrear':'জুলাই–সেপ্টেম্বর মূল বেতন বকেয়া',detail:en?'3 previous months':'আগের ৩ মাস',value:amt(a.priorThreeBasicArrear||0)},
+    {label:en?'October current-month increase':'অক্টোবর চলতি মাসের বৃদ্ধি',detail:en?'Not added twice':'দুইবার যোগ নয়',value:amt(a.monthlyBasicArrear||0)},
+    {label:en?'July–October total basic adjustment':'জুলাই–অক্টোবর মোট মূল বেতন সমন্বয়',detail:en?'4 months':'৪ মাস',value:amt(a.totalBasicArrear||0)},
+    {label:en?'July–September net arrear before adjustment':'সমন্বয়ের আগে জুলাই–সেপ্টেম্বর নিট বকেয়া',detail:en?'Before special benefit':'বিশেষ সুবিধা বিয়োগের আগে',value:amt(a.priorThreeNetArrear||0)},
+    {label:en?'Special benefit deducted':'বিশেষ সুবিধা অটো বিয়োগ',detail:en?'July–September':'জুলাই–সেপ্টেম্বর',value:`− ${amt(a.specialBenefitThreeMonths||0)}`},
+    {label:en?'Final previous arrear':'চূড়ান্ত পূর্বের বকেয়া',detail:en?'Payable with October bill':'অক্টোবর বিলের সাথে',value:amt(a.priorNetAfterSpecial||0),emphasis:true},
+    {label:en?'October current estimated net':'অক্টোবর চলতি আনুমানিক নিট',detail:en?'Current month':'চলতি মাস',value:amt(a.octoberCurrentNet||0)},
+    {label:en?'Estimated total receivable in October':'অক্টোবরে আনুমানিক মোট প্রাপ্য',detail:en?'Current + previous arrear':'চলতি + পূর্বের বকেয়া',value:amt(a.octoberBillNet||0),emphasis:true}
+  ];
+  const body=summary+
+    section(en?'Salary & special-benefit basis':'বেতন ও বিশেষ সুবিধার ভিত্তি',pdfTable(coreRows,{three:true,head1:en?'Item':'বিষয়',head2:en?'Basis':'ভিত্তি/হার',head3:en?'Amount / value':'অংক/মান',compact:true}),{table:true,tight:true})+
+    section(en?'Arrear settlement':'বকেয়া নিষ্পত্তি',pdfTable(settlementRows,{three:true,head1:en?'Settlement item':'সমন্বয়ের বিষয়',head2:en?'Period / basis':'সময়/ভিত্তি',head3:en?'Amount':'অংক',compact:true}),{table:true,tight:true})+
+    `<div style="margin-top:10px;border:2px solid #b9994d;border-radius:11px;padding:11px 14px;background:linear-gradient(120deg,#fffaf0,#f1faf5);display:flex;justify-content:space-between;align-items:center">
+      <div><div style="font-size:9px;color:#6d795f;font-weight:700">${en?'OCTOBER 2026 FINAL ESTIMATE':'অক্টোবর ২০২৬ চূড়ান্ত আনুমানিক হিসাব'}</div><div style="font-size:13px;font-weight:900;color:#244b3a;margin-top:2px">${en?'Estimated total receivable':'আনুমানিক মোট প্রাপ্য'}</div></div>
+      <div style="font-size:22px;font-weight:900;color:#76591e;font-family:'Inter','Hind Siliguri',sans-serif;font-variant-numeric:tabular-nums">${pdfSafe(amt(a.octoberBillNet||0))}</div>
+    </div>
+    <div style="margin-top:8px;padding:8px 10px;border-left:4px solid #1a7a50;background:#f1fbf6;border-radius:8px;font-size:9.4px;color:#38594a;line-height:1.45"><b>${en?'Method:':'পদ্ধতি:'}</b> ${en?'October current salary is counted once. July–September arrears are calculated against the old-scale July payroll and the special benefit already received for those three months is deducted automatically.':'অক্টোবরের চলতি বেতন একবারই ধরা হয়েছে। জুলাই–সেপ্টেম্বরের বকেয়া ১ জুলাইয়ের পুরোনো স্কেলের প্রাপ্য বেতনের বিপরীতে হিসাব করে ওই ৩ মাসের বিশেষ সুবিধা স্বয়ংক্রিয়ভাবে বাদ দেওয়া হয়েছে।'}</div>
+    <div style="margin-top:6px;padding:8px 10px;background:#fff8e8;border-radius:8px;font-size:8.9px;color:#6b5728;line-height:1.4">${en?'Net figures are estimates based on the deduction inputs. Tax, loan or payroll-specific deductions may change the final office bill.':'নিট অংকগুলো দেওয়া কর্তনের তথ্য অনুযায়ী আনুমানিক। আয়কর, ঋণ বা অফিসভিত্তিক অন্য কর্তনের কারণে চূড়ান্ত বিল ভিন্ন হতে পারে।'}</div>`;
+  return reportShell(en?'October 2026 Salary & Arrear Statement':'অক্টোবর ২০২৬ বেতন ও বকেয়া বিবরণী',en?'July–October 2026 adjustment · October bill settlement':'জুলাই–অক্টোবর ২০২৬ সমন্বয় · অক্টোবর বিল নিষ্পত্তি',body,lang);
 }
 
 function salaryProjectionReportResult(base,p,projections,year){
