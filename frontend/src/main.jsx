@@ -36,6 +36,7 @@ import './premium-home-navigation-v16-6.css';
 import './exact-mockup-v16-7.css';
 import './exact-mockup-v16-7-1.css';
 import './approved-home-v16-8.css';
+import './pay-scale-2026-public.css';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import {
   PAY2015,PAY2026,PAY_SCALE_2026_META,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
