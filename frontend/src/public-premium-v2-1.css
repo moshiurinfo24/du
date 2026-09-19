@@ -1,0 +1,821 @@
+/* =========================================================
+   Employee Digital Service — Premium Visual Pass V2.1
+   Scope: public website only. Calculation/business logic untouched.
+   ========================================================= */
+
+:root{
+  --eds-p-navy:#082d50;
+  --eds-p-navy-2:#0d4968;
+  --eds-p-blue-soft:#eef6fb;
+  --eds-p-blue-soft-2:#f7fbfe;
+  --eds-p-green:#146c4d;
+  --eds-p-green-2:#1d8762;
+  --eds-p-green-soft:#edf8f3;
+  --eds-p-gold:#b58a34;
+  --eds-p-gold-2:#d4b56c;
+  --eds-p-gold-soft:#fff8e8;
+  --eds-p-ivory:#fffdf8;
+  --eds-p-rose-soft:#fff4f2;
+  --eds-p-line:#d8e3e8;
+  --eds-p-shadow:0 12px 30px rgba(14,45,67,.08);
+  --eds-p-shadow-hover:0 18px 42px rgba(14,45,67,.13);
+}
+
+/* Page background depth */
+.approved-home{
+  background:
+    radial-gradient(circle at 5% 8%,rgba(15,91,122,.055),transparent 24%),
+    radial-gradient(circle at 94% 24%,rgba(26,125,88,.05),transparent 25%),
+    linear-gradient(180deg,#f7f9fb 0%,#f2f6f8 100%)!important;
+}
+.approved-home .approved-section{
+  position:relative;
+}
+
+/* Premium generic buttons */
+.approved-home .primary,
+.approved-home button.primary{
+  border:1px solid rgba(12,76,85,.18)!important;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,0)),
+    linear-gradient(135deg,var(--eds-p-navy-2),var(--eds-p-green))!important;
+  color:#fff!important;
+  box-shadow:0 10px 22px rgba(12,75,77,.18), inset 0 1px 0 rgba(255,255,255,.16)!important;
+  transition:transform .18s ease,box-shadow .18s ease,filter .18s ease!important;
+}
+.approved-home .primary:hover,
+.approved-home button.primary:hover{
+  transform:translateY(-2px)!important;
+  box-shadow:0 15px 30px rgba(12,75,77,.24), inset 0 1px 0 rgba(255,255,255,.20)!important;
+  filter:saturate(1.06);
+}
+.approved-home .secondary,
+.approved-home .ghost-btn,
+.approved-home .back-home-tool{
+  background:linear-gradient(180deg,#fff,#f7fafb)!important;
+  border:1px solid #d6e2e7!important;
+  box-shadow:0 5px 14px rgba(18,48,68,.06),inset 0 1px 0 #fff!important;
+}
+.approved-home .secondary:hover,
+.approved-home .ghost-btn:hover,
+.approved-home .back-home-tool:hover{
+  border-color:#b9ced7!important;
+  background:linear-gradient(180deg,#fff,#f0f7f7)!important;
+  transform:translateY(-1px);
+}
+
+/* Section title badges now feel branded */
+.approved-home .approved-section-title>span,
+.approved-home .calculator-hub-head>span,
+.approved-home .public-tool-page-head>div>span{
+  border:1px solid #d7e7e1!important;
+  background:linear-gradient(135deg,#f4faf7,#edf5fa)!important;
+  box-shadow:inset 0 1px 0 #fff;
+}
+
+/* Header actions */
+.approved-home .approved-actions .sign-in,
+.approved-home .approved-actions .new-account,
+.approved-home .lang-btn{
+  min-height:39px;
+  border-radius:11px!important;
+}
+.approved-home .approved-actions .new-account{
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.08),transparent),
+    linear-gradient(135deg,#0c3d63,#177152)!important;
+  box-shadow:0 8px 18px rgba(15,74,83,.17)!important;
+}
+
+/* Hero refinements */
+.approved-home .approved-hero{
+  border:1px solid rgba(255,255,255,.14)!important;
+  box-shadow:
+    0 28px 70px rgba(10,43,70,.18),
+    inset 0 1px 0 rgba(255,255,255,.13)!important;
+}
+.approved-home .approved-hero:after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  border-radius:inherit;
+  background:
+    linear-gradient(120deg,rgba(255,255,255,.07),transparent 28%),
+    radial-gradient(circle at 78% 18%,rgba(226,196,115,.09),transparent 20%);
+}
+.approved-home .approved-hero-buttons .primary{
+  background:linear-gradient(180deg,#ffffff,#eef6f5)!important;
+  color:#113c57!important;
+  border:1px solid rgba(255,255,255,.65)!important;
+  box-shadow:0 12px 28px rgba(0,0,0,.18)!important;
+}
+.approved-home .approved-hero-buttons .secondary{
+  background:linear-gradient(180deg,rgba(255,255,255,.13),rgba(255,255,255,.07))!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.16)!important;
+}
+
+/* Main calculator cards: no longer plain white */
+.approved-home .calculator-hub-grid>button{
+  position:relative;
+  overflow:hidden;
+  border-color:#d7e3e7!important;
+  box-shadow:var(--eds-p-shadow)!important;
+}
+.approved-home .calculator-hub-grid>button:before{
+  content:"";
+  position:absolute;
+  inset:0 0 auto 0;
+  height:4px;
+  background:linear-gradient(90deg,var(--eds-p-navy-2),var(--eds-p-green),var(--eds-p-gold-2));
+}
+.approved-home .calculator-hub-grid>button:nth-child(1){
+  background:
+    radial-gradient(circle at 100% 0,rgba(25,92,133,.09),transparent 37%),
+    linear-gradient(145deg,#ffffff,#f1f7fb)!important;
+}
+.approved-home .calculator-hub-grid>button:nth-child(2){
+  background:
+    radial-gradient(circle at 100% 0,rgba(23,126,84,.10),transparent 37%),
+    linear-gradient(145deg,#ffffff,#eef8f3)!important;
+}
+.approved-home .calculator-hub-grid>button:nth-child(3){
+  background:
+    radial-gradient(circle at 100% 0,rgba(181,138,52,.10),transparent 37%),
+    linear-gradient(145deg,#ffffff,#fff9ec)!important;
+}
+.approved-home .calculator-hub-grid>button:hover{
+  box-shadow:var(--eds-p-shadow-hover)!important;
+}
+.approved-home .hub-icon{
+  border:1px solid rgba(24,98,79,.10)!important;
+  box-shadow:0 7px 16px rgba(24,70,70,.08),inset 0 1px 0 #fff!important;
+}
+
+/* Unified services: each row gets a controlled tonal identity */
+.approved-home .approved-quick{
+  border-top:0!important;
+  border-radius:24px;
+  padding-left:22px!important;
+  padding-right:22px!important;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.78),rgba(248,251,252,.92));
+  border:1px solid #e0e8eb;
+  box-shadow:0 16px 42px rgba(14,45,67,.055);
+}
+.approved-home .approved-quick-grid>button{
+  position:relative;
+  overflow:hidden;
+  box-shadow:0 7px 18px rgba(18,50,70,.055)!important;
+}
+.approved-home .approved-quick-grid>button:nth-child(4n+1){
+  background:linear-gradient(145deg,#fff,#eef6fb)!important;
+  border-color:#d7e5ee!important;
+}
+.approved-home .approved-quick-grid>button:nth-child(4n+2){
+  background:linear-gradient(145deg,#fff,#edf8f3)!important;
+  border-color:#d5e8de!important;
+}
+.approved-home .approved-quick-grid>button:nth-child(4n+3){
+  background:linear-gradient(145deg,#fff,#fff8e8)!important;
+  border-color:#eadfbe!important;
+}
+.approved-home .approved-quick-grid>button:nth-child(4n){
+  background:linear-gradient(145deg,#fff,#f3f6f8)!important;
+  border-color:#dce5e9!important;
+}
+.approved-home .approved-quick-grid>button:after{
+  content:"";
+  position:absolute;
+  right:-18px;
+  bottom:-30px;
+  width:76px;height:76px;border-radius:50%;
+  background:rgba(20,85,100,.035);
+}
+.approved-home .approved-quick-grid>button:hover{
+  transform:translateY(-3px)!important;
+  box-shadow:0 13px 28px rgba(18,50,70,.10)!important;
+}
+.approved-home .approved-quick-grid>button>span{
+  background:linear-gradient(145deg,#fff,#eef4f5)!important;
+  border:1px solid rgba(39,92,103,.10);
+  box-shadow:0 5px 11px rgba(25,61,72,.06);
+}
+
+/* Personal-dashboard cards */
+.approved-home .approved-benefits{
+  background:
+    radial-gradient(circle at 10% 10%,rgba(21,90,121,.07),transparent 23%),
+    radial-gradient(circle at 92% 70%,rgba(24,123,83,.06),transparent 24%),
+    linear-gradient(180deg,#eef4f7,#f7f9fa)!important;
+  border-top:1px solid #dfe8eb;
+  border-bottom:1px solid #dfe8eb;
+}
+.approved-home .approved-benefit-grid article{
+  position:relative;
+  overflow:hidden;
+  box-shadow:0 7px 18px rgba(19,48,67,.055)!important;
+}
+.approved-home .approved-benefit-grid article:nth-child(3n+1){
+  background:linear-gradient(145deg,#fff,#eef6fb)!important;
+}
+.approved-home .approved-benefit-grid article:nth-child(3n+2){
+  background:linear-gradient(145deg,#fff,#eef9f3)!important;
+}
+.approved-home .approved-benefit-grid article:nth-child(3n){
+  background:linear-gradient(145deg,#fff,#fff9ec)!important;
+}
+.approved-home .approved-benefit-grid article:before{
+  content:"";
+  position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:linear-gradient(180deg,var(--eds-p-navy-2),var(--eds-p-green));
+}
+
+/* Tool/page shell layering */
+.approved-home .public-dedicated-calculator{
+  position:relative;
+}
+.approved-home .public-dedicated-calculator:before{
+  content:"";
+  position:absolute;inset:0;
+  pointer-events:none;
+  background:
+    radial-gradient(circle at 5% 5%,rgba(22,99,130,.04),transparent 20%),
+    radial-gradient(circle at 95% 34%,rgba(24,122,82,.04),transparent 22%);
+}
+.approved-home .public-tool-page-head,
+.approved-home .public-pay-hub,
+.approved-home .public-tool-only-shell{position:relative;z-index:1}
+
+/* Pay scale intro and phase cards */
+.approved-home .public-pay-hub>.approved-section-title{
+  border-color:#d6e3e7!important;
+  background:
+    radial-gradient(circle at 95% 0,rgba(24,124,84,.085),transparent 33%),
+    linear-gradient(145deg,#ffffff,#f1f7fa)!important;
+  box-shadow:0 11px 28px rgba(15,48,67,.06),inset 0 1px 0 #fff;
+}
+.approved-home .public-pay-facts article{
+  position:relative;
+  overflow:hidden;
+  box-shadow:0 7px 18px rgba(18,49,68,.055)!important;
+}
+.approved-home .public-pay-facts article:nth-child(1){
+  background:linear-gradient(145deg,#fff,#eef6fb)!important;
+  border-color:#d7e5ed!important;
+}
+.approved-home .public-pay-facts article:nth-child(2){
+  background:linear-gradient(145deg,#fff,#edf8f3)!important;
+  border-color:#d5e8de!important;
+}
+.approved-home .public-pay-facts article:nth-child(3){
+  background:linear-gradient(145deg,#fff,#fff9ec)!important;
+  border-color:#eadfbe!important;
+}
+.approved-home .public-pay-facts article:nth-child(4){
+  background:linear-gradient(145deg,#fff,#f0f4f7)!important;
+}
+.approved-home .public-pay-facts article:before{
+  content:"";
+  position:absolute;left:0;top:0;width:4px;height:100%;
+  background:linear-gradient(180deg,#0e4c6d,#1b805b);
+  opacity:.72;
+}
+
+/* Salary steps and form surfaces */
+.salary-step-strip>div{
+  border-color:#d8e3e8!important;
+  box-shadow:0 6px 16px rgba(18,48,68,.05);
+}
+.salary-step-strip>div:nth-child(1){
+  background:linear-gradient(145deg,#fff,#eef6fb)!important;
+}
+.salary-step-strip>div:nth-child(2){
+  background:linear-gradient(145deg,#fff,#eef9f3)!important;
+}
+.salary-step-strip>div:nth-child(3){
+  background:linear-gradient(145deg,#fff,#fff9eb)!important;
+}
+.salary-step-strip>div>span{
+  background:linear-gradient(145deg,#0e4a69,#187151)!important;
+  color:#fff!important;
+  box-shadow:0 5px 12px rgba(15,75,80,.17)!important;
+}
+.approved-home .salary-essential-card,
+.approved-home .calc-card{
+  border-color:#d5e2e7!important;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.96),rgba(249,252,252,.98))!important;
+  box-shadow:0 15px 38px rgba(15,48,68,.08),inset 0 1px 0 #fff!important;
+}
+.salary-form-section-title>span{
+  background:linear-gradient(145deg,#0b4163,#177250)!important;
+  box-shadow:0 7px 16px rgba(15,73,75,.18);
+}
+
+/* Inputs/selects get a premium field surface */
+.approved-home .public-salary-calculator input,
+.approved-home .public-salary-calculator select,
+.approved-home .public-tool-only-shell input,
+.approved-home .public-tool-only-shell select,
+.approved-home .points-panel input,
+.approved-home .points-panel select,
+.approved-home .calculator-tool-card input,
+.approved-home .calculator-tool-card select{
+  background:
+    linear-gradient(180deg,#ffffff,#f8fbfc)!important;
+  border:1px solid #d4e0e5!important;
+  box-shadow:inset 0 1px 2px rgba(25,52,68,.025),0 2px 5px rgba(25,52,68,.025)!important;
+}
+.approved-home .public-salary-calculator input:hover,
+.approved-home .public-salary-calculator select:hover,
+.approved-home .public-tool-only-shell input:hover,
+.approved-home .public-tool-only-shell select:hover{
+  border-color:#bdd1d8!important;
+}
+.approved-home .public-salary-calculator input:focus,
+.approved-home .public-salary-calculator select:focus,
+.approved-home .public-tool-only-shell input:focus,
+.approved-home .public-tool-only-shell select:focus{
+  background:#fff!important;
+  border-color:#72aa98!important;
+  box-shadow:0 0 0 4px rgba(25,123,84,.09),0 7px 16px rgba(18,64,70,.07)!important;
+}
+
+/* Accordions / detail rows */
+.approved-home .salary-detail-block,
+.approved-home .public-salary-calculator .deduction-box,
+.salary-v2-details,
+.salary-breakdown-v2{
+  border-color:#d6e2e6!important;
+  background:linear-gradient(180deg,#fbfdfd,#f5f9fa)!important;
+  box-shadow:0 6px 15px rgba(19,50,68,.045),inset 0 1px 0 #fff!important;
+}
+.approved-home .salary-detail-block>summary,
+.approved-home .public-salary-calculator .deduction-box>summary,
+.salary-v2-details>summary,
+.salary-breakdown-v2>summary{
+  background:
+    linear-gradient(90deg,rgba(12,71,104,.035),rgba(21,113,79,.035),rgba(185,142,53,.03))!important;
+}
+.approved-home .salary-detail-block[open]>summary,
+.approved-home .public-salary-calculator .deduction-box[open]>summary,
+.salary-v2-details[open]>summary,
+.salary-breakdown-v2[open]>summary{
+  color:#174c3a!important;
+  background:linear-gradient(90deg,#eef7f3,#f4f8fb)!important;
+}
+.approved-home .du-auto-deduction-card{
+  background:linear-gradient(145deg,#fff,#f2f7f8)!important;
+  border-color:#d9e4e8!important;
+  box-shadow:0 5px 12px rgba(20,49,66,.04)!important;
+}
+.approved-home .du-auto-deduction-card:nth-child(3n+1){background:linear-gradient(145deg,#fff,#eef7fb)!important}
+.approved-home .du-auto-deduction-card:nth-child(3n+2){background:linear-gradient(145deg,#fff,#eef8f3)!important}
+.approved-home .du-auto-deduction-card:nth-child(3n){background:linear-gradient(145deg,#fff,#fff8ea)!important}
+
+/* Salary result */
+.salary-result-toolbar{
+  border-color:#d5e2e7!important;
+  background:
+    linear-gradient(180deg,#fff,#f7fafb)!important;
+  box-shadow:0 9px 22px rgba(16,48,68,.065)!important;
+}
+.salary-v2-result .result-year-tabs button{
+  background:linear-gradient(145deg,#fff,#f2f6f8)!important;
+  box-shadow:0 4px 10px rgba(16,48,68,.035)!important;
+}
+.salary-v2-result .result-year-tabs button:nth-child(1){background:linear-gradient(145deg,#fff,#eef6fb)!important}
+.salary-v2-result .result-year-tabs button:nth-child(2){background:linear-gradient(145deg,#fff,#eef8f3)!important}
+.salary-v2-result .result-year-tabs button:nth-child(3){background:linear-gradient(145deg,#fff,#fff8e9)!important}
+.salary-v2-result .result-year-tabs button.active{
+  border-color:#77b397!important;
+  background:linear-gradient(145deg,#e9f7f0,#f8fcfa)!important;
+  box-shadow:0 8px 18px rgba(18,112,77,.11),inset 0 1px 0 #fff!important;
+}
+.salary-result-switch{
+  background:linear-gradient(180deg,#eaf0f2,#f4f7f8)!important;
+  border:1px solid #d8e2e6;
+}
+.salary-result-switch button.active{
+  color:#154c39!important;
+  background:linear-gradient(180deg,#fff,#f2f8f5)!important;
+  box-shadow:0 5px 12px rgba(16,61,64,.10)!important;
+}
+.salary-overview-v2{
+  border-color:#d5e2e6!important;
+  background:
+    radial-gradient(circle at 100% 0,rgba(21,119,80,.07),transparent 30%),
+    linear-gradient(145deg,#fff,#f7fafb)!important;
+  box-shadow:0 16px 38px rgba(16,49,68,.08)!important;
+}
+.salary-kpi-v2 article{
+  position:relative;
+  overflow:hidden;
+  box-shadow:0 6px 15px rgba(18,49,68,.045);
+}
+.salary-kpi-v2 article:nth-child(1){
+  background:linear-gradient(145deg,#fff,#eef6fb)!important;
+  border-color:#d5e4ed!important;
+}
+.salary-kpi-v2 article:nth-child(2){
+  background:linear-gradient(145deg,#fff,#eef8f3)!important;
+  border-color:#d5e8de!important;
+}
+.salary-kpi-v2 article:nth-child(3){
+  background:linear-gradient(145deg,#fff,#fff7ed)!important;
+  border-color:#eadfce!important;
+}
+.salary-kpi-v2 article.net{
+  background:
+    radial-gradient(circle at 100% 0,rgba(213,181,104,.15),transparent 37%),
+    linear-gradient(145deg,#edf9f3,#fffdf7)!important;
+  border:1px solid #bfd9cc!important;
+  box-shadow:0 8px 19px rgba(18,109,75,.09)!important;
+}
+.salary-kpi-v2 article:before{
+  content:"";
+  position:absolute;left:0;top:0;right:0;height:3px;
+  background:linear-gradient(90deg,#155574,#1b805b,#c09a4d);
+  opacity:.68;
+}
+
+/* Breakdowns & money rows */
+.salary-breakdown-v2,
+.salary-report-center-v2{
+  border-color:#d5e2e7!important;
+  background:linear-gradient(145deg,#fff,#f7fafb)!important;
+  box-shadow:0 12px 28px rgba(16,48,68,.065)!important;
+}
+.salary-breakdown-v2 .breakdown-card,
+.approved-home .breakdown-card{
+  border-color:#d9e4e8!important;
+  background:linear-gradient(145deg,#fff,#f5f9fa)!important;
+  box-shadow:0 6px 15px rgba(16,47,65,.04)!important;
+}
+.salary-breakdown-v2 .breakdown-card:nth-child(1){
+  background:linear-gradient(145deg,#fff,#eef8f3)!important;
+}
+.salary-breakdown-v2 .breakdown-card:nth-child(2){
+  background:linear-gradient(145deg,#fff,#fff7ed)!important;
+}
+.approved-home .money-row{
+  border-color:#dfe8eb!important;
+}
+.approved-home .money-row:nth-of-type(even){
+  background:rgba(236,245,247,.50);
+  margin-left:-6px;margin-right:-6px;padding-left:6px!important;padding-right:6px!important;
+  border-radius:7px;
+}
+
+/* Report/PDF web controls */
+.salary-report-primary-actions>button,
+.year-download-grid button,
+.arrear-v2-actions>button,
+.house-pdf-btn{
+  box-shadow:0 6px 14px rgba(17,51,68,.06)!important;
+  transition:transform .17s ease,box-shadow .17s ease,border-color .17s ease!important;
+}
+.salary-report-primary-actions>button{
+  background:linear-gradient(145deg,#fff,#eef6fb)!important;
+}
+.salary-report-primary-actions>button.primary-report{
+  background:linear-gradient(145deg,#edf8f3,#fffdf7)!important;
+  border-color:#bcd8ca!important;
+}
+.salary-report-primary-actions>button:hover,
+.year-download-grid button:hover{
+  transform:translateY(-2px);
+  box-shadow:0 10px 22px rgba(17,51,68,.10)!important;
+}
+
+/* Arrear: stronger luxury hierarchy */
+.arrear-v2{
+  border-color:#d2e1db!important;
+  background:
+    radial-gradient(circle at 100% 0,rgba(185,144,58,.10),transparent 28%),
+    radial-gradient(circle at 0 100%,rgba(22,118,79,.07),transparent 26%),
+    linear-gradient(145deg,#fff,#f8fbfa)!important;
+  box-shadow:0 17px 40px rgba(15,49,66,.09)!important;
+}
+.arrear-v2-total{
+  border:1px solid rgba(255,255,255,.14);
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.08),transparent),
+    linear-gradient(135deg,#0d4d67,#14704f)!important;
+  box-shadow:0 9px 20px rgba(15,90,74,.17),inset 0 1px 0 rgba(255,255,255,.13);
+}
+.arrear-equation-v2>div{
+  position:relative;
+  overflow:hidden;
+  box-shadow:0 5px 13px rgba(16,47,65,.04);
+}
+.arrear-equation-v2>div:nth-of-type(1){
+  background:linear-gradient(145deg,#fff,#eef6fb)!important;
+  border-color:#d4e4ed!important;
+}
+.arrear-equation-v2>div:nth-of-type(2){
+  background:linear-gradient(145deg,#fff,#eef8f3)!important;
+  border-color:#d4e8dd!important;
+}
+.arrear-equation-v2>div:nth-of-type(3){
+  background:linear-gradient(145deg,#fff,#fff5eb)!important;
+  border-color:#eadbc8!important;
+}
+.arrear-equation-v2>div.final{
+  background:
+    radial-gradient(circle at 100% 0,rgba(209,176,98,.16),transparent 35%),
+    linear-gradient(145deg,#e9f8f1,#fffaf0)!important;
+  border-color:#afcfbf!important;
+  box-shadow:0 8px 18px rgba(19,111,77,.09)!important;
+}
+.arrear-equation-v2 i{
+  width:30px;height:30px;align-self:center;
+  border:1px solid #d9e4e7;border-radius:50%;
+  background:linear-gradient(180deg,#fff,#f0f5f6);
+  box-shadow:0 4px 10px rgba(19,51,67,.05);
+}
+.arrear-mini-kpis-v2 article:nth-child(1){background:linear-gradient(145deg,#fff,#eef6fb)!important}
+.arrear-mini-kpis-v2 article:nth-child(2){background:linear-gradient(145deg,#fff,#eef8f3)!important}
+.arrear-mini-kpis-v2 article:nth-child(3){background:linear-gradient(145deg,#fff,#fff8e9)!important}
+.arrear-mini-kpis-v2 article{
+  box-shadow:0 6px 14px rgba(17,49,65,.045);
+}
+.arrear-detail-grid-v2 div:nth-child(3n+1){background:#f2f8fb!important}
+.arrear-detail-grid-v2 div:nth-child(3n+2){background:#f1f9f5!important}
+.arrear-detail-grid-v2 div:nth-child(3n){background:#fff9ed!important}
+.arrear-month-table.v2>div{
+  border:1px solid #dbe5e8!important;
+  background:linear-gradient(145deg,#fff,#f4f8f9)!important;
+  box-shadow:0 5px 12px rgba(18,47,64,.04)!important;
+}
+.arrear-month-table.v2>div.current{
+  border-color:#a9cfbb!important;
+  background:linear-gradient(145deg,#eaf8f1,#fffdf7)!important;
+}
+
+/* Generic public calculator panels */
+.approved-home .public-tool-only-shell .calc-card,
+.approved-home .calculator-tool-card,
+.approved-home .points-panel,
+.approved-home .cycle-card,
+.approved-home .roadmap-card,
+.approved-home .result-panel{
+  border-color:#d6e2e7!important;
+  background:
+    radial-gradient(circle at 100% 0,rgba(21,104,123,.045),transparent 28%),
+    linear-gradient(145deg,#fff,#f7fafb)!important;
+  box-shadow:0 13px 32px rgba(15,47,65,.07)!important;
+}
+.approved-home .result-panel.ok{
+  background:
+    radial-gradient(circle at 100% 0,rgba(21,125,82,.08),transparent 30%),
+    linear-gradient(145deg,#edf9f3,#fff)!important;
+}
+.approved-home .result-panel.warn{
+  background:linear-gradient(145deg,#fffaf0,#fff)!important;
+  border-color:#e6d8b5!important;
+}
+
+/* Promotion */
+.approved-home .forecast-hero{
+  border:1px solid #d0e0e4!important;
+  background:
+    radial-gradient(circle at 100% 0,rgba(199,164,75,.12),transparent 30%),
+    linear-gradient(125deg,#0b3557,#0e5168 58%,#176448)!important;
+  color:#fff!important;
+  box-shadow:0 17px 38px rgba(12,48,68,.13)!important;
+}
+.approved-home .forecast-hero h3,
+.approved-home .forecast-hero p,
+.approved-home .forecast-hero span{color:#fff!important}
+.approved-home .forecast-status{
+  background:rgba(255,255,255,.10)!important;
+  border:1px solid rgba(255,255,255,.18)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.10);
+}
+.approved-home .forecast-kpi-grid article{
+  border:1px solid #d9e4e8!important;
+  box-shadow:0 7px 17px rgba(17,48,65,.055)!important;
+}
+.approved-home .forecast-kpi-grid article:nth-child(4n+1){background:linear-gradient(145deg,#fff,#eef6fb)!important}
+.approved-home .forecast-kpi-grid article:nth-child(4n+2){background:linear-gradient(145deg,#fff,#eef8f3)!important}
+.approved-home .forecast-kpi-grid article:nth-child(4n+3){background:linear-gradient(145deg,#fff,#fff8e9)!important}
+.approved-home .forecast-kpi-grid article:nth-child(4n){background:linear-gradient(145deg,#fff,#f2f5f7)!important}
+.approved-home .promotion-window-card,
+.approved-home .forecast-requirements,
+.approved-home .next-two-card,
+.approved-home .roadmap-card{
+  border:1px solid #d6e2e7!important;
+  background:linear-gradient(145deg,#fff,#f7fafb)!important;
+  box-shadow:0 12px 30px rgba(16,48,66,.065)!important;
+}
+.approved-home .promotion-window-head,
+.approved-home .fr-head,
+.approved-home .next-two-head{
+  background:linear-gradient(90deg,#eef6fb,#edf8f3,#fff9ec)!important;
+  border-bottom:1px solid #dce7e8!important;
+}
+.approved-home .fr-grid>div{
+  border:1px solid #dce6e9!important;
+  background:linear-gradient(145deg,#fff,#f4f8f9)!important;
+}
+.approved-home .fr-grid>div.ok{
+  background:linear-gradient(145deg,#edf8f3,#fff)!important;
+  border-color:#c8dfd3!important;
+}
+.approved-home .next-two-grid article{
+  border:1px solid #dce5e8!important;
+  background:linear-gradient(145deg,#fff,#f3f8f9)!important;
+  box-shadow:0 6px 15px rgba(18,47,63,.04);
+}
+.approved-home .roadmap-row:nth-child(even){
+  background:#f3f8f9!important;
+}
+.approved-home .roadmap-row:nth-child(odd){
+  background:#fffdf8!important;
+}
+
+/* House Allocation */
+.approved-home .house-allocation-module{
+  overflow:hidden;
+  border:1px solid #d5e2e7!important;
+  background:
+    radial-gradient(circle at 100% 0,rgba(183,144,56,.09),transparent 30%),
+    linear-gradient(145deg,#fff,#f7fafb)!important;
+}
+.approved-home .house-category-card{
+  border:1px solid #d9e4e8!important;
+  background:linear-gradient(145deg,#fff,#f4f8f9)!important;
+  box-shadow:0 6px 15px rgba(18,49,66,.045)!important;
+}
+.approved-home .house-category-card:nth-child(3n+1){background:linear-gradient(145deg,#fff,#eef6fb)!important}
+.approved-home .house-category-card:nth-child(3n+2){background:linear-gradient(145deg,#fff,#eef8f3)!important}
+.approved-home .house-category-card:nth-child(3n){background:linear-gradient(145deg,#fff,#fff8e9)!important}
+.approved-home .house-category-card.active{
+  border-color:#78b397!important;
+  background:
+    radial-gradient(circle at 100% 0,rgba(198,164,82,.13),transparent 32%),
+    linear-gradient(145deg,#eaf8f1,#fffdf8)!important;
+  box-shadow:0 10px 22px rgba(19,108,76,.10)!important;
+}
+.approved-home .house-active-panel{
+  border:1px solid #d7e3e7!important;
+  background:linear-gradient(145deg,#fff,#f7fafb)!important;
+  box-shadow:0 12px 28px rgba(17,48,65,.065)!important;
+}
+.approved-home .house-active-head{
+  background:
+    radial-gradient(circle at 100% 0,rgba(191,154,66,.10),transparent 28%),
+    linear-gradient(90deg,#eef6fb,#edf8f3)!important;
+  border-bottom:1px solid #dce6e7!important;
+}
+.approved-home .house-auto-form{
+  background:linear-gradient(145deg,#f8fbfc,#f2f7f7)!important;
+  border:1px solid #dce6e9!important;
+}
+.approved-home .house-official-style{
+  overflow:hidden;
+  border:1px solid #d4e2e5!important;
+  background:#fff!important;
+  box-shadow:0 8px 20px rgba(17,49,65,.055)!important;
+}
+.approved-home .house-detail-head{
+  background:linear-gradient(90deg,#0e3f61,#17674d)!important;
+  color:#fff!important;
+}
+.approved-home .house-detail-head *{color:#fff!important}
+.approved-home .house-detail-row{
+  border-bottom:1px solid #e0e8eb!important;
+  background:#fff!important;
+}
+.approved-home .house-detail-row:nth-child(odd){
+  background:#f2f7f9!important;
+}
+.approved-home .house-detail-row.strong{
+  background:#edf8f3!important;
+}
+.approved-home .house-detail-row.total{
+  color:#123f30!important;
+  background:
+    radial-gradient(circle at 100% 0,rgba(198,164,82,.15),transparent 34%),
+    linear-gradient(90deg,#e5f5ed,#fff8e8)!important;
+  border-top:2px solid #b9d3c6!important;
+}
+.approved-home .house-pending-panel{
+  background:linear-gradient(145deg,#fffaf0,#f7fafb)!important;
+  border:1px solid #e5dbc0!important;
+}
+
+/* Points / education */
+.approved-home .points-panel-head{
+  padding-bottom:14px;
+  border-bottom:1px solid #e0e8eb;
+}
+.approved-home .points-panel-icon{
+  background:linear-gradient(145deg,#0d4567,#177151)!important;
+  color:#fff!important;
+  box-shadow:0 7px 16px rgba(15,74,77,.16)!important;
+}
+.approved-home .points-result-grid>div{
+  border:1px solid #dbe5e8!important;
+  background:linear-gradient(145deg,#fff,#eef6fb)!important;
+  box-shadow:0 5px 12px rgba(17,49,65,.045);
+}
+.approved-home .points-result-grid>div:nth-child(2){background:linear-gradient(145deg,#fff,#eef8f3)!important}
+.approved-home .points-result-grid>div.strong{
+  background:linear-gradient(145deg,#eef8f3,#fff8e9)!important;
+  border-color:#bcd6c9!important;
+}
+.approved-home .education-table-wrap{
+  overflow:hidden;
+  border:1px solid #d6e2e6!important;
+  border-radius:14px!important;
+  box-shadow:0 7px 17px rgba(17,48,65,.05);
+}
+.approved-home .education-point-table thead th{
+  background:linear-gradient(90deg,#0d4163,#17684d)!important;
+  color:#fff!important;
+  border-color:rgba(255,255,255,.1)!important;
+}
+.approved-home .education-point-table tbody tr:nth-child(even) td{background:#f1f7f9!important}
+.approved-home .education-point-table tbody tr:nth-child(odd) td{background:#fffdf9!important}
+.approved-home .education-point-table tfoot td{
+  background:linear-gradient(90deg,#eaf7f1,#fff8e9)!important;
+  color:#164c38!important;
+  font-weight:800!important;
+}
+.approved-home .education-rule-grid article:nth-child(3n+1){background:#eef6fb!important}
+.approved-home .education-rule-grid article:nth-child(3n+2){background:#eef8f3!important}
+.approved-home .education-rule-grid article:nth-child(3n){background:#fff8e9!important}
+
+/* Generic public tables */
+.approved-home .table-wrap{
+  border-radius:14px;
+}
+.approved-home .table-wrap table,
+.approved-home .public-pay-table table{
+  background:#fff;
+}
+.approved-home .table-wrap th,
+.approved-home .public-pay-table th{
+  background:linear-gradient(90deg,#0d4163,#17684d)!important;
+  color:#fff!important;
+  border-color:rgba(255,255,255,.08)!important;
+}
+.approved-home .table-wrap tbody tr:nth-child(even) td,
+.approved-home .public-pay-table tbody tr:nth-child(even) td{
+  background:#f1f7f9!important;
+}
+.approved-home .table-wrap tbody tr:nth-child(odd) td,
+.approved-home .public-pay-table tbody tr:nth-child(odd) td{
+  background:#fffdf9!important;
+}
+
+/* Notices/help/footer */
+.approved-home .approved-info-grid article{
+  background:linear-gradient(145deg,#fff,#f3f8f9)!important;
+  box-shadow:0 7px 16px rgba(17,48,65,.045)!important;
+}
+.approved-home .approved-support{
+  background:
+    radial-gradient(circle at 100% 0,rgba(21,126,83,.10),transparent 28%),
+    linear-gradient(145deg,#eef6fb,#f4fbf7)!important;
+  box-shadow:0 10px 24px rgba(17,50,67,.06)!important;
+}
+.approved-home .approved-support>a{
+  background:linear-gradient(135deg,#188854,#0e6948)!important;
+  box-shadow:0 8px 18px rgba(15,116,73,.17)!important;
+}
+
+/* Mobile: keep color/depth but reduce heavy shadows */
+@media(max-width:680px){
+  .approved-home .approved-quick{
+    padding-left:12px!important;
+    padding-right:12px!important;
+    border-radius:18px;
+  }
+  .approved-home .calculator-hub-grid>button,
+  .approved-home .approved-quick-grid>button,
+  .approved-home .approved-benefit-grid article,
+  .salary-overview-v2,
+  .arrear-v2,
+  .approved-home .points-panel,
+  .approved-home .house-active-panel{
+    box-shadow:0 8px 20px rgba(15,48,66,.065)!important;
+  }
+  .salary-step-strip>div{
+    min-height:54px;
+  }
+  .salary-kpi-v2 article,
+  .arrear-mini-kpis-v2 article{
+    min-height:88px;
+  }
+  .arrear-equation-v2 i{
+    margin:0 auto;
+  }
+  .approved-home .house-detail-row{
+    padding-top:11px!important;
+    padding-bottom:11px!important;
+  }
+}
