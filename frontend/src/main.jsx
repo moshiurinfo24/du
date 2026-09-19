@@ -37,6 +37,7 @@ import './exact-mockup-v16-7.css';
 import './exact-mockup-v16-7-1.css';
 import './approved-home-v16-8.css';
 import './pay-scale-2026-public.css';
+import './mobile-premium-public-v1.css';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import {
   PAY2015,PAY2026,PAY_SCALE_2026_META,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
@@ -606,6 +607,7 @@ function PublicPayScaleHub({lang='bn'}){
 function PublicHome({onLogin,onSignup,lang,setLang}){
   const en=lang==='en';
   const [publicMenu,setPublicMenu]=useState(false);
+  const [mobileCalcOpen,setMobileCalcOpen]=useState(false);
   const [activePublicTool,setActivePublicTool]=useState(null);
   const [notices,setNotices]=useState([]);
   const [policies,setPolicies]=useState([]);
@@ -623,11 +625,13 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
 
   const go=(id)=>{
     setPublicMenu(false);
+    setMobileCalcOpen(false);
     setActivePublicTool(null);
     window.requestAnimationFrame(()=>window.requestAnimationFrame(()=>document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'})));
   };
   const openPublicTool=(tool)=>{
     setPublicMenu(false);
+    setMobileCalcOpen(false);
     setActivePublicTool(tool);
     window.requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'smooth'}));
   };
@@ -895,6 +899,27 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
       </div>
       <small>{en?'Developer Support via WhatsApp':'ডেভেলপার সহায়তা — শুধু হোয়াটসঅ্যাপ'}<br/><b>মোঃ মশিউর রহমান · 01759084692</b></small>
     </footer>
+
+    {mobileCalcOpen&&<div className="mobile-calc-sheet-backdrop" onClick={()=>setMobileCalcOpen(false)}>
+      <section className="mobile-calc-sheet" onClick={e=>e.stopPropagation()}>
+        <div className="mobile-calc-sheet-head"><div><small>{en?'QUICK CALCULATORS':'দ্রুত ক্যালকুলেটর'}</small><h3>{en?'Choose a calculator':'যেটা দরকার সেটি বেছে নিন'}</h3></div><button onClick={()=>setMobileCalcOpen(false)} aria-label={en?'Close':'বন্ধ করুন'}><X/></button></div>
+        <div className="mobile-calc-sheet-grid">
+          <button onClick={()=>openPublicTool('promotion')}><span><TrendingUp/></span><div><b>{en?'Promotion':'পদোন্নতি'}</b><small>{en?'Eligibility & roadmap':'যোগ্যতা ও রোডম্যাপ'}</small></div><ChevronRight/></button>
+          <button onClick={()=>openPublicTool('house')}><span><Home/></span><div><b>{en?'House Allocation':'বাসা বরাদ্দ'}</b><small>{en?'Points calculation':'পয়েন্ট হিসাব'}</small></div><ChevronRight/></button>
+          <button onClick={()=>openPublicTool('service')}><span><Clock3/></span><div><b>{en?'Service Length':'চাকরিকাল'}</b><small>{en?'Years, months, days':'বছর, মাস, দিন'}</small></div><ChevronRight/></button>
+          <button onClick={()=>openPublicTool('age')}><span><UserRound/></span><div><b>{en?'Age':'বয়স'}</b><small>{en?'Exact age':'সঠিক বয়স'}</small></div><ChevronRight/></button>
+          <button onClick={()=>openPublicTool('gap')}><span><CalendarDays/></span><div><b>{en?'Date Difference':'তারিখের ব্যবধান'}</b><small>{en?'Two dates':'দুই তারিখ'}</small></div><ChevronRight/></button>
+          <button onClick={()=>openPublicTool('retire')}><span><FileClock/></span><div><b>{en?'Retirement':'অবসর'}</b><small>{en?'Retirement date':'অবসর তারিখ'}</small></div><ChevronRight/></button>
+        </div>
+      </section>
+    </div>}
+
+    <nav className="public-mobile-dock" aria-label={en?'Mobile quick navigation':'মোবাইল দ্রুত মেনু'}>
+      <button className={!activePublicTool?'active':''} onClick={()=>go('home')}><Home/><span>{en?'Home':'হোম'}</span></button>
+      <button className={activePublicTool==='salary'?'active':''} onClick={()=>openPublicTool('salary')}><WalletCards/><span>{en?'Pay Scale':'পে-স্কেল'}</span></button>
+      <button className={mobileCalcOpen||(['promotion','house','service','age','gap','retire'].includes(activePublicTool))?'active':''} onClick={()=>setMobileCalcOpen(v=>!v)}><Calculator/><span>{en?'Calculate':'ক্যালকুলেটর'}</span></button>
+      <button onClick={onLogin}><UserRound/><span>{en?'Login':'লগইন'}</span></button>
+    </nav>
 
     <a className="floating-whatsapp" href={`https://wa.me/8801759084692?text=${whatsappText}`} target="_blank" rel="noreferrer" aria-label={en?'Message on WhatsApp':'হোয়াটসঅ্যাপে মেসেজ করুন'}><MessageCircle/><span>{en?'WhatsApp':'হোয়াটসঅ্যাপ'}</span></a>
   </div>
@@ -1513,6 +1538,10 @@ function SalaryCalculator({lang='bn',publicMode=false}){
       disabledChild,area,training,charge,entertainment,otherSpecial,gross,projections,input});
   }
   useEffect(()=>{setF(x=>({...x,currentStage:'0'}));setR(null)},[f.grade]);
+  useEffect(()=>{
+    if(!r||!window.matchMedia?.('(max-width:760px)').matches)return;
+    window.requestAnimationFrame(()=>document.getElementById('salary-result')?.scrollIntoView({behavior:'smooth',block:'start'}));
+  },[r]);
   const categoryOpts=en?[['officer','Teacher / Officer'],['class3','Class III employee'],['class4','Class IV employee']]:[['officer','শিক্ষক / কর্মকর্তা'],['class3','৩য় শ্রেণির কর্মচারী'],['class4','৪র্থ শ্রেণির কর্মচারী']];
   const zoneOpts=en?[
     ['dhaka','Dhaka North/South City Corporation'],
@@ -1567,7 +1596,7 @@ function SalaryCalculator({lang='bn',publicMode=false}){
       </div>
     </details>
     <button className="primary wide" onClick={calc}>{en?'Submit':'সাবমিট করুন'}</button></section>
-    {r&&<SalaryResult r={r} lang={lang}/>}
+    {r&&<div id="salary-result" className="salary-result-anchor"><SalaryResult r={r} lang={lang}/></div>}
   </div>
 }
 function SalaryResult({r,lang='bn'}){
