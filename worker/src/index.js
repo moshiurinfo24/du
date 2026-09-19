@@ -195,7 +195,7 @@ export default{async fetch(req,env){
       const b=await req.json().catch(()=>({}));
       const visitor=String(b.visitor_id||'').trim().slice(0,160);
       if(visitor.length<8)return json({ok:true,ignored:true},200,C);
-      const event=['page_view','calculator_view','download'].includes(String(b.event||''))?String(b.event):'page_view';
+      const event=['page_view','calculator_view','download','share'].includes(String(b.event||''))?String(b.event):'page_view';
       const section=String(b.section||'home').replace(/[^a-zA-Z0-9_-]/g,'').slice(0,48)||'home';
       const path=String(b.path||'/').slice(0,160);
       const visitorHash=await sha('public-visitor:'+visitor);
