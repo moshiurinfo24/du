@@ -138,6 +138,21 @@ export function scaleStepAtOrAbove(arr,target){
   if(!list.length)return 0;
   return list.find(v=>Number(v)>=Number(target||0)) ?? list[list.length-1];
 }
+export function incremented2015Basic(grade,basic,count=1){
+  const arr=PAY2015[String(grade)]||[];
+  if(!arr.length)return Number(basic||0);
+  let i=arr.findIndex(v=>Number(v)>=Number(basic||0));
+  if(i<0)i=arr.length-1;
+  return arr[Math.min(arr.length-1,i+Math.max(0,Number(count)||0))];
+}
+export function specialBenefit2025(grade,julyBasic){
+  const g=Number(grade||20),b=Number(julyBasic||0);
+  const rate=g<=9?.10:.15;
+  const calculated=Math.round(b*rate);
+  const monthly=Math.max(1500,calculated);
+  return {rate,calculated,monthly,minimum:1500};
+}
+
 export function incremented2026Basic(grade,basic,count=1){
   const arr=PAY2026[String(grade)]||[];
   if(!arr.length)return Number(basic||0);
