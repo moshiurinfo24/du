@@ -5,7 +5,7 @@ import {
   LayoutDashboard,TrendingUp,WalletCards,Users,ShieldCheck,LogOut,Plus,Search,
   UserRound,Building2,IdCard,Activity,ChevronRight,ChevronDown,ArrowLeft,X,Save,Trash2,RefreshCw,
   Settings,Database,LockKeyhole,Home,BookOpen,Calculator,HelpCircle,Phone,
-  Bell,ArrowRight,CalendarDays,CheckCircle2,AlertTriangle,Landmark,FileText,Camera,Briefcase,MapPin,Mail,PhoneCall,MessageCircle,Edit3,UserCircle2,History,ArrowRightLeft,GraduationCap,BadgeDollarSign,Clock3,FileClock,ServerCog,Gauge,UserCog,ScrollText,SlidersHorizontal,ShieldAlert,Link2,Eye,Power,BookUser,NotebookTabs,Milestone,Award,BarChart3,PieChart,LineChart,MonitorCheck,Sparkles,UserCheck,UserX,Boxes,Command,DatabaseZap,ShieldEllipsis,Radio,TrendingDown,ReceiptText,ChartNoAxesCombined,Route,Flag,Target
+  Bell,ArrowRight,CalendarDays,CheckCircle2,AlertTriangle,Landmark,FileText,Camera,Briefcase,MapPin,Mail,PhoneCall,MessageCircle,Edit3,UserCircle2,History,ArrowRightLeft,GraduationCap,BadgeDollarSign,Clock3,FileClock,ServerCog,Gauge,UserCog,ScrollText,SlidersHorizontal,ShieldAlert,Link2,Eye,Power,BookUser,NotebookTabs,Milestone,Award,BarChart3,PieChart,LineChart,MonitorCheck,Sparkles,UserCheck,UserX,Boxes,Command,DatabaseZap,ShieldEllipsis,Radio,TrendingDown,ReceiptText,ChartNoAxesCombined,Route,Flag,Target,Share2,Copy,Send
 } from 'lucide-react';
 import './styles.css';
 import './auth-phase8.css';
@@ -182,14 +182,14 @@ function reportShell(title,subtitle,body,lang='bn',meta={}){
 }
 function kv(label,value){return `<div style="display:flex;justify-content:space-between;gap:16px;padding:7px 0;border-bottom:1px dashed #dfe4ec"><span style="color:#667085">${escapeHtml(label)}</span><b style="text-align:right;color:#182230">${escapeHtml(value)}</b></div>`}
 function section(title,content){return `<div style="margin:14px 0 0;page-break-inside:avoid"><div style="font-size:13px;font-weight:800;color:#1d3263;margin-bottom:5px">${escapeHtml(title)}</div><div style="border:1px solid #e1e6ef;border-radius:10px;padding:9px 12px;background:#fff">${content}</div></div>`}
-async function saveA4Pdf(element,filename){
+async function buildA4Pdf(element,{coverText='PDF তৈরি হচ্ছে...'}={}){
   if(!element)throw new Error('PDF preview is not available');
   const [html2canvas,JsPDF]=await Promise.all([loadHtml2Canvas(),loadJsPdf()]);
   await document.fonts?.ready?.catch?.(()=>{});
 
   const cover=document.createElement('div');
   cover.style.cssText='position:fixed;inset:0;z-index:2147483647;background:rgba(12,24,39,.96);color:#fff;display:grid;place-items:center;font-family:"Hind Siliguri","Inter",sans-serif;font-size:16px;font-weight:800';
-  cover.innerHTML='<div style="padding:16px 22px;border:1px solid rgba(255,255,255,.2);border-radius:14px;background:rgba(255,255,255,.06)">PDF তৈরি হচ্ছে...</div>';
+  cover.innerHTML=`<div style="padding:16px 22px;border:1px solid rgba(255,255,255,.2);border-radius:14px;background:rgba(255,255,255,.06)">${escapeHtml(coverText)}</div>`;
 
   const stage=document.createElement('div');
   stage.setAttribute('data-pdf-stage','true');
@@ -218,26 +218,32 @@ async function saveA4Pdf(element,filename){
 
       await new Promise(r=>requestAnimationFrame(r));
       const canvas=await html2canvas(page,{
-        scale:2,
-        useCORS:true,
-        allowTaint:false,
-        backgroundColor:'#ffffff',
-        logging:false,
-        scrollX:0,
-        scrollY:0,
-        windowWidth:Math.max(page.scrollWidth,734),
-        windowHeight:Math.max(page.scrollHeight,1078)
+        scale:2,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',logging:false,
+        scrollX:0,scrollY:0,windowWidth:Math.max(page.scrollWidth,734),windowHeight:Math.max(page.scrollHeight,1078)
       });
       if(!canvas.width||!canvas.height)throw new Error('PDF page capture failed');
       if(i>0)pdf.addPage('a4','portrait');
       const img=canvas.toDataURL('image/jpeg',0.96);
       pdf.addImage(img,'JPEG',8,6,194,285,undefined,'FAST');
     }
-    pdf.save(filename);
+    return pdf;
   }finally{
     cover.remove();
     stage.remove();
   }
+}
+async function saveA4Pdf(element,filename){
+  const pdf=await buildA4Pdf(element);
+  pdf.save(filename);
+}
+async function a4PdfFileFromHtml(html,filename,lang='bn'){
+  const source=document.createElement('div');
+  source.style.cssText='width:194mm;background:#fff';
+  source.innerHTML=html;
+  const pdf=await buildA4Pdf(source,{coverText:lang==='en'?'Preparing PDF for sharing...':'শেয়ারের জন্য PDF তৈরি হচ্ছে...'});
+  const blob=pdf.output('blob');
+  try{return new File([blob],filename,{type:'application/pdf',lastModified:Date.now()})}
+  catch{return blob}
 }
 async function downloadA4Html(html,filename){
   const source=document.createElement('div');
@@ -245,6 +251,35 @@ async function downloadA4Html(html,filename){
   source.innerHTML=html;
   await saveA4Pdf(source,filename);
 }
+function sanitizeSharedReportHtml(html){
+  const doc=new DOMParser().parseFromString(String(html||''),'text/html');
+  doc.querySelectorAll('script,iframe,object,embed,link,meta').forEach(x=>x.remove());
+  doc.body.querySelectorAll('*').forEach(el=>{
+    [...el.attributes].forEach(a=>{
+      if(/^on/i.test(a.name))el.removeAttribute(a.name);
+      if((a.name==='href'||a.name==='src')&&/^\s*javascript:/i.test(a.value))el.removeAttribute(a.name);
+    });
+  });
+  return doc.body.innerHTML;
+}
+async function copyToClipboard(text){
+  if(navigator.clipboard?.writeText)return navigator.clipboard.writeText(text);
+  const t=document.createElement('textarea');t.value=text;t.style.cssText='position:fixed;left:-9999px;top:0';document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();
+}
+async function createReportShareLink({html,filename,title,summary='',lang='bn'}){
+  const x=await api('/api/public/report-share',{method:'POST',body:JSON.stringify({html,title,filename,summary,lang})});
+  const url=new URL(window.location.href);url.search='';url.hash='';url.searchParams.set('shared_report',x.token);
+  return url.toString();
+}
+async function nativeShareReport({html,filename,title,summary='',url='',lang='bn'}){
+  if(!navigator.share)throw new Error(lang==='en'?'Native sharing is not supported on this browser.':'এই ব্রাউজারে সরাসরি শেয়ার সুবিধা নেই।');
+  let file=null;
+  try{file=await a4PdfFileFromHtml(html,filename,lang)}catch{}
+  const data={title,text:summary||title,url};
+  if(file instanceof File&&navigator.canShare?.({files:[file]}))data.files=[file];
+  await navigator.share(data);
+}
+
 function PdfPreviewModal({html,filename,onClose,lang='bn'}){
   const reportRef=useRef(null); const[busy,setBusy]=useState(false); const en=lang==='en';
   async function download(){try{setBusy(true);await saveA4Pdf(reportRef.current,filename)}catch(e){alert((en?'PDF could not be created: ':'PDF তৈরি করা যায়নি: ')+e.message)}finally{setBusy(false)}}
