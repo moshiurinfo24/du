@@ -1795,8 +1795,11 @@ function SalaryResult({r,lang='bn'}){
     year,html:salaryYearReportHtml(r,year,lang,{pageNo:1,totalPages:1}),filename:`pay-scale-${year}-${stamp}.pdf`
   }));
   const combinedReport={html:salaryCombinedReportHtml(r,lang),filename:`pay-scale-2026-2028-three-page-${stamp}.pdf`};
+  const activeYearReport=yearReports.find(x=>x.year===activeYear)||yearReports[0];
+  const activeShareTitle=en?`Pay Scale ${activeYear} Salary Report`:`পে-স্কেল ${numLang(activeYear,lang,0)} বেতন রিপোর্ট`;
+  const activeShareSummary=en?`${activeYear} salary calculation, allowances, deductions and net payable.`:`${numLang(activeYear,lang,0)} সালের বেতন, ভাতা, কর্তন ও নিট প্রাপ্যের হিসাব।`;
   async function directPdf(item,key){
-    try{setPdfBusy(key);await downloadA4Html(item.html,item.filename)}
+    try{setPdfBusy(key);await downloadA4Html(item.html,item.filename);trackPublic('download',key==='all'?'salary_2026_2028_pdf':`salary_${key}_pdf`)}
     catch(e){alert((en?'PDF could not be created: ':'PDF তৈরি করা যায়নি: ')+e.message)}
     finally{setPdfBusy('')}
   }
@@ -1851,6 +1854,11 @@ function SalaryResult({r,lang='bn'}){
       <section className="breakdown-card"><h3>{en?'Deductions':'কর্তনসমূহ'}</h3>{deds.map(([l,v])=><div className="money-row" key={l}><span>{l}</span><b>{amt(v)}</b></div>)}</section>
     </div>
 
+    <section className="selected-year-share-card">
+      <div><span>{en?'SHARE REPORT':'রিপোর্ট শেয়ার'}</span><h3>{en?`Share ${activeYear} report`:`${numLang(activeYear,lang,0)} সালের রিপোর্ট শেয়ার করুন`}</h3><p>{en?'Send the report by WhatsApp, Messenger, copy link, or use your phone share sheet.':'WhatsApp, Messenger, লিংক কপি বা ফোনের সব অ্যাপে রিপোর্টটি শেয়ার করুন।'}</p></div>
+      <ReportShareActions html={activeYearReport.html} filename={activeYearReport.filename} title={activeShareTitle} summary={activeShareSummary} lang={lang} compact={true}/>
+    </section>
+
     <div className="notice official-pay-note"><b>{en?'Year status:':'বছরের অবস্থা:'}</b> {activeYear===2028?(en?'New allowance rates are applied from 1 January 2028.':'১ জানুয়ারি ২০২৮ থেকে নতুন ভাতার হার প্রয়োগ হয়েছে।'):(en?'Pre-2028 allowance rules remain in force for this year.':'এই বছরে ২০২৮-এর আগের ভাতার নিয়ম/হার কার্যকর থাকবে।')}</div>
 
     <section className="year-download-center">
@@ -1859,6 +1867,10 @@ function SalaryResult({r,lang='bn'}){
         {yearReports.map(x=><button key={x.year} disabled={!!pdfBusy} onClick={()=>directPdf(x,String(x.year))}><FileText/><span><b>{numLang(x.year,lang,0)} PDF</b><small>{en?'Download':'ডাউনলোড'}</small></span><Save size={17}/></button>)}
       </div>
       <button className="download-all-years" disabled={!!pdfBusy} onClick={()=>directPdf(combinedReport,'all')}><FileText size={19}/><span><b>{en?'2026–2028 together — 3-page PDF':'২০২৬–২০২৮ একসাথে — ৩-পৃষ্ঠার PDF'}</b><small>{en?'One file containing all three years':'একটি ফাইলে তিন বছরের সব হিসাব'}</small></span><Save size={19}/></button>
+      <div className="combined-report-share">
+        <b>{en?'Share the complete 3-page report':'সম্পূর্ণ ৩-পৃষ্ঠার রিপোর্ট শেয়ার করুন'}</b>
+        <ReportShareActions html={combinedReport.html} filename={combinedReport.filename} title={en?'Pay Scale 2026–2028 Complete Salary Report':'পে-স্কেল ২০২৬–২০২৮ সম্পূর্ণ বেতন রিপোর্ট'} summary={en?'Complete 2026, 2027 and 2028 salary calculation report in three pages.':'২০২৬, ২০২৭ ও ২০২৮ সালের সম্পূর্ণ বেতন হিসাব—৩ পৃষ্ঠার রিপোর্ট।'} lang={lang} compact={true}/>
+      </div>
     </section>
   </div>
 }
