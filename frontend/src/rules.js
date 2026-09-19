@@ -200,10 +200,12 @@ export function salary2026Snapshot({
   const g=Number(grade||20),oldBasic=Number(currentBasic||0),d=String(date||'').slice(0,10);
   const fixed=fixed2026(g,oldBasic);
   const phase=implementationPhase2026(g,d);
-  const difference=Math.max(0,fixed-oldBasic);
+  const firstIncrementCount=incrementEligible2026?1:0;
+  const fixedWithFirstIncrement=incremented2026Basic(g,fixed,firstIncrementCount);
+  const difference=Math.max(0,fixedWithFirstIncrement-oldBasic);
   const implementedDifference=Math.round(difference*phase.rate);
   const dueIncrementCount=payableIncrementCount2026(d,incrementEligible2026);
-  const fullWithIncrements=d>='2027-07-01'?incremented2026Basic(g,fixed,dueIncrementCount):fixed;
+  const fullWithIncrements=d>='2027-07-01'?incremented2026Basic(g,fixed,dueIncrementCount):fixedWithFirstIncrement;
   const payableBasic=d<'2026-07-01'?oldBasic:(d<'2027-07-01'?oldBasic+implementedDifference:fullWithIncrements);
   const allowance2026=d>='2028-01-01';
   let house=0,medical=0,education=0,tiffinAmt=0,conveyanceAmt=0,mobileAmt=0,laundryAmt=0,disabledChildAmt=0,areaAmt=0,trainingAmt=0,chargeAmt=0,entertainmentAmt=0,otherSpecialAmt=0;
@@ -217,7 +219,7 @@ export function salary2026Snapshot({
     laundryAmt=laundry?300:0;
     disabledChildAmt=Math.min(2,Math.max(0,Number(disabledChildren)||0))*3000;
     areaAmt=areaAllowance2026(payableBasic,areaType);
-    trainingAmt=trainingInstructor&&g<=9?Math.round(payableBasic*.20):0;
+    trainingAmt=trainingInstructor&&g<=9?Math.round(payableBasic*.10):0;
     chargeAmt=chargeAllowance2026(chargeAllowance);
     entertainmentAmt=entertainmentAllowance2026(entertainmentTier);
     otherSpecialAmt=Math.max(0,Number(otherSpecialAllowance)||0);
@@ -232,7 +234,7 @@ export function salary2026Snapshot({
   const totalAllowances=Object.values(allowances).reduce((a,b)=>a+Number(b||0),0);
   const gross=payableBasic+totalAllowances;
   const banglaNewYear=allowance2026?Math.round(payableBasic*.15):null;
-  return {grade:g,date:d,currentBasic:oldBasic,fixed,phase,difference,implementedDifference,dueIncrementCount,
+  return {grade:g,date:d,currentBasic:oldBasic,fixed,fixedWithFirstIncrement,phase,difference,implementedDifference,dueIncrementCount,
     fullWithIncrements,payableBasic,allowance2026,allowances,totalAllowances,gross,banglaNewYear,
     houseRate:allowance2026&&housing!=='yes'?houseRentRate2026(g,zone):0};
 }
