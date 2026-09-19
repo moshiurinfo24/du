@@ -1438,8 +1438,12 @@ function SalaryCalculator({lang='bn',publicMode=false}){
   </div>
 }
 function SalaryResult({r,lang='bn'}){
-  const en=lang==='en',[preview,setPreview]=useState(false);
-  const report=salaryReportHtml(r,lang),filename=en?`salary-payslip-${Date.now()}.pdf`:`beton-pay-slip-${Date.now()}.pdf`,amt=v=>`${en?'Tk':'৳'} ${moneyLang(v,lang)}`;
+  const en=lang==='en',[pdfPreview,setPdfPreview]=useState(null);
+  const amt=v=>`${en?'Tk':'৳'} ${moneyLang(v,lang)}`;
+  const yearReports=[2026,2027,2028].map(year=>({
+    year,html:salaryYearReportHtml(r,year,lang),filename:`pay-scale-${year}-${Date.now()}.pdf`
+  }));
+  const combinedReport={year:'all',html:salaryReportHtml({...r,reportYear:null},lang),filename:`pay-scale-2026-2028-${Date.now()}.pdf`};
   const allowances=en?[
     ['House rent',r.house],['Medical allowance',r.medical],['Education allowance',r.education],['Tiffin allowance',r.tiffin],
     ['Conveyance allowance',r.conveyance],['Mobile allowance',r.mobile],['Laundry allowance',r.laundry],
@@ -1472,7 +1476,16 @@ function SalaryResult({r,lang='bn'}){
       <section className="breakdown-card"><h3>{en?'Deductions':'কর্তনসমূহ'}</h3>{deds.map(([l,v])=><div className="money-row" key={l}><span>{l}</span><b>{amt(v)}</b></div>)}</section></div>
     <div className="notice official-pay-note"><b>{en?'Official rule status:':'সরকারি নিয়ম:'}</b> {r.allowance2026?(en?'The new allowance rates are applied because the selected date is on/after 1 January 2028.':'নির্বাচিত তারিখ ১ জানুয়ারি ২০২৮ বা পরের হওয়ায় নতুন ভাতার হার প্রয়োগ হয়েছে।'):(en?'Until 31 December 2027 the pre-existing allowance amounts/rates remain in force; new 2028 allowances are not applied.':'৩১ ডিসেম্বর ২০২৭ পর্যন্ত আগের ভাতার অংক/হার বহাল; ২০২৮-এর নতুন ভাতা এখনো প্রয়োগ হয়নি।')}</div>
     <div className="notice"><b>{en?'Deduction note:':'কর্তন নোট:'}</b> {r.deductionMode!=='custom'?(en?'DU Auto is active: PF 10% and Benevolent Fund are calculated automatically under the DU statutes. Health/group insurance, stamp and association use the previous platform payroll defaults; tax, loan and other items remain employee-specific.':'DU Auto সক্রিয়: DU Statute অনুযায়ী PF ১০% এবং কল্যাণ তহবিল স্বয়ংক্রিয়ভাবে হিসাব হয়। স্বাস্থ্য/গ্রুপ বীমা, স্ট্যাম্প ও সমিতিতে আগের প্ল্যাটফর্মের পে-রোল ডিফল্ট ব্যবহৃত হয়; আয়কর, ঋণ ও অন্যান্য কর্তন ব্যক্তিভেদে থাকে।'):(en?'Custom deduction mode is active; verify all entered amounts against the actual payroll.':'কাস্টম কর্তন মোড সক্রিয়; দেওয়া সব অংক প্রকৃত পে-রোলের সঙ্গে মিলিয়ে দেখুন।')}</div>
-    <button className="primary wide" onClick={()=>setPreview(true)}><FileText size={17}/> {en?'A4 Payslip Preview':'এ-ফোর পে-স্লিপ প্রিভিউ'}</button>{preview&&<PdfPreviewModal html={report} filename={filename} onClose={()=>setPreview(false)} lang={lang}/>}
+    <section className="three-year-pdf-section">
+      <div className="three-year-pdf-head"><div><span>PDF</span><h3>{en?'Three separate yearly salary PDFs':'২০২৬, ২০২৭, ২০২৮ — তিনটি আলাদা PDF'}</h3></div><small>{en?'The 2027 PDF includes both January and July implementation stages.':'২০২৭ PDF-এ ১ জানুয়ারি ও ১ জুলাই—দুই ধাপই থাকবে।'}</small></div>
+      <div className="three-year-pdf-grid">
+        {yearReports.map(x=><button key={x.year} className="year-pdf-card" onClick={()=>setPdfPreview(x)}>
+          <span><FileText/></span><div><b>{numLang(x.year,lang,0)} PDF</b><small>{x.year===2026?(en?'1 July 2026 stage':'১ জুলাই ২০২৬ ধাপ'):x.year===2027?(en?'1 Jan + 1 Jul 2027':'১ জানুয়ারি + ১ জুলাই ২০২৭'):(en?'1 Jan 2028 + new allowances':'১ জানুয়ারি ২০২৮ + নতুন ভাতা')}</small></div><ArrowRight size={18}/>
+        </button>)}
+      </div>
+      <button className="secondary wide combined-pay-pdf" onClick={()=>setPdfPreview(combinedReport)}><FileText size={17}/>{en?'2026–2028 Combined PDF':'২০২৬–২০২৮ একসাথে PDF'}</button>
+    </section>
+    {pdfPreview&&<PdfPreviewModal html={pdfPreview.html} filename={pdfPreview.filename} onClose={()=>setPdfPreview(null)} lang={lang}/>}
   </div>
 }
 
