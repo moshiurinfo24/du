@@ -1199,3 +1199,21 @@ html[lang="en"] .pay-nav-link::after{content:"NEW"}
     font-size:14px!important;
   }
 }
+
+
+/* Compact DU auto deduction heading */
+.du-deduction-summary.simple{
+  grid-template-columns:auto 1fr;
+}
+.du-deduction-summary.simple .du-summary-copy b{
+  margin:0;
+  font-size:14px;
+}
+.du-deduction-summary.simple .du-status-icon{
+  width:30px;
+  height:30px;
+}
+.du-deduction-summary.simple .du-status-icon svg{
+  width:17px;
+  height:17px;
+}
