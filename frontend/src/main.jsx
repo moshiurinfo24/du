@@ -126,19 +126,29 @@ function loadHtml2Pdf(){
 }
 const eduBn={masters:'মাস্টার্স',bachelor:'স্নাতক',hsc:'এইচএসসি',diploma:'ডিপ্লোমা',bsceng:'বিএসসি ইঞ্জিনিয়ারিং',mbbs:'এমবিবিএস'};
 const categoryBn={officer:'কর্মকর্তা',class3:'তৃতীয় শ্রেণি',class4:'চতুর্থ শ্রেণি'};
-function reportShell(title,subtitle,body,lang='bn'){
+const PDF_BRAND={website:'dhakau.pages.dev',developerBn:'মোঃ মশিউর রহমান',developerEn:'Md. Moshiur Rahman',phone:'01759084692'};
+function reportShell(title,subtitle,body,lang='bn',meta={}){
   const en=lang==='en';
-  return `<div style="width:194mm;box-sizing:border-box;font-family:'Noto Sans Bengali','Hind Siliguri',Arial,sans-serif;color:#172033;background:#fff;padding:10mm 10mm 12mm;line-height:1.55;font-size:11.5px">
-    <div style="border:1px solid #d9dfeb;border-radius:14px;overflow:hidden">
-      <div style="background:linear-gradient(135deg,#111936,#263f74);color:#fff;padding:18px 22px">
-        <div style="font-size:10px;letter-spacing:.7px;opacity:.8">${en?'Employee Digital Service Platform':'কর্মকর্তা-কর্মচারী ডিজিটাল সেবা'}</div>
-        <div style="font-size:22px;font-weight:800;margin-top:4px">${escapeHtml(title)}</div>
-        <div style="font-size:10.5px;opacity:.86;margin-top:4px">${escapeHtml(subtitle)}</div>
+  const pageNo=Number(meta.pageNo||1),totalPages=Number(meta.totalPages||1);
+  const fixed=meta.fixedPage===true,breakAfter=meta.breakAfter===true;
+  const generated=new Date().toLocaleString(en?'en-GB':'bn-BD-u-nu-latn');
+  return `<div class="pdf-page" data-pdf-page="${pageNo}" style="width:194mm;${fixed?'height:285mm;':'min-height:270mm;'}box-sizing:border-box;font-family:'Hind Siliguri','Noto Sans Bengali','Inter',Arial,sans-serif;color:#172033;background:#fff;line-height:1.45;font-size:10.8px;${breakAfter?'page-break-after:always;break-after:page;':''}">
+    <div style="height:100%;box-sizing:border-box;border:1px solid #d5dee9;border-radius:12px;overflow:hidden;background:#fff;display:flex;flex-direction:column">
+      <div style="background:linear-gradient(120deg,#0b2f58 0%,#155d79 62%,#177454 100%);color:#fff;padding:13px 17px 12px;display:flex;align-items:center;justify-content:space-between;gap:16px">
+        <div style="display:flex;align-items:center;gap:10px;min-width:0">
+          <div style="width:34px;height:34px;border-radius:9px;background:#fff;color:#0d4968;display:grid;place-items:center;font-family:'Inter',Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.4px;flex:0 0 auto">EDS</div>
+          <div style="min-width:0"><div style="font-size:9px;font-weight:700;opacity:.86">${en?'Employee Digital Service Platform':'কর্মকর্তা-কর্মচারী ডিজিটাল সেবা'}</div><div style="font-size:18px;font-weight:800;margin-top:1px;line-height:1.15">${escapeHtml(title)}</div><div style="font-size:9.2px;opacity:.84;margin-top:3px">${escapeHtml(subtitle)}</div></div>
+        </div>
+        <div style="text-align:right;white-space:nowrap"><div style="font-family:'Inter',Arial,sans-serif;font-size:10px;font-weight:800">A4 REPORT</div><div style="font-family:'Inter',Arial,sans-serif;font-size:9px;opacity:.78;margin-top:3px">${PDF_BRAND.website}</div></div>
       </div>
-      <div style="padding:18px 22px">${body}</div>
-      <div style="border-top:1px solid #e3e7ef;padding:12px 22px;color:#667085;font-size:9.5px;background:#f8fafc">
-        ${en?'This is an independent and unofficial digital service platform. Verify the applicable rules/orders before any final administrative or financial decision.':'এটি একটি স্বাধীন ও অনানুষ্ঠানিক ডিজিটাল সেবা প্ল্যাটফর্ম। চূড়ান্ত প্রশাসনিক/আর্থিক সিদ্ধান্তের জন্য প্রযোজ্য বিধি ও আদেশ যাচাই করুন।'}<br>
-        ${en?'Report generated':'প্রতিবেদন তৈরি'}: ${new Date().toLocaleString(en?'en-GB':'bn-BD')}
+      <div style="flex:1;padding:12px 16px 9px;box-sizing:border-box;${fixed?'overflow:hidden;':''}">${body}</div>
+      <div style="border-top:1px solid #dce4ec;background:#f7fafc;padding:7px 16px 8px;color:#657283;font-size:8.2px;line-height:1.35">
+        <div style="margin-bottom:5px">${en?'Independent/unofficial digital service report. Verify applicable rules/orders before any final administrative or financial decision.':'স্বাধীন ও অনানুষ্ঠানিক ডিজিটাল সেবা প্রতিবেদন। চূড়ান্ত প্রশাসনিক/আর্থিক সিদ্ধান্তের আগে প্রযোজ্য বিধি/আদেশ যাচাই করুন।'}</div>
+        <div style="display:grid;grid-template-columns:1fr 1.35fr auto;gap:10px;align-items:center;border-top:1px dashed #d5dde5;padding-top:5px">
+          <span style="font-family:'Inter','Hind Siliguri',sans-serif"><b>${PDF_BRAND.website}</b><br>${en?'Generated':'তৈরি'}: ${generated}</span>
+          <span style="text-align:center"><b>${en?'Design & Development':'ডিজাইন ও ডেভেলপমেন্ট'}:</b> ${en?PDF_BRAND.developerEn:PDF_BRAND.developerBn} · <span style="font-family:'Inter',Arial,sans-serif">${PDF_BRAND.phone}</span></span>
+          <span style="font-family:'Inter',Arial,sans-serif;font-weight:800">${en?'Page':'পৃষ্ঠা'} ${pageNo} / ${totalPages}</span>
+        </div>
       </div>
     </div>
   </div>`;
@@ -157,6 +167,13 @@ async function saveA4Pdf(element,filename){
     jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
     pagebreak:{mode:['css','legacy'],avoid:['.pdf-keep']}
   }).from(element).save();
+}
+async function downloadA4Html(html,filename){
+  const host=document.createElement('div');
+  host.style.cssText='position:fixed;left:-12000px;top:0;width:194mm;background:#fff;z-index:-1;pointer-events:none';
+  host.innerHTML=html;
+  document.body.appendChild(host);
+  try{await saveA4Pdf(host,filename)}finally{host.remove()}
 }
 function PdfPreviewModal({html,filename,onClose,lang='bn'}){
   const reportRef=useRef(null); const[busy,setBusy]=useState(false); const en=lang==='en';
@@ -223,12 +240,15 @@ function salaryProjectionReportResult(base,p,projections,year){
     input:{...(base.input||{}),date:p?.date||(base.input||{}).date}
   };
 }
-function salaryYearReportHtml(base,year,lang='bn'){
+function salaryYearReportHtml(base,year,lang='bn',meta={}){
   const ps=(base.projections||[]).filter(p=>String(p.date||'').startsWith(String(year)));
-  if(!ps.length)return salaryReportHtml({...base,reportYear:year,projections:[]},lang);
-  return salaryReportHtml(salaryProjectionReportResult(base,ps[ps.length-1],ps,year),lang);
+  const data=!ps.length?{...base,reportYear:year,projections:[]}:salaryProjectionReportResult(base,ps[ps.length-1],ps,year);
+  return salaryReportHtml(data,lang,{pageNo:meta.pageNo||1,totalPages:meta.totalPages||1,breakAfter:meta.breakAfter===true,fixedPage:true});
 }
-function salaryReportHtml(r,lang='bn'){
+function salaryCombinedReportHtml(base,lang='bn'){
+  return [2026,2027,2028].map((year,i)=>salaryYearReportHtml(base,year,lang,{pageNo:i+1,totalPages:3,breakAfter:i<2})).join('');
+}
+function salaryReportHtml(r,lang='bn',pdfMeta={}){
   const en=lang==='en',f=r.input||{};
   const amt=v=>`${en?'Tk':'৳'} ${moneyLang(v,lang)}`;
   const row=(label,value,bold=false)=>`<div style="display:grid;grid-template-columns:1fr auto;gap:18px;padding:7px 0;border-bottom:1px solid #e8ebf1"><span style="color:#4b5565">${escapeHtml(label)}</span><span style="font-weight:${bold?800:650};color:#172033;text-align:right">${escapeHtml(value)}</span></div>`;
@@ -301,7 +321,7 @@ function salaryReportHtml(r,lang='bn'){
   const subtitle=reportYear
     ?(en?('A4 year statement · '+reportYear+' · based on the 17 September 2026 gazette'):('A4 বার্ষিক বিবরণী · '+numLang(reportYear,lang,0)+' · ১৭ সেপ্টেম্বর ২০২৬-এর গেজেটভিত্তিক'))
     :(en?'A4 combined statement · 2026–2028 · based on the 17 September 2026 gazette':'A4 সমন্বিত বিবরণী · ২০২৬–২০২৮ · ১৭ সেপ্টেম্বর ২০২৬-এর গেজেটভিত্তিক');
-  return reportShell(title,subtitle,body,lang);
+  return reportShell(title,subtitle,body,lang,pdfMeta);
 }
 
 function AuthPortal({onLogin,onBack,lang,setLang,initialMode='login'}) {
@@ -1428,7 +1448,7 @@ function SalaryCalculator({lang='bn',publicMode=false}){
       <label>{en?'Entertainment allowance tier':'আপ্যায়ন ভাতার স্তর'}<select value={f.entertainmentTier} onChange={e=>setF({...f,entertainmentTier:e.target.value})}><option value="none">{en?'Not applicable':'প্রযোজ্য নয়'}</option><option value="cabinet">{en?'Cabinet/Principal Secretary — Tk 2,000':'মন্ত্রিপরিষদ/মুখ্য সচিব — ৳২,০০০'}</option><option value="secretary">{en?'Senior Secretary/Secretary — Tk 1,000':'সিনিয়র সচিব/সচিব — ৳১,০০০'}</option><option value="additional_secretary">{en?'Additional Secretary — Tk 900':'অতিরিক্ত সচিব — ৳৯০০'}</option><option value="joint_secretary">{en?'Joint Secretary / entitled officer — Tk 600':'যুগ্মসচিব/অন্যান্য অধিকারপ্রাপ্ত — ৳৬০০'}</option></select></label>
       <label>{en?'Other verified special allowance (monthly)':'অন্যান্য যাচাইকৃত বিশেষ ভাতা (মাসিক)'}<input type="number" min="0" step="1" value={f.otherSpecialAllowance} onChange={e=>setF({...f,otherSpecialAllowance:e.target.value})} placeholder="0"/></label>
     </div></details>
-    <details className="deduction-box du-deduction-box" open><summary>{en?'Dhaka University automatic deductions':'ঢাকা বিশ্ববিদ্যালয়ের অটো কর্তন'}</summary>
+    <details className="deduction-box du-deduction-box" open><summary className="du-deduction-summary"><span className={f.deductionMode==='du_auto'?'du-status-icon active':'du-status-icon manual'}>{f.deductionMode==='du_auto'?<CheckCircle2/>:<Edit3/>}</span><span className="du-summary-copy"><b>{en?'Dhaka University automatic deductions':'ঢাকা বিশ্ববিদ্যালয়ের অটো কর্তন'}</b><small>{f.deductionMode==='du_auto'?(en?'PF, benevolent fund and preset deductions are active':'PF, কল্যাণ তহবিল ও প্রিসেট কর্তন অটো চালু'):(en?'Custom deduction mode is active':'কাস্টম কর্তন মোড চালু')}</small></span><em className={f.deductionMode==='du_auto'?'du-status-badge active':'du-status-badge manual'}>{f.deductionMode==='du_auto'?(en?'ACTIVE':'সক্রিয়'):(en?'MANUAL':'ম্যানুয়াল')}</em></summary>
       <div className="form-grid compact">
         <label>{en?'Deduction mode':'কর্তনের ধরন'}<select value={f.deductionMode} onChange={e=>setF({...f,deductionMode:e.target.value})}><option value="du_auto">{en?'DU Auto (previous payroll preset)':'DU Auto (আগের পে-রোল সেটিং)'}</option><option value="custom">{en?'Custom / manual':'কাস্টম / ম্যানুয়াল'}</option></select></label>
         {f.deductionMode==='du_auto'?<>
@@ -1451,12 +1471,18 @@ function SalaryCalculator({lang='bn',publicMode=false}){
   </div>
 }
 function SalaryResult({r,lang='bn'}){
-  const en=lang==='en',[pdfPreview,setPdfPreview]=useState(null);
+  const en=lang==='en',[pdfPreview,setPdfPreview]=useState(null),[pdfBusy,setPdfBusy]=useState('');
   const amt=v=>`${en?'Tk':'৳'} ${moneyLang(v,lang)}`;
+  const stamp=Date.now();
   const yearReports=[2026,2027,2028].map(year=>({
-    year,html:salaryYearReportHtml(r,year,lang),filename:`pay-scale-${year}-${Date.now()}.pdf`
+    year,html:salaryYearReportHtml(r,year,lang,{pageNo:1,totalPages:1}),filename:`pay-scale-${year}-${stamp}.pdf`
   }));
-  const combinedReport={year:'all',html:salaryReportHtml({...r,reportYear:null},lang),filename:`pay-scale-2026-2028-${Date.now()}.pdf`};
+  const combinedReport={year:'all',html:salaryCombinedReportHtml(r,lang),filename:`pay-scale-2026-2028-three-page-${stamp}.pdf`};
+  async function directPdf(item,key){
+    try{setPdfBusy(key);await downloadA4Html(item.html,item.filename)}
+    catch(e){alert((en?'PDF could not be created: ':'PDF তৈরি করা যায়নি: ')+e.message)}
+    finally{setPdfBusy('')}
+  }
   const allowances=en?[
     ['House rent',r.house],['Medical allowance',r.medical],['Education allowance',r.education],['Tiffin allowance',r.tiffin],
     ['Conveyance allowance',r.conveyance],['Mobile allowance',r.mobile],['Laundry allowance',r.laundry],
@@ -1489,14 +1515,19 @@ function SalaryResult({r,lang='bn'}){
       <section className="breakdown-card"><h3>{en?'Deductions':'কর্তনসমূহ'}</h3>{deds.map(([l,v])=><div className="money-row" key={l}><span>{l}</span><b>{amt(v)}</b></div>)}</section></div>
     <div className="notice official-pay-note"><b>{en?'Official rule status:':'সরকারি নিয়ম:'}</b> {r.allowance2026?(en?'The new allowance rates are applied because the selected date is on/after 1 January 2028.':'নির্বাচিত তারিখ ১ জানুয়ারি ২০২৮ বা পরের হওয়ায় নতুন ভাতার হার প্রয়োগ হয়েছে।'):(en?'Until 31 December 2027 the pre-existing allowance amounts/rates remain in force; new 2028 allowances are not applied.':'৩১ ডিসেম্বর ২০২৭ পর্যন্ত আগের ভাতার অংক/হার বহাল; ২০২৮-এর নতুন ভাতা এখনো প্রয়োগ হয়নি।')}</div>
     <div className="notice"><b>{en?'Deduction note:':'কর্তন নোট:'}</b> {r.deductionMode!=='custom'?(en?'DU Auto is active: PF 10% and Benevolent Fund are calculated automatically under the DU statutes. Health/group insurance, stamp and association use the previous platform payroll defaults; tax, loan and other items remain employee-specific.':'DU Auto সক্রিয়: DU Statute অনুযায়ী PF ১০% এবং কল্যাণ তহবিল স্বয়ংক্রিয়ভাবে হিসাব হয়। স্বাস্থ্য/গ্রুপ বীমা, স্ট্যাম্প ও সমিতিতে আগের প্ল্যাটফর্মের পে-রোল ডিফল্ট ব্যবহৃত হয়; আয়কর, ঋণ ও অন্যান্য কর্তন ব্যক্তিভেদে থাকে।'):(en?'Custom deduction mode is active; verify all entered amounts against the actual payroll.':'কাস্টম কর্তন মোড সক্রিয়; দেওয়া সব অংক প্রকৃত পে-রোলের সঙ্গে মিলিয়ে দেখুন।')}</div>
-    <section className="three-year-pdf-section">
-      <div className="three-year-pdf-head"><div><span>PDF</span><h3>{en?'Three separate yearly salary PDFs':'২০২৬, ২০২৭, ২০২৮ — তিনটি আলাদা PDF'}</h3></div><small>{en?'The 2027 PDF includes both January and July implementation stages.':'২০২৭ PDF-এ ১ জানুয়ারি ও ১ জুলাই—দুই ধাপই থাকবে।'}</small></div>
+    <section className="three-year-pdf-section premium-pdf-center">
+      <div className="three-year-pdf-head"><div><span>PDF CENTER</span><h3>{en?'Salary reports for 2026, 2027 and 2028':'২০২৬, ২০২৭ ও ২০২৮ সালের বেতন রিপোর্ট'}</h3><p>{en?'Preview or download each year separately, or download one complete 3-page A4 PDF.':'প্রতিটি বছর আলাদা Preview/Download করুন, অথবা একবারে একটি পূর্ণ ৩-পৃষ্ঠার A4 PDF নিন।'}</p></div><small>{en?'2027 includes both 1 January and 1 July stages. 2028 includes the new allowance structure.':'২০২৭-এ ১ জানুয়ারি ও ১ জুলাই—দুই ধাপ; ২০২৮-এ নতুন ভাতা কাঠামো থাকবে।'}</small></div>
       <div className="three-year-pdf-grid">
-        {yearReports.map(x=><button key={x.year} className="year-pdf-card" onClick={()=>setPdfPreview(x)}>
-          <span><FileText/></span><div><b>{numLang(x.year,lang,0)} PDF</b><small>{x.year===2026?(en?'1 July 2026 stage':'১ জুলাই ২০২৬ ধাপ'):x.year===2027?(en?'1 Jan + 1 Jul 2027':'১ জানুয়ারি + ১ জুলাই ২০২৭'):(en?'1 Jan 2028 + new allowances':'১ জানুয়ারি ২০২৮ + নতুন ভাতা')}</small></div><ArrowRight size={18}/>
-        </button>)}
+        {yearReports.map(x=><article key={x.year} className="year-pdf-card">
+          <span><FileText/></span>
+          <div className="year-pdf-copy"><b>{numLang(x.year,lang,0)} PDF</b><small>{x.year===2026?(en?'1 July 2026 implementation':'১ জুলাই ২০২৬ বাস্তবায়ন'):x.year===2027?(en?'1 Jan + 1 Jul 2027':'১ জানুয়ারি + ১ জুলাই ২০২৭'):(en?'1 Jan 2028 + new allowances':'১ জানুয়ারি ২০২৮ + নতুন ভাতা')}</small></div>
+          <div className="year-pdf-actions"><button onClick={()=>setPdfPreview(x)}><Eye size={15}/>{en?'Preview':'প্রিভিউ'}</button><button className="download" disabled={!!pdfBusy} onClick={()=>directPdf(x,String(x.year))}><Save size={15}/>{pdfBusy===String(x.year)?(en?'Creating...':'তৈরি হচ্ছে'):(en?'Download':'ডাউনলোড')}</button></div>
+        </article>)}
       </div>
-      <button className="secondary wide combined-pay-pdf" onClick={()=>setPdfPreview(combinedReport)}><FileText size={17}/>{en?'2026–2028 Combined PDF':'২০২৬–২০২৮ একসাথে PDF'}</button>
+      <div className="combined-pdf-card">
+        <div className="combined-pdf-icon"><FileText/></div><div className="combined-pdf-copy"><span>{en?'RECOMMENDED':'প্রস্তাবিত'}</span><h4>{en?'2026–2028 Complete 3-Page PDF':'২০২৬–২০২৮ সম্পূর্ণ ৩-পৃষ্ঠার PDF'}</h4><p>{en?'One PDF file: Page 1 = 2026, Page 2 = 2027, Page 3 = 2028. Each page has a premium header, footer, developer credit and page number.':'একটি PDF ফাইল: পৃষ্ঠা ১ = ২০২৬, পৃষ্ঠা ২ = ২০২৭, পৃষ্ঠা ৩ = ২০২৮। প্রতিটি পৃষ্ঠায় সুন্দর header, footer, developer credit ও page number থাকবে।'}</p></div>
+        <div className="combined-pdf-actions"><button className="preview" onClick={()=>setPdfPreview(combinedReport)}><Eye size={16}/>{en?'Preview 3 Pages':'৩ পৃষ্ঠা প্রিভিউ'}</button><button className="download" disabled={!!pdfBusy} onClick={()=>directPdf(combinedReport,'all')}><Save size={17}/>{pdfBusy==='all'?(en?'Creating 3-page PDF...':'৩-পৃষ্ঠার PDF তৈরি হচ্ছে...'):(en?'Download 3-Page PDF':'৩-পৃষ্ঠার PDF ডাউনলোড')}</button></div>
+      </div>
     </section>
     {pdfPreview&&<PdfPreviewModal html={pdfPreview.html} filename={pdfPreview.filename} onClose={()=>setPdfPreview(null)} lang={lang}/>}
   </div>
