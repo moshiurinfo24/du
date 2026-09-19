@@ -3,7 +3,7 @@ import React,{useEffect,useMemo,useRef,useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {
   LayoutDashboard,TrendingUp,WalletCards,Users,ShieldCheck,LogOut,Plus,Search,
-  UserRound,Building2,IdCard,Activity,ChevronRight,X,Save,Trash2,RefreshCw,
+  UserRound,Building2,IdCard,Activity,ChevronRight,ChevronDown,ArrowLeft,X,Save,Trash2,RefreshCw,
   Settings,Database,LockKeyhole,Home,BookOpen,Calculator,HelpCircle,Phone,
   Bell,ArrowRight,CalendarDays,CheckCircle2,AlertTriangle,Landmark,FileText,Camera,Briefcase,MapPin,Mail,PhoneCall,MessageCircle,Edit3,UserCircle2,History,ArrowRightLeft,GraduationCap,BadgeDollarSign,Clock3,FileClock,ServerCog,Gauge,UserCog,ScrollText,SlidersHorizontal,ShieldAlert,Link2,Eye,Power,BookUser,NotebookTabs,Milestone,Award,BarChart3,PieChart,LineChart,MonitorCheck,Sparkles,UserCheck,UserX,Boxes,Command,DatabaseZap,ShieldEllipsis,Radio,TrendingDown,ReceiptText,ChartNoAxesCombined,Route,Flag,Target
 } from 'lucide-react';
@@ -681,12 +681,12 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
         <details className="public-nav-dropdown">
           <summary><Calculator size={16}/><span>{en?'Calculators':'ক্যালকুলেটর'}</span><ChevronDown size={14}/></summary>
           <div className="public-nav-submenu">
-            <button onClick={()=>openPublicTool('promotion')}><TrendingUp/><div><b>{en?'Promotion':'পদোন্নতি'}</b><small>{en?'Eligibility & roadmap':'যোগ্যতা ও রোডম্যাপ'}</small></div></button>
-            <button onClick={()=>openPublicTool('house')}><Home/><div><b>{en?'House Allocation':'বাসা বরাদ্দ'}</b><small>{en?'Point calculation':'পয়েন্ট হিসাব'}</small></div></button>
-            <button onClick={()=>openPublicTool('service')}><Clock3/><div><b>{en?'Service Length':'চাকরিকাল'}</b><small>{en?'Years, months & days':'বছর, মাস ও দিন'}</small></div></button>
-            <button onClick={()=>openPublicTool('age')}><UserRound/><div><b>{en?'Age Calculator':'বয়স হিসাব'}</b><small>{en?'Exact current age':'সঠিক বর্তমান বয়স'}</small></div></button>
-            <button onClick={()=>openPublicTool('gap')}><CalendarDays/><div><b>{en?'Date Difference':'তারিখের ব্যবধান'}</b><small>{en?'Between two dates':'দুই তারিখের মধ্যে'}</small></div></button>
-            <button onClick={()=>openPublicTool('retire')}><FileClock/><div><b>{en?'Retirement Date':'অবসর তারিখ'}</b><small>{en?'Estimate by age':'বয়স অনুযায়ী হিসাব'}</small></div></button>
+            <button onClick={e=>{e.currentTarget.closest('details')?.removeAttribute('open');openPublicTool('promotion')}}><TrendingUp/><div><b>{en?'Promotion':'পদোন্নতি'}</b><small>{en?'Eligibility & roadmap':'যোগ্যতা ও রোডম্যাপ'}</small></div></button>
+            <button onClick={e=>{e.currentTarget.closest('details')?.removeAttribute('open');openPublicTool('house')}}><Home/><div><b>{en?'House Allocation':'বাসা বরাদ্দ'}</b><small>{en?'Point calculation':'পয়েন্ট হিসাব'}</small></div></button>
+            <button onClick={e=>{e.currentTarget.closest('details')?.removeAttribute('open');openPublicTool('service')}}><Clock3/><div><b>{en?'Service Length':'চাকরিকাল'}</b><small>{en?'Years, months & days':'বছর, মাস ও দিন'}</small></div></button>
+            <button onClick={e=>{e.currentTarget.closest('details')?.removeAttribute('open');openPublicTool('age')}}><UserRound/><div><b>{en?'Age Calculator':'বয়স হিসাব'}</b><small>{en?'Exact current age':'সঠিক বর্তমান বয়স'}</small></div></button>
+            <button onClick={e=>{e.currentTarget.closest('details')?.removeAttribute('open');openPublicTool('gap')}}><CalendarDays/><div><b>{en?'Date Difference':'তারিখের ব্যবধান'}</b><small>{en?'Between two dates':'দুই তারিখের মধ্যে'}</small></div></button>
+            <button onClick={e=>{e.currentTarget.closest('details')?.removeAttribute('open');openPublicTool('retire')}}><FileClock/><div><b>{en?'Retirement Date':'অবসর তারিখ'}</b><small>{en?'Estimate by age':'বয়স অনুযায়ী হিসাব'}</small></div></button>
           </div>
         </details>
         <button onClick={()=>go('services')}>{en?'Services':'সেবাসমূহ'}</button>
@@ -774,11 +774,12 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
     </section>
 
     <section className="approved-section approved-calculators" id="calculators">
-      <div className="approved-section-title"><span>{en?'MORE TOOLS':'আরও টুল'}</span><h2>{en?'Personal calculators after sign-in':'লগইনের পর ব্যক্তিগত ক্যালকুলেটর'}</h2><p>{en?'For salary, promotion or house-allocation calculations, use the public Calculator Center above.':'বেতন, পদোন্নতি বা বাসা বরাদ্দ হিসাবের জন্য উপরের পাবলিক Calculator Center ব্যবহার করুন।'}</p></div>
+      <div className="approved-section-title"><span>{en?'PUBLIC CALCULATORS':'পাবলিক ক্যালকুলেটর'}</span><h2>{en?'More calculators — no login required':'আরও ক্যালকুলেটর — লগইন লাগবে না'}</h2><p>{en?'Open any calculator directly. Only that selected tool will be shown.':'যেটি দরকার সেটিতে ক্লিক করুন। শুধু সেই নির্বাচিত হিসাবটিই খুলবে।'}</p></div>
       <div className="approved-calc-grid">
-        <button onClick={onLogin}><span><Clock3/></span><div><b>{en?'Service Length':'চাকরিকাল হিসাব'}</b><small>{en?'Years, months and days':'বছর, মাস ও দিন'}</small></div><ArrowRight/></button>
-        <button onClick={onLogin}><span><UserRound/></span><div><b>{en?'Age Calculator':'বয়স হিসাব'}</b><small>{en?'Exact age from date of birth':'জন্মতারিখ থেকে সঠিক বয়স'}</small></div><ArrowRight/></button>
-        <button onClick={onLogin}><span><CalendarDays/></span><div><b>{en?'Date Difference':'তারিখের ব্যবধান'}</b><small>{en?'Difference between two dates':'দুই তারিখের ব্যবধান'}</small></div><ArrowRight/></button>
+        <button onClick={()=>openPublicTool('service')}><span><Clock3/></span><div><b>{en?'Service Length':'চাকরিকাল হিসাব'}</b><small>{en?'Years, months and days':'বছর, মাস ও দিন'}</small></div><ArrowRight/></button>
+        <button onClick={()=>openPublicTool('age')}><span><UserRound/></span><div><b>{en?'Age Calculator':'বয়স হিসাব'}</b><small>{en?'Exact age from date of birth':'জন্মতারিখ থেকে সঠিক বয়স'}</small></div><ArrowRight/></button>
+        <button onClick={()=>openPublicTool('gap')}><span><CalendarDays/></span><div><b>{en?'Date Difference':'তারিখের ব্যবধান'}</b><small>{en?'Difference between two dates':'দুই তারিখের ব্যবধান'}</small></div><ArrowRight/></button>
+        <button onClick={()=>openPublicTool('retire')}><span><FileClock/></span><div><b>{en?'Retirement Date':'অবসর তারিখ'}</b><small>{en?'Estimate by retirement age':'অবসরের বয়স অনুযায়ী'}</small></div><ArrowRight/></button>
       </div>
     </section>
 
