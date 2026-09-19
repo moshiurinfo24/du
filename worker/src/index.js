@@ -94,6 +94,44 @@ function makeRecoveryCode(){
 function normalizeRecoveryCode(v){return String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'')}
 async function recoveryHash(code){return sha(normalizeRecoveryCode(code))}
 
+let publicEventsReady=false;
+async function ensurePublicEvents(env){
+  if(publicEventsReady)return;
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS public_events(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    visitor_hash TEXT NOT NULL,
+    event TEXT NOT NULL DEFAULT 'page_view',
+    section TEXT NOT NULL DEFAULT 'home',
+    path TEXT,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`).run();
+  await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_public_events_created_at ON public_events(created_at)`).run();
+  await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_public_events_visitor_hash ON public_events(visitor_hash)`).run();
+  await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_public_events_event_section ON public_events(event,section)`).run();
+  publicEventsReady=true;
+}
+async function publicTrafficStats(env){
+  await ensurePublicEvents(env);
+  const x=await env.DB.prepare(`
+    SELECT
+      COUNT(CASE WHEN event='page_view' THEN 1 END) total_views,
+      COUNT(DISTINCT CASE WHEN event='page_view' THEN visitor_hash END) total_unique,
+      COUNT(DISTINCT CASE WHEN event='page_view' AND date(datetime(created_at,'+6 hours'))=date('now','+6 hours') THEN visitor_hash END) today_unique,
+      COUNT(CASE WHEN event='page_view' AND date(datetime(created_at,'+6 hours'))=date('now','+6 hours') THEN 1 END) today_views,
+      COUNT(DISTINCT CASE WHEN event='page_view' AND strftime('%Y-%m',datetime(created_at,'+6 hours'))=strftime('%Y-%m',datetime('now','+6 hours')) THEN visitor_hash END) month_unique,
+      COUNT(CASE WHEN event='page_view' AND strftime('%Y-%m',datetime(created_at,'+6 hours'))=strftime('%Y-%m',datetime('now','+6 hours')) THEN 1 END) month_views
+    FROM public_events
+  `).first();
+  return {
+    today_unique:+(x?.today_unique||0),
+    month_unique:+(x?.month_unique||0),
+    total_unique:+(x?.total_unique||0),
+    today_views:+(x?.today_views||0),
+    month_views:+(x?.month_views||0),
+    total_views:+(x?.total_views||0)
+  };
+}
+
 export default{async fetch(req,env){
   const C=cors(req);
   if(!originAllowed(req))return json({error:'Origin not allowed'},403,C);
@@ -101,6 +139,25 @@ export default{async fetch(req,env){
   const u=new URL(req.url);
   try{
     if(u.pathname==='/api/health')return json({ok:true,service:'Employee Service ERP API',phase:'16.3.5-dual-recovery-super-admin'},200,C);
+
+    if(u.pathname==='/api/public/track'&&req.method==='POST'){
+      await ensurePublicEvents(env);
+      const b=await req.json().catch(()=>({}));
+      const visitor=String(b.visitor_id||'').trim().slice(0,160);
+      if(visitor.length<8)return json({ok:true,ignored:true},200,C);
+      const event=['page_view','calculator_view','download'].includes(String(b.event||''))?String(b.event):'page_view';
+      const section=String(b.section||'home').replace(/[^a-zA-Z0-9_-]/g,'').slice(0,48)||'home';
+      const path=String(b.path||'/').slice(0,160);
+      const visitorHash=await sha('public-visitor:'+visitor);
+      await env.DB.prepare(`INSERT INTO public_events(visitor_hash,event,section,path) VALUES(?,?,?,?)`)
+        .bind(visitorHash,event,section,path).run();
+      return json({ok:true},201,C);
+    }
+
+    if(u.pathname==='/api/public/stats'&&req.method==='GET'){
+      const stats=await publicTrafficStats(env);
+      return json({ok:true,...stats,timezone:'Asia/Dhaka',note:'Unique visitors are an anonymous browser/device estimate.'},200,C);
+    }
 
     // Phase 8 FREE: self-service registration and recovery code password reset
     // v16.5 Smart registration: create account + personal profile + education in one flow
