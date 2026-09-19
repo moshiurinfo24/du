@@ -15,7 +15,7 @@ export const PAY2026={
 "12":[24300,25600,26800,28200,29600,31100,32600,34200,36000,37700,39600,41600,43700,45900,48200,50600,53100,55700,58700],
 "13":[24000,25200,26500,27800,29200,30700,32200,33800,35500,37300,39100,41100,43200,45300,47600,49900,52400,55100,58000],
 "14":[23500,24700,26000,27300,28600,30000,31500,33100,34800,36500,38300,40200,42300,44400,46600,48900,51300,53900,56800],
-"15":[22800,24000,25200,26400,27800,29100,30600,32100,33700,35400,37200,39000,41000,43000,45200,47400,49800,52300,55200],
+"15":[22800,24000,25200,26400,27800,29100,30600,32200,33700,35400,37200,39000,41000,43000,45200,47400,49800,52300,55200],
 "16":[21900,23000,24200,25400,26700,28000,29400,30900,32400,34000,35700,37500,39400,41300,43400,45600,47900,50200,52900],
 "17":[21400,22500,23600,24800,26100,27400,28700,30200,31700,33200,34900,36700,38500,40400,42400,44500,46800,49100,51900],
 "18":[21000,22100,23200,24400,25600,26900,28200,29600,31100,32600,34300,36000,37800,39600,41600,43700,45900,48200,50900],
@@ -34,10 +34,10 @@ export const PAY_SCALE_2026_META={
 };
 
 export const HOUSE_RENT_2015=[
-  {max:9700,percent:65,minimum:5600},
-  {min:9701,max:16000,percent:60,minimum:6500},
-  {min:16001,max:35500,percent:55,minimum:9600},
-  {min:35501,percent:50,minimum:23000}
+  {max:9700,dhaka:{percent:65,minimum:5600},major:{percent:55,minimum:5000},other:{percent:50,minimum:4500}},
+  {min:9701,max:16000,dhaka:{percent:60,minimum:6400},major:{percent:50,minimum:5400},other:{percent:45,minimum:4800}},
+  {min:16001,max:35500,dhaka:{percent:55,minimum:9600},major:{percent:45,minimum:8000},other:{percent:40,minimum:7000}},
+  {min:35501,dhaka:{percent:50,minimum:19500},major:{percent:40,minimum:16000},other:{percent:35,minimum:13800}}
 ];
 
 export const PROMO_RULES={
@@ -180,6 +180,10 @@ export function conveyanceAllowance2026(grade,zone='other',applicable=true){
   return applicable&&city&&Number(grade)>=11?600:0;
 }
 export function mobileAllowance2026(grade,applicable=true){return applicable?(Number(grade)<=5?500:150):0}
+export function chargeAllowance2026(applicable=false){return applicable?1500:0}
+export function entertainmentAllowance2026(tier='none'){
+  return ({cabinet:2000,secretary:1000,additional_secretary:900,joint_secretary:600}[tier]||0);
+}
 export function areaAllowance2026(basic,type='none'){
   const b=Number(basic||0);
   if(type==='hill_district')return Math.min(Math.round(b*.20),5000);
@@ -190,7 +194,8 @@ export function areaAllowance2026(basic,type='none'){
 export function salary2026Snapshot({
   grade,currentBasic,date='2026-07-01',incrementEligible2026=true,housing='no',zone='dhaka',
   ageBand='under50',children=0,tiffin=true,conveyance=true,mobile=true,laundry=false,
-  disabledChildren=0,areaType='none',trainingInstructor=false
+  disabledChildren=0,areaType='none',trainingInstructor=false,chargeAllowance=false,
+  entertainmentTier='none',otherSpecialAllowance=0
 }={}){
   const g=Number(grade||20),oldBasic=Number(currentBasic||0),d=String(date||'').slice(0,10);
   const fixed=fixed2026(g,oldBasic);
@@ -201,7 +206,7 @@ export function salary2026Snapshot({
   const fullWithIncrements=d>='2027-07-01'?incremented2026Basic(g,fixed,dueIncrementCount):fixed;
   const payableBasic=d<'2026-07-01'?oldBasic:(d<'2027-07-01'?oldBasic+implementedDifference:fullWithIncrements);
   const allowance2026=d>='2028-01-01';
-  let house=0,medical=0,education=0,tiffinAmt=0,conveyanceAmt=0,mobileAmt=0,laundryAmt=0,disabledChildAmt=0,areaAmt=0,trainingAmt=0;
+  let house=0,medical=0,education=0,tiffinAmt=0,conveyanceAmt=0,mobileAmt=0,laundryAmt=0,disabledChildAmt=0,areaAmt=0,trainingAmt=0,chargeAmt=0,entertainmentAmt=0,otherSpecialAmt=0;
   if(allowance2026){
     house=houseRent2026(g,payableBasic,zone,housing);
     medical=medicalAllowance2026(ageBand);
@@ -213,14 +218,17 @@ export function salary2026Snapshot({
     disabledChildAmt=Math.min(2,Math.max(0,Number(disabledChildren)||0))*3000;
     areaAmt=areaAllowance2026(payableBasic,areaType);
     trainingAmt=trainingInstructor&&g<=9?Math.round(payableBasic*.20):0;
+    chargeAmt=chargeAllowance2026(chargeAllowance);
+    entertainmentAmt=entertainmentAllowance2026(entertainmentTier);
+    otherSpecialAmt=Math.max(0,Number(otherSpecialAllowance)||0);
   }else{
-    house=Math.round(houseRent2015(oldBasic,housing));
+    house=Math.round(houseRent2015(oldBasic,housing,zone));
     medical=1500;
     education=Math.min(Number(children||0),2)*500;
     tiffinAmt=tiffin&&g>=11?200:0;
     conveyanceAmt=conveyance&&(zone==='dhaka'||zone==='major')&&g>=11?300:0;
   }
-  const allowances={house,medical,education,tiffin:tiffinAmt,conveyance:conveyanceAmt,mobile:mobileAmt,laundry:laundryAmt,disabledChild:disabledChildAmt,area:areaAmt,training:trainingAmt};
+  const allowances={house,medical,education,tiffin:tiffinAmt,conveyance:conveyanceAmt,mobile:mobileAmt,laundry:laundryAmt,disabledChild:disabledChildAmt,area:areaAmt,training:trainingAmt,charge:chargeAmt,entertainment:entertainmentAmt,otherSpecial:otherSpecialAmt};
   const totalAllowances=Object.values(allowances).reduce((a,b)=>a+Number(b||0),0);
   const gross=payableBasic+totalAllowances;
   const banglaNewYear=allowance2026?Math.round(payableBasic*.15):null;
@@ -229,9 +237,12 @@ export function salary2026Snapshot({
     houseRate:allowance2026&&housing!=='yes'?houseRentRate2026(g,zone):0};
 }
 
-export function houseRent2015(basic,housing){
+export function houseRent2015(basic,housing,zone='dhaka'){
   if(housing==='yes')return 0;
   const b=Number(basic||0);
   const band=HOUSE_RENT_2015.find(r=>(r.min==null||b>=r.min)&&(r.max==null||b<=r.max));
-  return band?Math.max(b*band.percent/100,band.minimum):0;
+  if(!band)return 0;
+  const z=zone==='dhaka'?'dhaka':((zone==='major'||zone==='savar')?'major':'other');
+  const rule=band[z]||band.other;
+  return Math.max(b*rule.percent/100,rule.minimum);
 }
