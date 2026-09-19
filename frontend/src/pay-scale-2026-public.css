@@ -664,3 +664,32 @@ html[lang="en"] .pay-nav-link::after{content:"NEW"}
   }
   .active-tool-bar button{justify-content:center}
 }
+
+
+/* Clear numeric typography: Bangla copy stays Hind Siliguri, numeric data uses Inter/Latin digits */
+.public-pay-hub select,
+.public-pay-hub option,
+.public-pay-hub input[type="number"],
+.public-pay-hub input[type="date"],
+.public-pay-hub .salary-summary b,
+.public-pay-hub .money-row b,
+.public-pay-hub .result-panel h3,
+.public-pay-hub .pay-year-grid article>b,
+.public-pay-hub .pay-year-grid article strong,
+.public-pay-hub .du-auto-deduction-card b,
+.public-pay-hub .public-pay-table td,
+.public-pay-hub .public-pay-table th,
+.three-year-pdf-section .year-pdf-card b{
+  font-family:"Inter","Hind Siliguri","Noto Sans Bengali",Arial,sans-serif;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:0;
+}
+.public-pay-hub select,
+.public-pay-hub option{
+  font-weight:600;
+}
+.public-pay-hub .salary-summary b,
+.public-pay-hub .result-panel h3,
+.public-pay-hub .pay-year-grid article>b{
+  font-weight:800;
+}
