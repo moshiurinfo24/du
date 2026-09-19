@@ -2347,9 +2347,9 @@ function HouseAllocationPoints({lang='bn',publicMode=false}){
   </section>
 }
 
-function CalculatorCenter({lang='bn',onPage}){
+function CalculatorCenter({lang='bn',onPage,publicMode=false,initialTool='service',singleTool=false}){
   const en=lang==='en';
-  const [tool,setTool]=useState('service');
+  const [tool,setTool]=useState(initialTool||'service');
   const [career,setCareer]=useState({profile:null,education:[],events:[]});
   const [service,setService]=useState({start:'',end:todayLocalIso()});
   const [age,setAge]=useState({dob:'',asOf:todayLocalIso()});
@@ -2358,14 +2358,16 @@ function CalculatorCenter({lang='bn',onPage}){
   const [basicProj,setBasicProj]=useState({grade:'13',stage:'0',date:'2027-07-01'});
   const [result,setResult]=useState(null);
 
+  useEffect(()=>{setTool(initialTool||'service');setResult(null)},[initialTool]);
   useEffect(()=>{
+    if(publicMode)return;
     api('/api/my-career').then(x=>{
       setCareer({profile:x.profile||null,education:x.education||[],events:x.events||[]});
       const p=x.profile||{};
       if(p.first_joining_date)setService(v=>({...v,start:p.first_joining_date}));
       if(p.retirement_age)setRetire(v=>({...v,age:String(p.retirement_age)}));
     }).catch(()=>{});
-  },[]);
+  },[publicMode]);
 
   const validDate=v=>!!v&&!isNaN(new Date(v+'T00:00:00'));
   const dateObj=v=>new Date(v+'T00:00:00');
@@ -2415,30 +2417,29 @@ function CalculatorCenter({lang='bn',onPage}){
   ];
   const stages=PAY2015[basicProj.grade]||[];
 
-  return <div className="calculator-center advanced-calculator-center">
-    <section className="advanced-calc-hero">
+  return <div className={`calculator-center advanced-calculator-center ${publicMode?'public-single-calculator':''}`}>
+    {!singleTool&&<section className="advanced-calc-hero">
       <div><span>{en?'ADVANCED CALCULATOR CENTER':'উন্নত ক্যালকুলেটর সেন্টার'}</span><h2>{en?'Smart calculations from your own data':'নিজের তথ্য থেকে স্মার্ট হিসাব'}</h2><p>{en?'Use career, date, service and pay tools from one calculation center.':'ক্যারিয়ার, তারিখ, চাকরিকাল ও বেতন-সংক্রান্ত হিসাব এক জায়গা থেকে ব্যবহার করুন।'}</p></div>
-      
-    </section>
+    </section>}
 
-    <div className="calc-hub-grid">
+    {!singleTool&&<div className="calc-hub-grid">
       <button className="calc-hub-card promotion" onClick={()=>onPage?.('promotion')}><TrendingUp/><div><b>{en?'Promotion Calculator':'পদোন্নতি হিসাব'}</b><small>{en?'Promotion rules and roadmap':'পদোন্নতি নিয়ম ও রোডম্যাপ'}</small></div><ChevronRight/></button>
       <button className="calc-hub-card salary" onClick={()=>onPage?.('salary')}><WalletCards/><div><b>{en?'Pay Scale Calculator':'পে-স্কেল হিসাব'}</b><small>{en?'Fixation, gross, deductions and payslip':'ফিক্সেশন, মোট বেতন, কর্তন ও পে-স্লিপ'}</small></div><ChevronRight/></button>
       <button className="calc-hub-card points" onClick={()=>onPage?.('points')}><Award/><div><b>{en?'Points Calculator':'পয়েন্ট ক্যালকুলেটর'}</b><small>{en?'Service, education and house-allocation points':'সার্ভিস, শিক্ষাগত যোগ্যতা ও বাসা বরাদ্দ পয়েন্ট'}</small></div><ChevronRight/></button>
-    </div>
+    </div>}
 
-    {career.profile&&<section className="calc-personal-data-strip">
+    {!publicMode&&career.profile&&<section className="calc-personal-data-strip">
       <div><BookUser/><div><small>{en?'Personal data detected':'ব্যক্তিগত তথ্য পাওয়া গেছে'}</small><b>{career.profile.current_post||'—'} · {career.profile.current_grade?`${en?'Grade':'গ্রেড'} ${career.profile.current_grade}`:'—'}</b></div></div>
       <button onClick={()=>onPage?.('career')}>{en?'Update My Career':'আমার চাকরি আপডেট'}<ChevronRight size={14}/></button>
     </section>}
 
-    <div className="calculator-tabs">
+    {!singleTool&&<div className="calculator-tabs">
       {tools.map(([k,I,l])=><button key={k} className={tool===k?'active':''} onClick={()=>{setTool(k);setResult(null)}}><I size={17}/>{l}</button>)}
-    </div>
+    </div>}
 
     <section className="calc-card calculator-tool-card">
       {tool==='service'&&<>
-        <div className="tool-head"><Clock3/><div><h3>{en?'Service Length Calculator':'চাকরিকাল হিসাব'}</h3><p>{en?'Your first joining date is auto-filled from My Career when available.':'আমার চাকরি থেকে প্রথম যোগদানের তারিখ থাকলে স্বয়ংক্রিয়ভাবে বসবে।'}</p></div></div>
+        <div className="tool-head"><Clock3/><div><h3>{en?'Service Length Calculator':'চাকরিকাল হিসাব'}</h3><p>{publicMode?(en?'Enter the joining/start date to calculate exact service length.':'যোগদান/শুরুর তারিখ দিয়ে সঠিক চাকরিকাল হিসাব করুন।'):(en?'Your first joining date is auto-filled from My Career when available.':'আমার চাকরি থেকে প্রথম যোগদানের তারিখ থাকলে স্বয়ংক্রিয়ভাবে বসবে।')}</p></div></div>
         <div className="form-grid"><DMY label={en?'Joining / start date':'যোগদান / শুরুর তারিখ'} value={service.start} onChange={v=>setService({...service,start:v})}/></div>
         <div className="notice"><b>{en?'As of:':'হিসাব পর্যন্ত:'}</b> {fmtDateLang(todayLocalIso(),lang)}</div>
         <button className="primary wide" onClick={calcService}>{en?'Calculate Service Length':'চাকরিকাল হিসাব করুন'}</button>
