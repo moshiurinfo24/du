@@ -474,3 +474,92 @@
   .pwa-app-shell .pwa-welcome-meta small{color:#7A879B!important;opacity:1!important}
   .pwa-app-shell .pwa-welcome-meta b{color:#35466F!important}
 }
+
+
+/* Desktop sidebar V6 — light premium navigation */
+@media(min-width:901px){
+  .pwa-desktop-sidebar{
+    background:
+      radial-gradient(circle at 12% 0,rgba(80,98,202,.08),transparent 30%),
+      linear-gradient(180deg,#F7F9FC 0%,#F3F6FB 58%,#EEF3F8 100%)!important;
+    color:#35425A!important;
+    border-right:1px solid #DCE3F0!important;
+    box-shadow:10px 0 30px rgba(41,58,140,.055)!important
+  }
+
+  .pwa-desktop-brand{
+    color:#293A8C!important;
+    border-bottom:1px solid #DCE3F0!important
+  }
+  .pwa-desktop-brand>span{
+    background:linear-gradient(145deg,#EEF2FF,#E5F8F6)!important;
+    color:#3F51B5!important;
+    box-shadow:none!important;
+    border:1px solid #D9E1F3
+  }
+  .pwa-desktop-brand b{color:#293A8C!important}
+  .pwa-desktop-brand small{color:#74819A!important}
+
+  .pwa-desktop-nav{
+    scrollbar-color:#C8D0E3 transparent
+  }
+  .pwa-desktop-nav-group>small{
+    color:#8A96AB!important
+  }
+  .pwa-desktop-nav-group button{
+    color:#55637A!important;
+    background:transparent!important;
+    border-color:transparent!important
+  }
+  .pwa-desktop-nav-group button svg{
+    color:#7C89A0!important
+  }
+  .pwa-desktop-nav-group button:hover{
+    color:#293A8C!important;
+    background:#EEF2FF!important;
+    border-color:#E0E6F3!important;
+    transform:translateX(1px)
+  }
+  .pwa-desktop-nav-group button:hover svg{
+    color:#3F51B5!important
+  }
+  .pwa-desktop-nav-group button.active{
+    color:#293A8C!important;
+    background:linear-gradient(90deg,#E9EDFF 0%,#EAF8F7 100%)!important;
+    border-color:#D4DDF2!important;
+    box-shadow:inset 3px 0 0 #18A7A0,0 7px 18px rgba(41,58,140,.055)!important
+  }
+  .pwa-desktop-nav-group button.active svg{
+    color:#18A7A0!important
+  }
+  .pwa-desktop-nav-group.personal{
+    border-top:1px solid #DCE3F0!important
+  }
+
+  .pwa-desktop-sidebar-footer{
+    border-top:1px solid #DCE3F0!important
+  }
+  .pwa-desktop-sync{
+    background:linear-gradient(145deg,#FFFFFF,#EAF8F7)!important;
+    border-color:#CFE8E5!important;
+    color:#2E5F5A!important;
+    box-shadow:0 6px 18px rgba(24,167,160,.055)
+  }
+  .pwa-desktop-sync>svg:first-child{
+    background:#E1F5F2!important;
+    color:#168B84!important
+  }
+  .pwa-desktop-sync>svg:last-child{
+    color:#6C8A86!important
+  }
+  .pwa-desktop-sync b{color:#2E5F5A!important}
+  .pwa-desktop-sync small{color:#6D8582!important}
+  .pwa-desktop-disclaimer{color:#8793A8!important}
+
+  .pwa-desktop-nav-group button:focus-visible,
+  .pwa-desktop-brand:focus-visible,
+  .pwa-desktop-sync:focus-visible{
+    outline:2px solid rgba(63,81,181,.28);
+    outline-offset:2px
+  }
+}
