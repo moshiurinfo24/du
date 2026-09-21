@@ -1,45 +1,45 @@
-/* DU PWA Mobile V1 — magenta mobile app shell inspired by modern Bangladeshi wallet UX */
+/* DU PWA Mobile V1 — Indigo + Aqua mobile app shell inspired by modern Bangladeshi wallet UX */
 :root{
-  --du-app-primary:#c2185b;
-  --du-app-primary-dark:#8e1748;
-  --du-app-primary-soft:#fff0f6;
-  --du-app-primary-pale:#fff5f8;
+  --du-app-primary:#3F51B5;
+  --du-app-primary-dark:#293A8C;
+  --du-app-primary-soft:#EEF2FF;
+  --du-app-primary-pale:#F7F9FC;
   --du-app-ink:#27313a;
   --du-app-muted:#75808a;
-  --du-app-border:#f0d7e3;
+  --du-app-border:#DCE3F0;
 }
 
 .pwa-controls{position:relative;display:flex;align-items:center;gap:7px}
 .pwa-status-button,.pwa-install-button{
-  min-height:36px;border-radius:11px;border:1px solid #ead6df;background:#fff;color:#43343b;
+  min-height:36px;border-radius:11px;border:1px solid #DCE3F0;background:#fff;color:#465166;
   display:inline-flex;align-items:center;gap:7px;padding:0 10px;font:700 10px/1.1 "Hind Siliguri","Inter",sans-serif;cursor:pointer
 }
 .pwa-status-button svg,.pwa-install-button svg{width:14px;height:14px}
-.pwa-install-button{border-color:#c2185b;background:linear-gradient(135deg,#e83e7d,#c2185b);color:#fff;box-shadow:0 6px 14px rgba(212,20,104,.18)}
-.pwa-status-button small{display:block;color:#85737c;font:600 8px/1.1 "Inter","Hind Siliguri",sans-serif}
+.pwa-install-button{border-color:#3F51B5;background:linear-gradient(135deg,#5062CA,#3F51B5);color:#fff;box-shadow:0 6px 14px rgba(63,81,181,.18)}
+.pwa-status-button small{display:block;color:#75808F;font:600 8px/1.1 "Inter","Hind Siliguri",sans-serif}
 .pwa-status-button>span{display:flex;flex-direction:column;align-items:flex-start}
 .pwa-status-button.updating svg{animation:duPwaSpin 1s linear infinite}
 @keyframes duPwaSpin{to{transform:rotate(360deg)}}
 
 .pwa-status-popover{
   position:absolute;z-index:5000;right:0;top:44px;width:min(330px,calc(100vw - 24px));
-  border:1px solid #edd9e3;border-radius:18px;background:#fff;box-shadow:0 20px 48px rgba(70,22,44,.18);
-  padding:15px;color:#3a3135
+  border:1px solid #DCE3F0;border-radius:18px;background:#fff;box-shadow:0 20px 48px rgba(70,22,44,.18);
+  padding:15px;color:#3D4759
 }
-.pwa-status-popover:before{content:"";position:absolute;right:28px;top:-7px;width:13px;height:13px;background:#fff;border-left:1px solid #edd9e3;border-top:1px solid #edd9e3;transform:rotate(45deg)}
+.pwa-status-popover:before{content:"";position:absolute;right:28px;top:-7px;width:13px;height:13px;background:#fff;border-left:1px solid #DCE3F0;border-top:1px solid #DCE3F0;transform:rotate(45deg)}
 .pwa-status-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-.pwa-status-head>span{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:linear-gradient(145deg,#f02b83,#8e1748);color:#fff;box-shadow:0 7px 15px rgba(212,20,104,.22)}
+.pwa-status-head>span{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:linear-gradient(145deg,#5062CA,#293A8C);color:#fff;box-shadow:0 7px 15px rgba(63,81,181,.22)}
 .pwa-status-head svg{width:18px;height:18px}
-.pwa-status-head b{display:block;font-size:13px;color:#54203a}
-.pwa-status-head small{display:block;margin-top:1px;font-size:9px;color:#8b7881}
+.pwa-status-head b{display:block;font-size:13px;color:#293A8C}
+.pwa-status-head small{display:block;margin-top:1px;font-size:9px;color:#7B8594}
 .pwa-status-grid{display:grid;gap:7px}
-.pwa-status-grid>div{padding:10px 11px;border:1px solid #f0e3e9;border-radius:11px;background:linear-gradient(145deg,#fff,#fff8fb)}
-.pwa-status-grid small{display:block;font-size:8.5px;color:#96828b}
-.pwa-status-grid b{display:block;margin-top:2px;font-size:10.5px;color:#44343b}
+.pwa-status-grid>div{padding:10px 11px;border:1px solid #E5E9F2;border-radius:11px;background:linear-gradient(145deg,#fff,#fff8fb)}
+.pwa-status-grid small{display:block;font-size:8.5px;color:#7B8594}
+.pwa-status-grid b{display:block;margin-top:2px;font-size:10.5px;color:#465166}
 .pwa-status-actions{display:flex;gap:7px;margin-top:11px}
 .pwa-status-actions button{flex:1;min-height:38px;border:0;border-radius:10px;font-weight:800;font-size:10px;cursor:pointer}
-.pwa-status-actions .check{background:#f8e8f0;color:#8e1748}
-.pwa-status-actions .install{background:linear-gradient(135deg,#e83e7d,#bd105a);color:#fff}
+.pwa-status-actions .check{background:#EEF2FF;color:#293A8C}
+.pwa-status-actions .install{background:linear-gradient(135deg,#5062CA,#3F51B5);color:#fff}
 .pwa-ios-help{margin-top:9px;padding:9px 10px;border-radius:10px;background:#fff5df;color:#705b2c;font-size:9.5px;line-height:1.5}
 .pwa-update-toast{
   position:fixed;z-index:9999;left:50%;bottom:90px;transform:translateX(-50%);
@@ -48,23 +48,23 @@
   display:flex;align-items:center;gap:10px;font:700 11px/1.35 "Hind Siliguri","Inter",sans-serif
 }
 .pwa-update-toast svg{width:18px;height:18px;animation:duPwaSpin 1s linear infinite;color:#ff82b7}
-.pwa-update-complete{background:linear-gradient(135deg,#3b2631,#6a2447)}
+.pwa-update-complete{background:linear-gradient(135deg,#3b2631,#33457F)}
 .pwa-update-complete svg{animation:none!important;color:#8ff0bd!important}
 .pwa-update-complete>span{min-width:0;flex:1;display:flex;flex-direction:column;gap:1px}
 .pwa-update-complete b{font-size:11px;color:#fff}
-.pwa-update-complete small{font-size:9px;color:#e8cbd8;font-weight:600}
+.pwa-update-complete small{font-size:9px;color:#DCE3F0;font-weight:600}
 .pwa-update-complete button{width:28px;height:28px;display:grid;place-items:center;border:0;border-radius:8px;background:rgba(255,255,255,.10);color:#fff;cursor:pointer}
 .pwa-install-nudge{
   position:fixed;z-index:4500;left:12px;right:12px;bottom:84px;margin:auto;max-width:430px;
-  display:flex;align-items:center;gap:10px;padding:12px;border:1px solid #f0bfd5;border-radius:16px;
-  background:linear-gradient(135deg,#fff,#fff1f7);box-shadow:0 18px 40px rgba(98,27,60,.18)
+  display:flex;align-items:center;gap:10px;padding:12px;border:1px solid #CFD7FB;border-radius:16px;
+  background:linear-gradient(135deg,#fff,#F7F9FC);box-shadow:0 18px 40px rgba(41,58,140,.16)
 }
-.pwa-install-nudge .app-mark{width:42px;height:42px;display:grid;place-items:center;border-radius:13px;background:linear-gradient(145deg,#f02b83,#af0c52);color:#fff;font:900 14px/1 "Inter",sans-serif;box-shadow:0 8px 16px rgba(212,20,104,.22)}
+.pwa-install-nudge .app-mark{width:42px;height:42px;display:grid;place-items:center;border-radius:13px;background:linear-gradient(145deg,#5062CA,#293A8C);color:#fff;font:900 14px/1 "Inter",sans-serif;box-shadow:0 8px 16px rgba(63,81,181,.22)}
 .pwa-install-nudge div{min-width:0;flex:1}
-.pwa-install-nudge b{display:block;color:#57223b;font-size:12px}
-.pwa-install-nudge small{display:block;margin-top:2px;color:#8a717d;font-size:9px;line-height:1.35}
-.pwa-install-nudge button{border:0;border-radius:10px;background:#c2185b;color:#fff;padding:9px 12px;font-size:10px;font-weight:800;cursor:pointer}
-.pwa-install-nudge .dismiss{background:transparent;color:#96747f;padding:7px}
+.pwa-install-nudge b{display:block;color:#293A8C;font-size:12px}
+.pwa-install-nudge small{display:block;margin-top:2px;color:#667690;font-size:9px;line-height:1.35}
+.pwa-install-nudge button{border:0;border-radius:10px;background:#3F51B5;color:#fff;padding:9px 12px;font-size:10px;font-weight:800;cursor:pointer}
+.pwa-install-nudge .dismiss{background:transparent;color:#667690;padding:7px}
 
 @media(max-width:900px){
   html,body,#root{background:var(--du-app-primary-pale)}
@@ -72,13 +72,13 @@
   button,input,select,textarea{font-family:"Hind Siliguri","Inter",sans-serif}
 
   .app{background:var(--du-app-primary-pale)!important}
-  .app main{background:linear-gradient(180deg,#fff5f8 0,#fff 210px,#f8f9fb 100%)!important;padding-bottom:86px!important}
+  .app main{background:linear-gradient(180deg,#F7F9FC 0,#fff 210px,#f8f9fb 100%)!important;padding-bottom:86px!important}
   .app-topbar{
     position:sticky!important;top:0!important;z-index:300!important;
     margin:0!important;padding:calc(10px + env(safe-area-inset-top)) 14px 10px!important;
     border:0!important;border-radius:0 0 22px 22px!important;
-    background:linear-gradient(135deg,#e83e7d 0%,#c2185b 62%,#8e1748 100%)!important;
-    color:#fff!important;box-shadow:0 8px 22px rgba(167,12,78,.18)!important
+    background:linear-gradient(135deg,#5062CA 0%,#3F51B5 62%,#293A8C 100%)!important;
+    color:#fff!important;box-shadow:0 8px 22px rgba(41,58,140,.18)!important
   }
   .app-topbar h2,.app-topbar p{color:#fff!important}
   .app-topbar p{opacity:.78!important}
@@ -90,77 +90,77 @@
     position:fixed!important;z-index:900!important;left:0!important;right:0!important;bottom:0!important;
     height:calc(70px + env(safe-area-inset-bottom))!important;padding:7px 8px env(safe-area-inset-bottom)!important;
     display:grid!important;grid-template-columns:repeat(5,1fr)!important;gap:2px!important;
-    border:0!important;border-top:1px solid #f0dce5!important;border-radius:20px 20px 0 0!important;
+    border:0!important;border-top:1px solid #E5E9F2!important;border-radius:20px 20px 0 0!important;
     background:rgba(255,255,255,.97)!important;backdrop-filter:blur(18px)!important;
-    box-shadow:0 -10px 28px rgba(78,24,48,.10)!important
+    box-shadow:0 -10px 28px rgba(41,58,140,.10)!important
   }
   .mobile-bottom-nav button{
-    min-width:0!important;border:0!important;background:transparent!important;color:#86747c!important;
+    min-width:0!important;border:0!important;background:transparent!important;color:#75808F!important;
     display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;
     gap:3px!important;padding:4px!important;border-radius:12px!important;font-size:9px!important;font-weight:700!important
   }
   .mobile-bottom-nav button svg{width:20px!important;height:20px!important}
-  .mobile-bottom-nav button.active{color:#c2185b!important;background:#fff0f6!important}
-  .mobile-bottom-nav button.active svg{filter:drop-shadow(0 4px 6px rgba(212,20,104,.2))}
+  .mobile-bottom-nav button.active{color:#3F51B5!important;background:#EEF2FF!important}
+  .mobile-bottom-nav button.active svg{filter:drop-shadow(0 4px 6px rgba(63,81,181,.20))}
 
   .side.mobile-open{
-    border-radius:0 24px 24px 0!important;background:#fff!important;box-shadow:18px 0 42px rgba(76,24,47,.18)!important
+    border-radius:0 24px 24px 0!important;background:#fff!important;box-shadow:18px 0 42px rgba(41,58,140,.16)!important
   }
-  .side .brand{background:linear-gradient(135deg,#e83e7d,#8e1748)!important;color:#fff!important}
+  .side .brand{background:linear-gradient(135deg,#5062CA,#293A8C)!important;color:#fff!important}
   .side .brand b,.side .brand small{color:#fff!important}
-  .smart-side-nav button.active{background:#fff0f6!important;color:#bd105a!important;border-color:#f1c9dc!important}
+  .smart-side-nav button.active{background:#EEF2FF!important;color:#3F51B5!important;border-color:#D9E0FA!important}
   .smart-side-nav .side-group>small{color:#c25383!important}
 
   .app .calc-card,.app .dashboard-card,.app .panel,.app section{
-    border-color:#efe2e8;
+    border-color:#E5E9F2;
   }
   .app .primary,.app button.primary{
-    background:linear-gradient(135deg,#e83e7d,#be105b)!important;border-color:#bd105a!important;color:#fff!important;
-    box-shadow:0 8px 18px rgba(212,20,104,.18)!important
+    background:linear-gradient(135deg,#5062CA,#3F51B5)!important;border-color:#3F51B5!important;color:#fff!important;
+    box-shadow:0 8px 18px rgba(63,81,181,.18)!important
   }
   .app input:focus,.app select:focus,.app textarea:focus{
-    border-color:#c2185b!important;box-shadow:0 0 0 3px rgba(212,20,104,.10)!important
+    border-color:#3F51B5!important;box-shadow:0 0 0 3px rgba(63,81,181,.10)!important
   }
 
   .approved-home{background:var(--du-app-primary-pale)!important;padding-bottom:84px!important}
   .approved-home .approved-header{
-    border-bottom:1px solid #f1dce6!important;background:rgba(255,255,255,.96)!important;backdrop-filter:blur(16px)!important
+    border-bottom:1px solid #E5E9F2!important;background:rgba(255,255,255,.96)!important;backdrop-filter:blur(16px)!important
   }
   .approved-home .du-home-hero{
     background:
       radial-gradient(circle at 88% 10%,rgba(255,255,255,.18),transparent 26%),
-      linear-gradient(145deg,#e83e7d 0%,#c2185b 62%,#8e1748 100%)!important
+      linear-gradient(145deg,#5062CA 0%,#3F51B5 62%,#293A8C 100%)!important
   }
   .approved-home .approved-kicker{background:rgba(255,255,255,.14)!important}
   .approved-home .approved-hero-buttons .primary{
-    background:#fff!important;color:#b10d53!important;border-color:#fff!important;box-shadow:0 8px 20px rgba(74,8,37,.16)!important
+    background:#fff!important;color:#3F51B5!important;border-color:#fff!important;box-shadow:0 8px 20px rgba(41,58,140,.16)!important
   }
   .approved-home .approved-hero-buttons .secondary{
     border-color:rgba(255,255,255,.38)!important;background:rgba(255,255,255,.10)!important;color:#fff!important
   }
   .approved-home .calculator-hub-grid>button.active,
-  .approved-home .calculator-hub-grid>button:hover{border-color:#e7a9c5!important}
-  .approved-home .hub-icon{background:#fff0f6!important;color:#c30f5b!important}
+  .approved-home .calculator-hub-grid>button:hover{border-color:#C7D0F5!important}
+  .approved-home .hub-icon{background:#EEF2FF!important;color:#3F51B5!important}
   .approved-home .salary-step-strip>div>span,
   .approved-home .salary-form-section-title>span,
   .approved-home .du-category-rule-strip>svg,
   .approved-home .salary-auto-summary svg{
-    background:linear-gradient(145deg,#e83e7d,#8e1748)!important
+    background:linear-gradient(145deg,#5062CA,#293A8C)!important
   }
   .approved-home .salary-submit-bar .primary{
-    background:linear-gradient(135deg,#e83e7d,#8e1748)!important
+    background:linear-gradient(135deg,#5062CA,#293A8C)!important
   }
 
   .public-mobile-dock{
     grid-template-columns:repeat(5,1fr)!important;
     height:calc(70px + env(safe-area-inset-bottom))!important;
     padding:7px 6px env(safe-area-inset-bottom)!important;
-    border-radius:20px 20px 0 0!important;border-top:1px solid #f0dce5!important;
-    background:rgba(255,255,255,.97)!important;box-shadow:0 -10px 28px rgba(78,24,48,.10)!important;
+    border-radius:20px 20px 0 0!important;border-top:1px solid #E5E9F2!important;
+    background:rgba(255,255,255,.97)!important;box-shadow:0 -10px 28px rgba(41,58,140,.10)!important;
     backdrop-filter:blur(18px)!important
   }
-  .public-mobile-dock button{color:#89747d!important;font-size:8.5px!important}
-  .public-mobile-dock button.active{color:#c2185b!important;background:#fff0f6!important}
+  .public-mobile-dock button{color:#75808F!important;font-size:8.5px!important}
+  .public-mobile-dock button.active{color:#3F51B5!important;background:#EEF2FF!important}
   .public-mobile-dock svg{width:20px!important;height:20px!important}
 
   .floating-whatsapp{bottom:86px!important}
@@ -168,7 +168,7 @@
 
   .pwa-controls{gap:4px}
   .pwa-status-button{width:36px;padding:0;justify-content:center;border-color:rgba(255,255,255,.23);background:rgba(255,255,255,.12);color:inherit}
-  .approved-header .pwa-status-button{border-color:#efdce5;background:#fff;color:#b51058}
+  .approved-header .pwa-status-button{border-color:#E5E9F2;background:#fff;color:#3F51B5}
   .pwa-status-button>span{display:none}
   .pwa-install-button{min-width:36px;padding:0 8px}
   .pwa-install-button>span{display:none}
@@ -176,7 +176,7 @@
 }
 
 @media(display-mode:standalone){
-  body{padding-top:env(safe-area-inset-top);background:#fff5f8}
+  body{padding-top:env(safe-area-inset-top);background:#F7F9FC}
   .approved-home .approved-header{top:env(safe-area-inset-top)!important}
   .pwa-install-button,.pwa-install-nudge{display:none!important}
 }
@@ -197,7 +197,7 @@
   background:
     radial-gradient(circle at 90% 8%,rgba(255,255,255,.22),transparent 24%),
     radial-gradient(circle at 8% 95%,rgba(255,219,234,.44),transparent 30%),
-    linear-gradient(150deg,#e7277b 0%,#c2185b 48%,#8e1748 100%);
+    linear-gradient(150deg,#5062CA 0%,#3F51B5 48%,#293A8C 100%);
 }
 .pwa-gate-card{
   width:min(100%,430px);margin:auto;
@@ -205,46 +205,46 @@
   border-radius:26px;
   padding:20px;
   background:rgba(255,255,255,.97);
-  box-shadow:0 28px 70px rgba(74,8,38,.28);
-  color:#352d31;
+  box-shadow:0 28px 70px rgba(41,58,140,.24);
+  color:#3D4759;
 }
 .pwa-gate-card.success{padding-top:24px}
 .pwa-gate-top{display:flex;align-items:center;gap:11px;margin-bottom:16px}
 .pwa-gate-logo{
   width:48px;height:48px;display:grid;place-items:center;flex:0 0 auto;
-  border-radius:15px;background:linear-gradient(145deg,#ef2b82,#ad0c51);color:#fff;
-  box-shadow:0 9px 20px rgba(212,20,104,.25);font:900 15px/1 "Inter",sans-serif
+  border-radius:15px;background:linear-gradient(145deg,#5062CA,#293A8C);color:#fff;
+  box-shadow:0 9px 20px rgba(63,81,181,.25);font:900 15px/1 "Inter",sans-serif
 }
-.pwa-gate-top b{display:block;color:#502038;font:800 14px/1.25 "Inter","Hind Siliguri",sans-serif}
-.pwa-gate-top small{display:block;margin-top:3px;color:#997886;font-size:10px}
+.pwa-gate-top b{display:block;color:#33457F;font:800 14px/1.25 "Inter","Hind Siliguri",sans-serif}
+.pwa-gate-top small{display:block;margin-top:3px;color:#75808F;font-size:10px}
 .pwa-gate-badge{
   display:inline-flex;align-items:center;
-  padding:5px 9px;border-radius:999px;background:#fff0f6;color:#bc1059;
+  padding:5px 9px;border-radius:999px;background:#EEF2FF;color:#3F51B5;
   font:900 9px/1 "Inter","Hind Siliguri",sans-serif;letter-spacing:.06em
 }
 .pwa-gate-card h1{
-  margin:12px 0 8px;color:#4d1832;
+  margin:12px 0 8px;color:#293A8C;
   font-size:29px;line-height:1.14;letter-spacing:-.02em
 }
 .pwa-gate-card>p{
-  margin:0;color:#78656e;font-size:12.5px;line-height:1.7
+  margin:0;color:#667690;font-size:12.5px;line-height:1.7
 }
 .pwa-gate-quick{
   display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0
 }
 .pwa-gate-quick span{
   min-height:48px;display:flex;align-items:center;gap:8px;
-  padding:9px 10px;border:1px solid #f0dce5;border-radius:12px;
-  background:linear-gradient(145deg,#fff,#fff5f8);color:#5d3b4b;
+  padding:9px 10px;border:1px solid #E5E9F2;border-radius:12px;
+  background:linear-gradient(145deg,#fff,#F7F9FC);color:#526075;
   font-size:10.5px;font-weight:800
 }
-.pwa-gate-quick svg{width:17px;height:17px;color:#c2185b}
+.pwa-gate-quick svg{width:17px;height:17px;color:#3F51B5}
 .pwa-gate-primary{
   width:100%;min-height:52px;margin-top:3px;
   border:0;border-radius:14px;
   display:flex;align-items:center;justify-content:center;gap:8px;
-  background:linear-gradient(135deg,#e83e7d,#8e1748);color:#fff;
-  box-shadow:0 11px 24px rgba(196,15,91,.23);
+  background:linear-gradient(135deg,#5062CA,#293A8C);color:#fff;
+  box-shadow:0 11px 24px rgba(63,81,181,.23);
   font-size:13px;font-weight:900;cursor:pointer
 }
 .pwa-gate-primary:disabled{opacity:.7;cursor:wait}
@@ -257,15 +257,15 @@
 .pwa-gate-auto-note svg{width:13px;height:13px;flex:0 0 auto;color:#17845d;margin-top:1px}
 .pwa-gate-link{
   display:block;margin:10px auto 0;border:0;background:transparent;
-  color:#9c6c82;font-size:10px;font-weight:700;cursor:pointer
+  color:#667690;font-size:10px;font-weight:700;cursor:pointer
 }
 .pwa-gate-foot{
-  margin-top:14px;padding-top:11px;border-top:1px solid #f1e4ea;
-  color:#a18b95;font-size:8.7px;text-align:center
+  margin-top:14px;padding-top:11px;border-top:1px solid #E9EDF5;
+  color:#75808F;font-size:8.7px;text-align:center
 }
 .pwa-gate-message,.pwa-gate-ios{
-  margin:10px 0;padding:11px 12px;border:1px solid #efd9e3;border-radius:12px;
-  background:#fff5f8;color:#785263;font-size:10px;line-height:1.5
+  margin:10px 0;padding:11px 12px;border:1px solid #E5E9F2;border-radius:12px;
+  background:#F7F9FC;color:#667690;font-size:10px;line-height:1.5
 }
 .pwa-gate-message.success{border-color:#cce8d9;background:#effaf4;color:#31684f}
 .pwa-gate-ios{display:flex;align-items:flex-start;gap:9px;background:#fff8e7;border-color:#eddfb8;color:#725c2c}
@@ -282,24 +282,24 @@
 .pwa-gate-card.success>p{max-width:360px;margin-inline:auto}
 .pwa-home-hint{
   display:flex;align-items:center;gap:11px;margin:16px 0 14px;padding:12px;
-  border:1px solid #efdbe5;border-radius:14px;background:linear-gradient(145deg,#fff,#fff6fa);text-align:left
+  border:1px solid #E5E9F2;border-radius:14px;background:linear-gradient(145deg,#fff,#F7F9FC);text-align:left
 }
 .pwa-home-app-icon{
   width:48px;height:48px;display:grid;place-items:center;flex:0 0 auto;
-  border-radius:14px;background:linear-gradient(145deg,#ef2b82,#ad0c51);color:#fff;
-  box-shadow:0 8px 18px rgba(212,20,104,.22);font:900 14px/1 "Inter",sans-serif
+  border-radius:14px;background:linear-gradient(145deg,#5062CA,#293A8C);color:#fff;
+  box-shadow:0 8px 18px rgba(63,81,181,.22);font:900 14px/1 "Inter",sans-serif
 }
-.pwa-home-hint b{display:block;color:#5a3144;font-size:11px}
-.pwa-home-hint small{display:block;margin-top:3px;color:#9a7b89;font-size:9px}
+.pwa-home-hint b{display:block;color:#293A8C;font-size:11px}
+.pwa-home-hint small{display:block;margin-top:3px;color:#667690;font-size:9px}
 .pwa-gate-service-title{
-  margin:3px 0 8px;color:#816a75;font-size:9px;font-weight:800;text-align:left
+  margin:3px 0 8px;color:#667690;font-size:9px;font-weight:800;text-align:left
 }
 .pwa-gate-services{display:grid;grid-template-columns:1fr 1fr;gap:7px;text-align:left}
 .pwa-gate-services span{
   display:flex;align-items:center;gap:7px;min-height:43px;padding:8px 9px;
-  border:1px solid #f0e2e8;border-radius:11px;background:#fff;color:#57424c
+  border:1px solid #E5E9F2;border-radius:11px;background:#fff;color:#526075
 }
-.pwa-gate-services svg{width:15px;height:15px;color:#cb145f}
+.pwa-gate-services svg{width:15px;height:15px;color:#3F51B5}
 .pwa-gate-services b{font-size:9.5px;line-height:1.3}
 .pwa-gate-update{
   display:flex;align-items:flex-start;gap:10px;margin:14px 0 3px;padding:12px;
@@ -313,7 +313,7 @@
 .pwa-gate-update b{display:block;margin-top:1px;color:#216044;font-size:11px}
 .pwa-gate-update em{display:block;margin-top:2px;color:#7b8982;font-size:8.7px;font-style:normal}
 .pwa-gate-actions.single{margin-top:6px}
-.pwa-gate-actions.single .home-open-info{margin-top:0;background:linear-gradient(135deg,#e83e7d,#8e1748)}
+.pwa-gate-actions.single .home-open-info{margin-top:0;background:linear-gradient(135deg,#5062CA,#293A8C)}
 .pwa-gate-actions.single .home-open-info{pointer-events:none}
 
 @media(max-width:900px){
@@ -328,10 +328,10 @@
 
 .pwa-install-count{
   display:inline-flex;align-items:center;gap:5px;margin:8px 0 0;
-  padding:5px 8px;border:1px solid #efd9e3;border-radius:999px;
-  background:#fff7fa;color:#7b5365;font-size:9px;font-weight:800
+  padding:5px 8px;border:1px solid #E5E9F2;border-radius:999px;
+  background:#F7F9FC;color:#667690;font-size:9px;font-weight:800
 }
-.pwa-install-count svg{width:13px;height:13px;color:#c2185b}
+.pwa-install-count svg{width:13px;height:13px;color:#3F51B5}
 .pwa-gate-card.success .pwa-install-count{margin:9px auto 0}
 .pwa-gate-disclaimer{
   display:flex;align-items:flex-start;gap:9px;margin:12px 0;padding:11px 12px;
@@ -352,7 +352,7 @@
 .hero-nonofficial-note svg{width:15px;height:15px;flex:0 0 auto;margin-top:1px;color:#ffe3a5}
 @media(min-width:901px){
   .approved-home .hero-nonofficial-note{
-    border-color:#ead9e1;background:#fff8fb;color:#785c69
+    border-color:#E5E9F2;background:#fff8fb;color:#667690
   }
   .approved-home .hero-nonofficial-note svg{color:#a87920}
 }
@@ -366,9 +366,9 @@
 .public-install-stat svg{width:13px;height:13px}
 @media(min-width:901px){
   .approved-home .public-install-stat{
-    border-color:#efd9e3;background:#fff8fb;color:#7b5365
+    border-color:#E5E9F2;background:#fff8fb;color:#667690
   }
-  .approved-home .public-install-stat svg{color:#c2185b}
+  .approved-home .public-install-stat svg{color:#3F51B5}
 }
 
 html.mobile-pwa-hard-gate,
@@ -382,18 +382,18 @@ body.mobile-pwa-hard-gate .pwa-install-gate{
 }
 .pwa-browser-locked-note{
   display:flex;align-items:flex-start;gap:10px;margin:14px 0 6px;padding:12px;
-  border:1px solid #edcddd;border-radius:13px;background:linear-gradient(145deg,#fff7fa,#fff);
-  color:#6c4054;text-align:left
+  border:1px solid #DCE3F0;border-radius:13px;background:linear-gradient(145deg,#F7F9FC,#fff);
+  color:#526075;text-align:left
 }
 .pwa-browser-locked-note>svg{
   width:31px;height:31px;padding:7px;border-radius:10px;flex:0 0 auto;
-  background:#fff0f6;color:#c2185b
+  background:#EEF2FF;color:#3F51B5
 }
-.pwa-browser-locked-note b{display:block;color:#59253e;font-size:11px}
-.pwa-browser-locked-note span{display:block;margin-top:3px;color:#806572;font-size:9.5px;line-height:1.5}
+.pwa-browser-locked-note b{display:block;color:#33457F;font-size:11px}
+.pwa-browser-locked-note span{display:block;margin-top:3px;color:#667690;font-size:9.5px;line-height:1.5}
 .pwa-gate-browser-rule{
   display:flex;align-items:flex-start;justify-content:center;gap:6px;
-  margin:9px 0 0;padding:8px 9px;border-radius:10px;background:#fff3f7;
-  color:#7e5366;font-size:9px;line-height:1.45;text-align:left
+  margin:9px 0 0;padding:8px 9px;border-radius:10px;background:#F7F9FC;
+  color:#667690;font-size:9px;line-height:1.45;text-align:left
 }
-.pwa-gate-browser-rule svg{width:14px;height:14px;flex:0 0 auto;margin-top:1px;color:#c2185b}
+.pwa-gate-browser-rule svg{width:14px;height:14px;flex:0 0 auto;margin-top:1px;color:#3F51B5}
