@@ -8,7 +8,7 @@ let updateTimer=null;
 let versionTimer=null;
 
 const state={
-  installed:isStandalone(),
+  installed:isStandalone()||localStorage.getItem('du_pwa_installed_hint')==='1',
   canInstall:false,
   iosInstallHint:isIos&&!isStandalone(),
   build:null,
@@ -38,6 +38,8 @@ window.addEventListener('beforeinstallprompt',event=>{
 
 window.addEventListener('appinstalled',()=>{
   installPrompt=null;
+  localStorage.setItem('du_pwa_installed_hint','1');
+  localStorage.setItem('du_pwa_installed_at',new Date().toISOString());
   state.canInstall=false;
   state.installed=true;
   state.iosInstallHint=false;
@@ -56,7 +58,7 @@ export async function promptPwaInstall(){
   await p.prompt();
   const result=await p.userChoice.catch(()=>({outcome:'dismissed'}));
   if(result?.outcome==='accepted'){
-    state.installed=true;
+    localStorage.setItem('du_pwa_install_accepted','1');
     state.iosInstallHint=false;
   }
   emit();
@@ -171,8 +173,12 @@ export function initPwaRuntime(){
   started=true;
   document.documentElement.classList.toggle('pwa-standalone',isStandalone());
   window.matchMedia?.('(display-mode: standalone)').addEventListener?.('change',()=>{
-    state.installed=isStandalone();
-    document.documentElement.classList.toggle('pwa-standalone',state.installed);
+    if(isStandalone()){
+      localStorage.setItem('du_pwa_installed_hint','1');
+      if(!localStorage.getItem('du_pwa_installed_at'))localStorage.setItem('du_pwa_installed_at',new Date().toISOString());
+    }
+    state.installed=isStandalone()||localStorage.getItem('du_pwa_installed_hint')==='1';
+    document.documentElement.classList.toggle('pwa-standalone',isStandalone());
     emit();
   });
 
