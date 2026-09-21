@@ -128,8 +128,8 @@
 
 /* Standalone PWA */
 .pwa-app-shell{
-  --pwa-rose:#3F51B5!important;
-  --pwa-rose-2:#5062CA!important;
+  --pwa-indigo:#3F51B5!important;
+  --pwa-indigo-2:#5062CA!important;
   --pwa-plum:#293A8C!important;
   --pwa-soft:#EEF2FF!important;
   background:linear-gradient(180deg,#f4f7ff 0,#fff 190px,#f7f9fc 100%)!important
