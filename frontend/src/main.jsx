@@ -2632,14 +2632,15 @@ function duPayrollDeductionRules({category,date,basic,grade}={}){
   const pfRate=.10;
   const health=149.34;
 
-  // Group insurance is grade-sensitive. Only Grade 13/Class III July 2026+
-  // is verified from the supplied DU payslips; do not generalize ৳174 to all Class III grades.
+  // Group-insurance deductions are used automatically only where the category/grade/date
+  // amount has been verified. The supplied DU payslips verify Class III, Grade 13:
+  // June 2026 = 192.50 and July 2026 onward = 174.
   const verifiedGroupByGradeDate={
     'class3:13': d>='2026-07-01'?174:192.50
   };
   const groupKey=`${c}:${g}`;
-  const group=verifiedGroupByGradeDate[groupKey]??192.50;
   const groupRuleVerified=Object.prototype.hasOwnProperty.call(verifiedGroupByGradeDate,groupKey);
+  const group=groupRuleVerified?verifiedGroupByGradeDate[groupKey]:null;
 
   return {
     category:c,date:d,basic:b,grade:g,
@@ -2663,7 +2664,7 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
     ageBand:'under50',incrementEligible2026:'yes',mobile:'yes',laundry:'no',
     disabledChildren:'0',disabledBenefitElsewhere:'no',chargeAllowance:'no',otherSpecialAllowance:'0',
     deductionMode:'du_auto',category:initialProfilePrefill.category||'class3',gpfRate:'10',benevolent:'0',
-    health:'149.34',group:'192.50',stamp:'10',association:'10',tax:'0',loan:'0',other:'0'
+    health:'149.34',group:'',stamp:'10',association:'10',tax:'0',loan:'0',other:'0'
   });
   const [r,setR]=useState(null);
   const [profileAuto,setProfileAuto]=useState(Boolean(initialProfilePrefill.category||initialProfilePrefill.grade));
@@ -2686,6 +2687,7 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
   const stages=PAY2015[f.grade]||[];
   const currentIndex=Math.min(Math.max(0,Number(f.currentStage||0)),Math.max(0,stages.length-1));
   const categoryInfo=duCategoryInfo(f.category,lang);
+  const currentAutoRules=duPayrollDeductionRules({category:f.category,date:today,basic:0,grade:Number(f.grade)});
 
   function calc(){
     const grade=Number(f.grade),currentBasic=stages[currentIndex]||0,input={...f,date:today,zone:'dhaka'};
@@ -2711,7 +2713,7 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
       const beneRate=duAuto?autoRules.beneRate:info.beneRate;
       const bene=duAuto?autoRules.bene:Number(f.benevolent||0);
       const health=duAuto?autoRules.health:Number(f.health||0);
-      const group=duAuto?autoRules.group:Number(f.group||0);
+      const group=duAuto?(autoRules.groupRuleVerified?Number(autoRules.group||0):Number(f.group||0)):Number(f.group||0);
       const stamp=duAuto?autoRules.stamp:Number(f.stamp||0);
       const association=duAuto?autoRules.association:Number(f.association||0);
       const quarterRent=f.housing==='du_quarter'?Math.max(0,Number(f.duQuarterRent||0)):0;
@@ -2722,7 +2724,7 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
       const deductions=scaleLinkedDeductions+personalRecoveries;
       return {
         ...snap,label,deductionMode:f.deductionMode,category:f.category,categoryLabel:info.label,
-        deductionDate,autoRules,gpfRate,pf,beneRate,bene,health,group,stamp,association,quarterRent,quarterOther,tax,loan,other,
+        deductionDate,autoRules,autoRuleIncomplete:duAuto&&!autoRules.groupRuleVerified,gpfRate,pf,beneRate,bene,health,group,stamp,association,quarterRent,quarterOther,tax,loan,other,
         scaleLinkedDeductions,personalRecoveries,deductions,
         arrearDeductions:scaleLinkedDeductions,
         arrearNet:snap.gross-scaleLinkedDeductions,
@@ -2965,7 +2967,7 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
             <div className="du-auto-deduction-card"><small>{en?'Provident Fund':'ভবিষ্য তহবিল (PF)'}</small><b>10%</b><span>{en?'From payable basic':'প্রাপ্য মূল বেতন থেকে'}</span></div>
             <div className="du-auto-deduction-card"><small>{en?'Benevolent Fund':'কল্যাণ তহবিল'}</small><b>{numLang(categoryInfo.beneRate*100,lang,2)}%</b><span>{categoryInfo.label}</span></div>
             <div className="du-auto-deduction-card"><small>{en?'Health insurance':'স্বাস্থ্য বীমা'}</small><b>{en?'Tk 149.34':'৳ 149.34'}</b><span>{en?'Current DU payroll preset — editable in custom mode':'বর্তমান DU পে-রোল প্রিসেট — কাস্টমে পরিবর্তনযোগ্য'}</span></div>
-            <div className="du-auto-deduction-card"><small>{en?'Group insurance':'গ্রুপ বীমা'}</small><b>{en?'Tk 192.50':'৳ 192.50'}</b><span>{en?'Current DU payroll preset':'বর্তমান DU পে-রোল প্রিসেট'}</span></div>
+            <div className="du-auto-deduction-card"><small>{en?'Group insurance':'গ্রুপ বীমা'}</small><b>{currentAutoRules.groupRuleVerified?(en?`Tk ${moneyLang(currentAutoRules.group,'en')}`:`৳ ${moneyLang(currentAutoRules.group,'bn')}`):(en?'Verification required':'হার যাচাই প্রয়োজন')}</b><span>{currentAutoRules.groupRuleVerified?(en?'Verified for this category, grade and date':'এই শ্রেণি, গ্রেড ও তারিখের জন্য যাচাইকৃত'):(en?'No unverified rate is auto-applied':'অনিশ্চিত হার অটো বসানো হবে না')}</span></div>
             <div className="du-auto-deduction-card"><small>{en?'Revenue stamp':'রাজস্ব স্ট্যাম্প'}</small><b>{en?'Tk 10':'৳ 10'}</b><span>{en?'Current preset':'বর্তমান প্রিসেট'}</span></div>
             <div className="du-auto-deduction-card"><small>{en?'Association':'সমিতি'}</small><b>{en?'Tk 10':'৳ 10'}</b><span>{en?'Current preset':'বর্তমান প্রিসেট'}</span></div>
           </>:<>
@@ -2986,6 +2988,7 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
 }
 function SalaryResult({r,lang='bn',compact=false,initialCompactTab='now',onReset}){
   const en=lang==='en';
+  const autoRuleWarning=r?.autoRuleIncomplete?(en?'Group-insurance rate is not verified for this category/grade; it was not auto-assumed.':'এই শ্রেণি/গ্রেডের গ্রুপ বীমার হার যাচাইকৃত নয়; অনুমান করে অটো ধরা হয়নি।'):'';
   const [activeYear,setActiveYear]=useState(2026);
   const [resultView,setResultView]=useState('salary');
   const [compactTab,setCompactTab]=useState(initialCompactTab);
@@ -3071,6 +3074,7 @@ function SalaryResult({r,lang='bn',compact=false,initialCompactTab='now',onReset
       </div>
 
       {compactTab==='now'&&<>
+        {autoRuleWarning&&<div className="error">{autoRuleWarning}</div>}
         <section className="pwa-result-hero">
           <div><small>{en?'ESTIMATED TAKE-HOME':'আনুমানিক হাতে পাবেন'}</small><b>{amt(r.net??0)}</b><span>{r.phase?.label||''}</span></div>
           <CheckCircle2/>
