@@ -644,3 +644,72 @@
   .pwa-desktop-sync small{color:#ABC6D0!important}
   .pwa-desktop-disclaimer{color:#9EADD6!important}
 }
+
+
+/* Desktop sidebar V8 — balanced medium indigo, distinct from old navy */
+@media(min-width:901px){
+  .pwa-desktop-sidebar{
+    background:
+      radial-gradient(circle at 8% 0,rgba(122,143,230,.20),transparent 32%),
+      linear-gradient(180deg,#465DA3 0%,#3E538F 54%,#374A80 100%)!important;
+    color:#E2E8F8!important;
+    border-right:1px solid rgba(255,255,255,.10)!important;
+    box-shadow:10px 0 30px rgba(37,49,101,.10)!important
+  }
+
+  .pwa-desktop-brand{
+    border-bottom:1px solid rgba(255,255,255,.13)!important
+  }
+  .pwa-desktop-brand b{color:#F2F5FF!important}
+  .pwa-desktop-brand small{color:#C5D0EC!important}
+  .pwa-desktop-brand>span{
+    background:linear-gradient(145deg,#F5F7FF,#E9F8F6)!important;
+    color:#3F51B5!important;
+    border-color:rgba(255,255,255,.34)!important;
+    box-shadow:0 6px 16px rgba(32,43,92,.12)!important
+  }
+
+  .pwa-desktop-nav-group>small{color:#BAC6E7!important}
+  .pwa-desktop-nav-group button{
+    color:#E0E6F6!important;
+    background:transparent!important;
+    border-color:transparent!important
+  }
+  .pwa-desktop-nav-group button svg{color:#C0CAE7!important}
+
+  .pwa-desktop-nav-group button:hover{
+    color:#FFFFFF!important;
+    background:rgba(255,255,255,.09)!important;
+    border-color:rgba(255,255,255,.10)!important
+  }
+  .pwa-desktop-nav-group button:hover svg{color:#9FE4DF!important}
+
+  .pwa-desktop-nav-group button.active{
+    color:#2F416E!important;
+    background:linear-gradient(90deg,#F4F7FF 0%,#EAF8F7 100%)!important;
+    border-color:rgba(255,255,255,.35)!important;
+    box-shadow:inset 3px 0 0 #18A7A0,0 8px 20px rgba(32,43,92,.12)!important
+  }
+  .pwa-desktop-nav-group button.active svg{color:#168B84!important}
+
+  .pwa-desktop-nav-group.personal{
+    border-top:1px solid rgba(255,255,255,.11)!important
+  }
+  .pwa-desktop-sidebar-footer{
+    border-top:1px solid rgba(255,255,255,.12)!important
+  }
+
+  .pwa-desktop-sync{
+    background:linear-gradient(145deg,rgba(255,255,255,.12),rgba(182,239,234,.16))!important;
+    border-color:rgba(205,242,239,.26)!important;
+    color:#F3FBFA!important
+  }
+  .pwa-desktop-sync>svg:first-child{
+    background:rgba(230,251,249,.16)!important;
+    color:#B3EFEB!important
+  }
+  .pwa-desktop-sync>svg:last-child{color:#C4DDE0!important}
+  .pwa-desktop-sync b{color:#F4FBFA!important}
+  .pwa-desktop-sync small{color:#C5DBDE!important}
+  .pwa-desktop-disclaimer{color:#BCC7E2!important}
+}
