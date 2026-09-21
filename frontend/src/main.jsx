@@ -3006,17 +3006,30 @@ function SalaryResult({r,lang='bn',compact=false,initialCompactTab='now',onReset
 
       {compactTab==='arrear'&&<section className="pwa-compact-arrear">
         <button className="pwa-inline-back" onClick={()=>setCompactTab('now')}><ArrowLeft/>{en?'Back':'ফিরুন'}</button>
-        <div className="pwa-compact-section-head"><small>{en?'OCTOBER 2026':'অক্টোবর ২০২৬'}</small><h3>{en?'Salary + arrear':'বেতন + বকেয়া'}</h3></div>
-        <div className="pwa-arrear-total"><small>{en?'Estimated total receivable':'আনুমানিক মোট প্রাপ্য'}</small><b>{amt(arrear.octoberBillNet||0)}</b></div>
+        <div className="pwa-compact-section-head"><small>{en?'MONTHLY RECONCILIATION':'মাসভিত্তিক সমন্বয়'}</small><h3>{en?'July–October salary + arrear':'জুলাই–অক্টোবর বেতন + বকেয়া'}</h3></div>
+        <div className="pwa-arrear-total"><small>{en?'Estimated October total receivable':'অক্টোবরে আনুমানিক মোট প্রাপ্য'}</small><b>{amt(arrear.octoberBillNet||0)}</b></div>
+
+        <div className="pwa-month-settlements">
+          {(arrear.monthlySettlements||[]).map(m=><article key={m.date}>
+            <div className="pwa-month-settlement-head"><span>{en?m.monthEn:m.monthBn} 2026</span><b>{amt(m.finalArrear||0)}</b></div>
+            <div className="pwa-month-settlement-grid">
+              <span><small>{en?'Old net paid':'পুরোনো Net পাওয়া'}</small><b>{amt(m.oldPaid?.net||0)}</b></span>
+              <span><small>{en?'New net due':'নতুন Net প্রাপ্য'}</small><b>{amt(m.newEntitlement?.net||0)}</b></span>
+              <span><small>{en?'Deduction difference':'কর্তনের পার্থক্য'}</small><b>{(Number(m.deductionAdjustment||0)>=0?'+ ':'− ')+amt(Math.abs(Number(m.deductionAdjustment||0)))}</b></span>
+              <span><small>{en?'Special benefit':'বিশেষ সুবিধা'}</small><b>− {amt(m.specialAdjustment||0)}</b></span>
+            </div>
+          </article>)}
+        </div>
+
         <div className="pwa-arrear-lines">
           <div><span>{en?'30 Jun 2026 basic':'৩০ জুন ২০২৬ মূল বেতন'}</span><b>{amt(arrear.oldJuneBasic||0)}</b></div>
           <div><span>{en?'Old-scale July increment already paid':'পুরোনো স্কেলের জুলাই ইনক্রিমেন্ট ইতোমধ্যে পাওয়া'}</span><b>{amt(arrear.legacyIncrementPaid||0)}</b></div>
           <div><span>{en?'2026-scale increment step':'২০২৬ স্কেলের ইনক্রিমেন্ট ধাপ'}</span><b>{amt(arrear.newScaleIncrementAmount||0)}</b></div>
-          <div><span>{en?'October current net':'অক্টোবর চলতি নিট'}</span><b>{amt(arrear.octoberCurrentNet||0)}</b></div>
-          <div><span>{en?'Jul–Sep arrear (old payroll already offset)':'জুলাই–সেপ্টেম্বর বকেয়া (পুরোনো পে-রোল বাদসহ)'}</span><b>+ {amt(arrear.priorThreeNetArrear||0)}</b></div>
-          <div><span>{en?'Special benefit adjustment':'বিশেষ সুবিধা সমন্বয়'}</span><b>− {amt(arrear.specialBenefitReceivedAmount||0)}</b></div>
+          <div><span>{en?'Final Jul–Sep arrear':'চূড়ান্ত জুলাই–সেপ্টেম্বর বকেয়া'}</span><b>+ {amt(arrear.priorNetAfterSpecial||0)}</b></div>
+          <div><span>{en?'October current net':'অক্টোবর চলতি Net'}</span><b>+ {amt(arrear.octoberCurrentNet||0)}</b></div>
         </div>
-        <button className="pwa-arrear-pdf" disabled={!!pdfBusy} onClick={()=>directPdf(arrearReport,'arrear')}><FileText/>{en?'Arrear PDF':'বকেয়া PDF'}<Save/></button>
+        <div className="pwa-arrear-method-note">{en?'Old salary/allowances already paid are offset against the new entitlement. PF, benevolent and other deductions use only the deduction difference. Special Benefit is adjusted once per arrear month.':'আগে পাওয়া পুরোনো বেতন/ভাতা নতুন প্রাপ্যের বিপরীতে সমন্বয় হয়েছে। PF, কল্যাণ ও অন্যান্য কর্তনে শুধু কর্তনের পার্থক্য ধরা হয়েছে। Special Benefit প্রতিটি বকেয়া মাসে একবার করে সমন্বয় হয়েছে।'}</div>
+        <button className="pwa-arrear-pdf" disabled={!!pdfBusy} onClick={()=>directPdf(arrearReport,'arrear')}><FileText/>{en?'4-page A4 arrear PDF':'৪-পৃষ্ঠার A4 বকেয়া PDF'}<Save/></button>
       </section>}
 
       <div className="pwa-result-sticky-actions">
