@@ -47,6 +47,7 @@ import './du-payroll-v2-2.css';
 import './du-experience-v2-3.css';
 import './pwa-mobile-v1.css';
 import './hisab-brand-v1.css';
+import './pwa-home-v2.css';
 import {initPwaRuntime,subscribePwa,getPwaState,promptPwaInstall,formatPwaTime,manualPwaUpdateCheck,consumePwaUpdateNotice} from './pwa-client.js';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import {
@@ -1235,6 +1236,135 @@ function PublicPayScaleHub({lang='bn'}){
   </section>
 }
 
+function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,setActivePublicTool,onLogin,onSignup,pwaStats,mobileCalcOpen,setMobileCalcOpen,notices=[],policies=[]}){
+  const en=lang==='en';
+  const [appStatus,setAppStatus]=useState(()=>getPwaState());
+  const [recent,setRecent]=useState(()=>{
+    try{return JSON.parse(localStorage.getItem('hisab_recent_tools')||'[]').slice(0,3)}catch{return[]}
+  });
+  useEffect(()=>subscribePwa(setAppStatus),[]);
+  const labels={
+    salary:en?'Pay Scale':'পে-স্কেল',
+    promotion:en?'Promotion':'পদোন্নতি',
+    house:en?'House Points':'বাসা পয়েন্ট',
+    service:en?'Service Length':'চাকরিকাল',
+    age:en?'Age':'বয়স',
+    gap:en?'Date Gap':'তারিখ ব্যবধান',
+    retire:en?'Retirement':'অবসর'
+  };
+  const icons={salary:WalletCards,promotion:TrendingUp,house:Home,service:Clock3,age:UserRound,gap:CalendarDays,retire:FileClock};
+  const open=(tool)=>{
+    const next=[tool,...recent.filter(x=>x!==tool)].slice(0,3);
+    setRecent(next);
+    localStorage.setItem('hisab_recent_tools',JSON.stringify(next));
+    openPublicTool(tool);
+  };
+  const goHome=()=>{setActivePublicTool(null);setMobileCalcOpen(false);window.scrollTo({top:0,behavior:'smooth'})};
+  const updated=formatPwaTime(appStatus.lastAutoUpdateAt||appStatus.build?.built_at||'',lang);
+  const tools=[
+    ['salary',WalletCards,en?'Pay Scale':'পে-স্কেল','rose'],
+    ['promotion',TrendingUp,en?'Promotion':'পদোন্নতি','violet'],
+    ['house',Home,en?'House Points':'বাসা পয়েন্ট','gold'],
+    ['service',Clock3,en?'Service Length':'চাকরিকাল','mint'],
+    ['age',UserRound,en?'Age':'বয়স','pink'],
+    ['gap',CalendarDays,en?'Date Gap':'তারিখ ব্যবধান','blue'],
+    ['retire',FileClock,en?'Retirement':'অবসর','amber']
+  ];
+
+  if(activePublicTool){
+    const title=labels[activePublicTool]||'';
+    return <div className="pwa-app-shell pwa-tool-shell">
+      <header className="pwa-app-topbar tool">
+        <button className="pwa-round-btn" onClick={goHome} aria-label={en?'Back':'ফিরুন'}><ArrowLeft/></button>
+        <div><small>{en?'HISAB SAHAYIKA':'হিসাব সহায়িকা'}</small><b>{title}</b></div>
+        <PwaControls lang={lang}/>
+      </header>
+      <main className="pwa-tool-content">
+        {activePublicTool==='salary'&&<PublicPayScaleHub lang={lang}/>}
+        {activePublicTool==='promotion'&&<section className="public-tool-only-shell"><PromotionCenter lang={lang} publicMode={true}/></section>}
+        {activePublicTool==='house'&&<section className="public-tool-only-shell"><HouseAllocationPoints lang={lang} publicMode={true}/></section>}
+        {['service','age','gap','retire'].includes(activePublicTool)&&<section className="public-tool-only-shell"><CalculatorCenter lang={lang} publicMode={true} initialTool={activePublicTool} singleTool={true}/></section>}
+      </main>
+      <nav className="pwa-app-bottom">
+        <button onClick={goHome}><Home/><span>{en?'Home':'হোম'}</span></button>
+        <button className={activePublicTool==='salary'?'active':''} onClick={()=>open('salary')}><WalletCards/><span>{en?'Salary':'বেতন'}</span></button>
+        <button className={activePublicTool==='promotion'?'active':''} onClick={()=>open('promotion')}><TrendingUp/><span>{en?'Career':'ক্যারিয়ার'}</span></button>
+        <button onClick={()=>setMobileCalcOpen(true)}><Boxes/><span>{en?'Services':'সেবা'}</span></button>
+        <button onClick={onLogin}><UserRound/><span>{en?'Profile':'প্রোফাইল'}</span></button>
+      </nav>
+      {mobileCalcOpen&&<div className="pwa-service-sheet-backdrop" onClick={()=>setMobileCalcOpen(false)}>
+        <section className="pwa-service-sheet" onClick={e=>e.stopPropagation()}>
+          <div className="pwa-service-sheet-head"><div><small>{en?'ALL SERVICES':'সব সেবা'}</small><h3>{en?'Choose what you need':'যেটা দরকার সেটি বেছে নিন'}</h3></div><button onClick={()=>setMobileCalcOpen(false)}><X/></button></div>
+          <div className="pwa-sheet-grid">{tools.map(([key,I,title,tone])=><button key={key} onClick={()=>{setMobileCalcOpen(false);open(key)}}><span className={tone}><I/></span><b>{title}</b></button>)}</div>
+          <button className="pwa-sheet-dashboard" onClick={onLogin}><LayoutDashboard/><div><b>{en?'Personal Dashboard':'ব্যক্তিগত ড্যাশবোর্ড'}</b><small>{en?'Sign in for saved career and personal records':'সংরক্ষিত ক্যারিয়ার ও ব্যক্তিগত তথ্যের জন্য লগইন করুন'}</small></div><ChevronRight/></button>
+        </section>
+      </div>}
+    </div>;
+  }
+
+  return <div className="pwa-app-shell">
+    <header className="pwa-app-topbar">
+      <div className="pwa-app-brand"><span>হি</span><div><b>{en?'Hisab Sahayika':'হিসাব সহায়িকা'}</b><small>{en?'Independent calculation assistant':'স্বাধীন হিসাব সহায়ক অ্যাপ'}</small></div></div>
+      <div className="pwa-app-head-actions"><button className="pwa-round-btn" onClick={()=>setLang(lang==='bn'?'en':'bn')}>{en?'বাং':'EN'}</button><PwaControls lang={lang}/><button className="pwa-round-btn" onClick={onLogin}><UserRound/></button></div>
+    </header>
+
+    <main className="pwa-app-home">
+      <section className="pwa-welcome-card">
+        <div className="pwa-welcome-copy"><small>{en?'WELCOME':'স্বাগতম'}</small><h1>{en?'What would you like to calculate today?':'আজ কোন হিসাবটি করতে চান?'}</h1><p>{en?'Choose a service below and get the result in a few simple steps.':'নিচের একটি সেবা নির্বাচন করুন এবং কয়েকটি সহজ ধাপে হিসাব দেখুন।'}</p></div>
+        <div className="pwa-welcome-meta">
+          <span><RefreshCw/><div><small>{en?'Latest update':'সর্বশেষ আপডেট'}</small><b>{updated}</b></div></span>
+          <span><Users/><div><small>{en?'App installs':'অ্যাপ ইনস্টল'}</small><b>{pwaStats.total_installs==null?'—':numLang(pwaStats.total_installs,lang,0)}</b></div></span>
+        </div>
+      </section>
+
+      <section className="pwa-home-section">
+        <div className="pwa-section-head"><div><small>{en?'QUICK ACTIONS':'দ্রুত সেবা'}</small><h2>{en?'Your calculators':'আপনার প্রয়োজনীয় হিসাব'}</h2></div><button onClick={()=>setMobileCalcOpen(true)}>{en?'See all':'সব দেখুন'}<ChevronRight/></button></div>
+        <div className="pwa-quick-grid">
+          {tools.map(([key,I,title,tone])=><button key={key} onClick={()=>open(key)}><span className={tone}><I/></span><b>{title}</b></button>)}
+          <button onClick={()=>setMobileCalcOpen(true)}><span className="more"><Boxes/></span><b>{en?'More':'আরও সেবা'}</b></button>
+        </div>
+      </section>
+
+      <section className="pwa-personal-card" onClick={onLogin} role="button" tabIndex={0}>
+        <div className="pwa-personal-icon"><LayoutDashboard/></div>
+        <div><small>{en?'YOUR SPACE':'আপনার ব্যক্তিগত অংশ'}</small><h3>{en?'Personal Dashboard':'ব্যক্তিগত ড্যাশবোর্ড'}</h3><p>{en?'Sign in to view saved career, salary, leave, points and records in one place.':'লগইন করে সংরক্ষিত চাকরি, বেতন, ছুটি, পয়েন্ট ও রেকর্ড এক জায়গায় দেখুন।'}</p></div>
+        <ChevronRight/>
+      </section>
+
+      {recent.length>0&&<section className="pwa-home-section recent">
+        <div className="pwa-section-head"><div><small>{en?'RECENT':'সাম্প্রতিক'}</small><h2>{en?'Recently used':'সাম্প্রতিক ব্যবহৃত'}</h2></div></div>
+        <div className="pwa-recent-row">{recent.map(key=>{const I=icons[key]||Calculator;return <button key={key} onClick={()=>open(key)}><span><I/></span><b>{labels[key]||key}</b><ChevronRight/></button>})}</div>
+      </section>}
+
+      {(notices.length>0||policies.length>0)&&<section className="pwa-home-section pwa-info-strip">
+        <div className="pwa-section-head"><div><small>{en?'INFO':'তথ্য'}</small><h2>{en?'Useful updates':'প্রয়োজনীয় তথ্য'}</h2></div></div>
+        <div className="pwa-info-cards">
+          {notices.slice(0,1).map((x,i)=><article key={'n'+(x.id||i)}><Bell/><div><small>{en?'Notice':'নোটিশ'}</small><b>{x.title||x.name||x.subject}</b></div></article>)}
+          {policies.slice(0,1).map((x,i)=><article key={'p'+(x.id||i)}><BookOpen/><div><small>{en?'Reference':'রেফারেন্স'}</small><b>{x.title||x.name||x.subject}</b></div></article>)}
+        </div>
+      </section>}
+
+      <section className="pwa-home-footer-note"><ShieldAlert/><span>{en?'Independent and unofficial calculation assistant. No official affiliation with the University of Dhaka.':'স্বাধীন ও অনানুষ্ঠানিক হিসাব সহায়ক অ্যাপ। ঢাকা বিশ্ববিদ্যালয়ের সঙ্গে কোনো অফিসিয়াল সম্পর্ক নেই।'}</span></section>
+    </main>
+
+    <nav className="pwa-app-bottom">
+      <button className="active" onClick={goHome}><Home/><span>{en?'Home':'হোম'}</span></button>
+      <button onClick={()=>open('salary')}><WalletCards/><span>{en?'Salary':'বেতন'}</span></button>
+      <button onClick={()=>open('promotion')}><TrendingUp/><span>{en?'Career':'ক্যারিয়ার'}</span></button>
+      <button onClick={()=>setMobileCalcOpen(true)}><Boxes/><span>{en?'Services':'সেবা'}</span></button>
+      <button onClick={onLogin}><UserRound/><span>{en?'Profile':'প্রোফাইল'}</span></button>
+    </nav>
+
+    {mobileCalcOpen&&<div className="pwa-service-sheet-backdrop" onClick={()=>setMobileCalcOpen(false)}>
+      <section className="pwa-service-sheet" onClick={e=>e.stopPropagation()}>
+        <div className="pwa-service-sheet-head"><div><small>{en?'ALL SERVICES':'সব সেবা'}</small><h3>{en?'Choose what you need':'যেটা দরকার সেটি বেছে নিন'}</h3></div><button onClick={()=>setMobileCalcOpen(false)}><X/></button></div>
+        <div className="pwa-sheet-grid">{tools.map(([key,I,title,tone])=><button key={key} onClick={()=>{setMobileCalcOpen(false);open(key)}}><span className={tone}><I/></span><b>{title}</b></button>)}</div>
+        <button className="pwa-sheet-dashboard" onClick={onLogin}><LayoutDashboard/><div><b>{en?'Personal Dashboard':'ব্যক্তিগত ড্যাশবোর্ড'}</b><small>{en?'Sign in for saved career and personal records':'সংরক্ষিত ক্যারিয়ার ও ব্যক্তিগত তথ্যের জন্য লগইন করুন'}</small></div><ChevronRight/></button>
+      </section>
+    </div>}
+  </div>;
+}
+
 function PublicHome({onLogin,onSignup,lang,setLang}){
   const en=lang==='en';
   const [publicMenu,setPublicMenu]=useState(false);
@@ -1375,6 +1505,21 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
       </div>
     </div>
   </div>;
+
+  const standalonePwa=typeof window!=='undefined'&&(window.matchMedia?.('(display-mode: standalone)').matches||window.navigator.standalone===true);
+  if(standalonePwa){
+    return <PwaStandaloneShell
+      lang={lang} setLang={setLang}
+      activePublicTool={activePublicTool}
+      openPublicTool={openPublicTool}
+      setActivePublicTool={setActivePublicTool}
+      onLogin={onLogin} onSignup={onSignup}
+      pwaStats={pwaStats}
+      mobileCalcOpen={mobileCalcOpen}
+      setMobileCalcOpen={setMobileCalcOpen}
+      notices={notices} policies={policies}
+    />;
+  }
 
   return <div className="approved-home" id="home">
     <PwaMobileInstallGate lang={lang}/>
