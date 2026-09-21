@@ -50,6 +50,7 @@ import './hisab-brand-v1.css';
 import './pwa-home-v2.css';
 import './pwa-salary-compact-v1.css';
 import './hisab-indigo-aqua-v2.css';
+import './desktop-app-shell-v3.css';
 import {initPwaRuntime,subscribePwa,getPwaState,promptPwaInstall,formatPwaTime,manualPwaUpdateCheck,consumePwaUpdateNotice} from './pwa-client.js';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import GuestLocalCenter from './guest-local-v1.jsx';
@@ -1532,9 +1533,52 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
   ];
   const localMode=tool=>tool.startsWith('local-')?tool.slice(6):'dashboard';
 
+  const desktopSidebar=<aside className="pwa-desktop-sidebar" aria-label={en?'App navigation':'অ্যাপ নেভিগেশন'}>
+    <button className="pwa-desktop-brand" onClick={goHome}>
+      <span>হি</span><div><b>{en?'Hisab Sahayika':'হিসাব সহায়িকা'}</b><small>{en?'Independent calculation app':'স্বাধীন হিসাব সহায়ক অ্যাপ'}</small></div>
+    </button>
+    <nav className="pwa-desktop-nav">
+      <div className="pwa-desktop-nav-group">
+        <small>{en?'MAIN':'প্রধান'}</small>
+        <button className={!activePublicTool?'active':''} onClick={goHome}><LayoutDashboard/><span>{en?'Dashboard':'ড্যাশবোর্ড'}</span></button>
+        <button className={activePublicTool==='salary'?'active':''} onClick={()=>open('salary')}><WalletCards/><span>{en?'Pay Scale & Salary':'পে-স্কেল ও বেতন'}</span></button>
+        <button className={activePublicTool==='arrear'?'active':''} onClick={()=>open('arrear')}><ReceiptText/><span>{en?'Arrear':'বকেয়া / এরিয়ার'}</span></button>
+        <button className={activePublicTool==='promotion'?'active':''} onClick={()=>open('promotion')}><TrendingUp/><span>{en?'Promotion':'পদোন্নতি'}</span></button>
+      </div>
+      <div className="pwa-desktop-nav-group">
+        <small>{en?'CALCULATIONS':'হিসাব'}</small>
+        <button className={activePublicTool==='points'?'active':''} onClick={()=>open('points')}><Award/><span>{en?'Points':'পয়েন্ট হিসাব'}</span></button>
+        <button className={activePublicTool==='house'?'active':''} onClick={()=>open('house')}><Home/><span>{en?'House Allocation':'বাসা বরাদ্দ'}</span></button>
+        <button className={activePublicTool==='service'?'active':''} onClick={()=>open('service')}><Clock3/><span>{en?'Service Length':'চাকরিকাল'}</span></button>
+        <button className={activePublicTool==='retire'?'active':''} onClick={()=>open('retire')}><FileClock/><span>{en?'Retirement':'অবসর তারিখ'}</span></button>
+        <button className={activePublicTool==='calendar'?'active':''} onClick={()=>open('calendar')}><CalendarDays/><span>{en?'Office Calendar':'অফিস ক্যালেন্ডার'}</span></button>
+      </div>
+      <div className="pwa-desktop-nav-group compact">
+        <small>{en?'MORE TOOLS':'আরও টুল'}</small>
+        <button className={activePublicTool==='age'?'active':''} onClick={()=>open('age')}><UserRound/><span>{en?'Age':'বয়স'}</span></button>
+        <button className={activePublicTool==='gap'?'active':''} onClick={()=>open('gap')}><CalendarDays/><span>{en?'Date Difference':'তারিখের ব্যবধান'}</span></button>
+        <button className={activePublicTool==='basic'?'active':''} onClick={()=>open('basic')}><BadgeDollarSign/><span>{en?'Basic Projection':'মূল বেতন প্রক্ষেপণ'}</span></button>
+        <button className={activePublicTool==='reference'?'active':''} onClick={()=>open('reference')}><BookOpen/><span>{en?'Notices & Policies':'নোটিশ ও নীতিমালা'}</span></button>
+      </div>
+      <div className="pwa-desktop-nav-group personal">
+        <small>{en?'MY SPACE · LOCAL':'আমার অংশ · LOCAL'}</small>
+        <button className={activePublicTool==='local-dashboard'?'active':''} onClick={()=>open('local-dashboard')}><UserRound/><span>{en?'My Dashboard':'আমার ড্যাশবোর্ড'}</span></button>
+        <button className={activePublicTool==='local-profile'?'active':''} onClick={()=>open('local-profile')}><Briefcase/><span>{en?'Career Profile':'চাকরি তথ্য'}</span></button>
+        <button className={activePublicTool==='local-salary'?'active':''} onClick={()=>open('local-salary')}><WalletCards/><span>{en?'Salary History':'বেতন ইতিহাস'}</span></button>
+        <button className={activePublicTool==='local-leave'?'active':''} onClick={()=>open('local-leave')}><CalendarDays/><span>{en?'Leave Records':'ছুটি'}</span></button>
+        <button className={activePublicTool==='local-reports'?'active':''} onClick={()=>open('local-reports')}><FileText/><span>{en?'My Reports':'রিপোর্ট'}</span></button>
+      </div>
+    </nav>
+    <div className="pwa-desktop-sidebar-footer">
+      <button className="pwa-desktop-sync" onClick={onLogin}><Cloud/><div><b>{en?'Backup & Sync':'ব্যাকআপ ও সিঙ্ক'}</b><small>{en?'Login only when you need cloud sync':'Cloud sync দরকার হলেই লগইন'}</small></div><ChevronRight/></button>
+      <div className="pwa-desktop-disclaimer"><ShieldAlert/><span>{en?'Independent & unofficial':'স্বাধীন ও অনানুষ্ঠানিক'}</span></div>
+    </div>
+  </aside>;
+
   if(activePublicTool){
     const title=labels[activePublicTool]||'';
     return <div className="pwa-app-shell approved-home pwa-tool-shell">
+      {desktopSidebar}
       <header className="pwa-app-topbar tool">
         <button className="pwa-round-btn" onClick={goHome} aria-label={en?'Back':'ফিরুন'}><ArrowLeft/></button>
         <div><small>{en?'HISAB SAHAYIKA':'হিসাব সহায়িকা'}</small><b>{title}</b></div>
@@ -1571,6 +1615,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
   }
 
   return <div className="pwa-app-shell approved-home">
+    {desktopSidebar}
     <header className="pwa-app-topbar">
       <div className="pwa-app-brand"><span>হি</span><div><b>{en?'Hisab Sahayika':'হিসাব সহায়িকা'}</b><small>{en?'Independent calculation assistant':'স্বাধীন হিসাব সহায়ক অ্যাপ'}</small></div></div>
       <div className="pwa-app-head-actions"><button className="pwa-round-btn" onClick={()=>setLang(lang==='bn'?'en':'bn')}>{en?'বাং':'EN'}</button><PwaControls lang={lang}/><button className="pwa-round-btn" onClick={()=>open('local-dashboard')}><UserRound/></button></div>
@@ -1795,13 +1840,8 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
     </div>
   </div>;
 
-  const mobileAppUi=typeof window!=='undefined'&&(
-    window.matchMedia?.('(display-mode: standalone)').matches||
-    window.navigator.standalone===true||
-    window.matchMedia?.('(max-width: 900px)').matches||
-    /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent||'')
-  );
-  if(mobileAppUi){
+  const appUi=typeof window!=='undefined';
+  if(appUi){
     return <PwaStandaloneShell
       lang={lang} setLang={setLang}
       activePublicTool={activePublicTool}
