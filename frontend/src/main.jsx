@@ -3141,59 +3141,70 @@ function SalaryResult({r,lang='bn',compact=false,initialCompactTab='now',onReset
 
     {activeYear===2026&&resultView==='arrear'&&<section className="arrear-v2">
       <div className="arrear-v2-head">
-        <div><span>{en?'OCTOBER 2026 ARREAR':'অক্টোবর ২০২৬ বকেয়া'}</span><h3>{en?'October bill + July–September arrears':'অক্টোবর বিল + জুলাই–সেপ্টেম্বরের বকেয়া'}</h3><p>{en?'October is counted once. The July–September 2015-scale payroll, including any eligible July increment, is treated as already paid; only the special benefit actually received is then adjusted separately.':'অক্টোবরের চলতি বেতন একবারই ধরা হয়েছে। জুলাই–সেপ্টেম্বরের পুরোনো ২০১৫ স্কেলের পে-রোল (প্রাপ্য জুলাই ইনক্রিমেন্টসহ) ইতোমধ্যে পাওয়া অংশ হিসেবে ধরা হয়েছে; এরপর কেবল বাস্তবে পাওয়া বিশেষ সুবিধা আলাদাভাবে সমন্বয় করা হয়েছে।'}</p></div>
+        <div><span>{en?'MONTHLY ARREAR RECONCILIATION':'মাসভিত্তিক বকেয়া সমন্বয়'}</span><h3>{en?'October bill + July–September final arrears':'অক্টোবর বিল + জুলাই–সেপ্টেম্বরের চূড়ান্ত বকেয়া'}</h3><p>{en?'Each arrear month compares the complete old payroll already paid with the new entitlement. Earnings and deductions are reconciled separately, and Special Benefit is adjusted once per month.':'প্রতিটি বকেয়া মাসে ইতোমধ্যে পাওয়া সম্পূর্ণ পুরোনো পে-রোলের সঙ্গে নতুন প্রাপ্য তুলনা করা হয়েছে। বেতন/ভাতা ও কর্তন আলাদাভাবে সমন্বয় হয়েছে এবং Special Benefit প্রতি মাসে একবার করে সমন্বয় হয়েছে।'}</p></div>
         <div className="arrear-v2-total"><small>{en?'Estimated October total':'অক্টোবরে আনুমানিক মোট'}</small><b>{amt(arrear.octoberBillNet||0)}</b></div>
       </div>
 
-      <div className="arrear-equation-v2" aria-label={en?'Arrear equation':'বকেয়া হিসাবের সমীকরণ'}>
-        <div><small>{en?'October current estimated net':'অক্টোবর চলতি আনুমানিক নিট'}</small><b>{amt(arrear.octoberCurrentNet||0)}</b></div>
+      <div className="arrear-equation-v2 simple-final" aria-label={en?'Final settlement equation':'চূড়ান্ত সমন্বয়ের সমীকরণ'}>
+        <div><small>{en?'October current net':'অক্টোবর চলতি Net'}</small><b>{amt(arrear.octoberCurrentNet||0)}</b></div>
         <i>+</i>
-        <div><small>{en?'July–September net arrear':'জুলাই–সেপ্টেম্বর নিট বকেয়া'}</small><b>{amt(arrear.priorThreeNetArrear||0)}</b></div>
-        <i>−</i>
-        <div><small>{en?'Special benefit already received':'ইতোমধ্যে পাওয়া বিশেষ সুবিধা'}</small><b>{amt(arrear.specialBenefitReceivedAmount||0)}</b></div>
+        <div><small>{en?'Final July–September arrear':'চূড়ান্ত জুলাই–সেপ্টেম্বর বকেয়া'}</small><b>{amt(arrear.priorNetAfterSpecial||0)}</b></div>
         <i>=</i>
-        <div className="final"><small>{en?'Final estimated receivable':'চূড়ান্ত আনুমানিক প্রাপ্য'}</small><b>{amt(arrear.octoberBillNet||0)}</b></div>
+        <div className="final"><small>{en?'Estimated total receivable':'আনুমানিক মোট প্রাপ্য'}</small><b>{amt(arrear.octoberBillNet||0)}</b></div>
       </div>
 
-      <div className="arrear-mini-kpis-v2">
-        <article><small>{en?'Monthly basic increase':'মাসিক মূল বেতন বৃদ্ধি'}</small><b>{amt(arrear.monthlyBasicArrear||0)}</b></article>
-        <article><small>{en?'Final July–September arrear':'চূড়ান্ত জুলাই–সেপ্টেম্বর বকেয়া'}</small><b>{amt(arrear.priorNetAfterSpecial||0)}</b></article>
-        <article><small>{en?'July–October total basic adjustment':'জুলাই–অক্টোবর মোট মূল বেতন সমন্বয়'}</small><b>{amt(arrear.totalBasicArrear||0)}</b></article>
+      <div className="arrear-mini-kpis-v2 four">
+        <article><small>{en?'3-month gross adjustment':'৩ মাসের Gross সমন্বয়'}</small><b>{amt(arrear.priorThreeGrossArrear||0)}</b></article>
+        <article><small>{en?'3-month deduction difference':'৩ মাসের কর্তন পার্থক্য'}</small><b>{(Number(arrear.priorThreeDeductionIncrease||0)>=0?'+ ':'− ')+amt(Math.abs(Number(arrear.priorThreeDeductionIncrease||0)))}</b></article>
+        <article><small>{en?'Special Benefit adjusted':'Special Benefit সমন্বয়'}</small><b>− {amt(arrear.specialBenefitReceivedAmount||0)}</b></article>
+        <article><small>{en?'Final Jul–Sep arrear':'চূড়ান্ত Jul–Sep বকেয়া'}</small><b>{amt(arrear.priorNetAfterSpecial||0)}</b></article>
       </div>
 
-      <details className="salary-v2-details">
-        <summary>{en?'Special-benefit and arrear details':'বিশেষ সুবিধা ও বকেয়ার বিস্তারিত'}</summary>
+      <section className="arrear-monthly-reconciliation">
+        <div className="arrear-monthly-title"><div><small>{en?'OLD PAID → NEW ENTITLEMENT':'OLD PAID → NEW ENTITLEMENT'}</small><h3>{en?'Month-by-month settlement':'মাসভিত্তিক নিষ্পত্তি'}</h3></div><span>{en?'3 arrear months':'৩ বকেয়া মাস'}</span></div>
+        <div className="arrear-monthly-grid">
+          {(arrear.monthlySettlements||[]).map(m=><article key={m.date}>
+            <div className="amr-head"><div><small>{en?'ARREAR MONTH':'বকেয়া মাস'}</small><h4>{en?m.monthEn:m.monthBn} 2026</h4></div><strong>{amt(m.finalArrear||0)}</strong></div>
+            <div className="amr-net-row"><span><small>{en?'Old net paid':'পুরোনো Net পাওয়া'}</small><b>{amt(m.oldPaid?.net||0)}</b></span><i>→</i><span><small>{en?'New net due':'নতুন Net প্রাপ্য'}</small><b>{amt(m.newEntitlement?.net||0)}</b></span></div>
+            <div className="amr-lines">
+              <div><span>{en?'Old gross already paid':'পুরোনো Gross পাওয়া'}</span><b>{amt(m.oldPaid?.gross||0)}</b></div>
+              <div><span>{en?'New gross entitlement':'নতুন Gross প্রাপ্য'}</span><b>{amt(m.newEntitlement?.gross||0)}</b></div>
+              <div><span>{en?'Gross adjustment':'Gross সমন্বয়'}</span><b>{(Number(m.grossAdjustment||0)>=0?'+ ':'− ')+amt(Math.abs(Number(m.grossAdjustment||0)))}</b></div>
+              <div><span>{en?'Deduction difference':'কর্তনের পার্থক্য'}</span><b>{(Number(m.deductionAdjustment||0)>=0?'+ ':'− ')+amt(Math.abs(Number(m.deductionAdjustment||0)))}</b></div>
+              <div><span>{en?'Net before Special Benefit':'Special Benefit-এর আগে Net'}</span><b>{amt(m.netBeforeSpecial||0)}</b></div>
+              <div><span>{en?'Special Benefit already received':'ইতোমধ্যে পাওয়া Special Benefit'}</span><b>− {amt(m.specialAdjustment||0)}</b></div>
+            </div>
+            <div className="amr-final"><span>{en?'Final monthly arrear':'চূড়ান্ত মাসিক বকেয়া'}</span><b>{amt(m.finalArrear||0)}</b></div>
+          </article>)}
+        </div>
+      </section>
+
+      <details className="salary-v2-details" open>
+        <summary>{en?'Fixation, old payroll and deduction basis':'ফিক্সেশন, পুরোনো পে-রোল ও কর্তনের ভিত্তি'}</summary>
         <div className="details-body">
           <div className="arrear-detail-grid-v2">
             <div><small>{en?'Selected grade':'নির্বাচিত গ্রেড'}</small><b>{en?'Grade ':'গ্রেড '}{numLang(arrear.selectedGrade||r.grade||0,lang,0)}</b></div>
             <div><small>{en?'30 June old-scale basic':'৩০ জুন পুরোনো স্কেলের মূল বেতন'}</small><b>{amt(arrear.oldJuneBasic||0)}</b></div>
             <div><small>{en?'1 July old-scale basic':'১ জুলাই পুরোনো স্কেলের মূল বেতন'}</small><b>{amt(arrear.oldJulyBasic||0)}</b></div>
             <div><small>{en?'Old-scale July increment already paid':'পুরোনো স্কেলের জুলাই ইনক্রিমেন্ট ইতোমধ্যে পাওয়া'}</small><b>{amt(arrear.legacyIncrementPaid||0)}</b></div>
-            <div><small>{en?'2026 fixed basic':'২০২৬ স্কেলে ফিক্সড মূল বেতন'}</small><b>{amt(r.fixed||0)}</b></div>
-            <div><small>{en?'2026-scale increment step':'২০২৬ স্কেলের ইনক্রিমেন্ট ধাপ'}</small><b>{amt(arrear.newScaleIncrementAmount||0)}</b></div>
-            <div><small>{en?'Special-benefit rate':'বিশেষ সুবিধার হার'}</small><b>{numLang((arrear.specialBenefitRate||0)*100,lang,0)}%</b></div>
-            <div><small>{en?'Monthly special benefit':'মাসিক বিশেষ সুবিধা'}</small><b>{amt(arrear.specialBenefitMonthly||0)}</b></div>
-            <div><small>{en?'Special benefit actually received':'বাস্তবে পাওয়া বিশেষ সুবিধা'}</small><b>{amt(arrear.specialBenefitReceivedAmount||0)}</b></div>
-            <div><small>{en?'3-month basic arrear':'৩ মাসের মূল বেতন বকেয়া'}</small><b>{amt(arrear.priorThreeBasicArrear||0)}</b></div>
-            <div><small>{en?'3-month net before adjustment':'সমন্বয়ের আগে ৩ মাসের নিট'}</small><b>{amt(arrear.priorThreeNetArrear||0)}</b></div>
-            <div><small>{en?'Previous arrear after adjustment':'সমন্বয়ের পর পূর্বের বকেয়া'}</small><b>{amt(arrear.priorNetAfterSpecial||0)}</b></div>
+            <div><small>{en?'2026 fixed basic':'২০২৬ স্কেলে Fixed Basic'}</small><b>{amt(r.fixed||0)}</b></div>
+            <div><small>{en?'2026-scale increment step':'২০২৬ স্কেলের Increment Step'}</small><b>{amt(arrear.newScaleIncrementAmount||0)}</b></div>
+            <div><small>{en?'Old payroll gross / month':'পুরোনো Payroll Gross / মাস'}</small><b>{amt(arrear.legacyGross||0)}</b></div>
+            <div><small>{en?'Old payroll deductions / month':'পুরোনো Payroll কর্তন / মাস'}</small><b>{amt(arrear.legacyDeductions||0)}</b></div>
+            <div><small>{en?'Monthly Special Benefit':'মাসিক Special Benefit'}</small><b>{amt(arrear.specialBenefitMonthly||0)}</b></div>
+            <div><small>{en?'3-month Special Benefit adjusted':'৩ মাসের Special Benefit সমন্বয়'}</small><b>{amt(arrear.specialBenefitReceivedAmount||0)}</b></div>
+            <div><small>{en?'3-month net before Special Benefit':'Special Benefit-এর আগে ৩ মাসের Net'}</small><b>{amt(arrear.priorThreeNetArrear||0)}</b></div>
+            <div><small>{en?'Final previous arrear':'চূড়ান্ত পূর্বের বকেয়া'}</small><b>{amt(arrear.priorNetAfterSpecial||0)}</b></div>
           </div>
-          <div className="arrear-month-table v2">
-            {[
-              [en?'July':'জুলাই',arrear.monthlyBasicArrear],
-              [en?'August':'আগস্ট',arrear.monthlyBasicArrear],
-              [en?'September':'সেপ্টেম্বর',arrear.monthlyBasicArrear],
-              [en?'October':'অক্টোবর',arrear.monthlyBasicArrear]
-            ].map(([m,v],i)=><div key={m} className={i===3?'current':''}><span>{m} 2026</span><b>{amt(v||0)}</b><small>{i===3?(en?'Current month adjustment':'চলতি মাসের সমন্বয়'):(en?'Arrear month':'বকেয়া মাস')}</small></div>)}
-          </div>
+          <div className="arrear-method-v3"><ShieldCheck/><div><b>{en?'No double deduction':'কোনো Double Deduction নেই'}</b><span>{en?'Old Basic, July increment, house rent and other earnings are already included in Old Paid Payroll. PF, benevolent fund and other deductions use only the difference between new required deductions and amounts already deducted. Special Benefit is a separate one-time monthly adjustment.':'পুরোনো Basic, July increment, বাড়িভাড়া ও অন্যান্য প্রাপ্তি Old Paid Payroll-এর মধ্যেই ধরা হয়েছে। PF, কল্যাণ ও অন্যান্য কর্তনে নতুন প্রয়োজনীয় কর্তন থেকে আগে কর্তিত অংকের শুধু পার্থক্য ধরা হয়েছে। Special Benefit আলাদা মাসিক সমন্বয়—দ্বিতীয়বার কোনো অংক কর্তন হয়নি।'}</span></div></div>
         </div>
       </details>
 
       <div className="arrear-v2-actions">
-        <button disabled={!!pdfBusy} onClick={()=>directPdf(arrearReport,'arrear')}><FileText/><span>{en?'Download Arrear PDF':'বকেয়া PDF ডাউনলোড'}</span><Save size={16}/></button>
-        <ReportShareActions html={arrearReport.html} filename={arrearReport.filename} title={en?'October 2026 Salary & Arrear Statement':'অক্টোবর ২০২৬ বেতন ও বকেয়া বিবরণী'} summary={en?'October current salary with July–September arrears and automatic special-benefit adjustment.':'অক্টোবরের চলতি বেতন, জুলাই–সেপ্টেম্বর বকেয়া এবং অটো বিশেষ সুবিধা সমন্বয়ের রিপোর্ট।'} lang={lang} compact={true}/>
+        <button disabled={!!pdfBusy} onClick={()=>directPdf(arrearReport,'arrear')}><FileText/><span>{en?'Download 4-page A4 Arrear PDF':'৪-পৃষ্ঠার A4 বকেয়া PDF ডাউনলোড'}</span><Save size={16}/></button>
+        <ReportShareActions html={arrearReport.html} filename={arrearReport.filename} title={en?'July–October 2026 Monthly Salary & Arrear Statement':'জুলাই–অক্টোবর ২০২৬ মাসভিত্তিক বেতন ও বকেয়া বিবরণী'} summary={en?'Four A4 pages: July, August, September monthly reconciliation and October final settlement.':'৪টি A4 পৃষ্ঠা: জুলাই, আগস্ট, সেপ্টেম্বরের মাসভিত্তিক সমন্বয় এবং অক্টোবর Final Settlement।'} lang={lang} compact={true}/>
       </div>
-      <div className="notice arrear-note"><b>{en?'Important:':'গুরুত্বপূর্ণ:'}</b> {en?'The net amount is an estimate using the deduction inputs. Final payroll may differ because of tax, loan or office-specific deductions.':'কর্তনের দেওয়া তথ্য ধরে নিট অংকটি আনুমানিক। আয়কর, ঋণ বা অফিসভিত্তিক অন্য কর্তনের কারণে চূড়ান্ত বিল ভিন্ন হতে পারে।'}</div>
+      <div className="notice arrear-note"><b>{en?'Important:':'গুরুত্বপূর্ণ:'}</b> {en?'The PDF shows earnings and deductions separately for each month. Final payroll may still differ if the actual office bill contains tax, loan, housing recovery or other payroll-specific entries not entered here.':'PDF-এ প্রতি মাসের বেতন/ভাতা ও কর্তন আলাদাভাবে দেখানো হবে। প্রকৃত অফিস বিলে এখানে না দেওয়া আয়কর, ঋণ, বাসা recovery বা অন্য payroll entry থাকলে চূড়ান্ত অংক ভিন্ন হতে পারে।'}</div>
     </section>}
   </div>
 }
