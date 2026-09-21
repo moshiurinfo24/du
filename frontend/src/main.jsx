@@ -1089,20 +1089,20 @@ function AuthPortal({onLogin,onBack,lang,setLang,initialMode='login'}) {
   if(mode==='register')return <div className="smart-reg-shell">
     <div className="smart-reg-card">
       <div className="login-top"><button type="button" className="back-link" onClick={onBack}>{en?'← Back to Home':'← হোমে ফিরুন'}</button><LangToggle lang={lang} setLang={setLang}/></div>
-      <div className="smart-reg-title"><div className="auth-badge"><ShieldCheck size={15}/>{en?'SMART SELF-SERVICE SIGN UP':'স্মার্ট স্বয়ংক্রিয় সাইন আপ'}</div><h1>{en?'Create your personal service account':'আপনার ব্যক্তিগত সেবা অ্যাকাউন্ট তৈরি করুন'}</h1><p>{en?'Provide the necessary information once. Your dashboard and supported calculators can reuse it automatically.':'প্রয়োজনীয় তথ্য একবার দিন। পরে ড্যাশবোর্ড ও সমর্থিত ক্যালকুলেটরগুলো এই তথ্য স্বয়ংক্রিয়ভাবে ব্যবহার করবে।'}</p></div>
+      <div className="smart-reg-title"><div className="auth-badge"><ShieldCheck size={15}/>{en?'OPTIONAL BACKUP & SYNC ACCOUNT':'ঐচ্ছিক BACKUP & SYNC অ্যাকাউন্ট'}</div><h1>{en?'Create a Backup & Sync account':'Backup & Sync অ্যাকাউন্ট তৈরি করুন'}</h1><p>{en?'The app works without login. Create an account only if you want cloud backup, recovery and access from multiple devices.':'অ্যাপের মূল সেবা লগইন ছাড়াই কাজ করে। Cloud backup, recovery ও একাধিক ডিভাইসে ব্যবহার করতে চাইলে শুধু তখনই অ্যাকাউন্ট তৈরি করুন।'}</p></div>
       <div className="smart-reg-steps">{steps.map((x,i)=><div key={x} className={`${i===step?'active':''} ${i<step?'done':''}`}><span>{i<step?<CheckCircle2/>:numLang(i+1,lang,0)}</span><b>{x}</b></div>)}</div>
 
       <form onSubmit={submit} className="smart-reg-form">
         {step===0&&<section className="reg-policy">
           <div className="reg-signup-benefits">
-            <div className="reg-signup-benefits-head"><Sparkles/><div><h3>{en?'What you get after creating an account':'অ্যাকাউন্ট তৈরি করলে যা পাবেন'}</h3><p>{en?'Your own dashboard with career, promotion, points, salary, leave, calendar and report tools.':'নিজের Dashboard-এ Career, Promotion, Points, Salary, Leave, Calendar ও Report সুবিধা পাবেন।'}</p></div></div>
+            <div className="reg-signup-benefits-head"><Sparkles/><div><h3>{en?'What an optional account adds':'ঐচ্ছিক অ্যাকাউন্টে অতিরিক্ত যা পাবেন'}</h3><p>{en?'Cloud backup, multi-device sync, account recovery and server-saved personal records. Core calculators and local records already work without login.':'Cloud backup, একাধিক ডিভাইসে sync, account recovery ও server-এ ব্যক্তিগত রেকর্ড সংরক্ষণ। মূল calculator ও Local record login ছাড়াই ব্যবহার করা যায়।'}</p></div></div>
             <div className="reg-signup-mini-grid">
-              <span><LayoutDashboard/>{en?'Dashboard':'ড্যাশবোর্ড'}</span>
-              <span><TrendingUp/>{en?'Promotion':'পদোন্নতি'}</span>
-              <span><Award/>{en?'Points':'পয়েন্ট'}</span>
-              <span><WalletCards/>{en?'Salary':'বেতন'}</span>
-              <span><CalendarDays/>{en?'Leave & Calendar':'ছুটি ও ক্যালেন্ডার'}</span>
-              <span><FileText/>{en?'Reports':'রিপোর্ট'}</span>
+              <span><Cloud/>{en?'Cloud Backup':'Cloud Backup'}</span>
+              <span><RefreshCw/>{en?'Multi-device Sync':'Multi-device Sync'}</span>
+              <span><LockKeyhole/>{en?'Account Recovery':'Account Recovery'}</span>
+              <span><Database/>{en?'Server Records':'Server Records'}</span>
+              <span><ShieldCheck/>{en?'Session Security':'Session Security'}</span>
+              <span><UserRound/>{en?'Same Data Anywhere':'একই তথ্য যেকোনো ডিভাইসে'}</span>
             </div>
           </div>
           <div className="reg-policy-hero"><ShieldCheck/><div><h2>{en?'Know before you sign up':'সাইন আপ করার আগে জেনে নিন'}</h2><p>{en?'Create an account only after reading and understanding the following conditions.':'নিচের বিষয়গুলো সম্পূর্ণ পড়ে ও বুঝে তারপর অ্যাকাউন্ট তৈরি করুন।'}</p></div></div>
@@ -1188,11 +1188,11 @@ function AuthPortal({onLogin,onBack,lang,setLang,initialMode='login'}) {
     </div>
   </div>;
 
-  const title=mode==='forgot'?(en?'Recover your account':'অ্যাকাউন্ট পুনরুদ্ধার করুন'):(en?'Secure login':'নিরাপদ লগইন');
+  const title=mode==='forgot'?(en?'Recover your account':'অ্যাকাউন্ট পুনরুদ্ধার করুন'):(en?'Login for Backup & Sync':'Backup & Sync-এর জন্য Login');
   return <div className="login-shell phase8-auth"><form className="login-card phase8-card" onSubmit={submit}>
     <div className="login-top"><button type="button" className="back-link" onClick={onBack}>{en?'← Back to Home':'← হোমে ফিরুন'}</button><LangToggle lang={lang} setLang={setLang}/></div>
-    <div className="auth-badge"><ShieldCheck size={15}/>{en?'FREE SELF-SERVICE ACCOUNT':'বিনামূল্যের স্বয়ংক্রিয় অ্যাকাউন্ট'}</div>
-    <h1>{title}</h1><p>{en?'Hisab Sahayika · Independent calculation assistant':'হিসাব সহায়িকা · স্বাধীন হিসাব সহায়ক প্ল্যাটফর্ম'}</p>
+    <div className="auth-badge"><ShieldCheck size={15}/>{en?'OPTIONAL BACKUP & SYNC':'ঐচ্ছিক BACKUP & SYNC'}</div>
+    <h1>{title}</h1><p>{en?'Hisab Sahayika · Independent calculation assistant':'হিসাব সহায়িকা · স্বাধীন হিসাব সহায়ক প্ল্যাটফর্ম'}</p><div className="auth-guest-note"><CheckCircle2/><span>{en?'No login is required for calculators, local profile, salary history, leave records or reports. Login is only for backup and sync.':'Calculator, Local Profile, বেতন ইতিহাস, ছুটি বা রিপোর্ট ব্যবহারে login লাগবে না। Login শুধু backup ও sync-এর জন্য।'}</span></div>
     <label>{en?'Email':'ইমেইল'}<input value={form.email} onChange={e=>change('email',e.target.value)} type="email" required/></label>
     {mode==='forgot'&&<label>{en?'Recovery code':'রিকভারি কোড'}<input value={form.recovery_code} onChange={e=>change('recovery_code',e.target.value)} placeholder="XXXX-XXXX-XXXX-XXXX" required/></label>}
     <label>{mode==='forgot'?(en?'New password':'নতুন পাসওয়ার্ড'):(en?'Password':'পাসওয়ার্ড')}<input value={form.password} onChange={e=>change('password',e.target.value)} type="password" minLength="10" required/></label>
@@ -1674,8 +1674,8 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
     </section>
 
     <section className="approved-cta">
-      <div><h2>{en?'Keep your calculations and references in one place':'আপনার হিসাব ও প্রয়োজনীয় তথ্য এক জায়গায় রাখুন'}</h2><p>{en?'Create an account to save supported personal calculations and records. This is an independent, unofficial platform.':'অ্যাকাউন্ট তৈরি করে সমর্থিত ব্যক্তিগত হিসাব ও রেকর্ড সংরক্ষণ করুন। এটি একটি স্বাধীন ও অনানুষ্ঠানিক প্ল্যাটফর্ম।'}</p></div>
-      <div><button className="white" onClick={onSignup}>{en?'Create new account':'নতুন অ্যাকাউন্ট তৈরি করুন'}<ArrowRight/></button><button className="outline" onClick={onLogin}>{en?'Sign in':'সাইন ইন'}</button></div>
+      <div><h2>{en?'Use all core services without login':'লগইন ছাড়াই মূল সব সেবা ব্যবহার করুন'}</h2><p>{en?'Your local profile and records can stay on this device. Create an account only if you want cloud backup and sync.':'Local Profile ও ব্যক্তিগত রেকর্ড এই ডিভাইসেই রাখা যাবে। শুধু Cloud Backup ও Sync চাইলে অ্যাকাউন্ট তৈরি করুন।'}</p></div>
+      <div><button className="white" onClick={onSignup}>{en?'Enable Backup & Sync':'Backup & Sync চালু করুন'}<ArrowRight/></button><button className="outline" onClick={onLogin}>{en?'Login & Sync':'Login & Sync'}</button></div>
     </section>
 
 
