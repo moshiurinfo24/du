@@ -3745,12 +3745,25 @@ function CalculatorCenter({lang='bn',onPage,publicMode=false,initialTool='servic
 
   useEffect(()=>{setTool(initialTool||'service');setResult(null)},[initialTool]);
   useEffect(()=>{
+    const gp=guestLocalProfile();
+    if(gp.first_joining_date)setService(v=>({...v,start:gp.first_joining_date}));
+    if(gp.date_of_birth){
+      setAge(v=>({...v,dob:gp.date_of_birth}));
+      setRetire(v=>({...v,dob:gp.date_of_birth}));
+    }
+    if(gp.retirement_age)setRetire(v=>({...v,age:String(gp.retirement_age)}));
+    if(gp.grade)setBasicProj(v=>({...v,grade:String(gp.grade),stage:'0'}));
     if(publicMode)return;
     api('/api/my-career').then(x=>{
       setCareer({profile:x.profile||null,education:x.education||[],events:x.events||[]});
       const p=x.profile||{};
       if(p.first_joining_date)setService(v=>({...v,start:p.first_joining_date}));
+      if(p.date_of_birth){
+        setAge(v=>({...v,dob:p.date_of_birth}));
+        setRetire(v=>({...v,dob:p.date_of_birth}));
+      }
       if(p.retirement_age)setRetire(v=>({...v,age:String(p.retirement_age)}));
+      if(p.current_grade)setBasicProj(v=>({...v,grade:String(p.current_grade),stage:'0'}));
     }).catch(()=>{});
   },[publicMode]);
 
