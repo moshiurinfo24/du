@@ -2541,17 +2541,40 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
     const newScaleIncrementAmount=Math.max(0,Number(october.fixedWithFirstIncrement||0)-Number(october.fixed||0));
     const special=specialBenefit2025(grade,oldJulyBasic);
     const receivedMonths=3;
-    const specialBenefitReceivedAmount=special.monthly*receivedMonths;
-    const monthlyBasicArrear=Math.max(0,Number(october.payableBasic||0)-Number(legacyJuly.payableBasic||0));
-    const monthlyGrossArrear=Math.max(0,Number(october.gross||0)-Number(legacyJuly.gross||0));
-    const monthlyDeductionIncrease=Number(october.deductions||0)-Number(legacyJuly.deductions||0);
-    const monthlyNetArrear=Number(october.net||0)-Number(legacyJuly.net||0);
-    const priorThreeBasicArrear=monthlyBasicArrear*3;
-    const priorThreeGrossArrear=monthlyGrossArrear*3;
-    const priorThreeDeductionIncrease=monthlyDeductionIncrease*3;
-    const priorThreeNetArrear=monthlyNetArrear*3;
+
+    const monthlySettlements=[
+      ['2026-07-01','July','জুলাই'],
+      ['2026-08-01','August','আগস্ট'],
+      ['2026-09-01','September','সেপ্টেম্বর']
+    ].map(([date,enMonth,bnMonth])=>{
+      const newEntitlement=make(date,en?`${enMonth} 2026 entitlement`:`${bnMonth} ২০২৬ প্রাপ্য`);
+      const oldPaid={...legacyJuly,label:en?`${enMonth} 2026 old payroll`:`${bnMonth} ২০২৬ পুরোনো পে-রোল`};
+      const basicAdjustment=Number(newEntitlement.payableBasic||0)-Number(oldPaid.payableBasic||0);
+      const grossAdjustment=Number(newEntitlement.gross||0)-Number(oldPaid.gross||0);
+      const deductionAdjustment=Number(newEntitlement.deductions||0)-Number(oldPaid.deductions||0);
+      const netBeforeSpecial=Number(newEntitlement.net||0)-Number(oldPaid.net||0);
+      const specialAdjustment=Number(special.monthly||0);
+      const finalArrear=Math.max(0,netBeforeSpecial-specialAdjustment);
+      return {
+        date,month:en?enMonth:bnMonth,monthEn:enMonth,monthBn:bnMonth,
+        oldPaid,newEntitlement,basicAdjustment,grossAdjustment,deductionAdjustment,
+        netBeforeSpecial,specialAdjustment,finalArrear
+      };
+    });
+
+    const specialBenefitReceivedAmount=monthlySettlements.reduce((sum,m)=>sum+Number(m.specialAdjustment||0),0);
+    const priorThreeBasicArrear=monthlySettlements.reduce((sum,m)=>sum+Number(m.basicAdjustment||0),0);
+    const priorThreeGrossArrear=monthlySettlements.reduce((sum,m)=>sum+Number(m.grossAdjustment||0),0);
+    const priorThreeDeductionIncrease=monthlySettlements.reduce((sum,m)=>sum+Number(m.deductionAdjustment||0),0);
+    const priorThreeNetArrear=monthlySettlements.reduce((sum,m)=>sum+Number(m.netBeforeSpecial||0),0);
     const priorGrossAfterSpecial=Math.max(0,priorThreeGrossArrear-specialBenefitReceivedAmount);
-    const priorNetAfterSpecial=Math.max(0,priorThreeNetArrear-specialBenefitReceivedAmount);
+    const priorNetAfterSpecial=monthlySettlements.reduce((sum,m)=>sum+Number(m.finalArrear||0),0);
+    const firstMonth=monthlySettlements[0]||{};
+    const monthlyBasicArrear=Number(firstMonth.basicAdjustment||0);
+    const monthlyGrossArrear=Number(firstMonth.grossAdjustment||0);
+    const monthlyDeductionIncrease=Number(firstMonth.deductionAdjustment||0);
+    const monthlyNetArrear=Number(firstMonth.netBeforeSpecial||0);
+
     const arrear2026={
       startDate:'2026-07-01',endDate:'2026-10-31',months:4,previousMonths:3,
       selectedGrade:grade,specialBenefitRate:special.rate,specialBenefitMinimum:special.minimum,
@@ -2560,12 +2583,17 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
       specialBenefitThreeMonths:specialBenefitReceivedAmount,
       oldJuneBasic:currentBasic,oldJulyBasic,legacyIncrementPaid,newScaleIncrementAmount,
       legacyBasic:legacyJuly.payableBasic,legacyGross:legacyJuly.gross,legacyNet:legacyJuly.net,
+      legacyAllowances:legacyJuly.allowances,legacyDeductions:legacyJuly.deductions,
       octoberBasic:october.payableBasic,octoberGross:october.gross,octoberCurrentNet:october.net,
+      octoberDeductions:october.deductions,octoberAllowances:october.allowances,
+      monthlySettlements,
       monthlyBasicArrear,monthlyGrossArrear,monthlyDeductionIncrease,monthlyNetArrear,
       priorThreeBasicArrear,priorThreeGrossArrear,priorThreeDeductionIncrease,priorThreeNetArrear,
       priorGrossAfterSpecial,priorNetAfterSpecial,
-      totalBasicArrear:monthlyBasicArrear*4,totalGrossArrear:monthlyGrossArrear*4,
-      totalDeductionIncrease:monthlyDeductionIncrease*4,totalNetAdjustment:monthlyNetArrear*4,
+      totalBasicArrear:priorThreeBasicArrear+Math.max(0,Number(october.payableBasic||0)-Number(legacyJuly.payableBasic||0)),
+      totalGrossArrear:priorThreeGrossArrear+monthlyGrossArrear,
+      totalDeductionIncrease:priorThreeDeductionIncrease+monthlyDeductionIncrease,
+      totalNetAdjustment:priorThreeNetArrear+monthlyNetArrear,
       octoberBillGross:october.gross+priorGrossAfterSpecial,
       octoberBillNet:october.net+priorNetAfterSpecial
     };
