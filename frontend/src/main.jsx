@@ -383,16 +383,17 @@ function PwaControls({lang='bn'}){
   const [updatedNotice,setUpdatedNotice]=useState(()=>getPwaState().justUpdatedAt||'');
   useEffect(()=>subscribePwa(next=>{setPwa(next);if(next.justUpdatedAt)setUpdatedNotice(next.justUpdatedAt)}),[]);
   useEffect(()=>{
-    if((pwa.canInstall||pwa.iosInstallHint)&&!pwa.installed&&sessionStorage.getItem('du_pwa_install_nudge_dismissed')!=='1'){
+    if((pwa.canInstall||pwa.iosInstallHint||pwa.previouslyInstalled)&&!pwa.installed&&sessionStorage.getItem('du_pwa_install_nudge_dismissed')!=='1'){
       const t=setTimeout(()=>setNudge(true),1200);
       return()=>clearTimeout(t);
     }
     setNudge(false);
-  },[pwa.canInstall,pwa.iosInstallHint,pwa.installed]);
+  },[pwa.canInstall,pwa.iosInstallHint,pwa.previouslyInstalled,pwa.installed]);
   const shownTime=pwa.lastAutoUpdateAt||pwa.build?.built_at||'';
   const timeText=formatPwaTime(shownTime,lang);
   const doInstall=async()=>{
     if(pwa.iosInstallHint){setOpen(true);setNudge(false);return}
+    if(!pwa.canInstall){setOpen(true);setNudge(false);return}
     await promptPwaInstall();
     setNudge(false);
   };
@@ -404,7 +405,7 @@ function PwaControls({lang='bn'}){
     setTimeout(()=>setCheckNote(''),1800);
   };
   return <div className="pwa-controls">
-    {(pwa.canInstall||pwa.iosInstallHint)&&!pwa.installed&&<button className="pwa-install-button" onClick={doInstall} title={en?'Install app':'অ্যাপ ইনস্টল করুন'}><Save/><span>{en?'Install':'ইনস্টল'}</span></button>}
+    {(pwa.canInstall||pwa.iosInstallHint||pwa.previouslyInstalled)&&!pwa.installed&&<button className="pwa-install-button" onClick={doInstall} title={en?'Install app':'অ্যাপ ইনস্টল করুন'}><Save/><span>{en?'Install':'ইনস্টল'}</span></button>}
     <button className={`pwa-status-button ${pwa.updating?'updating':''}`} onClick={()=>setOpen(v=>!v)} title={en?'App update status':'অ্যাপ আপডেট অবস্থা'}><RefreshCw/><span><b>{pwa.offline?(en?'Offline':'অফলাইন'):(pwa.updating?(en?'Updating':'আপডেট হচ্ছে'):(en?'App':'অ্যাপ'))}</b><small>{timeText}</small></span></button>
     {open&&<div className="pwa-status-popover">
       <div className="pwa-status-head"><span>{pwa.updating?<RefreshCw/>:<CheckCircle2/>}</span><div><b>{en?'Hisab Sahayika':'হিসাব সহায়িকা'}</b><small>{en?'Independent · unofficial calculation app':'স্বাধীন · অনানুষ্ঠানিক হিসাব সহায়ক অ্যাপ'}</small></div></div>
@@ -414,17 +415,18 @@ function PwaControls({lang='bn'}){
         <div><small>{en?'Connection':'সংযোগ'}</small><b>{pwa.offline?(en?'Offline — cached app available':'অফলাইন — ক্যাশ করা অ্যাপ চলবে'):(en?'Online':'অনলাইন')}</b></div>
       </div>
       {pwa.iosInstallHint&&<div className="pwa-ios-help">{en?'On iPhone/iPad: tap Share, then “Add to Home Screen”. iOS does not allow silent installation.':'iPhone/iPad-এ Share চাপুন, তারপর “Add to Home Screen” নির্বাচন করুন। iOS নীরবে অটো ইনস্টল অনুমতি দেয় না।'}</div>}
+      {!pwa.canInstall&&!pwa.iosInstallHint&&!pwa.installed&&pwa.previouslyInstalled&&<div className="pwa-ios-help">{en?'The app was installed before but is not currently open as an installed app. If the one-tap prompt is unavailable, open your browser menu and choose “Install app” or “Add to Home screen”, then reload this page if needed.':'অ্যাপটি আগে ইনস্টল ছিল, কিন্তু এখন ইনস্টল করা অ্যাপ হিসেবে খোলা নেই। এক-ট্যাপ Install না এলে browser-এর মেনু খুলে “Install app” বা “Add to Home screen” দিন; প্রয়োজন হলে পেজটি একবার reload করুন।'}</div>}
       {checkNote&&<div className="pwa-ios-help">{checkNote}</div>}
       <div className="pwa-status-actions">
         <button className="check" onClick={check}>{en?'Check update':'আপডেট চেক'}</button>
-        {(pwa.canInstall||pwa.iosInstallHint)&&!pwa.installed&&<button className="install" onClick={doInstall}>{en?'Install app':'অ্যাপ ইনস্টল'}</button>}
+        {(pwa.canInstall||pwa.iosInstallHint||pwa.previouslyInstalled)&&!pwa.installed&&<button className="install" onClick={doInstall}>{en?'Install app':'অ্যাপ ইনস্টল'}</button>}
       </div>
     </div>}
     {pwa.updating&&<div className="pwa-update-toast"><RefreshCw/><span>{en?'New version found. Updating automatically…':'নতুন ভার্সন পাওয়া গেছে। অটো আপডেট হচ্ছে…'}</span></div>}
     {updatedNotice&&!pwa.updating&&<div className="pwa-update-toast pwa-update-complete"><CheckCircle2/><span><b>{en?'Automatic update complete':'অটো আপডেট সম্পন্ন'}</b><small>{formatPwaTime(updatedNotice,lang)}</small></span><button onClick={()=>{setUpdatedNotice('');consumePwaUpdateNotice()}} aria-label={en?'Close':'বন্ধ'}><X size={15}/></button></div>}
     {nudge&&<div className="pwa-install-nudge">
       <span className="app-mark">হি</span>
-      <div><b>{en?'Install Hisab Sahayika':'হিসাব সহায়িকা ইনস্টল করুন'}</b><small>{pwa.iosInstallHint?(en?'Add it to your Home Screen for app-like use.':'Home Screen-এ যোগ করলে অ্যাপের মতো ব্যবহার করতে পারবেন।'):(en?'One tap to install. Future updates will be automatic.':'এক ট্যাপে ইনস্টল করুন। পরের আপডেটগুলো অটো হবে।')}</small></div>
+      <div><b>{en?'Install Hisab Sahayika':'হিসাব সহায়িকা ইনস্টল করুন'}</b><small>{pwa.iosInstallHint?(en?'Add it to your Home Screen for app-like use.':'Home Screen-এ যোগ করলে অ্যাপের মতো ব্যবহার করতে পারবেন।'):(!pwa.canInstall&&pwa.previouslyInstalled?(en?'Reinstall from your browser menu if the one-tap prompt is not available.':'এক-ট্যাপ Install না এলে browser menu থেকে আবার ইনস্টল করুন।'):(en?'One tap to install. Future updates will be automatic.':'এক ট্যাপে ইনস্টল করুন। পরের আপডেটগুলো অটো হবে।'))}</small></div>
       <button onClick={doInstall}>{en?'Install':'ইনস্টল'}</button>
       <button className="dismiss" onClick={dismiss} aria-label={en?'Dismiss':'বন্ধ'}><X size={15}/></button>
     </div>}
