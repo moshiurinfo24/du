@@ -756,8 +756,8 @@ function salaryReportHtml(r,lang='bn',pdfMeta={}){
   ];
   const reportYear=r.reportYear||null;
   const title=reportYear
-    ?(en?('National Pay Scale '+reportYear+' Salary Statement'):('জাতীয় বেতনস্কেল '+numLang(reportYear,lang,0)+' বেতন বিবরণী'))
-    :(en?'National Pay Scale 2026–2028 Salary Calculation':'জাতীয় বেতনস্কেল ২০২৬–২০২৮ বেতন হিসাব');
+    ?(en?('University of Dhaka Pay Scale '+reportYear+' Salary Statement'):('ঢাকা বিশ্ববিদ্যালয় পে-স্কেল '+numLang(reportYear,lang,0)+' বেতন বিবরণী'))
+    :(en?'University of Dhaka Pay Scale 2026–2028 Salary Calculation':'ঢাকা বিশ্ববিদ্যালয় পে-স্কেল ২০২৬–২০২৮ বেতন হিসাব');
   const subtitle=reportYear
     ?(en?('DU payroll statement · '+reportYear+' · SRO 348/2026 Public Bodies'):('DU পে-রোল বিবরণী · '+numLang(reportYear,lang,0)+' · এস.আর.ও. ৩৪৮-আইন/২০২৬'))
     :(en?'DU payroll combined statement · SRO 348/2026 · 2026–2028':'DU পে-রোল সমন্বিত বিবরণী · এস.আর.ও. ৩৪৮-আইন/২০২৬ · ২০২৬–২০২৮');
