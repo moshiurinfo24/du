@@ -184,3 +184,187 @@
   .pwa-app-home>.pwa-personal-card{grid-column:1/-1}
   .pwa-app-home>.pwa-home-section.recent,.pwa-app-home>.pwa-info-strip{grid-column:1/-1}
 }
+
+
+/* Desktop readability V4 — tuned for 100% browser zoom */
+@media(min-width:901px){
+  .pwa-app-shell{
+    --desktop-sidebar:292px;
+    font-size:15px;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+
+  .pwa-desktop-sidebar{padding:18px 13px 14px}
+  .pwa-desktop-brand{
+    grid-template-columns:50px minmax(0,1fr);
+    gap:12px;padding:8px 9px 17px
+  }
+  .pwa-desktop-brand>span{
+    width:50px;height:50px;border-radius:15px;
+    font-size:18px
+  }
+  .pwa-desktop-brand b{font-size:17px;line-height:1.25}
+  .pwa-desktop-brand small{font-size:10px;line-height:1.45}
+
+  .pwa-desktop-nav{padding:13px 3px 10px}
+  .pwa-desktop-nav-group{margin-bottom:15px}
+  .pwa-desktop-nav-group>small{
+    padding:0 10px 7px;
+    font-size:9.5px;
+    letter-spacing:.09em
+  }
+  .pwa-desktop-nav-group button{
+    min-height:44px;
+    padding:9px 11px;
+    border-radius:11px;
+    gap:11px;
+    font-size:12.5px;
+    line-height:1.3;
+    font-weight:750
+  }
+  .pwa-desktop-nav-group button svg{width:18px;height:18px}
+  .pwa-desktop-sidebar-footer{padding-top:12px}
+  .pwa-desktop-sync{padding:11px 10px}
+  .pwa-desktop-sync b{font-size:11.5px}
+  .pwa-desktop-sync small{font-size:9px;line-height:1.4}
+  .pwa-desktop-disclaimer{font-size:9px}
+
+  .pwa-app-topbar{
+    min-height:78px;
+    padding:12px 28px
+  }
+  .pwa-app-topbar .pwa-app-brand>span{width:46px;height:46px}
+  .pwa-app-topbar .pwa-app-brand b{font-size:16px}
+  .pwa-app-topbar .pwa-app-brand small{font-size:10.5px}
+  .pwa-app-topbar.tool small{font-size:9.5px}
+  .pwa-app-topbar.tool b{font-size:17px}
+  .pwa-round-btn{width:40px;height:40px;font-size:10.5px}
+  .pwa-round-btn svg{width:19px;height:19px}
+  .pwa-app-topbar .pwa-status-button{
+    min-height:40px!important;
+    font-size:10.5px!important
+  }
+
+  .pwa-app-home{
+    max-width:1520px;
+    padding:28px 30px 38px;
+    gap:20px
+  }
+  .pwa-welcome-card{
+    min-height:230px;
+    padding:31px 34px
+  }
+  .pwa-welcome-copy>small{font-size:9.5px}
+  .pwa-welcome-copy h1{
+    max-width:800px;
+    margin-top:9px;
+    font-size:38px;
+    line-height:1.22
+  }
+  .pwa-welcome-copy p{
+    max-width:760px;
+    font-size:14px;
+    line-height:1.65
+  }
+  .pwa-welcome-meta{
+    max-width:640px;
+    margin-top:24px;
+    gap:10px
+  }
+  .pwa-welcome-meta>span{padding:11px 13px}
+  .pwa-welcome-meta svg{width:18px;height:18px}
+  .pwa-welcome-meta small{font-size:9.5px}
+  .pwa-welcome-meta b{font-size:11.5px}
+
+  .pwa-profile-strip{padding:13px;gap:10px}
+  .pwa-profile-strip>span{min-height:60px;padding:10px 13px}
+  .pwa-profile-strip small{font-size:10.5px}
+  .pwa-profile-strip b{font-size:13px}
+  .pwa-profile-strip button{font-size:11px}
+
+  .pwa-app-home>.pwa-home-section:not(.recent):not(.pwa-info-strip){
+    padding:21px 20px
+  }
+  .pwa-section-head{margin-bottom:13px}
+  .pwa-section-head small{font-size:9px}
+  .pwa-section-head h2{font-size:20px;line-height:1.25}
+  .pwa-section-head>button{font-size:11px}
+
+  .pwa-quick-grid{gap:13px}
+  .pwa-quick-grid button{
+    min-height:116px;
+    padding:15px 10px 12px;
+    gap:10px
+  }
+  .pwa-quick-grid button>span{width:52px;height:52px}
+  .pwa-quick-grid button>span svg{width:24px;height:24px}
+  .pwa-quick-grid button b{
+    max-width:140px;
+    font-size:13px;
+    line-height:1.35;
+    font-weight:850
+  }
+
+  .pwa-app-home>.pwa-personal-card{padding:23px}
+  .pwa-personal-icon{width:56px;height:56px}
+  .pwa-personal-icon svg{width:25px;height:25px}
+  .pwa-personal-card small{font-size:9px}
+  .pwa-personal-card h3{font-size:20px;margin-top:6px}
+  .pwa-personal-card p{font-size:12.5px;line-height:1.6}
+  .pwa-personal-card>svg{width:20px;height:20px}
+
+  .pwa-app-home>.pwa-home-section.recent,
+  .pwa-app-home>.pwa-info-strip{padding:20px}
+  .pwa-recent-row button{min-height:64px;padding:9px 12px}
+  .pwa-recent-row button>span{width:38px;height:38px}
+  .pwa-recent-row b{font-size:12px}
+  .pwa-info-cards article{min-height:70px;padding:12px}
+  .pwa-info-cards small{font-size:9px}
+  .pwa-info-cards b{font-size:11.5px;line-height:1.45}
+
+  .pwa-home-footer-note{
+    padding:12px 14px;
+    font-size:10.5px;
+    line-height:1.55
+  }
+
+  .pwa-tool-content{
+    padding:24px 30px 40px
+  }
+  .pwa-tool-content,
+  .pwa-tool-content input,
+  .pwa-tool-content select,
+  .pwa-tool-content button,
+  .pwa-tool-content textarea{
+    font-family:"Hind Siliguri","Inter",sans-serif
+  }
+  .pwa-tool-content .approved-section-title h2,
+  .pwa-tool-content .page-head h2{font-size:24px!important}
+  .pwa-tool-content .approved-section-title p,
+  .pwa-tool-content .page-head p{font-size:12.5px!important;line-height:1.6!important}
+  .pwa-tool-content label{font-size:11.5px}
+  .pwa-tool-content input,
+  .pwa-tool-content select,
+  .pwa-tool-content textarea{font-size:12.5px}
+
+  .pwa-service-sheet{
+    width:min(980px,calc(100vw - 90px));
+    padding:25px
+  }
+  .pwa-service-sheet-head small{font-size:9px}
+  .pwa-service-sheet-head h3{font-size:20px}
+  .pwa-sheet-grid button{min-height:104px}
+  .pwa-sheet-grid button>span{width:46px;height:46px}
+  .pwa-sheet-grid button>span svg{width:22px;height:22px}
+  .pwa-sheet-grid button b{font-size:11px;line-height:1.35}
+  .pwa-sheet-dashboard b{font-size:12px}
+  .pwa-sheet-dashboard small{font-size:9.5px}
+}
+
+@media(min-width:901px) and (max-width:1180px){
+  .pwa-app-shell{--desktop-sidebar:248px}
+  .pwa-desktop-nav-group button{font-size:11.5px}
+  .pwa-welcome-copy h1{font-size:31px}
+  .pwa-quick-grid button b{font-size:11.5px}
+}
