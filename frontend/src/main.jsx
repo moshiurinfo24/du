@@ -964,6 +964,8 @@ function salaryOctoberArrearReportHtml(base,lang='bn'){
     {label:en?'Arrear period':'বকেয়া/সমন্বয় সময়কাল',detail:en?'4 months':'৪ মাস',value:en?'1 Jul–31 Oct 2026':'১ জুলাই–৩১ অক্টোবর ২০২৬'},
     {label:en?'30 June 2026 basic':'৩০ জুন ২০২৬ মূল বেতন',detail:en?'Old scale':'পুরোনো স্কেল',value:amt(a.oldJuneBasic||base.currentBasic||0)},
     {label:en?'1 July 2026 old-scale basic':'১ জুলাই ২০২৬ পুরোনো স্কেলের মূল বেতন',detail:en?'Increment included if eligible':'প্রাপ্য হলে ইনক্রিমেন্টসহ',value:amt(a.oldJulyBasic||a.legacyBasic||0)},
+    {label:en?'Old-scale July increment already paid':'পুরোনো স্কেলের জুলাই ইনক্রিমেন্ট ইতোমধ্যে পাওয়া',detail:en?'Included in the legacy payroll offset; not deducted twice':'পুরোনো পে-রোল সমন্বয়ের মধ্যেই অন্তর্ভুক্ত; দ্বিতীয়বার কর্তন নয়',value:amt(a.legacyIncrementPaid||0)},
+    {label:en?'2026-scale increment step':'২০২৬ স্কেলের ইনক্রিমেন্ট ধাপ',detail:en?'Applied on new-scale fixation when eligible':'প্রাপ্য হলে নতুন স্কেল ফিক্সেশনের উপর প্রয়োগ',value:amt(a.newScaleIncrementAmount||0)},
     {label:en?'Selected grade':'নির্বাচিত গ্রেড',detail:`${numLang((a.specialBenefitRate||0)*100,lang,0)}% ${en?'special benefit':'বিশেষ সুবিধা'}`,value:`${en?'Grade':'গ্রেড'} ${numLang(a.selectedGrade||base.grade||0,lang,0)}`},
     {label:en?'Monthly special benefit basis':'মাসিক বিশেষ সুবিধার ভিত্তি',detail:en?'Minimum Tk 1,500 applies':'ন্যূনতম ৳১,৫০০ প্রযোজ্য',value:amt(a.specialBenefitMonthly||0)},
     {label:en?'Special benefit actually received':'বাস্তবে পাওয়া বিশেষ সুবিধা',detail:receivedBasis,value:amt(receivedAmount)},
@@ -984,7 +986,7 @@ function salaryOctoberArrearReportHtml(base,lang='bn'){
 
   const page1Body=summary+
     section(en?'Salary & special-benefit basis':'বেতন ও বিশেষ সুবিধার ভিত্তি',pdfTable(coreRows,{three:true,head1:en?'Item':'বিষয়',head2:en?'Basis':'ভিত্তি/হার',head3:en?'Amount / value':'অংক/মান'}),{table:true})+
-    `<div style="margin-top:10px;padding:10px 12px;border-left:4px solid #1a7a50;background:#f1fbf6;border-radius:8px;font-size:10.2px;color:#38594a;line-height:1.5"><b>${en?'Method:':'পদ্ধতি:'}</b> ${en?'October current salary is counted once. July–September arrears are calculated against the old-scale July payroll, and only the special benefit actually received is adjusted.':'অক্টোবরের চলতি বেতন একবারই ধরা হয়েছে। জুলাই–সেপ্টেম্বরের বকেয়া ১ জুলাইয়ের পুরোনো স্কেলের প্রাপ্য বেতনের বিপরীতে হিসাব করা হয়েছে এবং কেবল বাস্তবে পাওয়া বিশেষ সুবিধাই সমন্বয় করা হয়েছে।'}</div>`;
+    `<div style="margin-top:10px;padding:10px 12px;border-left:4px solid #1a7a50;background:#f1fbf6;border-radius:8px;font-size:10.2px;color:#38594a;line-height:1.5"><b>${en?'Method:':'পদ্ধতি:'}</b> ${en?'October current salary is counted once. July–September arrears are calculated against the old-scale July payroll, including any eligible old-scale July increment as already paid; only the special benefit actually received is adjusted separately.':'অক্টোবরের চলতি বেতন একবারই ধরা হয়েছে। জুলাই–সেপ্টেম্বরের বকেয়া ১ জুলাইয়ের পুরোনো স্কেলের প্রাপ্য পে-রোলের বিপরীতে হিসাব করা হয়েছে; ওই পে-রোলে প্রাপ্য পুরোনো স্কেলের জুলাই ইনক্রিমেন্ট থাকলে সেটিও ইতোমধ্যে পাওয়া অংশ হিসেবে অন্তর্ভুক্ত। কেবল বাস্তবে পাওয়া বিশেষ সুবিধা আলাদাভাবে সমন্বয় করা হয়েছে।'}</div>`;
 
   const page2Summary=pdfSummaryCards([
     {label:en?'Prior 3-month net arrear':'আগের ৩ মাসের নিট বকেয়া',value:amt(a.priorThreeNetArrear||0)},
