@@ -1564,9 +1564,12 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
         <small>{en?'MY SPACE · LOCAL':'আমার অংশ · LOCAL'}</small>
         <button className={activePublicTool==='local-dashboard'?'active':''} onClick={()=>open('local-dashboard')}><UserRound/><span>{en?'My Dashboard':'আমার ড্যাশবোর্ড'}</span></button>
         <button className={activePublicTool==='local-profile'?'active':''} onClick={()=>open('local-profile')}><Briefcase/><span>{en?'Career Profile':'চাকরি তথ্য'}</span></button>
+        <button className={activePublicTool==='local-education'?'active':''} onClick={()=>open('local-education')}><GraduationCap/><span>{en?'Education':'শিক্ষা'}</span></button>
+        <button className={activePublicTool==='local-timeline'?'active':''} onClick={()=>open('local-timeline')}><Route/><span>{en?'Career Timeline':'ক্যারিয়ার টাইমলাইন'}</span></button>
         <button className={activePublicTool==='local-salary'?'active':''} onClick={()=>open('local-salary')}><WalletCards/><span>{en?'Salary History':'বেতন ইতিহাস'}</span></button>
         <button className={activePublicTool==='local-leave'?'active':''} onClick={()=>open('local-leave')}><CalendarDays/><span>{en?'Leave Records':'ছুটি'}</span></button>
         <button className={activePublicTool==='local-reports'?'active':''} onClick={()=>open('local-reports')}><FileText/><span>{en?'My Reports':'রিপোর্ট'}</span></button>
+        <button className={activePublicTool==='local-privacy'?'active':''} onClick={()=>open('local-privacy')}><ShieldCheck/><span>{en?'Data & Backup':'ডাটা ও ব্যাকআপ'}</span></button>
       </div>
     </nav>
     <div className="pwa-desktop-sidebar-footer">
