@@ -116,6 +116,112 @@ const I18N={
 };
 function LangToggle({lang,setLang}){return <button className="lang-btn" onClick={()=>setLang(lang==='bn'?'en':'bn')}>{I18N[lang].language}</button>}
 
+function PwaMobileInstallGate({lang='bn'}){
+  const en=lang==='en';
+  const [pwa,setPwa]=useState(()=>getPwaState());
+  const [bypass,setBypass]=useState(()=>sessionStorage.getItem('du_pwa_browser_continue')==='1');
+  const [installing,setInstalling]=useState(false);
+  const [installResult,setInstallResult]=useState('');
+  useEffect(()=>subscribePwa(setPwa),[]);
+
+  const mobile=typeof window!=='undefined'&&(
+    window.matchMedia?.('(max-width: 900px)').matches||
+    /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent||'')
+  );
+  const standalone=typeof window!=='undefined'&&(window.matchMedia?.('(display-mode: standalone)').matches||window.navigator.standalone===true);
+  const mainEntry=typeof window!=='undefined'&&window.location.pathname==='/'&&!new URLSearchParams(window.location.search).has('shared_report');
+  if(!mobile||standalone||!mainEntry||bypass)return null;
+
+  const lastTime=formatPwaTime(pwa.lastAutoUpdateAt||pwa.build?.built_at||'',lang);
+  const installedAt=formatPwaTime(localStorage.getItem('du_pwa_installed_at')||'',lang);
+
+  const continueBrowser=()=>{
+    sessionStorage.setItem('du_pwa_browser_continue','1');
+    setBypass(true);
+  };
+  const install=async()=>{
+    if(pwa.iosInstallHint){
+      setInstallResult('ios');
+      return;
+    }
+    if(!pwa.canInstall){
+      setInstallResult('waiting');
+      return;
+    }
+    setInstalling(true);
+    const result=await promptPwaInstall();
+    if(result?.outcome==='accepted')setInstallResult('accepted');
+    else if(result?.outcome==='dismissed')setInstallResult('dismissed');
+    setInstalling(false);
+  };
+
+  const services=[
+    [WalletCards,en?'Salary & arrears':'বেতন ও বকেয়া'],
+    [TrendingUp,en?'Promotion calculation':'পদোন্নতি হিসাব'],
+    [Award,en?'Points & house allocation':'পয়েন্ট ও বাসা বরাদ্দ'],
+    [Clock3,en?'Service length & retirement':'চাকরিকাল ও অবসর'],
+    [FileText,en?'A4 PDF reports':'A4 PDF রিপোর্ট'],
+    [Bell,en?'Notices & useful information':'নোটিশ ও প্রয়োজনীয় তথ্য']
+  ];
+
+  if(pwa.installed)return <div className="pwa-install-gate installed">
+    <div className="pwa-gate-card success">
+      <div className="pwa-gate-icon success"><CheckCircle2/></div>
+      <span className="pwa-gate-badge">{en?'INSTALLATION COMPLETE':'ইনস্টল সম্পন্ন'}</span>
+      <h1>{en?'DU Service App is installed':'DU Service App ইনস্টল হয়েছে'}</h1>
+      <p>{en?'Open DU Service App from your phone Home Screen and use all services from the app.':'এখন আপনার মোবাইলের Home Screen থেকে DU Service App খুলে যাবতীয় সেবা ব্যবহার করুন।'}</p>
+      <div className="pwa-home-hint">
+        <span className="pwa-home-app-icon">DU</span>
+        <div><b>{en?'Look for this app on your Home Screen':'Home Screen-এ এই অ্যাপটি খুঁজুন'}</b><small>{en?'DU Service · magenta icon':'DU Service · ম্যাজেন্টা আইকন'}</small></div>
+      </div>
+      <div className="pwa-gate-service-title">{en?'Services available in the app':'অ্যাপে যা যা পাবেন'}</div>
+      <div className="pwa-gate-services">{services.map(([I,t])=><span key={t}><I/><b>{t}</b></span>)}</div>
+      <div className="pwa-gate-update">
+        <RefreshCw/><div><small>{en?'Automatic updates':'অটো আপডেট'}</small><b>{en?'Enabled':'চালু'}</b><em>{en?'Latest app update':'সর্বশেষ অ্যাপ আপডেট'}: {lastTime}</em>{localStorage.getItem('du_pwa_installed_at')&&<em>{en?'Installed':'ইনস্টল হয়েছে'}: {installedAt}</em>}</div>
+      </div>
+      <div className="pwa-gate-actions single">
+        <button className="pwa-gate-primary home-open-info" onClick={()=>{}}><Home/><span>{en?'Open DU Service App from Home Screen':'Home Screen থেকে DU Service App খুলুন'}</span></button>
+        <button className="pwa-gate-link" onClick={continueBrowser}>{en?'Continue in browser instead':'ব্রাউজারে সেবা দেখুন'}</button>
+      </div>
+    </div>
+  </div>;
+
+  return <div className="pwa-install-gate">
+    <div className="pwa-gate-card">
+      <div className="pwa-gate-top">
+        <span className="pwa-gate-logo">DU</span>
+        <div><b>DU Employee Digital Service</b><small>{en?'For University of Dhaka':'ঢাকা বিশ্ববিদ্যালয়ের জন্য'}</small></div>
+      </div>
+      <span className="pwa-gate-badge">{en?'MOBILE APP':'মোবাইল অ্যাপ'}</span>
+      <h1>{en?'Install DU Service App':'DU Service App ইনস্টল করুন'}</h1>
+      <p>{en?'Salary, arrears, promotion, points, housing and essential digital services for University of Dhaka teachers, officers and employees — all in one app.':'ঢাকা বিশ্ববিদ্যালয়ের শিক্ষক, কর্মকর্তা ও কর্মচারীদের বেতন, বকেয়া, পদোন্নতি, পয়েন্ট, বাসা ও প্রয়োজনীয় ডিজিটাল সেবা—সব এখন একটি অ্যাপে।'}</p>
+
+      <div className="pwa-gate-quick">
+        <span><WalletCards/>{en?'Salary & arrears':'বেতন ও বকেয়া'}</span>
+        <span><TrendingUp/>{en?'Promotion':'পদোন্নতি'}</span>
+        <span><Award/>{en?'Points':'পয়েন্ট'}</span>
+        <span><Home/>{en?'Housing':'বাসা'}</span>
+      </div>
+
+      {pwa.iosInstallHint||installResult==='ios'?<div className="pwa-gate-ios">
+        <Share2/><div><b>{en?'Install on iPhone / iPad':'iPhone / iPad-এ ইনস্টল'}</b><span>{en?'Tap Share in Safari, then choose “Add to Home Screen”.':'Safari-তে Share চাপুন, তারপর “Add to Home Screen” নির্বাচন করুন।'}</span></div>
+      </div>:null}
+
+      {installResult==='waiting'&&<div className="pwa-gate-message">{en?'The install option is getting ready. Please wait a moment and tap again.':'ইনস্টল অপশন প্রস্তুত হচ্ছে। একটু অপেক্ষা করে আবার চাপুন।'}</div>}
+      {installResult==='accepted'&&<div className="pwa-gate-message success">{en?'Installation started. Your phone will finish it automatically.':'ইনস্টল শুরু হয়েছে। এখন আপনার মোবাইল স্বয়ংক্রিয়ভাবে ইনস্টল সম্পন্ন করবে।'}</div>}
+      {installResult==='dismissed'&&<div className="pwa-gate-message">{en?'Installation was cancelled. You can install whenever you are ready.':'ইনস্টল বাতিল হয়েছে। প্রস্তুত হলে আবার ইনস্টল করুন।'}</div>}
+
+      <button className="pwa-gate-primary" onClick={install} disabled={installing}>
+        {installing?<RefreshCw className="spin"/>:<Save/>}
+        <span>{installing?(en?'Installing…':'ইনস্টল হচ্ছে…'):(pwa.iosInstallHint?(en?'Show install steps':'ইনস্টল করার নিয়ম দেখুন'):(pwa.canInstall?(en?'Install App':'অ্যাপ ইনস্টল করুন'):(en?'Prepare Install':'ইনস্টল প্রস্তুত করুন')))}</span>
+      </button>
+      <small className="pwa-gate-auto-note"><CheckCircle2/>{en?'After installation, future app updates will be applied automatically.':'একবার ইনস্টল হলে পরবর্তী অ্যাপ আপডেটগুলো স্বয়ংক্রিয়ভাবে হবে।'}</small>
+      <button className="pwa-gate-link" onClick={continueBrowser}>{en?'Not now — continue in browser':'এখন নয় — ব্রাউজারে দেখুন'}</button>
+      <div className="pwa-gate-foot">{en?'Secure install through your browser · No Play Store needed':'ব্রাউজারের নিরাপদ ইনস্টল · Play Store লাগবে না'}</div>
+    </div>
+  </div>;
+}
+
 function PwaControls({lang='bn'}){
   const en=lang==='en';
   const [pwa,setPwa]=useState(()=>getPwaState());
@@ -1226,6 +1332,7 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
   </div>;
 
   return <div className="approved-home" id="home">
+    <PwaMobileInstallGate lang={lang}/>
     <header className="approved-header">
       <button className="approved-brand brand-button" onClick={()=>go('home')}>
         <span><Landmark/></span><div><b>{en?'Employee Digital Service':'কর্মকর্তা-কর্মচারী ডিজিটাল সেবা'}</b><small>{en?'Personal Career & Service Management':'ব্যক্তিগত ক্যারিয়ার ও সেবা ব্যবস্থাপনা'}</small></div>
