@@ -2174,7 +2174,7 @@ function SalaryResult({r,lang='bn'}){
       <div className="result-year-tabs" aria-label={en?'Salary year':'বেতনের বছর'}>
         {[2026,2027,2028].map(year=><button key={year} className={activeYear===year?'active':''} onClick={()=>setActiveYear(year)}>
           <span>{numLang(year,lang,0)}</span>
-          <small>{year===2026?(en?'Phase 1':'১ম ধাপ'):year===2027?(en?'Phase 2 + full':'২য় ধাপ + পূর্ণ'):(en?'New allowances':'নতুন ভাতা')}</small>
+          <small>{year===2026?(en?'Phase 1':'১ম ধাপ'):year===2027?(en?'Phase 2 + full':'২য় ধাপ + পূর্ণ'):(en?'New allowances + Jul increment':'নতুন ভাতা + জুলাই ইনক্রিমেন্ট')}</small>
         </button>)}
       </div>
       <div className="salary-result-switch" role="tablist">
