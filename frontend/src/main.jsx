@@ -806,11 +806,18 @@ function readPdfCenter(){
     return Array.isArray(rows)?rows.filter(x=>x&&x.html&&x.title).slice(0,16):[];
   }catch{return []}
 }
+function pdfReportFingerprint(value=''){
+  let h=2166136261;
+  const s=String(value||'');
+  for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}
+  return (h>>>0).toString(36);
+}
 function rememberPdfReport({html,filename,title,summary=''}) {
   if(!html||!title)return;
   try{
     const now=new Date().toISOString();
-    const item={id:String(title),title:String(title),summary:String(summary||''),filename:String(filename||'report.pdf'),html:String(html),updated_at:now};
+    const id=`${String(title)}::${pdfReportFingerprint(html)}`;
+    const item={id,title:String(title),summary:String(summary||''),filename:String(filename||'report.pdf'),html:String(html),updated_at:now};
     const rows=readPdfCenter().filter(x=>x.id!==item.id);
     localStorage.setItem(PDF_CENTER_KEY,JSON.stringify([item,...rows].slice(0,16)));
     window.dispatchEvent(new CustomEvent('hisab-pdf-center-updated'));
