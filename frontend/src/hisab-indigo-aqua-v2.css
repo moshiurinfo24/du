@@ -1,0 +1,240 @@
+/* Hisab Sahayika V2 — final Indigo + Aqua identity */
+:root{
+  --hs-primary:#3F51B5;
+  --hs-deep:#293A8C;
+  --hs-aqua:#18A7A0;
+  --hs-soft:#EEF2FF;
+  --hs-soft-aqua:#EAF9F7;
+  --hs-bg:#F7F9FC;
+  --hs-card:#FFFFFF;
+  --hs-ink:#263238;
+  --hs-muted:#71808D;
+  --hs-border:#E1E6F0;
+  --hs-success:#18875F;
+  --hs-warning:#C48925;
+}
+
+/* Public website */
+.approved-home{
+  background:linear-gradient(180deg,#fff 0,#f8faff 32%,#f7f9fc 100%)!important;
+}
+.approved-home .approved-brand>span,
+.approved-home .hub-icon,
+.approved-home .salary-step-strip>div>span,
+.approved-home .salary-form-section-title>span,
+.approved-home .du-category-rule-strip>svg,
+.approved-home .salary-auto-summary svg{
+  background:linear-gradient(145deg,var(--hs-primary),var(--hs-aqua))!important;
+  color:#fff!important;
+}
+.approved-home .approved-brand b{color:#2d3a60!important}
+.approved-home .approved-brand small{color:#73809a!important}
+.approved-home .approved-header nav button:hover,
+.approved-home .public-nav-dropdown summary:hover{
+  background:#eef2ff!important;color:var(--hs-primary)!important
+}
+.approved-home .pay-scale-main-nav{
+  border-color:#cfd7fb!important;background:#f3f5ff!important;color:var(--hs-primary)!important
+}
+.approved-home .approved-actions .new-account,
+.approved-home .primary,
+.approved-home button.primary{
+  background:linear-gradient(135deg,#4f60c8,var(--hs-primary))!important;
+  border-color:var(--hs-primary)!important;color:#fff!important;
+  box-shadow:0 8px 18px rgba(63,81,181,.18)!important
+}
+.approved-home .du-home-hero,
+.approved-home .approved-hero{
+  background:
+    radial-gradient(circle at 88% 12%,rgba(255,255,255,.16),transparent 26%),
+    radial-gradient(circle at 10% 92%,rgba(24,167,160,.18),transparent 28%),
+    linear-gradient(135deg,#293A8C 0%,#3F51B5 56%,#18A7A0 120%)!important;
+  box-shadow:0 28px 65px rgba(41,58,140,.18)!important
+}
+.approved-home .du-home-hero .approved-hero-buttons .primary{
+  background:#fff!important;color:var(--hs-primary)!important;border-color:#fff!important
+}
+.approved-home .du-home-hero .approved-trust svg,
+.approved-home .public-install-stat svg{color:#a9f0eb!important}
+.approved-home .hero-nonofficial-note,
+.approved-home .public-install-stat{
+  border-color:rgba(255,255,255,.22)!important;background:rgba(255,255,255,.10)!important;color:#fff!important
+}
+.approved-home .approved-section-title>span,
+.approved-home .calculator-hub-head>span{
+  color:var(--hs-primary)!important;background:#eef2ff!important;border-color:#d7def8!important
+}
+.approved-home .calculator-hub-grid>button,
+.approved-home .approved-quick-grid button,
+.approved-home .approved-benefit-grid article,
+.approved-home .approved-information article,
+.approved-home .approved-support{
+  border-color:#e1e6f0!important;background:#fff!important;box-shadow:0 9px 24px rgba(42,55,93,.055)!important
+}
+.approved-home .calculator-hub-grid>button:hover,
+.approved-home .calculator-hub-grid>button.active{
+  border-color:#b9c4f0!important;box-shadow:0 14px 32px rgba(63,81,181,.10)!important
+}
+.approved-home .calculator-hub-grid b,
+.approved-home .approved-quick-grid button>span,
+.approved-home .approved-information article>span,
+.approved-home .public-pay-source>svg{color:var(--hs-primary)!important}
+.approved-home .approved-quick-grid button>span,
+.approved-home .approved-information article>span{background:#eef2ff!important}
+.approved-home .approved-cta{
+  background:
+    radial-gradient(circle at 86% 18%,rgba(24,167,160,.22),transparent 26%),
+    linear-gradient(135deg,#293A8C,#3F51B5 66%,#268FAD)!important;
+  box-shadow:0 18px 42px rgba(41,58,140,.17)!important
+}
+.approved-home .approved-cta .white{color:var(--hs-primary)!important}
+.approved-home .approved-footer{
+  background:
+    radial-gradient(circle at 18% 0,rgba(24,167,160,.14),transparent 27%),
+    linear-gradient(135deg,#1f2b69 0%,#293A8C 55%,#183f62 100%)!important
+}
+.approved-home .approved-footer .approved-brand>span{background:linear-gradient(145deg,#5062ca,#18A7A0)!important}
+
+/* Install gate */
+.pwa-install-gate{
+  background:
+    radial-gradient(circle at 90% 8%,rgba(255,255,255,.18),transparent 24%),
+    radial-gradient(circle at 8% 95%,rgba(24,167,160,.24),transparent 30%),
+    linear-gradient(150deg,#4f60c8 0%,#3F51B5 48%,#293A8C 100%)!important
+}
+.pwa-gate-logo,.pwa-home-app-icon,.pwa-install-nudge .app-mark{
+  background:linear-gradient(145deg,#4f60c8,#18A7A0)!important;
+  box-shadow:0 9px 20px rgba(63,81,181,.22)!important
+}
+.pwa-gate-badge,.pwa-install-count{
+  background:#eef2ff!important;color:#3F51B5!important;border-color:#dbe1f8!important
+}
+.pwa-install-count svg{color:#3F51B5!important}
+.pwa-gate-card h1{color:#29365b!important}
+.pwa-gate-primary,.pwa-install-button{
+  background:linear-gradient(135deg,#5062ca,#3F51B5 62%,#18A7A0)!important;
+  box-shadow:0 11px 24px rgba(63,81,181,.22)!important
+}
+.pwa-gate-quick span{border-color:#e0e5f2!important;background:#f8faff!important;color:#526075!important}
+.pwa-gate-quick svg,.pwa-gate-services svg{color:#3F51B5!important}
+.pwa-gate-disclaimer{border-color:#dce3f0!important;background:#f7f9fc!important;color:#607080!important}
+.pwa-gate-disclaimer>svg{color:#C48925!important}
+.pwa-gate-disclaimer b{color:#475668!important}
+.pwa-browser-locked-note{border-color:#d8def0!important;background:linear-gradient(145deg,#f5f7ff,#fff)!important;color:#52617a!important}
+.pwa-browser-locked-note>svg,.pwa-gate-browser-rule svg{background:#eef2ff!important;color:#3F51B5!important}
+.pwa-gate-browser-rule{background:#f1f4ff!important;color:#63718a!important}
+.pwa-gate-update{border-color:#cfe8e5!important;background:linear-gradient(145deg,#eefaf8,#fff)!important}
+.pwa-gate-update>svg{background:#dff5f2!important;color:#14877f!important}
+
+/* Standalone PWA */
+.pwa-app-shell{
+  --pwa-rose:#3F51B5!important;
+  --pwa-rose-2:#5062CA!important;
+  --pwa-plum:#293A8C!important;
+  --pwa-soft:#EEF2FF!important;
+  background:linear-gradient(180deg,#f4f7ff 0,#fff 190px,#f7f9fc 100%)!important
+}
+.pwa-app-topbar{
+  background:linear-gradient(135deg,#5062ca 0%,#3F51B5 58%,#18A7A0 125%)!important;
+  box-shadow:0 9px 24px rgba(41,58,140,.18)!important
+}
+.pwa-app-brand>span{color:#3F51B5!important}
+.pwa-welcome-card{
+  background:
+    radial-gradient(circle at 92% 10%,rgba(255,255,255,.17),transparent 28%),
+    radial-gradient(circle at 10% 100%,rgba(24,167,160,.20),transparent 30%),
+    linear-gradient(135deg,#293A8C,#3F51B5 66%,#278FAE)!important;
+  box-shadow:0 15px 32px rgba(41,58,140,.18)!important
+}
+.pwa-section-head small{color:#3F51B5!important}
+.pwa-section-head>button{color:#3F51B5!important}
+.pwa-quick-grid button{box-shadow:0 6px 18px rgba(44,55,88,.055)!important}
+.pwa-quick-grid .indigo{background:#e9edff!important;color:#3F51B5!important}
+.pwa-quick-grid .violet{background:#f1ecff!important;color:#7153b8!important}
+.pwa-quick-grid .gold{background:#fff4df!important;color:#a87024!important}
+.pwa-quick-grid .aqua{background:#e5f8f6!important;color:#168b84!important}
+.pwa-quick-grid .sky{background:#eaf6ff!important;color:#357ba8!important}
+.pwa-quick-grid .blue{background:#eaf0ff!important;color:#4969b7!important}
+.pwa-quick-grid .amber{background:#fff1e8!important;color:#b36c3e!important}
+.pwa-quick-grid .teal{background:#e8f7f3!important;color:#18875F!important}
+.pwa-quick-grid .more{background:#f0f2f6!important;color:#66717d!important}
+.pwa-personal-card{
+  border-color:#dce2f3!important;
+  background:
+    radial-gradient(circle at 100% 0,rgba(24,167,160,.08),transparent 34%),
+    linear-gradient(145deg,#fff,#f5f8ff)!important
+}
+.pwa-personal-icon{background:linear-gradient(145deg,#3F51B5,#18A7A0)!important;box-shadow:0 8px 17px rgba(63,81,181,.18)!important}
+.pwa-personal-card small,.pwa-section-head small{color:#3F51B5!important}
+.pwa-recent-row button>span,.pwa-info-cards>article>svg{
+  background:#eef2ff!important;color:#3F51B5!important
+}
+.pwa-app-bottom button.active{background:#eef2ff!important;color:#3F51B5!important}
+.pwa-service-sheet-head small{color:#3F51B5!important}
+.pwa-sheet-grid button>span{background:#eef2ff!important;color:#3F51B5!important}
+.pwa-sheet-grid button>span.local{background:#e9f8f6!important;color:#178a83!important}
+.pwa-sheet-dashboard{
+  border-color:#dce2f3!important;background:linear-gradient(145deg,#fff,#f5f8ff)!important
+}
+.pwa-sheet-dashboard>svg:first-child{background:#e9edff!important;color:#3F51B5!important}
+.pwa-sheet-sync{
+  width:100%;min-height:42px;margin-top:8px;border:1px solid #cfe8e5;border-radius:12px;
+  background:#eefaf8;color:#167f79;display:flex;align-items:center;justify-content:center;gap:6px;font-size:9px;font-weight:900
+}
+.pwa-sheet-sync svg{width:15px;height:15px}
+.pwa-sheet-group-title{
+  margin:13px 2px 7px;color:#667690;font:900 7.5px/1 Inter,sans-serif;letter-spacing:.08em
+}
+
+/* Compact salary */
+.pwa-salary-mini-head>span,
+.pwa-salary-sticky-calc button{
+  background:linear-gradient(145deg,#5062ca,#3F51B5 65%,#18A7A0)!important;
+  box-shadow:0 9px 20px rgba(63,81,181,.18)!important
+}
+.pwa-salary-fields select:focus,
+.pwa-option-body select:focus,
+.pwa-option-body input:focus{border-color:#3F51B5!important;box-shadow:0 0 0 3px rgba(63,81,181,.08)!important}
+.pwa-salary-auto-row svg,.pwa-salary-option>summary>svg:first-child{color:#3F51B5!important}
+.pwa-salary-option>summary>svg:first-child{background:#eef2ff!important}
+.pwa-result-tabs button.active{background:#eef2ff!important;color:#3F51B5!important}
+.pwa-result-hero{
+  background:
+    radial-gradient(circle at 90% 10%,rgba(255,255,255,.18),transparent 28%),
+    linear-gradient(135deg,#293A8C,#3F51B5 68%,#18A7A0)!important;
+  box-shadow:0 12px 27px rgba(41,58,140,.18)!important
+}
+.pwa-arrear-card>span{background:#eef2ff!important;color:#3F51B5!important}
+.pwa-arrear-card em{color:#3F51B5!important}
+.pwa-compact-section-head small{color:#3F51B5!important}
+.pwa-result-sticky-actions button:first-child{background:linear-gradient(135deg,#5062ca,#3F51B5)!important}
+.pwa-result-sticky-actions button.active{background:#eef2ff!important;color:#3F51B5!important}
+
+/* Reference center */
+.pwa-reference-center{padding:2px 0 84px}
+.pwa-reference-head{
+  display:flex;align-items:flex-start;gap:10px;padding:13px;border:1px solid #dfe5f2;border-radius:15px;background:linear-gradient(145deg,#fff,#f5f8ff)
+}
+.pwa-reference-head>svg{width:36px;height:36px;padding:9px;border-radius:11px;background:#eef2ff;color:#3F51B5}
+.pwa-reference-head small{display:block;color:#3F51B5;font:900 7px/1 Inter,sans-serif;letter-spacing:.08em}
+.pwa-reference-head h2{margin:4px 0 3px;color:#32405a;font-size:15px}
+.pwa-reference-head p{margin:0;color:#7a8596;font-size:8.8px}
+.pwa-reference-list{display:grid;gap:7px;margin-top:9px}
+.pwa-reference-list article{display:flex;align-items:flex-start;gap:9px;padding:10px;border:1px solid #e4e8f1;border-radius:13px;background:#fff}
+.pwa-reference-list article>span{width:32px;height:32px;display:grid;place-items:center;flex:0 0 auto;border-radius:10px;background:#eef2ff;color:#3F51B5}
+.pwa-reference-list article>span.policy{background:#e8f8f5;color:#17877f}
+.pwa-reference-list article>span svg{width:15px;height:15px}
+.pwa-reference-list small{display:block;color:#8791a1;font-size:7px}
+.pwa-reference-list b{display:block;margin-top:2px;color:#3e495b;font-size:9.5px}
+.pwa-reference-list p{margin:3px 0 0;color:#838c98;font-size:8px;line-height:1.4}
+.pwa-reference-empty{padding:22px;text-align:center;color:#8b95a3;font-size:9px}
+.pwa-reference-note{display:flex;gap:6px;margin-top:10px;padding:9px;border-radius:10px;background:#fff9e8;color:#766640;font-size:8px;line-height:1.45}
+.pwa-reference-note svg{width:14px;height:14px;flex:0 0 auto}
+
+/* Logged-in shell */
+.app .brand,.app .app-topbar{
+  background:linear-gradient(135deg,#5062ca,#3F51B5 62%,#18A7A0)!important
+}
+.app .smart-side-nav button.active{color:#3F51B5!important;border-color:#ced6fa!important;background:#eef2ff!important}
+.app .smart-side-nav .side-group>small{color:#4c5fbd!important}
+.app .primary,.app button.primary{background:linear-gradient(135deg,#5062ca,#3F51B5)!important;border-color:#3F51B5!important}
