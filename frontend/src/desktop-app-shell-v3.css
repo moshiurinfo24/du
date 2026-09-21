@@ -444,3 +444,33 @@
       linear-gradient(145deg,#FFFFFF,#F7F9FC)
   }
 }
+
+
+/* Desktop palette V5.1 — override global !important mobile/PWA colors */
+@media(min-width:901px){
+  .pwa-app-shell .pwa-app-topbar{
+    background:rgba(255,255,255,.96)!important;
+    color:#35425A!important;
+    border-bottom:1px solid #E4E8F1!important;
+    box-shadow:0 7px 24px rgba(41,58,140,.055)!important
+  }
+  .pwa-app-shell .pwa-welcome-card{
+    background:
+      radial-gradient(circle at 88% 18%,rgba(24,167,160,.15),transparent 30%),
+      radial-gradient(circle at 10% 0,rgba(80,98,202,.13),transparent 34%),
+      linear-gradient(135deg,#F4F6FF 0%,#EDF3FF 54%,#EAF8F7 100%)!important;
+    color:#293A8C!important;
+    border:1px solid #D7DFF2!important;
+    box-shadow:0 16px 34px rgba(41,58,140,.10)!important
+  }
+  .pwa-app-shell .pwa-welcome-copy>small{color:#5D6DB5!important;opacity:1!important}
+  .pwa-app-shell .pwa-welcome-copy h1{color:#27377F!important}
+  .pwa-app-shell .pwa-welcome-copy p{color:#65728C!important}
+  .pwa-app-shell .pwa-welcome-meta>span{
+    border-color:#D9E1F3!important;
+    background:rgba(255,255,255,.78)!important
+  }
+  .pwa-app-shell .pwa-welcome-meta svg{color:#3F51B5!important}
+  .pwa-app-shell .pwa-welcome-meta small{color:#7A879B!important;opacity:1!important}
+  .pwa-app-shell .pwa-welcome-meta b{color:#35466F!important}
+}
