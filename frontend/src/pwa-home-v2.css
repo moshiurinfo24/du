@@ -210,3 +210,56 @@
   .pwa-quick-grid button b{font-size:8.5px}
   .pwa-welcome-copy h1{font-size:21px}
 }
+
+
+/* Guest-first profile summary shown in both installed PWA and mobile-browser app UI */
+.pwa-profile-strip{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr)) auto;
+  gap:8px;
+  align-items:stretch;
+  margin:0 0 14px;
+  padding:10px;
+  border:1px solid #DCE3F0;
+  border-radius:16px;
+  background:linear-gradient(145deg,#FFFFFF,#F7F9FC);
+  box-shadow:0 8px 22px rgba(41,58,140,.07);
+}
+.pwa-profile-strip>span{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:2px;
+  padding:7px 8px;
+  border-radius:11px;
+  background:#EEF2FF;
+}
+.pwa-profile-strip small{color:#667690;font-size:8.5px;font-weight:700}
+.pwa-profile-strip b{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#293A8C;
+  font-size:10.5px;
+  font-weight:900
+}
+.pwa-profile-strip button{
+  min-width:62px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:3px;
+  border:0;
+  border-radius:11px;
+  background:#3F51B5;
+  color:#fff;
+  font-size:9px;
+  font-weight:900;
+  cursor:pointer
+}
+.pwa-profile-strip button svg{width:13px;height:13px}
+@media(max-width:380px){
+  .pwa-profile-strip{grid-template-columns:repeat(3,minmax(0,1fr));}
+  .pwa-profile-strip button{grid-column:1/-1;min-height:34px}
+}
