@@ -370,3 +370,30 @@
   }
   .approved-home .public-install-stat svg{color:#c2185b}
 }
+
+html.mobile-pwa-hard-gate,
+body.mobile-pwa-hard-gate{
+  overflow:hidden!important;
+  overscroll-behavior:none!important;
+  touch-action:none;
+}
+body.mobile-pwa-hard-gate .pwa-install-gate{
+  touch-action:pan-y;
+}
+.pwa-browser-locked-note{
+  display:flex;align-items:flex-start;gap:10px;margin:14px 0 6px;padding:12px;
+  border:1px solid #edcddd;border-radius:13px;background:linear-gradient(145deg,#fff7fa,#fff);
+  color:#6c4054;text-align:left
+}
+.pwa-browser-locked-note>svg{
+  width:31px;height:31px;padding:7px;border-radius:10px;flex:0 0 auto;
+  background:#fff0f6;color:#c2185b
+}
+.pwa-browser-locked-note b{display:block;color:#59253e;font-size:11px}
+.pwa-browser-locked-note span{display:block;margin-top:3px;color:#806572;font-size:9.5px;line-height:1.5}
+.pwa-gate-browser-rule{
+  display:flex;align-items:flex-start;justify-content:center;gap:6px;
+  margin:9px 0 0;padding:8px 9px;border-radius:10px;background:#fff3f7;
+  color:#7e5366;font-size:9px;line-height:1.45;text-align:left
+}
+.pwa-gate-browser-rule svg{width:14px;height:14px;flex:0 0 auto;margin-top:1px;color:#c2185b}
