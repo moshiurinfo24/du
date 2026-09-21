@@ -51,6 +51,7 @@ import './pwa-home-v2.css';
 import './pwa-salary-compact-v1.css';
 import './hisab-indigo-aqua-v2.css';
 import './desktop-app-shell-v3.css';
+import './salary-wizard-v27.css';
 import {initPwaRuntime,subscribePwa,getPwaState,promptPwaInstall,formatPwaTime,manualPwaUpdateCheck,consumePwaUpdateNotice} from './pwa-client.js';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import GuestLocalCenter from './guest-local-v1.jsx';
@@ -2771,6 +2772,24 @@ function duPayrollDeductionRules({category,date,basic,grade}={}){
     health,group,groupRuleVerified,stamp:10,association:10
   };
 }
+function SalaryFlowProgress({step=1,lang='bn'}){
+  const en=lang==='en';
+  const items=[
+    [en?'Information':'তথ্য',en?'3 basics':'৩টি মূল তথ্য'],
+    [en?'Adjustments':'সমন্বয়',en?'Only if needed':'প্রয়োজনে'],
+    [en?'Result':'ফলাফল',en?'Salary & arrear':'বেতন ও বকেয়া'],
+    [en?'Report':'রিপোর্ট',en?'PDF & share':'PDF ও শেয়ার']
+  ];
+  return <div className="salary-flow-progress" aria-label={en?'Calculation progress':'হিসাবের অগ্রগতি'}>
+    {items.map(([title,sub],i)=>{
+      const n=i+1,done=n<step,active=n===step;
+      return <div key={n} className={`salary-flow-step ${done?'done':''} ${active?'active':''}`}>
+        <span>{done?<CheckCircle2/>:numLang(n,lang,0)}</span><div><b>{title}</b><small>{sub}</small></div>
+      </div>;
+    })}
+  </div>;
+}
+
 function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
   const en=lang==='en',today=todayLocalIso();
   const compactPwa=typeof window!=='undefined'&&(
@@ -2788,6 +2807,7 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
     health:'149.34',group:'',stamp:'10',association:'10',tax:'0',loan:'0',other:'0'
   });
   const [r,setR]=useState(null);
+  const [formStep,setFormStep]=useState(1);
   const [profileAuto,setProfileAuto]=useState(Boolean(initialProfilePrefill.category||initialProfilePrefill.grade));
   useEffect(()=>{
     if(publicMode)return;
@@ -2942,7 +2962,7 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
 
   useEffect(()=>{setF(x=>({...x,currentStage:'0'}));setR(null)},[f.grade]);
   useEffect(()=>{
-    if(!r||!window.matchMedia?.('(max-width:760px)').matches)return;
+    if(!r)return;
     window.requestAnimationFrame(()=>document.getElementById('salary-result')?.scrollIntoView({behavior:'smooth',block:'start'}));
   },[r]);
 
@@ -2953,34 +2973,40 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
   ];
 
   if(compactPwa){
-    return <div className="pwa-salary-compact">
+    return <div className={`pwa-salary-compact salary-input-step-${formStep}`}>
       {!r?<>
+        <SalaryFlowProgress step={formStep} lang={lang}/>
         <section className="pwa-salary-form-card">
-          <div className="pwa-salary-mini-head"><span>3</span><div><b>{en?'Start with 3 details':'৩টি তথ্য দিয়ে শুরু করুন'}</b><small>{en?'Everything else is automatic or optional':'বাকি সব অটো অথবা প্রয়োজন হলে পরিবর্তনযোগ্য'}</small></div></div>
+          <div className="pwa-salary-mini-head"><span>{numLang(formStep,lang,0)}</span><div><b>{formStep===1?(en?'Start with 3 details':'৩টি তথ্য দিয়ে শুরু করুন'):(en?'Review only what needs changing':'শুধু প্রয়োজনীয় সমন্বয় দেখুন')}</b><small>{formStep===1?(en?'Everything else stays automatic or optional':'বাকি সব অটো অথবা ঐচ্ছিক'):(en?'Your basic information is saved while you adjust options':'মূল তথ্য সংরক্ষিত আছে—শুধু দরকার হলে পরিবর্তন করুন')}</small></div></div>
 
-          <div className="pwa-salary-fields">
+          <div className="pwa-salary-fields wizard-essential">
             <label><span>{en?'Category':'শ্রেণি'}</span><select value={f.category} onChange={e=>setF({...f,category:e.target.value})}>{categoryOpts.map(([v,l])=><option value={v} key={v}>{l}</option>)}</select></label>
             <label><span>{en?'Grade':'গ্রেড'}</span><select value={f.grade} onChange={e=>setF({...f,grade:e.target.value,currentStage:'0'})}>{Array.from({length:20},(_,i)=>i+1).map(g=><option key={g} value={g}>{en?`Grade ${g}`:`গ্রেড ${numLang(g,'bn',0)}`}</option>)}</select></label>
             <label><span>{en?'Basic on 30 Jun':'৩০ জুনের মূল বেতন'}</span><select value={f.currentStage} onChange={e=>setF({...f,currentStage:e.target.value})}>{stages.map((v,i)=><option value={i} key={i}>{en?`Stage ${i+1} · Tk ${moneyLang(v,'en')}`:`ধাপ ${numLang(i+1,'bn',0)} · ৳${moneyLang(v,'bn')}`}</option>)}</select></label>
           </div>
-          {profileAuto&&<div className="pwa-salary-auto-row"><span><UserRound/>{en?'Category & grade from saved profile':'শ্রেণি ও গ্রেড প্রোফাইল থেকে অটো'}</span><span><CheckCircle2/>{en?'You can still correct them here':'প্রয়োজনে এখানেই পরিবর্তন করা যাবে'}</span></div>}
+          {profileAuto&&<div className="pwa-salary-auto-row wizard-essential"><span><UserRound/>{en?'Category & grade from saved profile':'শ্রেণি ও গ্রেড প্রোফাইল থেকে অটো'}</span><span><CheckCircle2/>{en?'You can still correct them here':'প্রয়োজনে এখানেই পরিবর্তন করা যাবে'}</span></div>}
 
-          <div className="pwa-salary-auto-row">
+          <div className="pwa-salary-auto-row wizard-essential">
             <span><MapPin/>{en?'Dhaka rate':'ঢাকা হার'}</span>
             <span><CheckCircle2/>{en?'Automatic deductions':'অটো কর্তন'}</span>
             <span><RefreshCw/>{en?'Arrear auto':'বকেয়া অটো'}</span>
           </div>
 
-          <div className="pwa-salary-options-title"><span>{en?'Change only if needed':'শুধু প্রয়োজন হলে পরিবর্তন করুন'}</span></div>
+          <div className="salary-wizard-selection-summary wizard-adjustments">
+            <span><small>{en?'Category':'শ্রেণি'}</small><b>{categoryInfo.label}</b></span>
+            <span><small>{en?'Grade':'গ্রেড'}</small><b>{numLang(Number(f.grade),lang,0)}</b></span>
+            <span><small>{en?'Basic':'মূল বেতন'}</small><b>{en?'Tk ':'৳ '}{moneyLang(stages[currentIndex]||0,lang)}</b></span>
+          </div>
+          <div className="pwa-salary-options-title wizard-adjustments"><span>{en?'Change only if needed':'শুধু প্রয়োজন হলে পরিবর্তন করুন'}</span></div>
 
-          <details className="pwa-salary-option">
+          <details className="pwa-salary-option wizard-adjustments">
             <summary><UserCheck/><span>{en?'July increment exception':'জুলাই ইনক্রিমেন্ট প্রাপ্য নয়?'}</span><ChevronDown/></summary>
             <div className="pwa-option-body">
               <label><span>{en?'1 July 2026 increment':'১ জুলাই ২০২৬ ইনক্রিমেন্ট'}</span><select value={f.incrementEligible2026} onChange={e=>setF({...f,incrementEligible2026:e.target.value})}><option value="yes">{en?'Eligible':'প্রাপ্য'}</option><option value="no">{en?'Not eligible':'প্রাপ্য নয়'}</option></select></label>
             </div>
           </details>
 
-          <details className="pwa-salary-option">
+          <details className="pwa-salary-option wizard-adjustments">
             <summary><Home/><span>{en?'Housing & family':'বাসা ও পরিবার'}</span><ChevronDown/></summary>
             <div className="pwa-option-body">
               <label><span>{en?'DU quarter?':'DU কোয়ার্টারে থাকেন?'}</span><select value={f.housing} onChange={e=>setF({...f,housing:e.target.value})}><option value="none">{en?'No':'না'}</option><option value="du_quarter">{en?'Yes':'হ্যাঁ'}</option></select></label>
@@ -2995,7 +3021,7 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
             </div>
           </details>
 
-          <details className="pwa-salary-option">
+          <details className="pwa-salary-option wizard-adjustments">
             <summary><Plus/><span>{en?'Additional allowances':'অতিরিক্ত ভাতা'}</span><ChevronDown/></summary>
             <div className="pwa-option-body">
               <label><span>{en?'Mobile':'মোবাইল'}</span><select value={f.mobile} onChange={e=>setF({...f,mobile:e.target.value})}><option value="yes">{en?'Applicable':'প্রযোজ্য'}</option><option value="no">{en?'Not applicable':'প্রযোজ্য নয়'}</option></select></label>
@@ -3007,7 +3033,7 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
             </div>
           </details>
 
-          <details className="pwa-salary-option">
+          <details className="pwa-salary-option wizard-adjustments">
             <summary><ShieldCheck/><span>{en?'Deductions':'কর্তন'} · {f.deductionMode==='du_auto'?(en?'Auto':'অটো'):(en?'Custom':'কাস্টম')}</span><ChevronDown/></summary>
             <div className="pwa-option-body">
               <label><span>{en?'Mode':'পদ্ধতি'}</span><select value={f.deductionMode} onChange={e=>setF({...f,deductionMode:e.target.value})}><option value="du_auto">{en?'Automatic preset':'অটো প্রিসেট'}</option><option value="custom">{en?'Custom':'কাস্টম'}</option></select></label>
@@ -3021,42 +3047,49 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
           </details>
         </section>
 
-        <div className="pwa-salary-sticky-calc"><button onClick={calc}><Calculator/><span>{en?'Show calculation':'হিসাব দেখুন'}</span><ArrowRight/></button></div>
-      </>:<div id="salary-result"><SalaryResult r={r} lang={lang} compact={true} initialCompactTab={initialArrear?'arrear':'now'} onReset={()=>{setR(null);window.scrollTo({top:0,behavior:'smooth'})}}/></div>}
+        <div className={`pwa-salary-sticky-calc ${formStep===2?'dual':''}`}>
+          {formStep===1?<button onClick={()=>{setFormStep(2);window.scrollTo({top:0,behavior:'smooth'})}}><span>{en?'Next':'পরবর্তী ধাপ'}</span><ArrowRight/></button>:<>
+            <button className="secondary" onClick={()=>{setFormStep(1);window.scrollTo({top:0,behavior:'smooth'})}}><ArrowLeft/><span>{en?'Back':'পেছনে'}</span></button>
+            <button onClick={calc}><Calculator/><span>{en?'Show calculation':'আমার হিসাব দেখুন'}</span><ArrowRight/></button>
+          </>}
+        </div>
+      </>:<div id="salary-result"><SalaryResult r={r} lang={lang} compact={true} initialCompactTab={initialArrear?'arrear':'now'} onEdit={()=>{setR(null);setFormStep(1);window.scrollTo({top:0,behavior:'smooth'})}} onReset={()=>{setR(null);setFormStep(1);window.scrollTo({top:0,behavior:'smooth'})}}/></div>}
     </div>;
   }
 
-  return <div className={publicMode?'public-salary-calculator':''}>
+  return <div className={`${publicMode?'public-salary-calculator ':''}salary-input-step-${formStep}`}>
     <div className="page-head pay-calc-head simple-pay-head"><div><span className="pay-head-eyebrow">{en?'UNIVERSITY OF DHAKA':'ঢাকা বিশ্ববিদ্যালয়'}</span><h2>{en?'Salary & Arrear Calculator':'বেতন ও বকেয়া হিসাব'}</h2><p>{en?'Start with just three pieces of information. Date, Dhaka location, regular increment flow and arrear adjustment are automatic.':'শুরুতে শুধু ৩টি তথ্য দিন। তারিখ, ঢাকা লোকেশন, নিয়মিত ইনক্রিমেন্ট ধাপ ও বকেয়া সমন্বয় সিস্টেম নিজে করবে।'}</p></div></div>
 
-    <div className="salary-step-strip simple-step-strip" aria-label={en?'Calculation steps':'হিসাবের ধাপ'}>
-      <div><span>1</span><div><b>{en?'Basic information':'মূল তথ্য'}</b><small>{en?'Only 3 fields':'শুধু ৩টি তথ্য'}</small></div></div>
-      <div><span>2</span><div><b>{en?'Change if needed':'প্রয়োজনে পরিবর্তন'}</b><small>{en?'Housing, family, extras':'বাসা, পরিবার, অতিরিক্ত ভাতা'}</small></div></div>
-      <div><span>3</span><div><b>{en?'See result':'ফলাফল দেখুন'}</b><small>{en?'Salary, arrear and PDF':'বেতন, বকেয়া ও PDF'}</small></div></div>
-    </div>
+    <SalaryFlowProgress step={formStep} lang={lang}/>
 
     <section className="calc-card salary-essential-card">
-      <div className="salary-form-section-title easy-section-title"><span>1</span><div><h3>{en?'Enter these 3 details first':'প্রথমে এই ৩টি তথ্য দিন'}</h3><p>{en?'For most users, these are enough to get a salary result.':'বেশিরভাগ ব্যবহারকারীর মূল হিসাবের জন্য এই ৩টি তথ্যই যথেষ্ট।'}</p></div></div>
-      <div className="form-grid essential-three-grid">
+      <div className="salary-form-section-title easy-section-title"><span>{numLang(formStep,lang,0)}</span><div><h3>{formStep===1?(en?'Enter these 3 details first':'প্রথমে এই ৩টি তথ্য দিন'):(en?'Check adjustments only if they apply':'শুধু প্রযোজ্য সমন্বয়গুলো দেখুন')}</h3><p>{formStep===1?(en?'For most users, these are enough to begin.':'বেশিরভাগ ব্যবহারকারীর জন্য এই ৩টি তথ্যই শুরু করার জন্য যথেষ্ট।'):(en?'Your first-step information stays saved. Open only the sections you need.':'প্রথম ধাপের তথ্য সংরক্ষিত আছে। শুধু প্রয়োজনীয় সেকশন খুলুন।')}</p></div></div>
+      <div className="form-grid essential-three-grid wizard-essential">
         <label>{en?'Your DU category':'আপনার DU শ্রেণি'}<select value={f.category} onChange={e=>setF({...f,category:e.target.value})}>{categoryOpts.map(([v,l])=><option value={v} key={v}>{l}</option>)}</select></label>
         <label>{en?'Current grade':'বর্তমান গ্রেড'}<select value={f.grade} onChange={e=>setF({...f,grade:e.target.value,currentStage:'0'})}>{Array.from({length:20},(_,i)=>i+1).map(g=><option key={g} value={g}>{en?`Grade ${g}`:`গ্রেড ${numLang(g,'bn',0)}`}</option>)}</select></label>
         <label>{en?'Basic on 30 June 2026':'৩০ জুন ২০২৬-এর মূল বেতন'}<select value={f.currentStage} onChange={e=>setF({...f,currentStage:e.target.value})}>{stages.map((v,i)=><option value={i} key={i}>{en?`Stage ${i+1} — Tk ${moneyLang(v,'en')}`:`ধাপ ${numLang(i+1,'bn',0)} — ৳${moneyLang(v,'bn')}`}</option>)}</select></label>
       </div>
-      {profileAuto&&<div className="salary-auto-summary"><span><UserRound/><div><small>{en?'Profile autofill':'প্রোফাইল অটোফিল'}</small><b>{en?'Category and grade loaded from your saved profile':'সংরক্ষিত প্রোফাইল থেকে শ্রেণি ও গ্রেড নেওয়া হয়েছে'}</b></div></span></div>}
+      {profileAuto&&<div className="salary-auto-summary wizard-essential"><span><UserRound/><div><small>{en?'Profile autofill':'প্রোফাইল অটোফিল'}</small><b>{en?'Category and grade loaded from your saved profile':'সংরক্ষিত প্রোফাইল থেকে শ্রেণি ও গ্রেড নেওয়া হয়েছে'}</b></div></span></div>}
 
-      <div className="salary-auto-summary">
+      <div className="salary-auto-summary wizard-essential">
         <span><MapPin/><div><small>{en?'Work location':'কর্মস্থল'}</small><b>{en?'University of Dhaka, Dhaka':'ঢাকা বিশ্ববিদ্যালয়, ঢাকা'}</b></div></span>
         <span><ShieldCheck/><div><small>{en?'DU Auto':'DU Auto'}</small><b>{categoryInfo.label} · {en?'Benevolent':'কল্যাণ'} {numLang(categoryInfo.beneRate*100,lang,2)}% · PF {numLang(10,lang,0)}%</b></div></span>
       </div>
 
-      <details className="salary-detail-block increment-exception-block">
+      <div className="salary-wizard-selection-summary wizard-adjustments">
+        <span><small>{en?'Category':'শ্রেণি'}</small><b>{categoryInfo.label}</b></span>
+        <span><small>{en?'Grade':'গ্রেড'}</small><b>{numLang(Number(f.grade),lang,0)}</b></span>
+        <span><small>{en?'30 June basic':'৩০ জুনের মূল বেতন'}</small><b>{en?'Tk ':'৳ '}{moneyLang(stages[currentIndex]||0,lang)}</b></span>
+      </div>
+
+      <details className="salary-detail-block increment-exception-block wizard-adjustments">
         <summary><span><UserCheck/>{en?'Newly appointed or not eligible for 1 July 2026 increment?':'নতুন যোগদানকারী বা ১ জুলাই ২০২৬ ইনক্রিমেন্ট প্রাপ্য নয়?'}</span><small>{en?'Open only if this applies to you':'শুধু প্রযোজ্য হলে খুলুন'}</small></summary>
         <div className="form-grid compact one-field-grid">
           <label>{en?'1 July 2026 annual increment':'১ জুলাই ২০২৬ বার্ষিক ইনক্রিমেন্ট'}<select value={f.incrementEligible2026} onChange={e=>setF({...f,incrementEligible2026:e.target.value})}><option value="yes">{en?'Eligible / regular employee':'প্রাপ্য / নিয়মিত কর্মী'}</option><option value="no">{en?'Not eligible — new appointee without 6 months qualifying service':'প্রাপ্য নয় — নতুন যোগদানকারী, ৬ মাস পূর্ণ হয়নি'}</option></select></label>
         </div>
       </details>
 
-      <details className="salary-detail-block allowance-basic-options">
+      <details className="salary-detail-block allowance-basic-options wizard-adjustments">
         <summary><span><Home/>{en?'Housing & family information':'বাসা ও পারিবারিক তথ্য'}</span><small>{en?'Open if housing, age or child information needs changing':'বাসা, বয়স বা সন্তানের তথ্য বদলাতে হলে খুলুন'}</small></summary>
         <div className="form-grid compact">
           <label>{en?'Do you live in a DU quarter?':'আপনি কি DU কোয়ার্টারে থাকেন?'}<select value={f.housing} onChange={e=>setF({...f,housing:e.target.value})}><option value="none">{en?'No — receive Dhaka house-rent allowance':'না — ঢাকা সিটি বাড়িভাড়া ভাতা পাব'}</option><option value="du_quarter">{en?'Yes — I live in a DU quarter':'হ্যাঁ — DU কোয়ার্টারে থাকি'}</option></select></label>
@@ -3072,7 +3105,7 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
         {f.housing==='du_quarter'&&<div className="notice du-quarter-note"><b>{en?'DU quarter rule:':'ঢাবি বাসার নিয়ম:'}</b> {en?'House-rent allowance is set to zero. Your actual unit rent and other verified housing recovery are added to deductions.':'বাড়িভাড়া ভাতা শূন্য হবে। আপনার প্রকৃত ইউনিট ভাড়া ও যাচাইকৃত অন্যান্য বাসা-সংক্রান্ত অর্থ কর্তনে যোগ হবে।'}</div>}
       </details>
 
-      <details className="deduction-box official-extra-options"><summary><span><Plus/>{en?'Additional allowances':'অতিরিক্ত ভাতা'}</span><small>{en?'Open only if something applies':'প্রযোজ্য হলে খুলুন'}</small></summary><div className="form-grid compact">
+      <details className="deduction-box official-extra-options wizard-adjustments"><summary><span><Plus/>{en?'Additional allowances':'অতিরিক্ত ভাতা'}</span><small>{en?'Open only if something applies':'প্রযোজ্য হলে খুলুন'}</small></summary><div className="form-grid compact">
         <label>{en?'Mobile allowance':'মোবাইল ভাতা'}<select value={f.mobile} onChange={e=>setF({...f,mobile:e.target.value})}><option value="yes">{en?'Applicable':'প্রযোজ্য'}</option><option value="no">{en?'Not applicable':'প্রযোজ্য নয়'}</option></select></label>
         <label>{en?'Laundry allowance':'ধোলাই ভাতা'}<select value={f.laundry} onChange={e=>setF({...f,laundry:e.target.value})}><option value="no">{en?'Not applicable':'প্রযোজ্য নয়'}</option><option value="yes">{en?'Applicable':'প্রযোজ্য'}</option></select></label>
         <label>{en?'Children with special needs':'বিশেষ চাহিদাসম্পন্ন সন্তানের সংখ্যা'}<select value={f.disabledChildren} onChange={e=>setF({...f,disabledChildren:e.target.value})}><option value="0">0</option><option value="1">1</option><option value="2">2</option></select></label>
@@ -3081,7 +3114,7 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
         <label>{en?'Other separately approved allowance (monthly)':'আলাদা অনুমোদনপ্রাপ্ত অন্যান্য ভাতা (মাসিক)'}<input type="number" min="0" step="1" value={f.otherSpecialAllowance} onChange={e=>setF({...f,otherSpecialAllowance:e.target.value})} placeholder="0"/><small>{en?'Use only when a separate DU/UGC/Government approval applies.':'শুধু আলাদা DU/UGC/সরকারি অনুমোদন থাকলে ব্যবহার করুন।'}</small></label>
       </div></details>
 
-      <details className="deduction-box du-deduction-box"><summary className="du-deduction-summary simple"><span className={f.deductionMode==='du_auto'?'du-status-icon active':'du-status-icon manual'}>{f.deductionMode==='du_auto'?<CheckCircle2/>:<Edit3/>}</span><span className="du-summary-copy"><b>{en?'DU payroll deductions':'DU পে-রোল কর্তন'}</b><small>{en?'DU Auto is already selected — open only to review or customize':'DU Auto আগে থেকেই চালু — দেখতে বা বদলাতে হলে খুলুন'}</small></span></summary>
+      <details className="deduction-box du-deduction-box wizard-adjustments"><summary className="du-deduction-summary simple"><span className={f.deductionMode==='du_auto'?'du-status-icon active':'du-status-icon manual'}>{f.deductionMode==='du_auto'?<CheckCircle2/>:<Edit3/>}</span><span className="du-summary-copy"><b>{en?'DU payroll deductions':'DU পে-রোল কর্তন'}</b><small>{en?'DU Auto is already selected — open only to review or customize':'DU Auto আগে থেকেই চালু — দেখতে বা বদলাতে হলে খুলুন'}</small></span></summary>
         <div className="form-grid compact">
           <label>{en?'Deduction mode':'কর্তনের ধরন'}<select value={f.deductionMode} onChange={e=>setF({...f,deductionMode:e.target.value})}><option value="du_auto">{en?'DU Auto':'DU Auto'}</option><option value="custom">{en?'Custom / manual':'কাস্টম / ম্যানুয়াল'}</option></select></label>
           {f.deductionMode==='du_auto'?<>
@@ -3099,15 +3132,21 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
         </div>
       </details>
 
-      <div className="salary-submit-bar">
-        <p>{en?'Done? The system will calculate salary, arrears and 2026–2028 stages automatically.':'তথ্য ঠিক থাকলে হিসাব করুন। বেতন, বকেয়া ও ২০২৬–২০২৮ ধাপ স্বয়ংক্রিয়ভাবে তৈরি হবে।'}</p>
-        <button className="primary" onClick={calc}>{en?'Show my calculation':'আমার হিসাব দেখুন'}<ArrowRight size={16}/></button>
+      <div className="salary-submit-bar wizard-actions">
+        {formStep===1?<>
+          <p>{en?'Your basic information will stay saved in the next step.':'পরবর্তী ধাপে গেলেও এই তথ্যগুলো সংরক্ষিত থাকবে।'}</p>
+          <button className="primary" onClick={()=>{setFormStep(2);window.scrollTo({top:0,behavior:'smooth'})}}>{en?'Next step':'পরবর্তী ধাপ'}<ArrowRight size={16}/></button>
+        </>:<>
+          <button className="wizard-back" onClick={()=>{setFormStep(1);window.scrollTo({top:0,behavior:'smooth'})}}><ArrowLeft size={16}/>{en?'Back':'পেছনে'}</button>
+          <p>{en?'Ready? Salary, arrears and 2026–2028 stages will be calculated together.':'তথ্য ঠিক থাকলে হিসাব করুন। বেতন, বকেয়া ও ২০২৬–২০২৮ ধাপ একসাথে তৈরি হবে।'}</p>
+          <button className="primary" onClick={calc}>{en?'Show my calculation':'আমার হিসাব দেখুন'}<ArrowRight size={16}/></button>
+        </>}
       </div>
     </section>
-    {r&&<div id="salary-result" className="salary-result-anchor"><SalaryResult r={r} lang={lang}/></div>}
+    {r&&<div id="salary-result" className="salary-result-anchor"><SalaryResult r={r} lang={lang} onEdit={()=>{setR(null);setFormStep(1);window.scrollTo({top:0,behavior:'smooth'})}} onReset={()=>{setR(null);setFormStep(1);window.scrollTo({top:0,behavior:'smooth'})}}/></div>}
   </div>
 }
-function SalaryResult({r,lang='bn',compact=false,initialCompactTab='now',onReset}){
+function SalaryResult({r,lang='bn',compact=false,initialCompactTab='now',onEdit,onReset}){
   const en=lang==='en';
   const autoRuleWarning=r?.autoRuleIncomplete?(en?'Group-insurance rate is not verified for this category/grade; it was not auto-assumed.':'এই শ্রেণি/গ্রেডের গ্রুপ বীমার হার যাচাইকৃত নয়; অনুমান করে অটো ধরা হয়নি।'):'';
   const [activeYear,setActiveYear]=useState(2026);
@@ -3115,7 +3154,9 @@ function SalaryResult({r,lang='bn',compact=false,initialCompactTab='now',onReset
   const [compactTab,setCompactTab]=useState(initialCompactTab);
   const [pdfBusy,setPdfBusy]=useState('');
   const [pdfPreview,setPdfPreview]=useState(null);
-  useEffect(()=>{setActiveYear(2026);setResultView('salary');setCompactTab(initialCompactTab);setPdfPreview(null)},[r,initialCompactTab]);
+  const [screen,setScreen]=useState('result');
+  const [lastResultView,setLastResultView]=useState('salary');
+  useEffect(()=>{setActiveYear(2026);setResultView('salary');setCompactTab(initialCompactTab);setPdfPreview(null);setScreen('result');setLastResultView('salary')},[r,initialCompactTab]);
   useEffect(()=>{if(activeYear!==2026)setResultView('salary')},[activeYear]);
 
   const amt=v=>`${en?'Tk':'৳'} ${moneyLang(v,lang)}`;
@@ -3172,6 +3213,17 @@ function SalaryResult({r,lang='bn',compact=false,initialCompactTab='now',onReset
     });
     trackPublic('view',key==='all'?'salary_2026_2028_pdf_preview':key==='arrear'?'monthly_2026_arrear_pdf_preview':`salary_${key}_pdf_preview`);
   }
+  function openReportCenter(){
+    setLastResultView(resultView);
+    setResultView('salary');
+    setScreen('report');
+    window.requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'smooth'}));
+  }
+  function backToResult(){
+    setScreen('result');
+    setResultView(lastResultView||'salary');
+    window.requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'smooth'}));
+  }
 
   if(compact){
     const cc=r.allowances||{};
@@ -3195,6 +3247,7 @@ function SalaryResult({r,lang='bn',compact=false,initialCompactTab='now',onReset
     ]).filter(([,v])=>Number(v)>0);
 
     return <div className="pwa-salary-result">
+      <SalaryFlowProgress step={compactTab==='reports'?4:3} lang={lang}/>
       <div className="pwa-result-tabs">
         <button className={compactTab==='now'?'active':''} onClick={()=>setCompactTab('now')}>{en?'Now':'এখন'}</button>
         <button className={compactTab==='timeline'?'active':''} onClick={()=>setCompactTab('timeline')}>{en?'2026–2028':'২০২৬–২০২৮'}</button>
@@ -3273,8 +3326,19 @@ function SalaryResult({r,lang='bn',compact=false,initialCompactTab='now',onReset
         <button className="pwa-arrear-pdf" disabled={!!pdfBusy} onClick={()=>previewPdf(arrearReport,'arrear')}><FileText/>{en?'View 4-page A4 arrear PDF':'৪-পৃষ্ঠার A4 বকেয়া PDF দেখুন'}<ChevronRight/></button>
       </section>}
 
+      {compactTab==='reports'&&<section className="pwa-compact-report-center">
+        <button className="pwa-inline-back" onClick={()=>setCompactTab('now')}><ArrowLeft/>{en?'Back to result':'ফলাফলে ফিরুন'}</button>
+        <div className="pwa-compact-section-head"><small>{en?'REPORT CENTER':'রিপোর্ট সেন্টার'}</small><h3>{en?'Preview, download or share':'প্রিভিউ, ডাউনলোড বা শেয়ার'}</h3></div>
+        <div className="pwa-report-choice-grid">
+          <button onClick={()=>previewPdf(activeYearReport,String(activeYear),activeShareTitle,activeShareSummary)}><FileText/><span><b>{numLang(activeYear,lang,0)} PDF</b><small>{en?'Selected year':'নির্বাচিত বছর'}</small></span><ChevronRight/></button>
+          <button onClick={()=>previewPdf(combinedReport,'all')}><FileText/><span><b>{en?'2026–2028 PDF':'২০২৬–২০২৮ PDF'}</b><small>{en?'Complete report':'সম্পূর্ণ রিপোর্ট'}</small></span><ChevronRight/></button>
+          <button onClick={()=>previewPdf(arrearReport,'arrear')}><ReceiptText/><span><b>{en?'Arrear PDF':'বকেয়া PDF'}</b><small>{en?'July–October 2026':'জুলাই–অক্টোবর ২০২৬'}</small></span><ChevronRight/></button>
+        </div>
+        <ReportShareActions html={activeYearReport.html} filename={activeYearReport.filename} title={activeShareTitle} summary={activeShareSummary} lang={lang} compact={true}/>
+      </section>}
+
       <div className="pwa-result-sticky-actions">
-        <button disabled={!!pdfBusy} onClick={()=>previewPdf(combinedReport,'all')}><FileText/><span>{en?'View PDF':'PDF দেখুন'}</span></button>
+        <button className={compactTab==='reports'?'active':''} onClick={()=>setCompactTab('reports')}><FileText/><span>{en?'Reports':'রিপোর্ট'}</span></button>
         <button className={compactTab==='details'?'active':''} onClick={()=>setCompactTab(compactTab==='details'?'now':'details')}><SlidersHorizontal/><span>{en?'Details':'বিস্তারিত'}</span></button>
         <button onClick={()=>onReset?.()}><RefreshCw/><span>{en?'New':'নতুন হিসাব'}</span></button>
       </div>
@@ -3282,7 +3346,16 @@ function SalaryResult({r,lang='bn',compact=false,initialCompactTab='now',onReset
     </div>;
   }
 
-  return <div className="result-stack year-tab-result salary-v2-result">
+  return <div className={`result-stack year-tab-result salary-v2-result salary-screen-${screen}`}>
+    <SalaryFlowProgress step={screen==='report'?4:3} lang={lang}/>
+    {screen==='result'&&<section className="salary-result-editbar">
+      <div><small>{en?'CURRENT INPUT':'বর্তমান তথ্য'}</small><b>{duCategoryInfo(r.category,lang).label} · {en?'Grade ':'গ্রেড '}{numLang(r.grade||0,lang,0)} · {amt(r.currentBasic||0)}</b></div>
+      <button onClick={()=>onEdit?.()}><Edit3/>{en?'Edit information':'তথ্য পরিবর্তন'}</button>
+    </section>}
+    {screen==='report'&&<section className="salary-report-backbar">
+      <button onClick={backToResult}><ArrowLeft/>{en?'Back to result':'ফলাফলে ফিরুন'}</button>
+      <div><small>{en?'STEP 4':'ধাপ ৪'}</small><b>{en?'Report & PDF Center':'রিপোর্ট ও PDF সেন্টার'}</b></div>
+    </section>}
     <section className="salary-result-toolbar">
       <div className="result-year-tabs" aria-label={en?'Salary year':'বেতনের বছর'}>
         {[2026,2027,2028].map(year=><button key={year} className={activeYear===year?'active':''} onClick={()=>setActiveYear(year)}>
@@ -3376,6 +3449,11 @@ function SalaryResult({r,lang='bn',compact=false,initialCompactTab='now',onReset
             </div>
           </div>
         </details>
+        {activeYear===2026&&<div className="salary-report-extra-arrear">
+          <div><ReceiptText/><span><small>{en?'ARREAR REPORT':'বকেয়া রিপোর্ট'}</small><b>{en?'July–October 2026 monthly reconciliation':'জুলাই–অক্টোবর ২০২৬ মাসভিত্তিক সমন্বয়'}</b></span></div>
+          <button disabled={!!pdfBusy} onClick={()=>previewPdf(arrearReport,'arrear')}><FileText/>{en?'Preview arrear PDF':'বকেয়া PDF প্রিভিউ'}<ChevronRight/></button>
+          <ReportShareActions html={arrearReport.html} filename={arrearReport.filename} title={en?'July–October 2026 Monthly Salary & Arrear Statement':'জুলাই–অক্টোবর ২০২৬ মাসভিত্তিক বেতন ও বকেয়া বিবরণী'} summary={en?'Four A4 pages with July–September reconciliation and October settlement.':'জুলাই–সেপ্টেম্বর সমন্বয় ও অক্টোবর নিষ্পত্তিসহ ৪-পৃষ্ঠার A4 রিপোর্ট।'} lang={lang} compact={true}/>
+        </div>}
       </section>
 
       <div className="notice official-pay-note"><b>{en?'Year status:':'বছরের অবস্থা:'}</b> {activeYear===2028?(en?'New allowance rates apply from 1 January 2028; the next annual increment is applied from 1 July 2028.':'১ জানুয়ারি ২০২৮ থেকে নতুন ভাতার হার এবং ১ জুলাই ২০২৮ থেকে পরবর্তী বার্ষিক ইনক্রিমেন্ট প্রয়োগ হবে।'):(en?'Pre-2028 allowance rules remain in force for this year.':'এই বছরে ২০২৮-এর আগের ভাতার নিয়ম/হার কার্যকর থাকবে।')}</div>
@@ -3447,6 +3525,10 @@ function SalaryResult({r,lang='bn',compact=false,initialCompactTab='now',onReset
         <ReportShareActions html={arrearReport.html} filename={arrearReport.filename} title={en?'July–October 2026 Monthly Salary & Arrear Statement':'জুলাই–অক্টোবর ২০২৬ মাসভিত্তিক বেতন ও বকেয়া বিবরণী'} summary={en?'Four A4 pages: July, August, September monthly reconciliation and October final settlement.':'৪টি A4 পৃষ্ঠা: জুলাই, আগস্ট, সেপ্টেম্বরের মাসভিত্তিক সমন্বয় এবং অক্টোবর Final Settlement।'} lang={lang} compact={true}/>
       </div>
       <div className="notice arrear-note"><b>{en?'Important:':'গুরুত্বপূর্ণ:'}</b> {en?'The PDF shows earnings and deductions separately for each month. Final payroll may still differ if the actual office bill contains tax, loan, housing recovery or other payroll-specific entries not entered here.':'PDF-এ প্রতি মাসের বেতন/ভাতা ও কর্তন আলাদাভাবে দেখানো হবে। প্রকৃত অফিস বিলে এখানে না দেওয়া আয়কর, ঋণ, বাসা recovery বা অন্য payroll entry থাকলে চূড়ান্ত অংক ভিন্ন হতে পারে।'}</div>
+    </section>}
+    {screen==='result'&&<section className="salary-result-next-report">
+      <div><FileText/><span><small>{en?'NEXT STEP':'পরবর্তী ধাপ'}</small><b>{en?'Open Report & PDF Center':'রিপোর্ট ও PDF সেন্টার খুলুন'}</b></span></div>
+      <button onClick={openReportCenter}>{en?'Reports & PDF':'রিপোর্ট ও PDF'}<ArrowRight/></button>
     </section>}
     {pdfPreview&&<PdfPreviewModal html={pdfPreview.html} filename={pdfPreview.filename} onClose={()=>setPdfPreview(null)} lang={lang} shareTitle={pdfPreview.title} shareSummary={pdfPreview.summary||''}/>}
   </div>
