@@ -163,7 +163,16 @@ function PwaMobileInstallGate({lang='bn'}){
   );
   const standalone=typeof window!=='undefined'&&(window.matchMedia?.('(display-mode: standalone)').matches||window.navigator.standalone===true);
   const mainEntry=typeof window!=='undefined'&&window.location.pathname==='/'&&!new URLSearchParams(window.location.search).has('shared_report');
-  if(!mobile||standalone||!mainEntry)return null;
+  const hardGate=mobile&&!standalone&&mainEntry;
+  useEffect(()=>{
+    document.documentElement.classList.toggle('mobile-pwa-hard-gate',!!hardGate);
+    document.body.classList.toggle('mobile-pwa-hard-gate',!!hardGate);
+    return()=>{
+      document.documentElement.classList.remove('mobile-pwa-hard-gate');
+      document.body.classList.remove('mobile-pwa-hard-gate');
+    };
+  },[hardGate]);
+  if(!hardGate)return null;
 
   const lastTime=formatPwaTime(pwa.lastAutoUpdateAt||pwa.build?.built_at||'',lang);
   const installedAt=formatPwaTime(localStorage.getItem('du_pwa_installed_at')||'',lang);
