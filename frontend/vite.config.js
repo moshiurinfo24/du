@@ -5,7 +5,7 @@ function duBuildVersion(){
   const info={
     id:`du-${Date.now()}`,
     built_at:new Date().toISOString(),
-    app:'DU Employee Digital Service',
+    app:'Hisab Sahayika',
     channel:'production'
   };
   const payload=JSON.stringify(info,null,2);
