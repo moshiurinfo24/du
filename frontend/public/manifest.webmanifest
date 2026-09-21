@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "DU Employee Digital Service",
-  "short_name": "DU Service",
-  "description": "ঢাকা বিশ্ববিদ্যালয়ের শিক্ষক, কর্মকর্তা ও কর্মচারীদের বেতন, পদোন্নতি, পয়েন্ট ও ডিজিটাল সেবা",
+  "name": "হিসাব সহায়িকা",
+  "short_name": "হিসাব সহায়িকা",
+  "description": "বেতন, বকেয়া, পদোন্নতি, পয়েন্ট, বাসা ও অন্যান্য সমর্থিত হিসাব জানা ও দেখার স্বাধীন ও অনানুষ্ঠানিক সহায়ক অ্যাপ",
   "lang": "bn",
   "dir": "ltr",
   "start_url": "/",
@@ -10,8 +10,8 @@
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait-primary",
-  "background_color": "#FFF7FB",
-  "theme_color": "#D41468",
+  "background_color": "#FFF5F8",
+  "theme_color": "#C2185B",
   "categories": ["productivity", "utilities"],
   "icons": [
     {
