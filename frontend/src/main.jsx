@@ -107,8 +107,8 @@ function trackPublic(event='page_view',section='home'){
 const roleLabel={super_admin:'System Administrator',admin:'Admin',department_admin:'Department Admin',editor:'Editor',employee:'Employee'};
 const I18N={
   bn:{
-    appName:'কর্মকর্তা-কর্মচারী ডিজিটাল সেবা',
-    appSub:'স্বাধীন ডিজিটাল সেবা প্ল্যাটফর্ম',
+    appName:'হিসাব সহায়িকা',
+    appSub:'স্বাধীন ও অনানুষ্ঠানিক হিসাব সহায়ক প্ল্যাটফর্ম',
     login:'লগইন',
     logout:'লগআউট',
     home:'হোম',
@@ -123,8 +123,8 @@ const I18N={
     welcome:'স্বাগতম'
   },
   en:{
-    appName:'Employee Digital Service Platform',
-    appSub:'Independent Digital Service Platform',
+    appName:'Hisab Sahayika',
+    appSub:'Independent & unofficial calculation assistant',
     login:'Login',
     logout:'Logout',
     home:'Home',
@@ -1176,7 +1176,7 @@ function AuthPortal({onLogin,onBack,lang,setLang,initialMode='login'}) {
   return <div className="login-shell phase8-auth"><form className="login-card phase8-card" onSubmit={submit}>
     <div className="login-top"><button type="button" className="back-link" onClick={onBack}>{en?'← Back to Home':'← হোমে ফিরুন'}</button><LangToggle lang={lang} setLang={setLang}/></div>
     <div className="auth-badge"><ShieldCheck size={15}/>{en?'FREE SELF-SERVICE ACCOUNT':'বিনামূল্যের স্বয়ংক্রিয় অ্যাকাউন্ট'}</div>
-    <h1>{title}</h1><p>{en?'Employee Digital Service Platform':'কর্মকর্তা-কর্মচারী ডিজিটাল সেবা'}</p>
+    <h1>{title}</h1><p>{en?'Hisab Sahayika · Independent calculation assistant':'হিসাব সহায়িকা · স্বাধীন হিসাব সহায়ক প্ল্যাটফর্ম'}</p>
     <label>{en?'Email':'ইমেইল'}<input value={form.email} onChange={e=>change('email',e.target.value)} type="email" required/></label>
     {mode==='forgot'&&<label>{en?'Recovery code':'রিকভারি কোড'}<input value={form.recovery_code} onChange={e=>change('recovery_code',e.target.value)} placeholder="XXXX-XXXX-XXXX-XXXX" required/></label>}
     <label>{mode==='forgot'?(en?'New password':'নতুন পাসওয়ার্ড'):(en?'Password':'পাসওয়ার্ড')}<input value={form.password} onChange={e=>change('password',e.target.value)} type="password" minLength="10" required/></label>
@@ -1298,7 +1298,7 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
     [CalendarDays,en?'Leave & Calendar':'ছুটি ও ক্যালেন্ডার',en?'Personal leave and office-day information.':'ব্যক্তিগত ছুটি ও অফিস দিনের তথ্য।'],
     [FileText,en?'Reports & Records':'রিপোর্ট ও রেকর্ড',en?'Create and keep useful personal reports.':'প্রয়োজনীয় ব্যক্তিগত রিপোর্ট তৈরি ও সংরক্ষণ।']
   ];
-  const whatsappText=encodeURIComponent(en?'Hello, I need help with the Employee Digital Service Platform.':'আসসালামু আলাইকুম, কর্মকর্তা-কর্মচারী ডিজিটাল সেবা প্ল্যাটফর্ম বিষয়ে সহায়তা প্রয়োজন।');
+  const whatsappText=encodeURIComponent(en?'Hello, I need help with Hisab Sahayika.':'আসসালামু আলাইকুম, হিসাব সহায়িকা অ্যাপ বিষয়ে সহায়তা প্রয়োজন।');
 
   const HeroDevice=()=> <div className="native-device-stage" aria-label={en?'Live interface preview':'লাইভ ইন্টারফেস নমুনা'}>
     <div className="native-laptop">
@@ -1373,7 +1373,7 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
     <PwaMobileInstallGate lang={lang}/>
     <header className="approved-header">
       <button className="approved-brand brand-button" onClick={()=>go('home')}>
-        <span><Landmark/></span><div><b>{en?'Employee Digital Service':'কর্মকর্তা-কর্মচারী ডিজিটাল সেবা'}</b><small>{en?'Personal Career & Service Management':'ব্যক্তিগত ক্যারিয়ার ও সেবা ব্যবস্থাপনা'}</small></div>
+        <span><Calculator/></span><div><b>{en?'Hisab Sahayika':'হিসাব সহায়িকা'}</b><small>{en?'Independent · unofficial calculation assistant':'স্বাধীন · অনানুষ্ঠানিক হিসাব সহায়ক প্ল্যাটফর্ম'}</small></div>
       </button>
 
       <nav className={publicMenu?'open':''} aria-label={en?'Main navigation':'প্রধান মেনু'}>
@@ -1421,6 +1421,7 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
           <span><CheckCircle2/>{en?'Simple guided steps':'সহজ ধাপে ব্যবহার'}</span>
           <span><CheckCircle2/>{en?'A4 PDF reports':'A4 PDF রিপোর্ট'}</span>
         </div>
+        <div className="hero-nonofficial-note"><ShieldAlert/><span>{en?'Independent and unofficial. No official affiliation with the University of Dhaka.':'স্বাধীন ও অনানুষ্ঠানিক। ঢাকা বিশ্ববিদ্যালয়ের সঙ্গে এই প্ল্যাটফর্মের কোনো অফিসিয়াল সম্পর্ক নেই।'}</span></div>
       </div>
       <HeroDevice/>
     </section>
@@ -3933,7 +3934,7 @@ function App(){
   if(!user)return showLogin?<AuthPortal onLogin={u=>{setLang('bn');setUser(u);window.history.replaceState({},'',window.location.pathname)}} onBack={()=>{setShowLogin(false);setAuthMode('login');setAuthToken('');window.history.replaceState({},'',window.location.pathname)}} lang={lang} setLang={setLang} initialMode={authMode} initialToken={authToken}/>:<PublicHome onLogin={()=>{setAuthMode('login');setShowLogin(true)}} onSignup={()=>{setAuthMode('register');setShowLogin(true)}} lang={lang} setLang={setLang}/>;
   const admin=['super_admin','admin','department_admin'].includes(user.role);
   return <div className={`app ${mobileMenu?'mobile-menu-open':''}`}><button className={`mobile-drawer-backdrop ${mobileMenu?'show':''}`} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'} onClick={()=>setMobileMenu(false)}></button><aside className={`side ${mobileMenu?'mobile-open':''}`}>
-    <div className="brand"><div><b>{lang==='en'?'Employee Service ERP':'কর্মকর্তা-কর্মচারী সেবা'}</b><small>{lang==='en'?'Digital Service Platform':'ডিজিটাল সেবা প্ল্যাটফর্ম'}</small></div><button className="mobile-drawer-close" onClick={()=>setMobileMenu(false)} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'}><X size={19}/></button></div>
+    <div className="brand"><div><b>{lang==='en'?'Hisab Sahayika':'হিসাব সহায়িকা'}</b><small>{lang==='en'?'Independent · unofficial':'স্বাধীন · অনানুষ্ঠানিক'}</small></div><button className="mobile-drawer-close" onClick={()=>setMobileMenu(false)} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'}><X size={19}/></button></div>
     <nav className="smart-side-nav">
       <div className="side-group"><small>{lang==='en'?'MAIN':'প্রধান'}</small>
         <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}><LayoutDashboard size={18}/>{lang==='en'?'Dashboard':'ড্যাশবোর্ড'}</button>
@@ -3991,7 +3992,7 @@ function App(){
       <button className={mobileMenu?'active':''} onClick={()=>setMobileMenu(v=>!v)}><Boxes/><span>{lang==='en'?'Services':'সেবা'}</span></button>
       <button className={page==='career'?'active':''} onClick={()=>setPage('career')}><UserRound/><span>{lang==='en'?'Profile':'প্রোফাইল'}</span></button>
     </nav>
-    <a className="floating-whatsapp logged-in-whatsapp" href={`https://wa.me/8801759084692?text=${encodeURIComponent(lang==='en'?'Hello, I need help with the Employee Digital Service Platform.':'আসসালামু আলাইকুম, কর্মকর্তা-কর্মচারী ডিজিটাল সেবা প্ল্যাটফর্ম বিষয়ে সহায়তা প্রয়োজন।')}`} target="_blank" rel="noreferrer" aria-label={lang==='en'?'Message on WhatsApp':'হোয়াটসঅ্যাপে মেসেজ করুন'}><MessageCircle/><span>{lang==='en'?'WhatsApp':'হোয়াটসঅ্যাপ'}</span></a>
+    <a className="floating-whatsapp logged-in-whatsapp" href={`https://wa.me/8801759084692?text=${encodeURIComponent(lang==='en'?'Hello, I need help with Hisab Sahayika.':'আসসালামু আলাইকুম, হিসাব সহায়িকা অ্যাপ বিষয়ে সহায়তা প্রয়োজন।')}`} target="_blank" rel="noreferrer" aria-label={lang==='en'?'Message on WhatsApp':'হোয়াটসঅ্যাপে মেসেজ করুন'}><MessageCircle/><span>{lang==='en'?'WhatsApp':'হোয়াটসঅ্যাপ'}</span></a>
   </div>
 }
 createRoot(document.getElementById('root')).render(<App/>);
