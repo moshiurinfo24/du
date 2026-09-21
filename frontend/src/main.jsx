@@ -1009,12 +1009,10 @@ function salaryOctoberArrearReportHtml(base,lang='bn'){
       [label('সমিতি','Association'),o.association,n.association],
       [label('ঢাবি বাসা/ইউনিট ভাড়া','DU quarter/unit rent'),o.quarterRent,n.quarterRent],
       [label('বাসা-সংক্রান্ত অন্যান্য কর্তন','Other housing recovery'),o.quarterOther,n.quarterOther],
-      [label('আয়কর','Income tax'),o.tax,n.tax],
-      [label('ঋণ/অগ্রিম','Loan/advance'),o.loan,n.loan],
-      [label('অন্যান্য কর্তন','Other deduction'),o.other,n.other]
+      [label('আয়কর','Income tax'),o.tax,n.tax]
     ].filter(x=>Number(x[1]||0)!==0||Number(x[2]||0)!==0)
       .map(x=>({label:x[0],old:Number(x[1]||0),new:Number(x[2]||0),diff:Number(x[2]||0)-Number(x[1]||0)}));
-    rows.push({label:label('মোট কর্তন','Total deductions'),old:Number(o.deductions||0),new:Number(n.deductions||0),diff:Number(m.deductionAdjustment||0),emphasis:true});
+    rows.push({label:label('Arrear-সংশ্লিষ্ট মোট কর্তন','Arrear-linked deductions'),old:Number(o.arrearDeductions||0),new:Number(n.arrearDeductions||0),diff:Number(m.deductionAdjustment||0),emphasis:true});
     return rows;
   };
 
@@ -1046,7 +1044,7 @@ function salaryOctoberArrearReportHtml(base,lang='bn'){
 
     const note='<div style="margin-top:8px;padding:8px 10px;border:1px solid #d9e0ef;border-radius:9px;background:#f7f9fc;color:#5b687a;font-size:8.8px;line-height:1.42"><b style="color:#293A8C">'+
       label('হিসাবের ব্যাখ্যা:','Calculation note:')+'</b> '+
-      label('পুরোনো ২০১৫ স্কেলে ইতোমধ্যে পাওয়া Basic, July increment, বাড়িভাড়া ও অন্যান্য ভাতা Old Paid Payroll হিসেবে সমন্বয় করা হয়েছে। PF, কল্যাণ ও অন্যান্য কর্তনের ক্ষেত্রে নতুন প্রয়োজনীয় কর্তন ও আগে কর্তিত অংকের শুধু পার্থক্য ধরা হয়েছে। Special Benefit আলাদাভাবে সমন্বয় হয়েছে; কোনো অংক দ্বিতীয়বার কর্তন করা হয়নি।','Basic pay, eligible July increment, house rent and other earnings already received under the 2015 scale are treated as Old Paid Payroll. For PF, benevolent fund and other deductions, only the difference between the new required deduction and the amount already deducted is adjusted. Special Benefit is adjusted separately; no amount is deducted twice.')+
+      label('পুরোনো ২০১৫ স্কেলে ইতোমধ্যে পাওয়া Basic, July increment, বাড়িভাড়া ও অন্যান্য ভাতা Old Paid Payroll হিসেবে সমন্বয় করা হয়েছে। PF, কল্যাণ, স্বাস্থ্য/গ্রুপ বীমা ও অন্যান্য scale-linked কর্তনের ক্ষেত্রে নতুন প্রয়োজনীয় কর্তন ও আগে কর্তিত অংকের শুধু পার্থক্য ধরা হয়েছে। PF advance, loan/advance recovery ও ব্যক্তিগত/সাময়িক recovery arrear comparison-এর বাইরে রাখা হয়েছে। Special Benefit আলাদাভাবে সমন্বয় হয়েছে; কোনো অংক দ্বিতীয়বার কর্তন করা হয়নি।','Basic pay, eligible July increment, house rent and other earnings already received under the 2015 scale are treated as Old Paid Payroll. For PF, benevolent fund and other deductions, only the difference between the new required deduction and the amount already deducted is adjusted. Special Benefit is adjusted separately; no amount is deducted twice.')+
       '</div>';
 
     const body=summary+
@@ -2625,6 +2623,22 @@ function duCategoryInfo(category,lang='bn'){
   };
   return map[normalizeDuCategory(category)]||map.class3;
 }
+function duPayrollDeductionRules({category,date,basic}={}){
+  const c=normalizeDuCategory(category)||'class3';
+  const d=String(date||'').slice(0,10);
+  const b=Math.max(0,Number(basic||0));
+  const beneRate=({teacher:.05,officer:.05,class3:.04,class4:.0275}[c]??.04);
+  const pfRate=.10;
+  const health=149.34;
+  const group=(c==='class3'&&d>='2026-07-01')?174:192.50;
+  return {
+    category:c,date:d,basic:b,
+    pfRate,beneRate,
+    pf:Math.round(b*pfRate*100)/100,
+    bene:Math.round(b*beneRate*100)/100,
+    health,group,stamp:10,association:10
+  };
+}
 function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
   const en=lang==='en',today=todayLocalIso();
   const compactPwa=typeof window!=='undefined'&&(
@@ -2679,22 +2693,29 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
         entertainmentTier:'none',otherSpecialAllowance:f.otherSpecialAllowance
       });
       const duAuto=f.deductionMode!=='custom';
-      const gpfRate=duAuto?10:Math.max(0,Math.min(25,Number(f.gpfRate||0)));
-      const pf=Math.round(snap.payableBasic*(gpfRate/100)*100)/100;
+      const deductionDate=String(opts.deductionDate||date).slice(0,10);
+      const autoRules=duPayrollDeductionRules({category:f.category,date:deductionDate,basic:snap.payableBasic});
+      const gpfRate=duAuto?autoRules.pfRate*100:Math.max(0,Math.min(25,Number(f.gpfRate||0)));
+      const pf=duAuto?autoRules.pf:Math.round(snap.payableBasic*(gpfRate/100)*100)/100;
       const info=duCategoryInfo(f.category,lang);
-      const beneRate=info.beneRate;
-      const bene=duAuto?Math.round(snap.payableBasic*beneRate*100)/100:Number(f.benevolent||0);
-      const health=duAuto?149.34:Number(f.health||0);
-      const group=duAuto?192.50:Number(f.group||0);
-      const stamp=duAuto?10:Number(f.stamp||0);
-      const association=duAuto?10:Number(f.association||0);
+      const beneRate=duAuto?autoRules.beneRate:info.beneRate;
+      const bene=duAuto?autoRules.bene:Number(f.benevolent||0);
+      const health=duAuto?autoRules.health:Number(f.health||0);
+      const group=duAuto?autoRules.group:Number(f.group||0);
+      const stamp=duAuto?autoRules.stamp:Number(f.stamp||0);
+      const association=duAuto?autoRules.association:Number(f.association||0);
       const quarterRent=f.housing==='du_quarter'?Math.max(0,Number(f.duQuarterRent||0)):0;
       const quarterOther=f.housing==='du_quarter'?Math.max(0,Number(f.duQuarterOther||0)):0;
       const tax=Math.max(0,Number(f.tax||0)),loan=Math.max(0,Number(f.loan||0)),other=Math.max(0,Number(f.other||0));
-      const deductions=pf+bene+health+group+stamp+association+quarterRent+quarterOther+tax+loan+other;
+      const scaleLinkedDeductions=pf+bene+health+group+stamp+association+quarterRent+quarterOther+tax;
+      const personalRecoveries=loan+other;
+      const deductions=scaleLinkedDeductions+personalRecoveries;
       return {
         ...snap,label,deductionMode:f.deductionMode,category:f.category,categoryLabel:info.label,
-        gpfRate,pf,beneRate,bene,health,group,stamp,association,quarterRent,quarterOther,tax,loan,other,deductions,
+        deductionDate,autoRules,gpfRate,pf,beneRate,bene,health,group,stamp,association,quarterRent,quarterOther,tax,loan,other,
+        scaleLinkedDeductions,personalRecoveries,deductions,
+        arrearDeductions:scaleLinkedDeductions,
+        arrearNet:snap.gross-scaleLinkedDeductions,
         net:snap.gross-deductions,location:'ঢাকা বিশ্ববিদ্যালয়, ঢাকা',housingMode:f.housing,
         educationClaimedElsewhere:f.educationClaimedElsewhere,disabledBenefitElsewhere:f.disabledBenefitElsewhere
       };
@@ -2712,7 +2733,7 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
     const julyIncrementEligible=f.incrementEligible2026==='yes';
     const oldJulyBasic=incremented2015Basic(grade,currentBasic,julyIncrementEligible?1:0);
     const legacyIncrementPaid=Math.max(0,Number(oldJulyBasic||0)-Number(currentBasic||0));
-    const legacyJuly=make('2026-06-30',en?'Legacy July 2026 payroll':'জুলাই ২০২৬ পুরোনো পে-রোল',{currentBasic:oldJulyBasic,incrementEligible:false});
+    const legacyJune=make('2026-06-30',en?'Legacy June 2026 payroll':'জুন ২০২৬ পুরোনো পে-রোল',{currentBasic:oldJulyBasic,incrementEligible:false,deductionDate:'2026-06-30'});
     const october=make('2026-10-01',en?'October 2026':'অক্টোবর ২০২৬');
     const newScaleIncrementAmount=Math.max(0,Number(october.fixedWithFirstIncrement||0)-Number(october.fixed||0));
     const special=specialBenefit2025(grade,oldJulyBasic);
@@ -2724,11 +2745,13 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
       ['2026-09-01','September','সেপ্টেম্বর']
     ].map(([date,enMonth,bnMonth])=>{
       const newEntitlement=make(date,en?`${enMonth} 2026 entitlement`:`${bnMonth} ২০২৬ প্রাপ্য`);
-      const oldPaid={...legacyJuly,label:en?`${enMonth} 2026 old payroll`:`${bnMonth} ২০২৬ পুরোনো পে-রোল`};
+      const oldPaid=make('2026-06-30',en?`${enMonth} 2026 old payroll`:`${bnMonth} ২০২৬ পুরোনো পে-রোল`,{
+        currentBasic:oldJulyBasic,incrementEligible:false,deductionDate:date
+      });
       const basicAdjustment=Number(newEntitlement.payableBasic||0)-Number(oldPaid.payableBasic||0);
       const grossAdjustment=Number(newEntitlement.gross||0)-Number(oldPaid.gross||0);
-      const deductionAdjustment=Number(newEntitlement.deductions||0)-Number(oldPaid.deductions||0);
-      const netBeforeSpecial=Number(newEntitlement.net||0)-Number(oldPaid.net||0);
+      const deductionAdjustment=Number(newEntitlement.arrearDeductions||0)-Number(oldPaid.arrearDeductions||0);
+      const netBeforeSpecial=Number(newEntitlement.arrearNet||0)-Number(oldPaid.arrearNet||0);
       const specialAdjustment=Number(special.monthly||0);
       const finalArrear=Math.max(0,netBeforeSpecial-specialAdjustment);
       return {
@@ -2758,8 +2781,8 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
       specialBenefitReceivedAmount,specialBenefitMonthly:special.monthly,
       specialBenefitThreeMonths:specialBenefitReceivedAmount,
       oldJuneBasic:currentBasic,oldJulyBasic,legacyIncrementPaid,newScaleIncrementAmount,
-      legacyBasic:legacyJuly.payableBasic,legacyGross:legacyJuly.gross,legacyNet:legacyJuly.net,
-      legacyAllowances:legacyJuly.allowances,legacyDeductions:legacyJuly.deductions,
+      legacyBasic:legacyJune.payableBasic,legacyGross:legacyJune.gross,legacyNet:legacyJune.net,
+      legacyAllowances:legacyJune.allowances,legacyDeductions:legacyJune.deductions,
       octoberBasic:october.payableBasic,octoberGross:october.gross,octoberCurrentNet:october.net,
       octoberDeductions:october.deductions,octoberAllowances:october.allowances,
       monthlySettlements,
