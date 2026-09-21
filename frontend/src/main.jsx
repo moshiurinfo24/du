@@ -84,72 +84,93 @@ async function syncGuestWorkspaceToAccount(user){
     (w.education||[]).length||(w.events||[]).length||(w.salary_history||[]).length||(w.leave||[]).length
   );
   if(!hasData)return {synced:false,reason:'empty'};
-  const accountKey=String(user?.id||user?.email||user?.employee_reference||'account');
-  const markerKey='hisab_guest_synced_'+accountKey;
-  const localStamp=String(w.updated_at||'local');
-  if(localStorage.getItem(markerKey)===localStamp)return {synced:false,reason:'already-synced'};
 
-  let attempted=0,failed=0;
+  const accountKey=String(user?.id||user?.email||user?.employee_reference||'account');
+  const mapKey='hisab_guest_sync_map_'+accountKey;
+  let map={profileKey:'',education:[],events:[],salary:[],leave:[]};
+  try{map={...map,...JSON.parse(localStorage.getItem(mapKey)||'{}')}}catch{}
+  const sets={
+    education:new Set(map.education||[]),
+    events:new Set(map.events||[]),
+    salary:new Set(map.salary||[]),
+    leave:new Set(map.leave||[])
+  };
+  let attempted=0,failed=0,succeeded=0;
   const push=async(path,opts)=>{
     attempted++;
-    try{await api(path,opts);return true}
+    try{await api(path,opts);succeeded++;return true}
     catch{failed++;return false}
   };
+  const persistMap=()=>{
+    localStorage.setItem(mapKey,JSON.stringify({
+      profileKey:map.profileKey||'',
+      education:[...sets.education],events:[...sets.events],salary:[...sets.salary],leave:[...sets.leave]
+    }));
+  };
+
   const p=w.profile||{};
-  const profileHasData=[p.first_joining_date,p.current_post,p.grade,p.current_post_joining_date,p.office_name,p.department_name].some(Boolean);
-  if(profileHasData){
-    await push('/api/my-career/profile',{method:'PUT',body:JSON.stringify({
-      first_joining_date:p.first_joining_date||'',
-      current_post:p.current_post||'',
-      current_grade:p.grade?Number(p.grade):null,
-      current_post_joining_date:p.current_post_joining_date||'',
-      employment_type:p.category||'',
-      office_name:p.office_name||'',
-      department_name:p.department_name||'',
-      retirement_age:p.retirement_age?Number(p.retirement_age):null,
-      notes:'Imported from Hisab Sahayika local PWA'
-    })});
+  const profilePayload={
+    first_joining_date:p.first_joining_date||'',
+    current_post:p.current_post||'',
+    current_grade:p.grade?Number(p.grade):null,
+    current_post_joining_date:p.current_post_joining_date||'',
+    employment_type:p.category||'',
+    office_name:p.office_name||'',
+    department_name:p.department_name||'',
+    retirement_age:p.retirement_age?Number(p.retirement_age):null,
+    notes:'Imported from Hisab Sahayika local PWA'
+  };
+  const profileHasData=[profilePayload.first_joining_date,profilePayload.current_post,profilePayload.current_grade,profilePayload.current_post_joining_date,profilePayload.office_name,profilePayload.department_name].some(Boolean);
+  const profileKey=JSON.stringify(profilePayload);
+  if(profileHasData&&map.profileKey!==profileKey){
+    if(await push('/api/my-career/profile',{method:'PUT',body:JSON.stringify(profilePayload)})){
+      map.profileKey=profileKey;persistMap();
+    }
   }
+
   for(const x of (w.education||[])){
-    if(!x.level)continue;
-    await push('/api/my-career/education',{method:'POST',body:JSON.stringify({
+    const id=String(x.id||'');
+    if(!x.level||!id||sets.education.has(id))continue;
+    if(await push('/api/my-career/education',{method:'POST',body:JSON.stringify({
       level:x.level||'',institution:x.institution||'',subject:x.subject||'',
       passing_year:x.passing_year||'',result:x.result||'',notes:'Imported from local PWA'
-    })});
+    })})){sets.education.add(id);persistMap()}
   }
   for(const x of (w.events||[])){
-    if(!x.event_date||!x.title)continue;
-    await push('/api/my-career/events',{method:'POST',body:JSON.stringify({
+    const id=String(x.id||'');
+    if(!x.event_date||!x.title||!id||sets.events.has(id))continue;
+    if(await push('/api/my-career/events',{method:'POST',body:JSON.stringify({
       event_type:x.type||'other',event_date:x.event_date||'',title:x.title||'',
       post_name:x.post_name||'',grade:x.grade||'',office_name:x.office_name||'',
       reference_no:'',notes:'Imported from local PWA'
-    })});
+    })})){sets.events.add(id);persistMap()}
   }
   for(const x of (w.salary_history||[])){
-    if(!x.effective_date)continue;
-    await push('/api/my-salary-history',{method:'POST',body:JSON.stringify({
+    const id=String(x.id||'');
+    if(!x.effective_date||!id||sets.salary.has(id))continue;
+    if(await push('/api/my-salary-history',{method:'POST',body:JSON.stringify({
       effective_date:x.effective_date||'',grade:Number(x.grade||p.grade||13),stage_2015:0,
       basic_2015:Number(x.basic||0),fixed_2026:0,payable_basic:Number(x.basic||0),
       gross_salary:Number(x.gross||0),total_deduction:Number(x.deductions||0),
       net_salary:Number(x.net||0),source:'guest_import',notes:x.note||'Imported from local PWA'
-    })});
+    })})){sets.salary.add(id);persistMap()}
   }
   for(const x of (w.leave||[])){
-    if(!x.start_date||!x.end_date)continue;
-    await push('/api/my-leave-records',{method:'POST',body:JSON.stringify({
+    const id=String(x.id||'');
+    if(!x.start_date||!x.end_date||!id||sets.leave.has(id))continue;
+    if(await push('/api/my-leave-records',{method:'POST',body:JSON.stringify({
       leave_type:x.type||'other',start_date:x.start_date||'',end_date:x.end_date||'',
       day_mode:'full',total_days:Number(x.total_days||0),notes:x.note||'Imported from local PWA'
-    })});
+    })})){sets.leave.add(id);persistMap()}
   }
 
-  if(attempted>0&&failed===0){
-    localStorage.setItem(markerKey,localStamp);
+  if(failed===0){
     localStorage.setItem('hisab_guest_last_cloud_sync_at',new Date().toISOString());
     localStorage.removeItem('hisab_guest_last_cloud_sync_error');
-    return {synced:true,attempted};
+  }else{
+    localStorage.setItem('hisab_guest_last_cloud_sync_error',new Date().toISOString());
   }
-  if(failed>0)localStorage.setItem('hisab_guest_last_cloud_sync_error',new Date().toISOString());
-  return {synced:false,reason:failed?'partial-failure':'nothing-to-sync',attempted,failed};
+  return {synced:failed===0,attempted,succeeded,failed};
 }
 
 function pwaInstallId(){
