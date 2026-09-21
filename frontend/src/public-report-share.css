@@ -265,14 +265,27 @@
 .pdf-center-footer button svg{width:14px}
 
 @media(max-width:760px){
+  .pdf-preview-modal{
+    overflow:hidden!important;
+  }
   .pdf-preview-scroll{
     overflow-x:hidden!important;
+    overscroll-behavior:contain;
     padding:10px 4px 84px!important;
     display:block;
+    width:100%;
+    max-width:100vw;
+    box-sizing:border-box;
   }
   .pdf-preview-fit-shell{
     margin:0 auto;
     max-width:100%;
+    overflow:hidden;
+    box-sizing:border-box;
+  }
+  .pdf-preview-paper{
+    margin:0!important;
+    max-width:none!important;
   }
   .pdf-preview-sharebar{
     overflow-x:hidden!important;
