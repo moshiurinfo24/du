@@ -301,20 +301,88 @@ function Salary({en,lang,data,commit}){
   return <div className="guest-two-part"><form className="guest-card guest-form" onSubmit={save}><Title icon={WalletCards} title={editing?(en?'Edit salary snapshot':'বেতন স্ন্যাপশট সম্পাদনা'):(en?'Save salary snapshot':'বেতন স্ন্যাপশট সংরক্ষণ')} sub={en?'Works without login.':'লগইন ছাড়াই কাজ করবে।'}/><div className="guest-fields"><label>{en?'Effective date':'কার্যকর তারিখ'}<input type="date" value={f.effective_date} onChange={e=>setF({...f,effective_date:e.target.value})}/></label><label>{en?'Grade':'গ্রেড'}<input inputMode="numeric" value={f.grade} onChange={e=>setF({...f,grade:e.target.value})}/></label>{[['basic',en?'Basic':'মূল বেতন'],['gross',en?'Gross':'মোট'],['deductions',en?'Deductions':'কর্তন'],['net',en?'Net':'নিট']].map(([k,l])=><label key={k}>{l}<input type="number" inputMode="decimal" min="0" value={f[k]} onChange={e=>setF({...f,[k]:e.target.value})}/></label>)}<label>{en?'Note':'নোট'}<input value={f.note} onChange={e=>setF({...f,note:e.target.value})}/></label></div><div className="guest-form-actions"><button className="guest-primary"><Save/>{editing?(en?'Save changes':'পরিবর্তন সংরক্ষণ'):(en?'Save':'সংরক্ষণ')}</button>{editing&&<button type="button" className="guest-cancel" onClick={reset}><X/>{en?'Cancel':'বাতিল'}</button>}</div></form><List items={data.salary_history} empty={en?'No salary snapshot saved yet.':'এখনও কোনো বেতন স্ন্যাপশট নেই।'} edit={beginEdit} remove={id=>commit({...data,salary_history:data.salary_history.filter(x=>x.id!==id)})} render={x=><div><b>{dateFmt(x.effective_date,lang)} · {en?'Net ':'নিট ৳'}{num(x.net,lang)}</b><span>{en?'Basic ':'মূল '}{num(x.basic,lang)} · {en?'Gross ':'মোট '}{num(x.gross,lang)}</span></div>}/></div>;
 }
 
+function localLeaveUsageInYear(item,year){
+  const y=Number(year),start=String(item?.start_date||''),end=String(item?.end_date||start);
+  if(!start)return 0;
+  const a=new Date(start+'T00:00:00'),b=new Date(end+'T00:00:00');
+  if(Number.isNaN(a.getTime())||Number.isNaN(b.getTime())||b<a)return 0;
+  if(item?.day_mode==='half')return a.getFullYear()===y?0.5:0;
+  const ys=new Date(y,0,1),ye=new Date(y,11,31),from=a>ys?a:ys,to=b<ye?b:ye;
+  return to<from?0:Math.floor((to-from)/86400000)+1;
+}
 function Leave({en,lang,data,commit}){
-  const blank={type:'casual',start_date:'',end_date:'',note:''};
-  const [f,setF]=useState(blank);
-  const [editing,setEditing]=useState('');
+  const currentYear=String(new Date().getFullYear());
+  const blank={type:'casual',start_date:'',end_date:'',day_mode:'full',note:''};
+  const [f,setF]=useState(blank),[editing,setEditing]=useState(''),[selectedYear,setSelectedYear]=useState(currentYear);
   const names=en?{casual:'Casual',earned:'Earned',medical:'Medical',maternity:'Maternity',paternity:'Paternity',study:'Study',special:'Special',other:'Other'}:{casual:'নৈমিত্তিক',earned:'অর্জিত',medical:'চিকিৎসা',maternity:'মাতৃত্বকালীন',paternity:'পিতৃত্বকালীন',study:'শিক্ষা',special:'বিশেষ',other:'অন্যান্য'};
+  const types=Object.keys(names);
   const reset=()=>{setF(blank);setEditing('')};
+  const yearConfig=data.leave_entitlements?.[selectedYear]||{entitlements:{},source_note:''};
+  const entitlements=yearConfig.entitlements||{};
+  const years=Array.from(new Set([currentYear,selectedYear,...data.leave.map(x=>String(x.start_date||'').slice(0,4)).filter(x=>/^\d{4}$/.test(x)),...Object.keys(data.leave_entitlements||{})])).sort((a,b)=>Number(b)-Number(a));
+  const usage=types.reduce((m,type)=>{m[type]=data.leave.filter(x=>x.type===type).reduce((sum,x)=>sum+localLeaveUsageInYear(x,selectedYear),0);return m},{});
+  const configured=types.filter(type=>entitlements[type]!==undefined&&entitlements[type]!=='');
+  const totalUsed=Object.values(usage).reduce((sum,x)=>sum+Number(x||0),0);
+  const totalEntitlement=configured.reduce((sum,type)=>sum+Number(entitlements[type]||0),0);
+  const remaining=configured.reduce((sum,type)=>sum+Number(entitlements[type]||0)-Number(usage[type]||0),0);
+
   const save=e=>{
-    e.preventDefault();const total=inclusiveDays(f.start_date,f.end_date);if(!total)return;
-    const item=editing?{...f,id:editing,total_days:total}:{id:uid(),...f,total_days:total};
+    e.preventDefault();
+    const endDate=f.day_mode==='half'?f.start_date:f.end_date;
+    const total=f.day_mode==='half'?(f.start_date?0.5:0):inclusiveDays(f.start_date,endDate);
+    if(!total)return;
+    const item=editing?{...f,end_date:endDate,id:editing,total_days:total}:{id:uid(),...f,end_date:endDate,total_days:total};
     const next=(editing?data.leave.map(x=>x.id===editing?item:x):[item,...data.leave]).sort((a,b)=>String(b.start_date).localeCompare(String(a.start_date)));
     commit({...data,leave:next});reset();
   };
+  const setEntitlement=(type,value)=>{
+    const next={...entitlements};
+    if(value==='')delete next[type];else next[type]=value;
+    commit({...data,leave_entitlements:{...(data.leave_entitlements||{}),[selectedYear]:{...yearConfig,entitlements:next}}});
+  };
+  const setSource=value=>commit({...data,leave_entitlements:{...(data.leave_entitlements||{}),[selectedYear]:{...yearConfig,source_note:value}}});
   const beginEdit=x=>{setEditing(x.id);setF({...blank,...x})};
-  return <div className="guest-two-part"><form className="guest-card guest-form" onSubmit={save}><Title icon={CalendarDays} title={editing?(en?'Edit leave record':'ছুটির রেকর্ড সম্পাদনা'):(en?'Add leave record':'ছুটির রেকর্ড যোগ করুন')}/><div className="guest-fields"><label>{en?'Leave type':'ছুটির ধরন'}<select value={f.type} onChange={e=>setF({...f,type:e.target.value})}>{Object.entries(names).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label><label>{en?'Start':'শুরু'}<input type="date" value={f.start_date} onChange={e=>setF({...f,start_date:e.target.value})}/></label><label>{en?'End':'শেষ'}<input type="date" value={f.end_date} onChange={e=>setF({...f,end_date:e.target.value})}/></label><label>{en?'Note':'নোট'}<input value={f.note} onChange={e=>setF({...f,note:e.target.value})}/></label></div><div className="guest-form-actions"><button className="guest-primary">{editing?<Save/>:<Plus/>}{editing?(en?'Save changes':'পরিবর্তন সংরক্ষণ'):(en?'Add':'যোগ করুন')}</button>{editing&&<button type="button" className="guest-cancel" onClick={reset}><X/>{en?'Cancel':'বাতিল'}</button>}</div></form><List items={data.leave} empty={en?'No leave record saved yet.':'এখনও কোনো ছুটির রেকর্ড নেই।'} edit={beginEdit} remove={id=>commit({...data,leave:data.leave.filter(x=>x.id!==id)})} render={x=><div><b>{names[x.type]||x.type} · {num(x.total_days,lang,1)} {en?'day(s)':'দিন'}</b><span>{dateFmt(x.start_date,lang)} — {dateFmt(x.end_date,lang)}</span></div>}/></div>;
+
+  return <div className="guest-leave-balance">
+    <section className="guest-card guest-leave-summary">
+      <div className="guest-leave-year">
+        <div><small>{en?'LEAVE BALANCE':'ছুটি ব্যালেন্স'}</small><h3>{en?'Entitlement · Used · Remaining':'প্রাপ্য · ব্যবহৃত · অবশিষ্ট'}</h3><p>{en?'No entitlement is assumed. Enter only the rule that applies to you.':'কোনো entitlement অটো ধরা হয় না। আপনার ক্ষেত্রে প্রযোজ্য entitlement দিন।'}</p></div>
+        <label>{en?'Year':'বছর'}<select value={selectedYear} onChange={e=>setSelectedYear(e.target.value)}>{years.map(y=><option key={y} value={y}>{num(y,lang)}</option>)}</select></label>
+      </div>
+      <div className="guest-leave-kpis">
+        <span><small>{en?'Used':'ব্যবহৃত'}</small><b>{num(totalUsed,lang,1)}</b></span>
+        <span><small>{en?'Entitlement':'প্রাপ্য'}</small><b>{configured.length?num(totalEntitlement,lang,1):'—'}</b></span>
+        <span className={configured.length&&remaining<0?'over':''}><small>{en?'Remaining':'অবশিষ্ট'}</small><b>{configured.length?num(remaining,lang,1):'—'}</b></span>
+      </div>
+      <div className="guest-leave-balance-list">
+        {types.map(type=>{
+          const used=Number(usage[type]||0),raw=entitlements[type],has=raw!==undefined&&raw!=='',rem=has?Number(raw)-used:null;
+          return <div key={type} className={has&&rem<0?'over':''}>
+            <div><b>{names[type]}</b><small>{en?'Used':'ব্যবহৃত'} {num(used,lang,1)}</small></div>
+            <label>{en?'Entitlement':'প্রাপ্য'}<input type="number" min="0" max="366" step="0.5" value={raw??''} placeholder="—" onChange={e=>setEntitlement(type,e.target.value)}/></label>
+            <span><small>{en?'Remaining':'অবশিষ্ট'}</small><b>{has?num(rem,lang,1):'—'}</b></span>
+          </div>
+        })}
+      </div>
+      <label className="guest-leave-source">{en?'Rule / source reference (optional)':'নিয়ম / উৎস রেফারেন্স (ঐচ্ছিক)'}<input value={yearConfig.source_note||''} maxLength="500" onChange={e=>setSource(e.target.value)} placeholder={en?'Office order / rule reference':'অফিস আদেশ / বিধির রেফারেন্স'}/></label>
+      <div className="guest-disclaimer"><ShieldCheck/>{en?'Balance is a personal planning aid only; blank entitlement means “not configured”.':'ব্যালেন্স শুধু ব্যক্তিগত পরিকল্পনার সহায়ক; ফাঁকা entitlement মানে “সেট করা হয়নি”।'}</div>
+    </section>
+
+    <div className="guest-two-part">
+      <form className="guest-card guest-form" onSubmit={save}>
+        <Title icon={CalendarDays} title={editing?(en?'Edit leave record':'ছুটির রেকর্ড সম্পাদনা'):(en?'Add leave record':'ছুটির রেকর্ড যোগ করুন')}/>
+        <div className="guest-fields">
+          <label>{en?'Leave type':'ছুটির ধরন'}<select value={f.type} onChange={e=>setF({...f,type:e.target.value})}>{Object.entries(names).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label>
+          <label>{en?'Day mode':'দিনের ধরন'}<select value={f.day_mode} onChange={e=>setF({...f,day_mode:e.target.value,end_date:e.target.value==='half'?f.start_date:f.end_date})}><option value="full">{en?'Full day(s)':'পূর্ণ দিন'}</option><option value="half">{en?'Half day':'অর্ধদিবস'}</option></select></label>
+          <label>{en?'Start':'শুরু'}<input type="date" value={f.start_date} onChange={e=>setF({...f,start_date:e.target.value,...(f.day_mode==='half'?{end_date:e.target.value}:{})})}/></label>
+          <label>{en?'End':'শেষ'}<input type="date" disabled={f.day_mode==='half'} value={f.day_mode==='half'?f.start_date:f.end_date} onChange={e=>setF({...f,end_date:e.target.value})}/></label>
+          <label>{en?'Note':'নোট'}<input value={f.note} onChange={e=>setF({...f,note:e.target.value})}/></label>
+        </div>
+        <div className="guest-form-actions"><button className="guest-primary">{editing?<Save/>:<Plus/>}{editing?(en?'Save changes':'পরিবর্তন সংরক্ষণ'):(en?'Add':'যোগ করুন')}</button>{editing&&<button type="button" className="guest-cancel" onClick={reset}><X/>{en?'Cancel':'বাতিল'}</button>}</div>
+      </form>
+      <List items={data.leave} empty={en?'No leave record saved yet.':'এখনও কোনো ছুটির রেকর্ড নেই।'} edit={beginEdit} remove={id=>commit({...data,leave:data.leave.filter(x=>x.id!==id)})} render={x=><div><b>{names[x.type]||x.type} · {num(x.total_days,lang,1)} {en?'day(s)':'দিন'}</b><span>{dateFmt(x.start_date,lang)} — {dateFmt(x.end_date,lang)}{x.day_mode==='half'?' · '+(en?'Half day':'অর্ধদিবস'):''}</span></div>}/>
+    </div>
+  </div>;
 }
 
 function Reports({en,lang,data,service,leaveDays,latestSalary,onOpen}){
