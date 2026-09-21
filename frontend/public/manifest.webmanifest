@@ -1,0 +1,36 @@
+{
+  "id": "/",
+  "name": "DU Employee Digital Service",
+  "short_name": "DU Service",
+  "description": "ঢাকা বিশ্ববিদ্যালয়ের শিক্ষক, কর্মকর্তা ও কর্মচারীদের বেতন, পদোন্নতি, পয়েন্ট ও ডিজিটাল সেবা",
+  "lang": "bn",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "background_color": "#FFF7FB",
+  "theme_color": "#D41468",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/du-app-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/du-app-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/du-app-maskable.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
