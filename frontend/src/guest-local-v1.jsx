@@ -106,7 +106,7 @@ function Dashboard({en,lang,data,service,leaveDays,latestSalary,onTab,onOpen,onL
       <button onClick={()=>onOpen?.('points')}><Route/><span>{en?'Points':'পয়েন্ট'}</span></button>
       <button onClick={()=>onTab('leave')}><CalendarDays/><span>{en?'Leave':'ছুটি'}</span></button>
     </div></section>
-    <button className="guest-sync-card" onClick={onLogin}><Cloud/><div><b>{en?'Backup & Sync — optional':'Backup & Sync — ঐচ্ছিক'}</b><span>{en?'Login only for cloud backup and multi-device use.':'শুধু Cloud backup ও একাধিক ডিভাইসে ব্যবহার করতে চাইলে লগইন করুন।'}</span></div><ChevronRight/></button>
+    <button className="guest-sync-card" onClick={onLogin}><Cloud/><div><b>{en?'Backup & Sync — optional':'Backup & Sync — ঐচ্ছিক'}</b><span>{en?'Login only for Cloud Backup, Sync, Recovery and multi-device use.':'শুধু Cloud Backup, Sync, Recovery ও একাধিক ডিভাইসে ব্যবহার করতে চাইলে লগইন করুন।'}</span></div><ChevronRight/></button>
   </div>;
 }
 
@@ -203,7 +203,7 @@ function Reports({en,lang,data,service,leaveDays,latestSalary}){
 
 function Privacy({en,data,onLogin}){
   const clear=()=>{if(!confirm(en?'Delete all local personal records?':'সব Local ব্যক্তিগত রেকর্ড মুছে ফেলবেন?'))return;localStorage.removeItem(KEY);location.reload()};
-  return <div className="guest-privacy-grid"><article><Download/><h3>{en?'Download local data':'Local ডাটা ডাউনলোড'}</h3><p>{en?'Export this device data as JSON.':'এই ডিভাইসের তথ্য JSON হিসেবে নিন।'}</p><button onClick={()=>downloadData(data)}><Download/>Export</button></article><article><Cloud/><h3>Backup & Sync</h3><p>{en?'Optional login for cloud backup and multiple devices.':'Cloud backup ও একাধিক ডিভাইসের জন্য ঐচ্ছিক login।'}</p><button onClick={onLogin}><Cloud/>Login & Sync</button></article><article><Trash2/><h3>{en?'Clear local records':'Local রেকর্ড মুছুন'}</h3><p>{en?'Deletes only records on this device.':'শুধু এই ডিভাইসের রেকর্ড মুছবে।'}</p><button className="danger" onClick={clear}><Trash2/>{en?'Clear':'মুছুন'}</button></article></div>;
+  return <div className="guest-privacy-grid"><article><Download/><h3>{en?'Download local data':'Local ডাটা ডাউনলোড'}</h3><p>{en?'Export this device data as JSON.':'এই ডিভাইসের তথ্য JSON হিসেবে নিন।'}</p><button onClick={()=>downloadData(data)}><Download/>Export</button></article><article><Cloud/><h3>Backup & Sync</h3><p>{en?'Optional login for Cloud Backup, Sync, Recovery and multiple-device use.':'Cloud Backup, Sync, Recovery ও একাধিক ডিভাইসে ব্যবহারের জন্য ঐচ্ছিক লগইন।'}</p><button onClick={onLogin}><Cloud/>{en?'Login for Backup & Sync':'Backup & Sync-এর জন্য লগইন'}</button></article><article><Trash2/><h3>{en?'Clear local records':'Local রেকর্ড মুছুন'}</h3><p>{en?'Deletes only records on this device.':'শুধু এই ডিভাইসের রেকর্ড মুছবে।'}</p><button className="danger" onClick={clear}><Trash2/>{en?'Clear':'মুছুন'}</button></article></div>;
 }
 
 function Title({icon:Icon,title,sub}){
