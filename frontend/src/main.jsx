@@ -54,12 +54,13 @@ import './desktop-app-shell-v3.css';
 import './salary-wizard-v27.css';
 import './salary-service-split-v29.css';
 import './calculation-history-v32.css';
+import './increment-center-v34.css';
 import {initPwaRuntime,subscribePwa,getPwaState,promptPwaInstall,formatPwaTime,manualPwaUpdateCheck,consumePwaUpdateNotice} from './pwa-client.js';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import GuestLocalCenter from './guest-local-v1.jsx';
 import {
   PAY2015,PAY2026,PAY_SCALE_2026_META,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
-  annualPromotionCycle,futureRoadmap,serviceExperiencePoints,fixed2026,implementationRate,houseRent2015,salary2026Snapshot,incremented2015Basic,specialBenefit2025
+  annualPromotionCycle,futureRoadmap,serviceExperiencePoints,fixed2026,implementationRate,houseRent2015,salary2026Snapshot,incremented2015Basic,incremented2026Basic,specialBenefit2025
 } from './rules';
 
 initPwaRuntime();
@@ -882,7 +883,7 @@ function CalculationHistoryCenter({lang='bn',onOpen}){
     age:{icon:UserRound,bn:'বয়স',en:'Age'},
     gap:{icon:CalendarDays,bn:'তারিখের ব্যবধান',en:'Date Difference'},
     retire:{icon:FileClock,bn:'অবসর তারিখ',en:'Retirement'},
-    basic:{icon:BadgeDollarSign,bn:'মূল বেতন প্রক্ষেপণ',en:'Basic Projection'}
+    basic:{icon:BadgeDollarSign,bn:'ইনক্রিমেন্ট সেন্টার',en:'Increment Center'}
   };
   const groups=[['all',en?'All':'সব'],['salary',en?'Salary':'বেতন'],['arrear',en?'Arrear':'বকেয়া'],['promotion',en?'Promotion':'পদোন্নতি'],['other',en?'Other':'অন্যান্য']];
   const visible=items.filter(x=>filter==='all'?true:filter==='other'?!['salary','arrear','promotion'].includes(x.tool):x.tool===filter);
@@ -900,7 +901,7 @@ function CalculationHistoryCenter({lang='bn',onOpen}){
     try{return new Intl.DateTimeFormat(en?'en-GB':'bn-BD',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(v))}
     catch{return v||'—'}
   };
-  const metricLabel=k=>en?({grade:'Grade',basic:'Basic',net:'Net',gross:'Gross',arrear:'Arrear',points:'Points',date:'Date',target:'Target',duration:'Duration',retirement:'Retirement',payable:'Payable basic'}[k]||k):({grade:'গ্রেড',basic:'মূল বেতন',net:'নিট',gross:'মোট',arrear:'বকেয়া',points:'পয়েন্ট',date:'তারিখ',target:'লক্ষ্য',duration:'সময়কাল',retirement:'অবসর',payable:'প্রাপ্য মূল বেতন'}[k]||k);
+  const metricLabel=k=>en?({grade:'Grade',basic:'Basic',net:'Net',gross:'Gross',arrear:'Arrear',points:'Points',date:'Date',target:'Target',duration:'Duration',retirement:'Retirement',payable:'Payable basic',increment:'Increment step',monthly:'Monthly increase',annual:'Annual equivalent'}[k]||k):({grade:'গ্রেড',basic:'মূল বেতন',net:'নিট',gross:'মোট',arrear:'বকেয়া',points:'পয়েন্ট',date:'তারিখ',target:'লক্ষ্য',duration:'সময়কাল',retirement:'অবসর',payable:'প্রাপ্য মূল বেতন',increment:'ইনক্রিমেন্ট ধাপ',monthly:'মাসিক বৃদ্ধি',annual:'বার্ষিক সমপরিমাণ'}[k]||k);
   return <div className="calc-history-center">
     <section className="calc-history-hero">
       <div className="calc-history-hero-icon"><History/></div>
@@ -1725,7 +1726,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     age:en?'Age':'বয়স',
     gap:en?'Date Gap':'তারিখ ব্যবধান',
     retire:en?'Retirement':'অবসর',
-    basic:en?'Basic Projection':'মূল বেতন প্রক্ষেপণ',
+    basic:en?'Increment Center':'ইনক্রিমেন্ট সেন্টার',
     points:en?'Points Center':'পয়েন্ট',
     calendar:en?'Calendar':'ক্যালেন্ডার',
     reference:en?'Notices & Policies':'নোটিশ ও নীতিমালা',
@@ -1764,7 +1765,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
   const moreTools=[
     ['age',UserRound,en?'Age':'বয়স','sky'],
     ['gap',CalendarDays,en?'Date Difference':'তারিখের ব্যবধান','blue'],
-    ['basic',BadgeDollarSign,en?'Basic Projection':'মূল বেতন প্রক্ষেপণ','indigo'],
+    ['basic',BadgeDollarSign,en?'Increment Center':'ইনক্রিমেন্ট সেন্টার','indigo'],
     ['history',History,en?'My Calculations':'আমার হিসাব','aqua'],
     ['pdf-center',FileText,en?'PDF Center':'PDF সেন্টার','violet'],
     ['reference',BookOpen,en?'Notices & Policies':'নোটিশ ও নীতিমালা','teal']
@@ -1806,7 +1807,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
         <small>{en?'MORE TOOLS':'আরও টুল'}</small>
         <button className={activePublicTool==='age'?'active':''} onClick={()=>open('age')}><UserRound/><span>{en?'Age':'বয়স'}</span></button>
         <button className={activePublicTool==='gap'?'active':''} onClick={()=>open('gap')}><CalendarDays/><span>{en?'Date Difference':'তারিখের ব্যবধান'}</span></button>
-        <button className={activePublicTool==='basic'?'active':''} onClick={()=>open('basic')}><BadgeDollarSign/><span>{en?'Basic Projection':'মূল বেতন প্রক্ষেপণ'}</span></button>
+        <button className={activePublicTool==='basic'?'active':''} onClick={()=>open('basic')}><BadgeDollarSign/><span>{en?'Increment Center':'ইনক্রিমেন্ট সেন্টার'}</span></button>
         <button className={activePublicTool==='history'?'active':''} onClick={()=>open('history')}><History/><span>{en?'My Calculations':'আমার হিসাব'}</span></button>
         <button className={activePublicTool==='pdf-center'?'active':''} onClick={()=>open('pdf-center')}><FileText/><span>{en?'PDF Center':'PDF সেন্টার'}</span></button>
         <button className={activePublicTool==='reference'?'active':''} onClick={()=>open('reference')}><BookOpen/><span>{en?'Notices & Policies':'নোটিশ ও নীতিমালা'}</span></button>
@@ -4634,30 +4635,30 @@ function CalculatorCenter({lang='bn',onPage,publicMode=false,initialTool='servic
   const [age,setAge]=useState({dob:'',asOf:todayLocalIso()});
   const [gap,setGap]=useState({from:'',to:''});
   const [retire,setRetire]=useState({dob:'',age:''});
-  const [basicProj,setBasicProj]=useState({grade:'13',stage:'0',date:'2027-07-01'});
+  const [basicProj,setBasicProj]=useState({grade:'13',stage:'0',date:todayLocalIso(),incrementEligible2026:'yes'});
   const [result,setResult]=useState(null);
 
   useEffect(()=>{setTool(initialTool||'service');setResult(null)},[initialTool]);
   useEffect(()=>{
-    const gp=guestLocalProfile(),localPay=salaryProfilePrefill(gp),localExactStage=exactPay2015Stage(localPay.grade,gp.current_basic_salary);
+    const gp=guestLocalProfile(),localPay=salaryProfilePrefill(gp);
     if(gp.first_joining_date)setService(v=>({...v,start:gp.first_joining_date}));
     if(gp.date_of_birth){
       setAge(v=>({...v,dob:gp.date_of_birth}));
       setRetire(v=>({...v,dob:gp.date_of_birth}));
     }
     if(gp.retirement_age)setRetire(v=>({...v,age:String(gp.retirement_age)}));
-    if(localPay.grade)setBasicProj(v=>({...v,grade:String(localPay.grade),stage:localExactStage||'0'}));
+    if(localPay.grade)setBasicProj(v=>({...v,grade:String(localPay.grade),stage:localPay.currentStage||'0'}));
     if(publicMode)return;
     api('/api/my-career').then(x=>{
       setCareer({profile:x.profile||null,education:x.education||[],events:x.events||[]});
-      const p=x.profile||{},accountPay=salaryProfilePrefill(p),accountExactStage=exactPay2015Stage(accountPay.grade,p.current_basic_salary);
+      const p=x.profile||{},accountPay=salaryProfilePrefill(p);
       if(p.first_joining_date)setService(v=>({...v,start:p.first_joining_date}));
       if(p.date_of_birth){
         setAge(v=>({...v,dob:p.date_of_birth}));
         setRetire(v=>({...v,dob:p.date_of_birth}));
       }
       if(p.retirement_age)setRetire(v=>({...v,age:String(p.retirement_age)}));
-      if(accountPay.grade)setBasicProj(v=>({...v,grade:String(accountPay.grade),stage:accountExactStage||'0'}));
+      if(accountPay.grade)setBasicProj(v=>({...v,grade:String(accountPay.grade),stage:accountPay.currentStage||'0'}));
     }).catch(()=>{});
   },[publicMode]);
 
@@ -4700,10 +4701,45 @@ function CalculatorCenter({lang='bn',onPage,publicMode=false,initialTool='servic
     rememberCalculationHistory({tool:'retire',title_bn:'অবসর তারিখ হিসাব',title_en:'Retirement date calculation',summary_bn:`সম্ভাব্য অবসর: ${fmtDateLang(retirement,'bn')}`,summary_en:`Estimated retirement: ${fmtDateLang(retirement,'en')}`,metrics:{retirement:fmtDateLang(retirement,'bn'),date:fmtDateLang(retire.dob,'bn')},input:{...retire}});
   }
   function calcBasicProjection(){
-    const grade=Number(basicProj.grade),stages=PAY2015[String(grade)]||[],idx=Math.min(Math.max(0,Number(basicProj.stage||0)),Math.max(0,stages.length-1));
-    const current=stages[idx]||0,fixed=fixed2026(grade,current),rate=implementationRate(grade,basicProj.date),increase=Math.max(0,fixed-current),payable=Math.round(current+increase*rate);
-    const value={type:'basicProjection',grade,stage:idx+1,current,fixed,rate,payable,date:basicProj.date};setResult(value);
-    rememberCalculationHistory({tool:'basic',title_bn:`গ্রেড ${numLang(grade,'bn',0)} · মূল বেতন প্রক্ষেপণ`,title_en:`Grade ${grade} · Basic pay projection`,summary_bn:`২০১৫ মূল ৳${moneyLang(current,'bn')} → প্রাপ্য ৳${moneyLang(payable,'bn')}`,summary_en:`2015 basic Tk ${moneyLang(current,'en')} → payable Tk ${moneyLang(payable,'en')}`,metrics:{grade,basic:`৳${moneyLang(current,'bn')}`,payable:`৳${moneyLang(payable,'bn')}`,date:fmtDateLang(basicProj.date,'bn')},input:{...basicProj}});
+    const grade=Number(basicProj.grade),rows=PAY2015[String(grade)]||[],idx=Math.min(Math.max(0,Number(basicProj.stage||0)),Math.max(0,rows.length-1));
+    const oldBasic=rows[idx]||0,date=String(basicProj.date||todayLocalIso()).slice(0,10),eligible2026=basicProj.incrementEligible2026==='yes';
+    if(!oldBasic||date<'2026-07-01')return setResult({error:en?'Choose a valid 2015 pay stage and a projection date on or after 1 July 2026.':'সঠিক ২০১৫ বেতন ধাপ এবং ১ জুলাই ২০২৬ বা পরের একটি তারিখ নির্বাচন করুন।'});
+    const snap=d=>salary2026Snapshot({grade,currentBasic:oldBasic,date:d,incrementEligible2026:eligible2026});
+    const currentSnap=snap(date);
+    const y=Math.max(2027,Number(date.slice(0,4))||2027);
+    const thisJuly=`${y}-07-01`;
+    const nextIncrementDate=date<thisJuly?thisJuly:`${y+1}-07-01`;
+    const nextSnap=snap(nextIncrementDate);
+    const nextCount=Math.max(0,Number(nextSnap.dueIncrementCount||0));
+    const fullBeforeIncrement=incremented2026Basic(grade,nextSnap.fixed,Math.max(0,nextCount-1));
+    const fullAfterIncrement=incremented2026Basic(grade,nextSnap.fixed,nextCount);
+    const incrementStep=Math.max(0,fullAfterIncrement-fullBeforeIncrement);
+    const monthlyIncrease=Math.max(0,nextSnap.payableBasic-currentSnap.payableBasic);
+    const annualEquivalent=monthlyIncrease*12;
+    const timelineDefs=[
+      ['2026-07-01',en?'1st implementation phase':'১ম বাস্তবায়ন ধাপ'],
+      ['2027-01-01',en?'2nd implementation phase':'২য় বাস্তবায়ন ধাপ'],
+      ['2027-07-01',en?'Full basic + annual increment':'পূর্ণ মূল বেতন + বার্ষিক ইনক্রিমেন্ট'],
+      ['2028-01-01',en?'Full basic continues':'পূর্ণ মূল বেতন বহাল'],
+      ['2028-07-01',en?'Next annual increment':'পরবর্তী বার্ষিক ইনক্রিমেন্ট']
+    ];
+    const timeline=timelineDefs.map(([d,label])=>{const x=snap(d);return {date:d,label,payable:x.payableBasic,fixed:x.fixed,full:x.fullWithIncrements,rate:x.phase?.rate??0,dueIncrementCount:x.dueIncrementCount||0}});
+    const value={
+      type:'incrementCenter',grade,stage:idx+1,oldBasic,date,eligible2026,
+      fixed:currentSnap.fixed,fixedWithFirstIncrement:currentSnap.fixedWithFirstIncrement,currentPayable:currentSnap.payableBasic,
+      nextIncrementDate,nextPayable:nextSnap.payableBasic,incrementStep,monthlyIncrease,annualEquivalent,
+      nextFullBefore:fullBeforeIncrement,nextFullAfter:fullAfterIncrement,timeline
+    };
+    setResult(value);
+    rememberCalculationHistory({
+      tool:'basic',
+      title_bn:`গ্রেড ${numLang(grade,'bn',0)} · ইনক্রিমেন্ট সেন্টার`,
+      title_en:`Grade ${grade} · Increment Center`,
+      summary_bn:`বর্তমান প্রাপ্য ৳${moneyLang(currentSnap.payableBasic,'bn')} → ${fmtDateLang(nextIncrementDate,'bn')} এ ৳${moneyLang(nextSnap.payableBasic,'bn')}`,
+      summary_en:`Current payable Tk ${moneyLang(currentSnap.payableBasic,'en')} → Tk ${moneyLang(nextSnap.payableBasic,'en')} on ${fmtDateLang(nextIncrementDate,'en')}`,
+      metrics:{grade,basic:`৳${moneyLang(currentSnap.payableBasic,'bn')}`,increment:`৳${moneyLang(incrementStep,'bn')}`,monthly:`৳${moneyLang(monthlyIncrease,'bn')}`,annual:`৳${moneyLang(annualEquivalent,'bn')}`},
+      input:{...basicProj}
+    });
   }
   const showDur=d=>en?`${numLang(d.y,lang,0)} years ${numLang(d.m,lang,0)} months ${numLang(d.d,lang,0)} days`:durationBn(d);
   const tools=[
@@ -4711,7 +4747,7 @@ function CalculatorCenter({lang='bn',onPage,publicMode=false,initialTool='servic
     ['age',UserRound,en?'Age':'বয়স'],
     ['gap',CalendarDays,en?'Date Difference':'তারিখের ব্যবধান'],
     ['retire',FileClock,en?'Retirement Estimate':'অবসর তারিখ'],
-    ['basic',BadgeDollarSign,en?'Basic Pay Projection':'মূল বেতন প্রক্ষেপণ']
+    ['basic',BadgeDollarSign,en?'Increment Center':'ইনক্রিমেন্ট সেন্টার']
   ];
   const stages=PAY2015[basicProj.grade]||[];
 
@@ -4758,27 +4794,65 @@ function CalculatorCenter({lang='bn',onPage,publicMode=false,initialTool='servic
         <button className="primary wide" onClick={calcRetire}>{en?'Estimate Retirement Date':'অবসর তারিখ হিসাব করুন'}</button>
       </>}
       {tool==='basic'&&<>
-        <div className="tool-head"><BadgeDollarSign/><div><h3>{en?'Basic Pay Projection':'মূল বেতন প্রক্ষেপণ'}</h3><p>{en?'Projects basic pay using the current fixation and implementation schedule.':'বর্তমান ফিক্সেশন ও বাস্তবায়ন সূচি অনুযায়ী মূল বেতন প্রক্ষেপণ দেখায়।'}</p></div></div>
+        <div className="tool-head increment-center-head"><BadgeDollarSign/><div><h3>{en?'Increment Center':'ইনক্রিমেন্ট সেন্টার'}</h3><p>{en?'See current payable basic, the next annual increment, its effective date and the 2026–2028 progression using the verified pay-scale engine.':'যাচাইকৃত পে-স্কেল engine ব্যবহার করে বর্তমান প্রাপ্য মূল বেতন, পরবর্তী বার্ষিক ইনক্রিমেন্ট, কার্যকর তারিখ এবং ২০২৬–২০২৮ progression দেখুন।'}</p></div></div>
+        <div className="increment-center-input-note"><ShieldCheck/><span>{en?'This tool reuses the same fixation and annual-increment rules used by the Salary Calculator.':'এই টুল Salary Calculator-এর একই fixation ও annual-increment rules ব্যবহার করে।'}</span></div>
         <div className="form-grid">
           <label>{en?'Grade':'গ্রেড'}<select value={basicProj.grade} onChange={e=>setBasicProj({...basicProj,grade:e.target.value,stage:'0'})}>{Array.from({length:20},(_,i)=>i+1).map(g=><option key={g} value={g}>{en?`Grade ${g}`:`গ্রেড ${g.toLocaleString('bn-BD')}`}</option>)}</select></label>
-          <label>{en?'Current 2015 pay stage':'বর্তমান ২০১৫ বেতন ধাপ'}<select value={basicProj.stage} onChange={e=>setBasicProj({...basicProj,stage:e.target.value})}>{stages.map((v,i)=><option value={i} key={i}>{en?`Stage ${i+1} — Tk ${moneyLang(v,'en')}`:`ধাপ ${(i+1).toLocaleString('bn-BD')} — ৳${moneyLang(v,'bn')}`}</option>)}</select></label>
-          <label>{en?'Projection date':'প্রক্ষেপণের তারিখ'}<input type="date" value={basicProj.date} onChange={e=>setBasicProj({...basicProj,date:e.target.value})}/></label>
+          <label>{en?'30 June 2026 · 2015 pay stage':'৩০ জুন ২০২৬ · ২০১৫ বেতন ধাপ'}<select value={basicProj.stage} onChange={e=>setBasicProj({...basicProj,stage:e.target.value})}>{stages.map((v,i)=><option value={i} key={i}>{en?`Stage ${i+1} — Tk ${moneyLang(v,'en')}`:`ধাপ ${(i+1).toLocaleString('bn-BD')} — ৳${moneyLang(v,'bn')}`}</option>)}</select></label>
+          <label>{en?'1 July 2026 increment':'১ জুলাই ২০২৬ ইনক্রিমেন্ট'}<select value={basicProj.incrementEligible2026} onChange={e=>setBasicProj({...basicProj,incrementEligible2026:e.target.value})}><option value="yes">{en?'Eligible / applicable':'প্রাপ্য / প্রযোজ্য'}</option><option value="no">{en?'Not eligible / not applicable':'প্রাপ্য নয় / প্রযোজ্য নয়'}</option></select></label>
+          <label>{en?'Calculate as of':'হিসাবের তারিখ'}<input type="date" min="2026-07-01" value={basicProj.date} onChange={e=>setBasicProj({...basicProj,date:e.target.value})}/></label>
         </div>
-        <button className="primary wide" onClick={calcBasicProjection}>{en?'Project Basic Pay':'মূল বেতন প্রক্ষেপণ করুন'}</button>
+        <button className="primary wide" onClick={calcBasicProjection}>{en?'Show Increment Progression':'ইনক্রিমেন্ট প্রগ্রেশন দেখুন'}</button>
       </>}
     </section>
 
-    {result&&<section className={`calculator-result ${result.error?'warn':'ok'}`}>
+    {result?.type==='incrementCenter'?<IncrementCenterResult r={result} lang={lang}/>:result&&<section className={`calculator-result ${result.error?'warn':'ok'}`}>
       {result.error?<><AlertTriangle/><div><h3>{en?'Unable to calculate':'হিসাব করা যায়নি'}</h3><p>{result.error}</p></div></>:
       result.type==='service'?<><CheckCircle2/><div><small>{en?'Total service length':'মোট চাকরিকাল'}</small><h3>{showDur(result.d)}</h3><p>{fmtDateLang(result.start,lang)} → {fmtDateLang(result.end,lang)}</p></div></>:
       result.type==='age'?<><CheckCircle2/><div><small>{en?'Current age':'বর্তমান বয়স'}</small><h3>{showDur(result.d)}</h3><p>{en?'Date of birth':'জন্মতারিখ'}: {fmtDateLang(result.dob,lang)}</p></div></>:
       result.type==='gap'?<><CheckCircle2/><div><small>{en?'Exact difference':'সঠিক ব্যবধান'}</small><h3>{showDur(result.d)}</h3><p>{fmtDateLang(result.from,lang)} → {fmtDateLang(result.to,lang)}</p></div></>:
-      result.type==='retire'?<><FileClock/><div><small>{en?'Estimated retirement date':'সম্ভাব্য অবসর তারিখ'}</small><h3>{fmtDateLang(result.retirement,lang)}</h3><p>{en?`Based on the retirement age you entered: ${numLang(result.years,lang,0)} years.`:`আপনার দেওয়া অবসরের বয়স ${numLang(result.years,lang,0)} বছর ধরে হিসাব করা হয়েছে।`}</p></div></>:
-      <><BadgeDollarSign/><div><small>{en?'Projected payable basic':'প্রক্ষেপিত প্রাপ্য মূল বেতন'}</small><h3>{en?'Tk':'৳'} {moneyLang(result.payable,lang)}</h3><p>{en?`2015 basic Tk ${moneyLang(result.current,'en')} · Full fixed 2026 Tk ${moneyLang(result.fixed,'en')} · Implementation ${numLang(result.rate*100,lang,0)}%`:`২০১৫ মূল বেতন ৳${moneyLang(result.current,'bn')} · ২০২৬ পূর্ণ নির্ধারিত ৳${moneyLang(result.fixed,'bn')} · বাস্তবায়ন ${numLang(result.rate*100,lang,0)}%`}</p></div></>}
+      result.type==='retire'?<><FileClock/><div><small>{en?'Estimated retirement date':'সম্ভাব্য অবসর তারিখ'}</small><h3>{fmtDateLang(result.retirement,lang)}</h3><p>{en?`Based on the retirement age you entered: ${numLang(result.years,lang,0)} years.`:`আপনার দেওয়া অবসরের বয়স ${numLang(result.years,lang,0)} বছর ধরে হিসাব করা হয়েছে।`}</p></div></>:null}
     </section>}
 
     
   </div>
+}
+
+function IncrementCenterResult({r,lang='bn'}){
+  const en=lang==='en';
+  const money=v=>`${en?'Tk ':'৳ '}${moneyLang(v,lang)}`;
+  const atCeiling=Number(r.incrementStep||0)<=0;
+  return <section className="increment-result">
+    <div className="increment-result-hero">
+      <div><small>{en?'INCREMENT CENTER RESULT':'ইনক্রিমেন্ট সেন্টার ফলাফল'}</small><h3>{en?`Grade ${r.grade} · current payable basic`:`গ্রেড ${numLang(r.grade,lang,0)} · বর্তমান প্রাপ্য মূল বেতন`}</h3><strong>{money(r.currentPayable)}</strong><p>{fmtDateLang(r.date,lang)} · {en?'2015 reference basic':'২০১৫ রেফারেন্স মূল বেতন'} {money(r.oldBasic)}</p></div>
+      <div className="increment-next-date"><CalendarDays/><span>{en?'Next annual increment':'পরবর্তী বার্ষিক ইনক্রিমেন্ট'}</span><b>{fmtDateLang(r.nextIncrementDate,lang)}</b></div>
+    </div>
+
+    <div className="increment-kpi-grid">
+      <article><small>{en?'Next increment step':'পরবর্তী ইনক্রিমেন্ট ধাপ'}</small><b>{money(r.incrementStep)}</b><span>{atCeiling?(en?'Top step reached in the verified scale':'যাচাইকৃত স্কেলের সর্বোচ্চ ধাপে পৌঁছেছে'):(en?'Full 2026 scale step difference':'পূর্ণ ২০২৬ স্কেলের ধাপ পার্থক্য')}</span></article>
+      <article><small>{en?'Payable basic on next date':'পরবর্তী তারিখে প্রাপ্য মূল বেতন'}</small><b>{money(r.nextPayable)}</b><span>{fmtDateLang(r.nextIncrementDate,lang)}</span></article>
+      <article><small>{en?'Monthly increase from selected date':'নির্বাচিত তারিখ থেকে মাসিক বৃদ্ধি'}</small><b>{money(r.monthlyIncrease)}</b><span>{en?'Includes any implementation change up to that date':'ওই তারিখ পর্যন্ত বাস্তবায়ন পরিবর্তন থাকলে সেটিও অন্তর্ভুক্ত'}</span></article>
+      <article><small>{en?'Annual equivalent increase':'বার্ষিক সমপরিমাণ বৃদ্ধি'}</small><b>{money(r.annualEquivalent)}</b><span>{en?'Monthly difference × 12; not an arrear calculation':'মাসিক পার্থক্য × ১২; এটি বকেয়া হিসাব নয়'}</span></article>
+    </div>
+
+    <div className="increment-scale-strip">
+      <span><small>{en?'2015 reference':'২০১৫ রেফারেন্স'}</small><b>{money(r.oldBasic)}</b></span>
+      <ChevronRight/>
+      <span><small>{en?'2026 fixed':'২০২৬ নির্ধারিত'}</small><b>{money(r.fixed)}</b></span>
+      <ChevronRight/>
+      <span><small>{en?'Fixed + eligible 2026 increment':'নির্ধারিত + প্রাপ্য ২০২৬ ইনক্রিমেন্ট'}</small><b>{money(r.fixedWithFirstIncrement)}</b></span>
+    </div>
+
+    <div className="increment-timeline-card">
+      <div className="increment-timeline-head"><div><small>{en?'2026–2028 PROGRESSION':'২০২৬–২০২৮ প্রগ্রেশন'}</small><h3>{en?'Payable basic timeline':'প্রাপ্য মূল বেতনের টাইমলাইন'}</h3></div><span>{en?'Same verified Salary engine':'একই যাচাইকৃত Salary engine'}</span></div>
+      <div className="increment-timeline-table">
+        <div className="increment-timeline-row head"><span>{en?'Effective date':'কার্যকর তারিখ'}</span><span>{en?'Stage':'ধাপ'}</span><span>{en?'Implementation':'বাস্তবায়ন'}</span><span>{en?'Payable basic':'প্রাপ্য মূল বেতন'}</span></div>
+        {(r.timeline||[]).map((x,i)=><div className="increment-timeline-row" key={x.date}><span>{fmtDateLang(x.date,lang)}</span><span>{x.label}</span><span>{numLang(Number(x.rate||0)*100,lang,0)}%</span><span><b>{money(x.payable)}</b></span></div>)}
+      </div>
+    </div>
+
+    <div className="increment-safety-note"><ShieldCheck/><div><b>{en?'How this is calculated':'হিসাবের ভিত্তি'}</b><p>{en?'The result uses the verified 2015 pay stage, 2026 fixation, phased implementation and the existing 1 July annual-increment logic already used by the Salary Calculator.':'ফলাফল ২০১৫ বেতন ধাপ, ২০২৬ fixation, ধাপভিত্তিক বাস্তবায়ন এবং Salary Calculator-এ ব্যবহৃত বিদ্যমান ১ জুলাই annual-increment logic অনুযায়ী করা হয়েছে।'}</p></div></div>
+  </section>;
 }
 
 function MyCareer({lang='bn'}){
