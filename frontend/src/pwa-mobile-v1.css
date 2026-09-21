@@ -342,3 +342,17 @@
 .pwa-gate-disclaimer span{display:block;margin-top:2px;font-size:9px;line-height:1.5;color:#7b6a44}
 .pwa-gate-disclaimer.compact{margin-top:10px;padding:9px 10px}
 .pwa-gate-disclaimer.compact>svg{width:16px;height:16px}
+
+.hero-nonofficial-note{
+  margin-top:14px;display:flex;align-items:flex-start;gap:7px;max-width:610px;
+  padding:9px 11px;border:1px solid rgba(255,255,255,.18);border-radius:11px;
+  background:rgba(255,255,255,.08);color:rgba(255,255,255,.82);
+  font-size:9.5px;line-height:1.45
+}
+.hero-nonofficial-note svg{width:15px;height:15px;flex:0 0 auto;margin-top:1px;color:#ffe3a5}
+@media(min-width:901px){
+  .approved-home .hero-nonofficial-note{
+    border-color:#ead9e1;background:#fff8fb;color:#785c69
+  }
+  .approved-home .hero-nonofficial-note svg{color:#a87920}
+}
