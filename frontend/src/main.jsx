@@ -445,7 +445,7 @@ function reportShell(title,subtitle,body,lang='bn',meta={}){
         <div style="display:flex;align-items:center;gap:12px;min-width:0;position:relative;z-index:1">
           <div style="width:41px;height:41px;border-radius:11px;background:linear-gradient(145deg,#fff,#edf5f2);color:#0c4a67;display:grid;place-items:center;font-family:'Inter',Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.5px;flex:0 0 auto;box-shadow:0 5px 16px rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.7)">EDS</div>
           <div style="min-width:0">
-            <div style="font-size:10.2px;font-weight:700;opacity:.92;letter-spacing:.1px">${en?'Employee Digital Service Platform':'কর্মকর্তা-কর্মচারী ডিজিটাল সেবা'}</div>
+            <div style="font-size:10.2px;font-weight:700;opacity:.92;letter-spacing:.1px">${en?'Hisab Sahayika':'হিসাব সহায়িকা'}</div>
             <div style="font-size:20.8px;font-weight:700;margin-top:2px;line-height:1.22;letter-spacing:-.1px">${pdfSafe(title)}</div>
             <div style="font-size:10.4px;opacity:.9;margin-top:4px;line-height:1.38">${pdfSafe(subtitle)}</div>
           </div>
@@ -620,8 +620,8 @@ async function nativeShareReport({html,filename,title,summary='',url='',lang='bn
 function ReportShareActions({html,filename,title,summary='',lang='bn',existingUrl='',compact=false}){
   const en=lang==='en';
   const [busy,setBusy]=useState(''),[shareUrl,setShareUrl]=useState(existingUrl||''),[copied,setCopied]=useState(false);
-  const shareTitle=title||(en?'Employee Digital Service Report':'কর্মকর্তা-কর্মচারী ডিজিটাল সেবা রিপোর্ট');
-  const shareSummary=summary||(en?'View this calculation report from Employee Digital Service.':'কর্মকর্তা-কর্মচারী ডিজিটাল সেবার এই হিসাবের রিপোর্টটি দেখুন।');
+  const shareTitle=title||(en?'Hisab Sahayika Report':'হিসাব সহায়িকা রিপোর্ট');
+  const shareSummary=summary||(en?'View this calculation report from Hisab Sahayika.':'হিসাব সহায়িকার এই হিসাবের রিপোর্টটি দেখুন।');
 
   async function ensureUrl(){
     if(existingUrl)return existingUrl;
@@ -725,7 +725,7 @@ function SharedReportViewer({token,lang='bn',setLang}){
   const currentUrl=window.location.href;
   return <div className="shared-report-page">
     <header className="shared-report-header">
-      <a className="shared-report-brand" href="/"><Landmark/><div><b>{en?'Employee Digital Service':'কর্মকর্তা-কর্মচারী ডিজিটাল সেবা'}</b><small>{en?'Shared Report':'শেয়ার করা রিপোর্ট'}</small></div></a>
+      <a className="shared-report-brand" href="/"><Calculator/><div><b>{en?'Hisab Sahayika':'হিসাব সহায়িকা'}</b><small>{en?'Independent shared calculation report':'স্বাধীন হিসাব সহায়ক শেয়ার রিপোর্ট'}</small></div></a>
       <div className="shared-report-header-actions"><LangToggle lang={lang} setLang={setLang}/><a href="/">{en?'Home':'হোম'}</a></div>
     </header>
     <main className="shared-report-main">
