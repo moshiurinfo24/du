@@ -55,6 +55,7 @@ import './salary-wizard-v27.css';
 import './salary-service-split-v29.css';
 import './calculation-history-v32.css';
 import './increment-center-v34.css';
+import './pf-deduction-center-v35.css';
 import {initPwaRuntime,subscribePwa,getPwaState,promptPwaInstall,formatPwaTime,manualPwaUpdateCheck,consumePwaUpdateNotice} from './pwa-client.js';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import GuestLocalCenter from './guest-local-v1.jsx';
@@ -883,7 +884,8 @@ function CalculationHistoryCenter({lang='bn',onOpen}){
     age:{icon:UserRound,bn:'বয়স',en:'Age'},
     gap:{icon:CalendarDays,bn:'তারিখের ব্যবধান',en:'Date Difference'},
     retire:{icon:FileClock,bn:'অবসর তারিখ',en:'Retirement'},
-    basic:{icon:BadgeDollarSign,bn:'ইনক্রিমেন্ট সেন্টার',en:'Increment Center'}
+    basic:{icon:BadgeDollarSign,bn:'ইনক্রিমেন্ট সেন্টার',en:'Increment Center'},
+    pf:{icon:ReceiptText,bn:'PF ও কর্তন',en:'PF & Deductions'}
   };
   const groups=[['all',en?'All':'সব'],['salary',en?'Salary':'বেতন'],['arrear',en?'Arrear':'বকেয়া'],['promotion',en?'Promotion':'পদোন্নতি'],['other',en?'Other':'অন্যান্য']];
   const visible=items.filter(x=>filter==='all'?true:filter==='other'?!['salary','arrear','promotion'].includes(x.tool):x.tool===filter);
@@ -901,7 +903,7 @@ function CalculationHistoryCenter({lang='bn',onOpen}){
     try{return new Intl.DateTimeFormat(en?'en-GB':'bn-BD',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(v))}
     catch{return v||'—'}
   };
-  const metricLabel=k=>en?({grade:'Grade',basic:'Basic',net:'Net',gross:'Gross',arrear:'Arrear',points:'Points',date:'Date',target:'Target',duration:'Duration',retirement:'Retirement',payable:'Payable basic',increment:'Increment step',monthly:'Monthly increase',annual:'Annual equivalent'}[k]||k):({grade:'গ্রেড',basic:'মূল বেতন',net:'নিট',gross:'মোট',arrear:'বকেয়া',points:'পয়েন্ট',date:'তারিখ',target:'লক্ষ্য',duration:'সময়কাল',retirement:'অবসর',payable:'প্রাপ্য মূল বেতন',increment:'ইনক্রিমেন্ট ধাপ',monthly:'মাসিক বৃদ্ধি',annual:'বার্ষিক সমপরিমাণ'}[k]||k);
+  const metricLabel=k=>en?({grade:'Grade',basic:'Basic',net:'Net',gross:'Gross',arrear:'Arrear',points:'Points',date:'Date',target:'Target',duration:'Duration',retirement:'Retirement',payable:'Payable basic',increment:'Increment step',monthly:'Monthly increase',annual:'Annual equivalent',pf:'Monthly PF',rate:'PF rate',deductions:'Total deductions',takeHome:'Take-home impact'}[k]||k):({grade:'গ্রেড',basic:'মূল বেতন',net:'নিট',gross:'মোট',arrear:'বকেয়া',points:'পয়েন্ট',date:'তারিখ',target:'লক্ষ্য',duration:'সময়কাল',retirement:'অবসর',payable:'প্রাপ্য মূল বেতন',increment:'ইনক্রিমেন্ট ধাপ',monthly:'মাসিক বৃদ্ধি',annual:'বার্ষিক সমপরিমাণ',pf:'মাসিক PF',rate:'PF হার',deductions:'মোট কর্তন',takeHome:'Take-home প্রভাব'}[k]||k);
   return <div className="calc-history-center">
     <section className="calc-history-hero">
       <div className="calc-history-hero-icon"><History/></div>
@@ -1727,6 +1729,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     gap:en?'Date Gap':'তারিখ ব্যবধান',
     retire:en?'Retirement':'অবসর',
     basic:en?'Increment Center':'ইনক্রিমেন্ট সেন্টার',
+    pf:en?'PF & Deduction Center':'PF ও কর্তন সেন্টার',
     points:en?'Points Center':'পয়েন্ট',
     calendar:en?'Calendar':'ক্যালেন্ডার',
     reference:en?'Notices & Policies':'নোটিশ ও নীতিমালা',
@@ -1741,7 +1744,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     'local-reports':en?'My Reports':'রিপোর্ট',
     'local-privacy':en?'Data & Backup':'ডাটা ও ব্যাকআপ'
   };
-  const icons={salary:WalletCards,arrear:ReceiptText,promotion:TrendingUp,house:Home,service:Clock3,age:UserRound,gap:CalendarDays,retire:FileClock,basic:BadgeDollarSign,points:Award,calendar:CalendarDays,reference:BookOpen,history:History,'pdf-center':FileText,'local-dashboard':LayoutDashboard,'local-profile':Briefcase,'local-education':GraduationCap,'local-timeline':Route,'local-salary':WalletCards,'local-leave':CalendarDays,'local-reports':FileText,'local-privacy':ShieldCheck};
+  const icons={salary:WalletCards,arrear:ReceiptText,promotion:TrendingUp,house:Home,service:Clock3,age:UserRound,gap:CalendarDays,retire:FileClock,basic:BadgeDollarSign,pf:ReceiptText,points:Award,calendar:CalendarDays,reference:BookOpen,history:History,'pdf-center':FileText,'local-dashboard':LayoutDashboard,'local-profile':Briefcase,'local-education':GraduationCap,'local-timeline':Route,'local-salary':WalletCards,'local-leave':CalendarDays,'local-reports':FileText,'local-privacy':ShieldCheck};
   const open=(tool)=>{
     const next=[tool,...recent.filter(x=>x!==tool)].slice(0,3);
     setRecent(next);
@@ -1766,6 +1769,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     ['age',UserRound,en?'Age':'বয়স','sky'],
     ['gap',CalendarDays,en?'Date Difference':'তারিখের ব্যবধান','blue'],
     ['basic',BadgeDollarSign,en?'Increment Center':'ইনক্রিমেন্ট সেন্টার','indigo'],
+    ['pf',ReceiptText,en?'PF & Deductions':'PF ও কর্তন','teal'],
     ['history',History,en?'My Calculations':'আমার হিসাব','aqua'],
     ['pdf-center',FileText,en?'PDF Center':'PDF সেন্টার','violet'],
     ['reference',BookOpen,en?'Notices & Policies':'নোটিশ ও নীতিমালা','teal']
@@ -1808,6 +1812,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
         <button className={activePublicTool==='age'?'active':''} onClick={()=>open('age')}><UserRound/><span>{en?'Age':'বয়স'}</span></button>
         <button className={activePublicTool==='gap'?'active':''} onClick={()=>open('gap')}><CalendarDays/><span>{en?'Date Difference':'তারিখের ব্যবধান'}</span></button>
         <button className={activePublicTool==='basic'?'active':''} onClick={()=>open('basic')}><BadgeDollarSign/><span>{en?'Increment Center':'ইনক্রিমেন্ট সেন্টার'}</span></button>
+        <button className={activePublicTool==='pf'?'active':''} onClick={()=>open('pf')}><ReceiptText/><span>{en?'PF & Deductions':'PF ও কর্তন'}</span></button>
         <button className={activePublicTool==='history'?'active':''} onClick={()=>open('history')}><History/><span>{en?'My Calculations':'আমার হিসাব'}</span></button>
         <button className={activePublicTool==='pdf-center'?'active':''} onClick={()=>open('pdf-center')}><FileText/><span>{en?'PDF Center':'PDF সেন্টার'}</span></button>
         <button className={activePublicTool==='reference'?'active':''} onClick={()=>open('reference')}><BookOpen/><span>{en?'Notices & Policies':'নোটিশ ও নীতিমালা'}</span></button>
@@ -1844,6 +1849,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
         {activePublicTool==='promotion'&&<section className="public-tool-only-shell"><PromotionCenter lang={lang} publicMode={true}/></section>}
         {activePublicTool==='house'&&<section className="public-tool-only-shell"><HouseAllocationPoints lang={lang} publicMode={true}/></section>}
         {['service','age','gap','retire','basic'].includes(activePublicTool)&&<section className="public-tool-only-shell"><CalculatorCenter lang={lang} publicMode={true} initialTool={activePublicTool} singleTool={true}/></section>}
+        {activePublicTool==='pf'&&<section className="public-tool-only-shell"><PfDeductionCenter lang={lang} publicMode={true}/></section>}
         {activePublicTool==='points'&&<section className="public-tool-only-shell"><PointsCalculator lang={lang} publicMode={true}/></section>}
         {activePublicTool==='calendar'&&<section className="public-tool-only-shell"><FiscalOfficeCalendar lang={lang}/></section>}
         {activePublicTool==='reference'&&<PwaReferenceCenter lang={lang} notices={notices} policies={policies}/>}
@@ -4625,6 +4631,163 @@ function HouseAllocationPoints({lang='bn',publicMode=false}){
       
     </div>}
   </section>
+}
+
+
+function PfDeductionCenter({lang='bn',publicMode=false}){
+  const en=lang==='en',today=todayLocalIso();
+  const local=guestLocalProfile(),pref=salaryProfilePrefill(local);
+  const [f,setF]=useState({
+    category:pref.category||'class3',
+    grade:pref.grade||'13',
+    date:today,
+    basic:String(Number(local.current_basic_salary||0)||''),
+    scenarioRate:'10',
+    gross:'',
+    group:'',
+    quarterRent:'',
+    quarterOther:'',
+    tax:'',
+    loan:'',
+    other:''
+  });
+  const [result,setResult]=useState(null);
+  useEffect(()=>{
+    if(publicMode)return;
+    let alive=true;
+    api('/api/my-career').then(x=>{
+      if(!alive)return;
+      const p=x?.profile||{},sp=salaryProfilePrefill(p);
+      setF(v=>({
+        ...v,
+        ...(sp.category?{category:sp.category}:{}),
+        ...(sp.grade?{grade:sp.grade}:{}),
+        ...(Number(p.current_basic_salary||0)>0?{basic:String(Number(p.current_basic_salary))}:{})
+      }));
+    }).catch(()=>{});
+    return()=>{alive=false};
+  },[publicMode]);
+
+  const categoryOptions=en?[
+    ['teacher','Teacher'],['officer','Officer'],['class3','Class III employee'],['class4','Class IV employee']
+  ]:[
+    ['teacher','শিক্ষক'],['officer','কর্মকর্তা'],['class3','৩য় শ্রেণির কর্মচারী'],['class4','৪র্থ শ্রেণির কর্মচারী']
+  ];
+
+  function calculate(){
+    const basic=Math.max(0,Number(f.basic||0)),grade=Number(f.grade||0),scenarioRate=Math.max(0,Math.min(25,Number(f.scenarioRate||0)));
+    if(!(basic>0)||!(grade>=1&&grade<=20)||!f.date)return setResult({error:en?'Enter a valid payable basic, grade and date.':'সঠিক প্রাপ্য মূল বেতন, গ্রেড ও তারিখ দিন।'});
+    const rules=duPayrollDeductionRules({category:f.category,date:f.date,basic,grade});
+    const group=rules.groupRuleVerified?Number(rules.group||0):Math.max(0,Number(f.group||0));
+    const quarterRent=Math.max(0,Number(f.quarterRent||0)),quarterOther=Math.max(0,Number(f.quarterOther||0));
+    const tax=Math.max(0,Number(f.tax||0)),loan=Math.max(0,Number(f.loan||0)),other=Math.max(0,Number(f.other||0));
+    const verifiedPf=Number(rules.pf||0),scenarioPf=Math.round(basic*(scenarioRate/100)*100)/100;
+    const fixedOther=Number(rules.bene||0)+Number(rules.health||0)+group+Number(rules.stamp||0)+Number(rules.association||0)+quarterRent+quarterOther+tax+loan+other;
+    const verifiedTotal=verifiedPf+fixedOther,scenarioTotal=scenarioPf+fixedOther;
+    const gross=Math.max(0,Number(f.gross||0)),hasGross=gross>0;
+    const verifiedNet=hasGross?gross-verifiedTotal:null,scenarioNet=hasGross?gross-scenarioTotal:null;
+    const takeHomeImpact=verifiedTotal-scenarioTotal;
+    const rows=[
+      {key:'pf',bn:'ভবিষ্য তহবিল (PF)',en:'Provident Fund (PF)',current:verifiedPf,scenario:scenarioPf},
+      {key:'bene',bn:'কল্যাণ তহবিল',en:'Benevolent Fund',current:Number(rules.bene||0),scenario:Number(rules.bene||0)},
+      {key:'health',bn:'স্বাস্থ্য বীমা',en:'Health insurance',current:Number(rules.health||0),scenario:Number(rules.health||0)},
+      {key:'group',bn:'গ্রুপ বীমা',en:'Group insurance',current:group,scenario:group,manual:!rules.groupRuleVerified},
+      {key:'stamp',bn:'রাজস্ব স্ট্যাম্প',en:'Revenue stamp',current:Number(rules.stamp||0),scenario:Number(rules.stamp||0)},
+      {key:'association',bn:'সমিতি',en:'Association',current:Number(rules.association||0),scenario:Number(rules.association||0)},
+      {key:'quarterRent',bn:'ঢাবি বাসা/ইউনিট ভাড়া',en:'DU quarter/unit rent',current:quarterRent,scenario:quarterRent},
+      {key:'quarterOther',bn:'বাসা-সংক্রান্ত অন্যান্য কর্তন',en:'Other housing recovery',current:quarterOther,scenario:quarterOther},
+      {key:'tax',bn:'আয়কর',en:'Income tax',current:tax,scenario:tax},
+      {key:'loan',bn:'ঋণ/অগ্রিম',en:'Loan / advance',current:loan,scenario:loan},
+      {key:'other',bn:'অন্যান্য',en:'Other',current:other,scenario:other}
+    ];
+    const value={
+      category:f.category,categoryLabel:duCategoryInfo(f.category,lang).label,grade,date:f.date,basic,
+      verifiedRate:Number(rules.pfRate||.10)*100,scenarioRate,verifiedPf,scenarioPf,
+      annualVerifiedPf:verifiedPf*12,annualScenarioPf:scenarioPf*12,
+      rules,group,rows,verifiedTotal,scenarioTotal,gross,hasGross,verifiedNet,scenarioNet,takeHomeImpact
+    };
+    setResult(value);
+    rememberCalculationHistory({
+      tool:'pf',
+      title_bn:`গ্রেড ${numLang(grade,'bn',0)} · PF ও কর্তন বিশ্লেষণ`,
+      title_en:`Grade ${grade} · PF & deduction analysis`,
+      summary_bn:`মাসিক PF ৳${moneyLang(verifiedPf,'bn')} · মোট কর্তন ৳${moneyLang(verifiedTotal,'bn')}`,
+      summary_en:`Monthly PF Tk ${moneyLang(verifiedPf,'en')} · Total deductions Tk ${moneyLang(verifiedTotal,'en')}`,
+      metrics:{grade,pf:`৳${moneyLang(verifiedPf,'bn')}`,rate:`${numLang(Number(rules.pfRate||.10)*100,'bn',0)}%`,deductions:`৳${moneyLang(verifiedTotal,'bn')}`},
+      input:{...f}
+    });
+  }
+
+  const liveBasic=Math.max(0,Number(f.basic||0)),liveGrade=Number(f.grade||0);
+  const liveRules=liveBasic>0?duPayrollDeductionRules({category:f.category,date:f.date,basic:liveBasic,grade:liveGrade}):null;
+
+  return <div className="pf-center">
+    <section className="pf-hero">
+      <div><small>{en?'PF & DEDUCTION CENTER':'PF ও কর্তন সেন্টার'}</small><h2>{en?'Understand monthly deductions before payday':'বেতন পাওয়ার আগে মাসিক কর্তন বুঝে নিন'}</h2><p>{en?'Uses the same verified DU payroll deduction rules as the Salary Calculator. PF what-if rates are comparison scenarios only.':'Salary Calculator-এর একই যাচাইকৃত DU payroll deduction rules ব্যবহার করে। PF what-if rate শুধু তুলনামূলক scenario।'}</p></div>
+      <div className="pf-verified-badge"><ShieldCheck/><span>{en?'Verified payroll PF':'যাচাইকৃত payroll PF'}</span><b>10%</b></div>
+    </section>
+
+    <section className="pf-form-card">
+      <div className="pf-section-title"><ReceiptText/><div><h3>{en?'Payroll basis':'পে-রোল ভিত্তি'}</h3><p>{en?'Enter the payable basic currently used for deductions.':'কর্তনের জন্য বর্তমানে ব্যবহৃত প্রাপ্য মূল বেতন দিন।'}</p></div></div>
+      <div className="form-grid">
+        <label>{en?'Employee category':'কর্মী শ্রেণি'}<select value={f.category} onChange={e=>setF({...f,category:e.target.value})}>{categoryOptions.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
+        <label>{en?'Grade':'গ্রেড'}<select value={f.grade} onChange={e=>setF({...f,grade:e.target.value})}>{Array.from({length:20},(_,i)=>i+1).map(g=><option key={g} value={g}>{en?`Grade ${g}`:`গ্রেড ${g.toLocaleString('bn-BD')}`}</option>)}</select></label>
+        <label>{en?'Payroll date':'পে-রোল তারিখ'}<input type="date" value={f.date} onChange={e=>setF({...f,date:e.target.value})}/></label>
+        <label>{en?'Current payable basic':'বর্তমান প্রাপ্য মূল বেতন'}<input type="number" min="0" inputMode="decimal" value={f.basic} onChange={e=>setF({...f,basic:e.target.value})} placeholder="0"/></label>
+      </div>
+      {liveRules&&!liveRules.groupRuleVerified&&<div className="pf-warning"><AlertTriangle/><span>{en?'Group-insurance amount is not verified for this category/date, so the app will not assume one. Enter the payroll amount below if applicable.':'এই শ্রেণি/তারিখের গ্রুপ বীমার অঙ্ক যাচাইকৃত নয়, তাই অ্যাপ নিজে থেকে কোনো অঙ্ক ধরবে না। প্রযোজ্য হলে নিচে payroll-এর অঙ্ক দিন।'}</span></div>}
+
+      <div className="pf-section-title compact"><SlidersHorizontal/><div><h3>{en?'Personal / payroll recoveries':'ব্যক্তিগত / payroll কর্তন'}</h3><p>{en?'Enter only deductions that apply to this employee.':'শুধু এই কর্মীর ক্ষেত্রে প্রযোজ্য কর্তন দিন।'}</p></div></div>
+      <div className="form-grid">
+        {liveRules&&!liveRules.groupRuleVerified&&<label>{en?'Group insurance (manual)':'গ্রুপ বীমা (ম্যানুয়াল)'}<input type="number" min="0" value={f.group} onChange={e=>setF({...f,group:e.target.value})}/></label>}
+        <label>{en?'DU quarter / unit rent':'ঢাবি বাসা / ইউনিট ভাড়া'}<input type="number" min="0" value={f.quarterRent} onChange={e=>setF({...f,quarterRent:e.target.value})}/></label>
+        <label>{en?'Other housing recovery':'বাসা-সংক্রান্ত অন্যান্য কর্তন'}<input type="number" min="0" value={f.quarterOther} onChange={e=>setF({...f,quarterOther:e.target.value})}/></label>
+        <label>{en?'Income tax':'আয়কর'}<input type="number" min="0" value={f.tax} onChange={e=>setF({...f,tax:e.target.value})}/></label>
+        <label>{en?'Loan / advance recovery':'ঋণ / অগ্রিম কর্তন'}<input type="number" min="0" value={f.loan} onChange={e=>setF({...f,loan:e.target.value})}/></label>
+        <label>{en?'Other deduction':'অন্যান্য কর্তন'}<input type="number" min="0" value={f.other} onChange={e=>setF({...f,other:e.target.value})}/></label>
+        <label>{en?'Monthly gross salary (optional)':'মাসিক Gross বেতন (ঐচ্ছিক)'}<input type="number" min="0" value={f.gross} onChange={e=>setF({...f,gross:e.target.value})} placeholder={en?'For take-home comparison':'Take-home তুলনার জন্য'}/></label>
+      </div>
+
+      <div className="pf-whatif">
+        <div><small>{en?'WHAT-IF ANALYSIS':'WHAT-IF বিশ্লেষণ'}</small><h3>{en?'Compare a PF rate':'একটি PF হার তুলনা করুন'}</h3><p>{en?'This does not change the verified payroll rule; it only shows the financial effect of another rate.':'এটি যাচাইকৃত payroll rule পরিবর্তন করে না; শুধু অন্য হারের আর্থিক প্রভাব দেখায়।'}</p></div>
+        <label><span>{en?'Scenario PF rate':'Scenario PF হার'}</span><div><input type="number" min="0" max="25" step="0.5" value={f.scenarioRate} onChange={e=>setF({...f,scenarioRate:e.target.value})}/><b>%</b></div></label>
+      </div>
+      <button className="primary wide" onClick={calculate}>{en?'Analyze PF & Deductions':'PF ও কর্তন বিশ্লেষণ করুন'}</button>
+    </section>
+
+    {result?.error&&<section className="calculator-result warn"><AlertTriangle/><div><h3>{en?'Unable to calculate':'হিসাব করা যায়নি'}</h3><p>{result.error}</p></div></section>}
+    {result&&!result.error&&<section className="pf-result">
+      <div className="pf-result-summary">
+        <article className="verified"><small>{en?'Verified monthly PF':'যাচাইকৃত মাসিক PF'}</small><b>{en?'Tk':'৳'} {moneyLang(result.verifiedPf,lang)}</b><span>{numLang(result.verifiedRate,lang,0)}% × {en?'payable basic':'প্রাপ্য মূল বেতন'}</span></article>
+        <article><small>{en?'Annual PF contribution equivalent':'বার্ষিক PF অবদান সমপরিমাণ'}</small><b>{en?'Tk':'৳'} {moneyLang(result.annualVerifiedPf,lang)}</b><span>{en?'Monthly PF × 12; not PF balance':'মাসিক PF × ১২; এটি PF balance নয়'}</span></article>
+        <article><small>{en?'Current total monthly deductions':'বর্তমান মোট মাসিক কর্তন'}</small><b>{en?'Tk':'৳'} {moneyLang(result.verifiedTotal,lang)}</b><span>{result.categoryLabel} · {en?'Grade':'গ্রেড'} {numLang(result.grade,lang,0)}</span></article>
+        <article className={result.takeHomeImpact>0?'positive':result.takeHomeImpact<0?'negative':''}><small>{en?'Scenario take-home impact':'Scenario Take-home প্রভাব'}</small><b>{result.takeHomeImpact>=0?'+':'−'} {en?'Tk':'৳'} {moneyLang(Math.abs(result.takeHomeImpact),lang)}</b><span>{en?'Compared with verified 10% PF':'যাচাইকৃত ১০% PF-এর তুলনায়'}</span></article>
+      </div>
+
+      <div className="pf-comparison-card">
+        <div className="pf-comparison-head"><div><small>{en?'DEDUCTION BREAKDOWN':'কর্তন BREAKDOWN'}</small><h3>{en?'Verified payroll vs what-if':'যাচাইকৃত payroll বনাম what-if'}</h3></div><span>{numLang(result.scenarioRate,lang,1)}% {en?'scenario':'scenario'}</span></div>
+        <div className="pf-table">
+          <div className="pf-row head"><span>{en?'Deduction':'কর্তন'}</span><span>{en?'Verified / current':'যাচাইকৃত / বর্তমান'}</span><span>{en?'What-if':'What-if'}</span></div>
+          {result.rows.filter(x=>x.current||x.scenario||x.key==='pf').map(x=><div className="pf-row" key={x.key}><span>{en?x.en:x.bn}{x.manual&&<small>{en?'manual':'ম্যানুয়াল'}</small>}</span><b>{en?'Tk':'৳'} {moneyLang(x.current,lang)}</b><b>{en?'Tk':'৳'} {moneyLang(x.scenario,lang)}</b></div>)}
+          <div className="pf-row total"><span>{en?'Total deductions':'মোট কর্তন'}</span><b>{en?'Tk':'৳'} {moneyLang(result.verifiedTotal,lang)}</b><b>{en?'Tk':'৳'} {moneyLang(result.scenarioTotal,lang)}</b></div>
+        </div>
+      </div>
+
+      <div className="pf-rate-comparison">
+        <div><small>{en?'Verified PF':'যাচাইকৃত PF'}</small><b>{numLang(result.verifiedRate,lang,0)}% · {en?'Tk':'৳'} {moneyLang(result.verifiedPf,lang)}</b><span>{en?'Annual equivalent':'বার্ষিক সমপরিমাণ'} {en?'Tk':'৳'} {moneyLang(result.annualVerifiedPf,lang)}</span></div>
+        <ArrowRightLeft/>
+        <div><small>{en?'What-if PF':'What-if PF'}</small><b>{numLang(result.scenarioRate,lang,1)}% · {en?'Tk':'৳'} {moneyLang(result.scenarioPf,lang)}</b><span>{en?'Annual equivalent':'বার্ষিক সমপরিমাণ'} {en?'Tk':'৳'} {moneyLang(result.annualScenarioPf,lang)}</span></div>
+      </div>
+
+      {result.hasGross?<div className="pf-takehome">
+        <div><small>{en?'Entered gross salary':'দেওয়া Gross বেতন'}</small><b>{en?'Tk':'৳'} {moneyLang(result.gross,lang)}</b></div>
+        <div><small>{en?'Take-home · verified deductions':'Take-home · যাচাইকৃত কর্তন'}</small><b>{en?'Tk':'৳'} {moneyLang(result.verifiedNet,lang)}</b></div>
+        <div><small>{en?'Take-home · what-if PF':'Take-home · What-if PF'}</small><b>{en?'Tk':'৳'} {moneyLang(result.scenarioNet,lang)}</b></div>
+      </div>:<div className="pf-gross-note"><WalletCards/><span>{en?'Enter monthly gross salary above if you want to compare actual take-home pay.':'বাস্তব Take-home তুলনা দেখতে চাইলে উপরে মাসিক Gross বেতন দিন।'}</span></div>}
+
+      <div className="pf-safety-note"><ShieldCheck/><div><b>{en?'Important':'গুরুত্বপূর্ণ'}</b><p>{en?'PF balance is not estimated here because a reliable balance requires opening balance and contribution/withdrawal history. Unverified group-insurance amounts are never auto-assumed.':'Opening balance এবং contribution/withdrawal history ছাড়া নির্ভরযোগ্য PF balance সম্ভব নয়, তাই এখানে PF balance অনুমান করা হয় না। যাচাই না হওয়া Group Insurance-ও অটো ধরে নেওয়া হয় না।'}</p></div></div>
+    </section>}
+  </div>;
 }
 
 function CalculatorCenter({lang='bn',onPage,publicMode=false,initialTool='service',singleTool=false}){
