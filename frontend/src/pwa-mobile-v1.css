@@ -1,0 +1,182 @@
+/* DU PWA Mobile V1 — magenta mobile app shell inspired by modern Bangladeshi wallet UX */
+:root{
+  --du-app-primary:#d41468;
+  --du-app-primary-dark:#a90d50;
+  --du-app-primary-soft:#fff0f6;
+  --du-app-primary-pale:#fff7fb;
+  --du-app-ink:#27313a;
+  --du-app-muted:#75808a;
+  --du-app-border:#f0d7e3;
+}
+
+.pwa-controls{position:relative;display:flex;align-items:center;gap:7px}
+.pwa-status-button,.pwa-install-button{
+  min-height:36px;border-radius:11px;border:1px solid #ead6df;background:#fff;color:#43343b;
+  display:inline-flex;align-items:center;gap:7px;padding:0 10px;font:700 10px/1.1 "Hind Siliguri","Inter",sans-serif;cursor:pointer
+}
+.pwa-status-button svg,.pwa-install-button svg{width:14px;height:14px}
+.pwa-install-button{border-color:#d41468;background:linear-gradient(135deg,#e52678,#c6115e);color:#fff;box-shadow:0 6px 14px rgba(212,20,104,.18)}
+.pwa-status-button small{display:block;color:#85737c;font:600 8px/1.1 "Inter","Hind Siliguri",sans-serif}
+.pwa-status-button>span{display:flex;flex-direction:column;align-items:flex-start}
+.pwa-status-button.updating svg{animation:duPwaSpin 1s linear infinite}
+@keyframes duPwaSpin{to{transform:rotate(360deg)}}
+
+.pwa-status-popover{
+  position:absolute;z-index:5000;right:0;top:44px;width:min(330px,calc(100vw - 24px));
+  border:1px solid #edd9e3;border-radius:18px;background:#fff;box-shadow:0 20px 48px rgba(70,22,44,.18);
+  padding:15px;color:#3a3135
+}
+.pwa-status-popover:before{content:"";position:absolute;right:28px;top:-7px;width:13px;height:13px;background:#fff;border-left:1px solid #edd9e3;border-top:1px solid #edd9e3;transform:rotate(45deg)}
+.pwa-status-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.pwa-status-head>span{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:linear-gradient(145deg,#f02b83,#b80e58);color:#fff;box-shadow:0 7px 15px rgba(212,20,104,.22)}
+.pwa-status-head svg{width:18px;height:18px}
+.pwa-status-head b{display:block;font-size:13px;color:#54203a}
+.pwa-status-head small{display:block;margin-top:1px;font-size:9px;color:#8b7881}
+.pwa-status-grid{display:grid;gap:7px}
+.pwa-status-grid>div{padding:10px 11px;border:1px solid #f0e3e9;border-radius:11px;background:linear-gradient(145deg,#fff,#fff8fb)}
+.pwa-status-grid small{display:block;font-size:8.5px;color:#96828b}
+.pwa-status-grid b{display:block;margin-top:2px;font-size:10.5px;color:#44343b}
+.pwa-status-actions{display:flex;gap:7px;margin-top:11px}
+.pwa-status-actions button{flex:1;min-height:38px;border:0;border-radius:10px;font-weight:800;font-size:10px;cursor:pointer}
+.pwa-status-actions .check{background:#f8e8f0;color:#a90d50}
+.pwa-status-actions .install{background:linear-gradient(135deg,#e52678,#bd105a);color:#fff}
+.pwa-ios-help{margin-top:9px;padding:9px 10px;border-radius:10px;background:#fff5df;color:#705b2c;font-size:9.5px;line-height:1.5}
+.pwa-update-toast{
+  position:fixed;z-index:9999;left:50%;bottom:90px;transform:translateX(-50%);
+  width:min(390px,calc(100vw - 24px));padding:12px 14px;border-radius:14px;
+  background:#36232d;color:#fff;box-shadow:0 15px 35px rgba(37,15,26,.25);
+  display:flex;align-items:center;gap:10px;font:700 11px/1.35 "Hind Siliguri","Inter",sans-serif
+}
+.pwa-update-toast svg{width:18px;height:18px;animation:duPwaSpin 1s linear infinite;color:#ff82b7}
+.pwa-install-nudge{
+  position:fixed;z-index:4500;left:12px;right:12px;bottom:84px;margin:auto;max-width:430px;
+  display:flex;align-items:center;gap:10px;padding:12px;border:1px solid #f0bfd5;border-radius:16px;
+  background:linear-gradient(135deg,#fff,#fff1f7);box-shadow:0 18px 40px rgba(98,27,60,.18)
+}
+.pwa-install-nudge .app-mark{width:42px;height:42px;display:grid;place-items:center;border-radius:13px;background:linear-gradient(145deg,#f02b83,#af0c52);color:#fff;font:900 14px/1 "Inter",sans-serif;box-shadow:0 8px 16px rgba(212,20,104,.22)}
+.pwa-install-nudge div{min-width:0;flex:1}
+.pwa-install-nudge b{display:block;color:#57223b;font-size:12px}
+.pwa-install-nudge small{display:block;margin-top:2px;color:#8a717d;font-size:9px;line-height:1.35}
+.pwa-install-nudge button{border:0;border-radius:10px;background:#d41468;color:#fff;padding:9px 12px;font-size:10px;font-weight:800;cursor:pointer}
+.pwa-install-nudge .dismiss{background:transparent;color:#96747f;padding:7px}
+
+@media(max-width:900px){
+  html,body,#root{background:var(--du-app-primary-pale)}
+  body{overscroll-behavior-y:none}
+  button,input,select,textarea{font-family:"Hind Siliguri","Inter",sans-serif}
+
+  .app{background:var(--du-app-primary-pale)!important}
+  .app main{background:linear-gradient(180deg,#fff7fb 0,#fff 210px,#f8f9fb 100%)!important;padding-bottom:86px!important}
+  .app-topbar{
+    position:sticky!important;top:0!important;z-index:300!important;
+    margin:0!important;padding:calc(10px + env(safe-area-inset-top)) 14px 10px!important;
+    border:0!important;border-radius:0 0 22px 22px!important;
+    background:linear-gradient(135deg,#e42578 0%,#c81261 62%,#a70c4e 100%)!important;
+    color:#fff!important;box-shadow:0 8px 22px rgba(167,12,78,.18)!important
+  }
+  .app-topbar h2,.app-topbar p{color:#fff!important}
+  .app-topbar p{opacity:.78!important}
+  .app-topbar .lang-btn,.app-topbar .logout,.app-topbar .mobile-menu-trigger{
+    border-color:rgba(255,255,255,.25)!important;background:rgba(255,255,255,.13)!important;color:#fff!important
+  }
+
+  .mobile-bottom-nav{
+    position:fixed!important;z-index:900!important;left:0!important;right:0!important;bottom:0!important;
+    height:calc(70px + env(safe-area-inset-bottom))!important;padding:7px 8px env(safe-area-inset-bottom)!important;
+    display:grid!important;grid-template-columns:repeat(5,1fr)!important;gap:2px!important;
+    border:0!important;border-top:1px solid #f0dce5!important;border-radius:20px 20px 0 0!important;
+    background:rgba(255,255,255,.97)!important;backdrop-filter:blur(18px)!important;
+    box-shadow:0 -10px 28px rgba(78,24,48,.10)!important
+  }
+  .mobile-bottom-nav button{
+    min-width:0!important;border:0!important;background:transparent!important;color:#86747c!important;
+    display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;
+    gap:3px!important;padding:4px!important;border-radius:12px!important;font-size:9px!important;font-weight:700!important
+  }
+  .mobile-bottom-nav button svg{width:20px!important;height:20px!important}
+  .mobile-bottom-nav button.active{color:#d41468!important;background:#fff0f6!important}
+  .mobile-bottom-nav button.active svg{filter:drop-shadow(0 4px 6px rgba(212,20,104,.2))}
+
+  .side.mobile-open{
+    border-radius:0 24px 24px 0!important;background:#fff!important;box-shadow:18px 0 42px rgba(76,24,47,.18)!important
+  }
+  .side .brand{background:linear-gradient(135deg,#e42578,#b40d55)!important;color:#fff!important}
+  .side .brand b,.side .brand small{color:#fff!important}
+  .smart-side-nav button.active{background:#fff0f6!important;color:#bd105a!important;border-color:#f1c9dc!important}
+  .smart-side-nav .side-group>small{color:#c25383!important}
+
+  .app .calc-card,.app .dashboard-card,.app .panel,.app section{
+    border-color:#efe2e8;
+  }
+  .app .primary,.app button.primary{
+    background:linear-gradient(135deg,#e52578,#be105b)!important;border-color:#bd105a!important;color:#fff!important;
+    box-shadow:0 8px 18px rgba(212,20,104,.18)!important
+  }
+  .app input:focus,.app select:focus,.app textarea:focus{
+    border-color:#d41468!important;box-shadow:0 0 0 3px rgba(212,20,104,.10)!important
+  }
+
+  .approved-home{background:var(--du-app-primary-pale)!important;padding-bottom:84px!important}
+  .approved-home .approved-header{
+    border-bottom:1px solid #f1dce6!important;background:rgba(255,255,255,.96)!important;backdrop-filter:blur(16px)!important
+  }
+  .approved-home .du-home-hero{
+    background:
+      radial-gradient(circle at 88% 10%,rgba(255,255,255,.18),transparent 26%),
+      linear-gradient(145deg,#e5277a 0%,#c41160 62%,#9e0a49 100%)!important
+  }
+  .approved-home .approved-kicker{background:rgba(255,255,255,.14)!important}
+  .approved-home .approved-hero-buttons .primary{
+    background:#fff!important;color:#b10d53!important;border-color:#fff!important;box-shadow:0 8px 20px rgba(74,8,37,.16)!important
+  }
+  .approved-home .approved-hero-buttons .secondary{
+    border-color:rgba(255,255,255,.38)!important;background:rgba(255,255,255,.10)!important;color:#fff!important
+  }
+  .approved-home .calculator-hub-grid>button.active,
+  .approved-home .calculator-hub-grid>button:hover{border-color:#e7a9c5!important}
+  .approved-home .hub-icon{background:#fff0f6!important;color:#c30f5b!important}
+  .approved-home .salary-step-strip>div>span,
+  .approved-home .salary-form-section-title>span,
+  .approved-home .du-category-rule-strip>svg,
+  .approved-home .salary-auto-summary svg{
+    background:linear-gradient(145deg,#e52678,#b60e56)!important
+  }
+  .approved-home .salary-submit-bar .primary{
+    background:linear-gradient(135deg,#e52578,#b70e56)!important
+  }
+
+  .public-mobile-dock{
+    grid-template-columns:repeat(5,1fr)!important;
+    height:calc(70px + env(safe-area-inset-bottom))!important;
+    padding:7px 6px env(safe-area-inset-bottom)!important;
+    border-radius:20px 20px 0 0!important;border-top:1px solid #f0dce5!important;
+    background:rgba(255,255,255,.97)!important;box-shadow:0 -10px 28px rgba(78,24,48,.10)!important;
+    backdrop-filter:blur(18px)!important
+  }
+  .public-mobile-dock button{color:#89747d!important;font-size:8.5px!important}
+  .public-mobile-dock button.active{color:#d41468!important;background:#fff0f6!important}
+  .public-mobile-dock svg{width:20px!important;height:20px!important}
+
+  .floating-whatsapp{bottom:86px!important}
+  .pwa-standalone .floating-whatsapp{display:none!important}
+
+  .pwa-controls{gap:4px}
+  .pwa-status-button{width:36px;padding:0;justify-content:center;border-color:rgba(255,255,255,.23);background:rgba(255,255,255,.12);color:inherit}
+  .approved-header .pwa-status-button{border-color:#efdce5;background:#fff;color:#b51058}
+  .pwa-status-button>span{display:none}
+  .pwa-install-button{min-width:36px;padding:0 8px}
+  .pwa-install-button>span{display:none}
+  .pwa-status-popover{position:fixed;top:72px;right:12px}
+}
+
+@media(display-mode:standalone){
+  body{padding-top:env(safe-area-inset-top);background:#fff7fb}
+  .approved-home .approved-header{top:env(safe-area-inset-top)!important}
+  .pwa-install-button,.pwa-install-nudge{display:none!important}
+}
+
+@media(max-width:390px){
+  .mobile-bottom-nav button,.public-mobile-dock button{font-size:8px!important}
+  .mobile-bottom-nav button svg,.public-mobile-dock button svg{width:19px!important;height:19px!important}
+  .pwa-status-popover{left:10px;right:10px;width:auto}
+}
