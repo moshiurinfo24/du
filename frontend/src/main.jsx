@@ -2632,20 +2632,14 @@ function duPayrollDeductionRules({category,date,basic,grade}={}){
   const pfRate=.10;
   const health=149.34;
 
-  // Group-insurance deductions are auto-applied only to the exact payroll state
-  // verified by evidence. The supplied DU payslips verify Class III, Grade 13:
-  // June 2026 basic 14,760 => group insurance 192.50
-  // July-Sep 2026 old-scale basic 15,500 => group insurance 174.
-  // Do not generalize either amount to every pay step within Grade 13.
-  const verifiedGroupSamples=[
-    {category:'class3',grade:13,from:'2026-06-01',to:'2026-06-30',basic:14760,amount:192.50},
-    {category:'class3',grade:13,from:'2026-07-01',to:'2026-09-30',basic:15500,amount:174}
-  ];
-  const groupSample=verifiedGroupSamples.find(x=>
-    x.category===c&&x.grade===g&&b===x.basic&&d>=x.from&&d<=x.to
-  );
-  const groupRuleVerified=Boolean(groupSample);
-  const group=groupSample?.amount??null;
+  // Verified from multiple DU Class III payslips across Grades 12, 13 and 16
+  // and different 2015 pay steps: from July 2026, Group Insurance is a fixed Tk 174.
+  // June 2026 is not generalized; only the previously supplied Grade 13/basic 14,760
+  // sample is verified at Tk 192.50.
+  const class3CurrentGroup=(c==='class3'&&d>='2026-07-01')?174:null;
+  const juneVerifiedGroup=(c==='class3'&&g===13&&b===14760&&d>='2026-06-01'&&d<='2026-06-30')?192.50:null;
+  const group=class3CurrentGroup??juneVerifiedGroup;
+  const groupRuleVerified=group!==null;
 
   return {
     category:c,date:d,basic:b,grade:g,
@@ -2998,7 +2992,8 @@ function SalaryResult({r,lang='bn',compact=false,initialCompactTab='now',onReset
   const [resultView,setResultView]=useState('salary');
   const [compactTab,setCompactTab]=useState(initialCompactTab);
   const [pdfBusy,setPdfBusy]=useState('');
-  useEffect(()=>{setActiveYear(2026);setResultView('salary');setCompactTab(initialCompactTab)},[r,initialCompactTab]);
+  const [pdfPreview,setPdfPreview]=useState(null);
+  useEffect(()=>{setActiveYear(2026);setResultView('salary');setCompactTab(initialCompactTab);setPdfPreview(null)},[r,initialCompactTab]);
   useEffect(()=>{if(activeYear!==2026)setResultView('salary')},[activeYear]);
 
   const amt=v=>`${en?'Tk':'৳'} ${moneyLang(v,lang)}`;
@@ -3044,10 +3039,16 @@ function SalaryResult({r,lang='bn',compact=false,initialCompactTab='now',onReset
   const activeShareTitle=en?`Pay Scale ${activeYear} Salary Report`:`পে-স্কেল ${numLang(activeYear,lang,0)} বেতন রিপোর্ট`;
   const activeShareSummary=en?`${activeYear} salary calculation, allowances, deductions and net payable.`:`${numLang(activeYear,lang,0)} সালের বেতন, ভাতা, কর্তন ও নিট প্রাপ্যের হিসাব।`;
 
-  async function directPdf(item,key){
-    try{setPdfBusy(key);await downloadA4Html(item.html,item.filename);trackPublic('download',key==='all'?'salary_2026_2028_pdf':key==='arrear'?'monthly_2026_arrear_pdf':`salary_${key}_pdf`)}
-    catch(e){alert((en?'PDF could not be created: ':'PDF তৈরি করা যায়নি: ')+e.message)}
-    finally{setPdfBusy('')}
+  function previewPdf(item,key,title='',summary=''){
+    if(!item?.html)return;
+    setPdfPreview({
+      ...item,key,
+      title:title||(key==='all'?(en?'Pay Scale 2026–2028 Complete Salary Report':'পে-স্কেল ২০২৬–২০২৮ সম্পূর্ণ বেতন রিপোর্ট'):
+        key==='arrear'?(en?'July–October 2026 Monthly Salary & Arrear Statement':'জুলাই–অক্টোবর ২০২৬ মাসভিত্তিক বেতন ও বকেয়া বিবরণী'):
+        (en?`Pay Scale ${key} Salary Report`:`পে-স্কেল ${numLang(key,lang,0)} বেতন রিপোর্ট`)),
+      summary
+    });
+    trackPublic('view',key==='all'?'salary_2026_2028_pdf_preview':key==='arrear'?'monthly_2026_arrear_pdf_preview':`salary_${key}_pdf_preview`);
   }
 
   if(compact){
@@ -3147,14 +3148,15 @@ function SalaryResult({r,lang='bn',compact=false,initialCompactTab='now',onReset
           <div><span>{en?'October current net':'অক্টোবর চলতি Net'}</span><b>+ {amt(arrear.octoberCurrentNet||0)}</b></div>
         </div>
         <div className="pwa-arrear-method-note">{en?'Old salary/allowances already paid are offset against the new entitlement. PF, benevolent and other deductions use only the deduction difference. Special Benefit is adjusted once per arrear month.':'আগে পাওয়া পুরোনো বেতন/ভাতা নতুন প্রাপ্যের বিপরীতে সমন্বয় হয়েছে। PF, কল্যাণ ও অন্যান্য কর্তনে শুধু কর্তনের পার্থক্য ধরা হয়েছে। Special Benefit প্রতিটি বকেয়া মাসে একবার করে সমন্বয় হয়েছে।'}</div>
-        <button className="pwa-arrear-pdf" disabled={!!pdfBusy} onClick={()=>directPdf(arrearReport,'arrear')}><FileText/>{en?'4-page A4 arrear PDF':'৪-পৃষ্ঠার A4 বকেয়া PDF'}<Save/></button>
+        <button className="pwa-arrear-pdf" disabled={!!pdfBusy} onClick={()=>previewPdf(arrearReport,'arrear')}><FileText/>{en?'View 4-page A4 arrear PDF':'৪-পৃষ্ঠার A4 বকেয়া PDF দেখুন'}<ChevronRight/></button>
       </section>}
 
       <div className="pwa-result-sticky-actions">
-        <button disabled={!!pdfBusy} onClick={()=>directPdf(combinedReport,'all')}><FileText/><span>PDF</span></button>
+        <button disabled={!!pdfBusy} onClick={()=>previewPdf(combinedReport,'all')}><FileText/><span>{en?'View PDF':'PDF দেখুন'}</span></button>
         <button className={compactTab==='details'?'active':''} onClick={()=>setCompactTab(compactTab==='details'?'now':'details')}><SlidersHorizontal/><span>{en?'Details':'বিস্তারিত'}</span></button>
         <button onClick={()=>onReset?.()}><RefreshCw/><span>{en?'New':'নতুন হিসাব'}</span></button>
       </div>
+      {pdfPreview&&<PdfPreviewModal html={pdfPreview.html} filename={pdfPreview.filename} onClose={()=>setPdfPreview(null)} lang={lang} shareTitle={pdfPreview.title} shareSummary={pdfPreview.summary||''}/>}
     </div>;
   }
 
@@ -3232,10 +3234,10 @@ function SalaryResult({r,lang='bn',compact=false,initialCompactTab='now',onReset
       </details>
 
       <section className="salary-report-center-v2">
-        <div className="salary-report-head-v2"><div><span>{en?'REPORTS':'রিপোর্ট'}</span><h3>{en?'Download or share the result':'রিপোর্ট ডাউনলোড বা শেয়ার করুন'}</h3><p>{en?'The current-year report is shown first. Other years are available below.':'বর্তমান বছরের রিপোর্ট আগে রাখা হয়েছে; অন্য বছরগুলো নিচে আছে।'}</p></div></div>
+        <div className="salary-report-head-v2"><div><span>{en?'REPORTS':'রিপোর্ট'}</span><h3>{en?'Preview the report first':'প্রথমে রিপোর্ট দেখে নিন'}</h3><p>{en?'Open the A4 preview first; download or share only if you want.':'আগে A4 প্রিভিউ খুলবে; তারপর চাইলে ডাউনলোড বা শেয়ার করবেন।'}</p></div></div>
         <div className="salary-report-primary-actions">
-          <button className="primary-report" disabled={!!pdfBusy} onClick={()=>directPdf(activeYearReport,String(activeYear))}><FileText/><span><b>{numLang(activeYear,lang,0)} PDF</b><small>{en?'Current selected year':'নির্বাচিত বছর'}</small></span><Save size={17}/></button>
-          <button disabled={!!pdfBusy} onClick={()=>directPdf(combinedReport,'all')}><FileText/><span><b>{en?'2026–2028 Combined PDF':'২০২৬–২০২৮ একসাথে PDF'}</b><small>{en?'Three-page report':'৩-পৃষ্ঠার রিপোর্ট'}</small></span><Save size={17}/></button>
+          <button className="primary-report" disabled={!!pdfBusy} onClick={()=>previewPdf(activeYearReport,String(activeYear),activeShareTitle,activeShareSummary)}><FileText/><span><b>{numLang(activeYear,lang,0)} PDF</b><small>{en?'Current selected year':'নির্বাচিত বছর'}</small></span><ChevronRight size={17}/></button>
+          <button disabled={!!pdfBusy} onClick={()=>previewPdf(combinedReport,'all')}><FileText/><span><b>{en?'2026–2028 Combined PDF':'২০২৬–২০২৮ একসাথে PDF'}</b><small>{en?'Three-page report':'৩-পৃষ্ঠার রিপোর্ট'}</small></span><ChevronRight size={17}/></button>
         </div>
         <div className="salary-report-share-v2">
           <ReportShareActions html={activeYearReport.html} filename={activeYearReport.filename} title={activeShareTitle} summary={activeShareSummary} lang={lang} compact={true}/>
@@ -3244,7 +3246,7 @@ function SalaryResult({r,lang='bn',compact=false,initialCompactTab='now',onReset
           <summary>{en?'Other yearly PDFs and complete-report sharing':'অন্য বছরের PDF ও সম্পূর্ণ রিপোর্ট শেয়ার'}</summary>
           <div className="details-body">
             <div className="year-download-grid">
-              {yearReports.filter(x=>x.year!==activeYear).map(x=><button key={x.year} disabled={!!pdfBusy} onClick={()=>directPdf(x,String(x.year))}><FileText/><span><b>{numLang(x.year,lang,0)} PDF</b><small>{en?'Download':'ডাউনলোড'}</small></span><Save size={17}/></button>)}
+              {yearReports.filter(x=>x.year!==activeYear).map(x=><button key={x.year} disabled={!!pdfBusy} onClick={()=>previewPdf(x,String(x.year))}><FileText/><span><b>{numLang(x.year,lang,0)} PDF</b><small>{en?'Preview':'প্রিভিউ'}</small></span><ChevronRight size={17}/></button>)}
             </div>
             <div className="combined-report-share">
               <b>{en?'Share the complete 3-page report':'সম্পূর্ণ ৩-পৃষ্ঠার রিপোর্ট শেয়ার করুন'}</b>
@@ -3319,11 +3321,12 @@ function SalaryResult({r,lang='bn',compact=false,initialCompactTab='now',onReset
       </details>
 
       <div className="arrear-v2-actions">
-        <button disabled={!!pdfBusy} onClick={()=>directPdf(arrearReport,'arrear')}><FileText/><span>{en?'Download 4-page A4 Arrear PDF':'৪-পৃষ্ঠার A4 বকেয়া PDF ডাউনলোড'}</span><Save size={16}/></button>
+        <button disabled={!!pdfBusy} onClick={()=>previewPdf(arrearReport,'arrear')}><FileText/><span>{en?'View 4-page A4 Arrear PDF':'৪-পৃষ্ঠার A4 বকেয়া PDF দেখুন'}</span><ChevronRight size={16}/></button>
         <ReportShareActions html={arrearReport.html} filename={arrearReport.filename} title={en?'July–October 2026 Monthly Salary & Arrear Statement':'জুলাই–অক্টোবর ২০২৬ মাসভিত্তিক বেতন ও বকেয়া বিবরণী'} summary={en?'Four A4 pages: July, August, September monthly reconciliation and October final settlement.':'৪টি A4 পৃষ্ঠা: জুলাই, আগস্ট, সেপ্টেম্বরের মাসভিত্তিক সমন্বয় এবং অক্টোবর Final Settlement।'} lang={lang} compact={true}/>
       </div>
       <div className="notice arrear-note"><b>{en?'Important:':'গুরুত্বপূর্ণ:'}</b> {en?'The PDF shows earnings and deductions separately for each month. Final payroll may still differ if the actual office bill contains tax, loan, housing recovery or other payroll-specific entries not entered here.':'PDF-এ প্রতি মাসের বেতন/ভাতা ও কর্তন আলাদাভাবে দেখানো হবে। প্রকৃত অফিস বিলে এখানে না দেওয়া আয়কর, ঋণ, বাসা recovery বা অন্য payroll entry থাকলে চূড়ান্ত অংক ভিন্ন হতে পারে।'}</div>
     </section>}
+    {pdfPreview&&<PdfPreviewModal html={pdfPreview.html} filename={pdfPreview.filename} onClose={()=>setPdfPreview(null)} lang={lang} shareTitle={pdfPreview.title} shareSummary={pdfPreview.summary||''}/>}
   </div>
 }
 function ImagePicker({value,onChange}){
