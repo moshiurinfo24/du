@@ -907,6 +907,8 @@ function PdfPreviewModal({html,filename,onClose,lang='bn',shareTitle='',shareSum
 function SharedReportViewer({token,lang='bn',setLang}){
   const en=lang==='en';
   const [state,setState]=useState({loading:true,report:null,error:''});
+  const viewportRef=useRef(null),paperRef=useRef(null);
+  const [fit,setFit]=useState({scale:1,width:0,height:0});
   useEffect(()=>{
     let alive=true;
     api('/api/public/report-share/'+encodeURIComponent(token)).then(x=>{
@@ -918,6 +920,31 @@ function SharedReportViewer({token,lang='bn',setLang}){
     }).catch(e=>alive&&setState({loading:false,report:null,error:e.message||String(e)}));
     return()=>{alive=false};
   },[token]);
+  useEffect(()=>{
+    const report=state.report;
+    if(!report?.report_html)return;
+    rememberPdfReport({
+      html:report.report_html,
+      filename:report.filename||'shared-report.pdf',
+      title:report.title||(en?'Shared Report':'শেয়ার করা রিপোর্ট'),
+      summary:report.summary||''
+    });
+    const update=()=>{
+      const paper=paperRef.current,viewport=viewportRef.current;
+      if(!paper||!viewport)return;
+      const mobile=window.matchMedia?.('(max-width: 760px)').matches;
+      const naturalWidth=paper.scrollWidth||paper.getBoundingClientRect().width||1;
+      const naturalHeight=paper.scrollHeight||paper.getBoundingClientRect().height||1;
+      const available=Math.max(240,viewport.clientWidth-8);
+      const scale=mobile?Math.min(1,available/naturalWidth):1;
+      setFit({scale,width:naturalWidth*scale,height:naturalHeight*scale});
+    };
+    const frame=requestAnimationFrame(()=>requestAnimationFrame(update));
+    const ro=typeof ResizeObserver!=='undefined'?new ResizeObserver(update):null;
+    if(paperRef.current)ro?.observe(paperRef.current);
+    window.addEventListener('resize',update);
+    return()=>{cancelAnimationFrame(frame);ro?.disconnect();window.removeEventListener('resize',update)};
+  },[state.report,en]);
   if(state.loading)return <div className="shared-report-loading">{en?'Loading shared report...':'শেয়ার করা রিপোর্ট লোড হচ্ছে...'}</div>;
   if(state.error||!state.report)return <div className="shared-report-error"><AlertTriangle/><h2>{en?'Report unavailable':'রিপোর্ট পাওয়া যাচ্ছে না'}</h2><p>{state.error|| (en?'The link may have expired.':'লিংকের মেয়াদ শেষ হয়ে থাকতে পারে।')}</p><a href="/">{en?'Go to Home':'হোমে যান'}</a></div>;
   const r=state.report;
@@ -933,11 +960,14 @@ function SharedReportViewer({token,lang='bn',setLang}){
         <button className="primary" onClick={()=>downloadA4Html(r.report_html,r.filename)}><Save/>{en?'Download PDF':'PDF ডাউনলোড'}</button>
         <ReportShareActions html={r.report_html} filename={r.filename} title={r.title} summary={r.summary||''} lang={lang} existingUrl={currentUrl} compact={true}/>
       </div>
-      <div className="shared-report-paper" dangerouslySetInnerHTML={{__html:r.report_html}}/>
+      <div className="shared-report-preview-scroll" ref={viewportRef}>
+        <div className="shared-report-fit-shell" style={fit.scale<1?{width:fit.width,height:fit.height}:undefined}>
+          <div ref={paperRef} className="shared-report-paper" style={fit.scale<1?{transform:`scale(${fit.scale})`,transformOrigin:'top left'}:undefined} dangerouslySetInnerHTML={{__html:r.report_html}}/>
+        </div>
+      </div>
     </main>
   </div>
 }
-
 function promotionReportHtml(r,lang='bn'){
   const en=lang==='en',f=r.input||{};
   const edu=en?{masters:'Masters',bachelor:"Bachelor's",hsc:'HSC',diploma:'Diploma',bsceng:'BSc Engineering',mbbs:'MBBS'}:eduBn;
