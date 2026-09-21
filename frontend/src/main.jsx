@@ -1619,7 +1619,7 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
     {!activePublicTool&&<>
     <section className="approved-hero du-home-hero">
       <div className="approved-hero-copy">
-        <span className="approved-kicker"><Landmark/>{en?'FOR UNIVERSITY OF DHAKA ONLY':'শুধু স্বাধীন হিসাব সহায়ক অ্যাপ'}</span>
+        <span className="approved-kicker"><Calculator/>{en?'INDEPENDENT · UNOFFICIAL CALCULATION ASSISTANT':'স্বাধীন · অনানুষ্ঠানিক হিসাব সহায়ক অ্যাপ'}</span>
         <h1>{en?'Salary, promotion and points — simple calculations in one place':'বেতন, পদোন্নতি ও পয়েন্ট হিসাব—সহজভাবে এক জায়গায়'}</h1>
         <p>{en?'A simple independent calculator for salary, arrears, promotion, points and related information. It is not an official University of Dhaka service.':'বেতন, বকেয়া, পদোন্নতি, পয়েন্ট ও সংশ্লিষ্ট হিসাব জানা ও দেখার জন্য একটি স্বাধীন সহায়ক প্ল্যাটফর্ম। এটি ঢাকা বিশ্ববিদ্যালয়ের কোনো অফিসিয়াল সেবা নয়।'}</p>
         <div className="approved-hero-buttons">
@@ -1666,7 +1666,7 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
     </section>
 
     <section className="approved-section approved-benefits" id="benefits">
-      <div className="approved-section-title"><span>{en?'YOUR DATA, YOUR CONTROL':'নিজের তথ্য, নিজের নিয়ন্ত্রণ'}</span><h2>{en?'Your personal career and service management':'নিজের ব্যক্তিগত ক্যারিয়ার ও সেবা ব্যবস্থাপনা'}</h2><p>{en?'See your career, salary, promotion, points, leave and essential services from one personal account.':'একটি ব্যক্তিগত অ্যাকাউন্ট থেকে চাকরি, বেতন, পদোন্নতি, পয়েন্ট, ছুটি ও প্রয়োজনীয় সেবার তথ্য দেখুন।'}</p></div>
+      <div className="approved-section-title"><span>{en?'YOUR DATA, YOUR CONTROL':'নিজের তথ্য, নিজের নিয়ন্ত্রণ'}</span><h2>{en?'Personal calculations without mandatory login':'বাধ্যতামূলক login ছাড়াই ব্যক্তিগত হিসাব'}</h2><p>{en?'In the installed app, local profile, salary history, leave, reports and core calculators work without login. Account login is optional for cloud backup and sync.':'ইনস্টল করা অ্যাপে Local Profile, বেতন ইতিহাস, ছুটি, রিপোর্ট ও মূল calculator login ছাড়াই চলবে। Cloud backup ও sync-এর জন্য account login ঐচ্ছিক।'}</p></div>
       <div className="approved-benefit-layout">
         <DashboardPreview/>
         <div className="approved-benefit-grid">{benefits.map(([I,t,d],i)=><article key={t}><span className={`tone t${i%4}`}><I/></span><div><h3>{t}</h3><p>{d}</p></div></article>)}</div>
