@@ -89,49 +89,67 @@ async function syncGuestWorkspaceToAccount(user){
   const localStamp=String(w.updated_at||'local');
   if(localStorage.getItem(markerKey)===localStamp)return {synced:false,reason:'already-synced'};
 
+  let attempted=0,failed=0;
+  const push=async(path,opts)=>{
+    attempted++;
+    try{await api(path,opts);return true}
+    catch{failed++;return false}
+  };
   const p=w.profile||{};
-  await api('/api/my-career/profile',{method:'PUT',body:JSON.stringify({
-    first_joining_date:p.first_joining_date||'',
-    current_post:p.current_post||'',
-    current_grade:p.grade?Number(p.grade):null,
-    current_post_joining_date:p.current_post_joining_date||'',
-    employment_type:p.category||'',
-    office_name:p.office_name||'',
-    department_name:p.department_name||'',
-    retirement_age:p.retirement_age?Number(p.retirement_age):null,
-    notes:'Imported from Hisab Sahayika local PWA'
-  })}).catch(()=>{});
-
+  const profileHasData=[p.first_joining_date,p.current_post,p.grade,p.current_post_joining_date,p.office_name,p.department_name].some(Boolean);
+  if(profileHasData){
+    await push('/api/my-career/profile',{method:'PUT',body:JSON.stringify({
+      first_joining_date:p.first_joining_date||'',
+      current_post:p.current_post||'',
+      current_grade:p.grade?Number(p.grade):null,
+      current_post_joining_date:p.current_post_joining_date||'',
+      employment_type:p.category||'',
+      office_name:p.office_name||'',
+      department_name:p.department_name||'',
+      retirement_age:p.retirement_age?Number(p.retirement_age):null,
+      notes:'Imported from Hisab Sahayika local PWA'
+    })});
+  }
   for(const x of (w.education||[])){
-    await api('/api/my-career/education',{method:'POST',body:JSON.stringify({
+    if(!x.level)continue;
+    await push('/api/my-career/education',{method:'POST',body:JSON.stringify({
       level:x.level||'',institution:x.institution||'',subject:x.subject||'',
       passing_year:x.passing_year||'',result:x.result||'',notes:'Imported from local PWA'
-    })}).catch(()=>{});
+    })});
   }
   for(const x of (w.events||[])){
-    await api('/api/my-career/events',{method:'POST',body:JSON.stringify({
+    if(!x.event_date||!x.title)continue;
+    await push('/api/my-career/events',{method:'POST',body:JSON.stringify({
       event_type:x.type||'other',event_date:x.event_date||'',title:x.title||'',
       post_name:x.post_name||'',grade:x.grade||'',office_name:x.office_name||'',
       reference_no:'',notes:'Imported from local PWA'
-    })}).catch(()=>{});
+    })});
   }
   for(const x of (w.salary_history||[])){
-    await api('/api/my-salary-history',{method:'POST',body:JSON.stringify({
+    if(!x.effective_date)continue;
+    await push('/api/my-salary-history',{method:'POST',body:JSON.stringify({
       effective_date:x.effective_date||'',grade:Number(x.grade||p.grade||13),stage_2015:0,
       basic_2015:Number(x.basic||0),fixed_2026:0,payable_basic:Number(x.basic||0),
       gross_salary:Number(x.gross||0),total_deduction:Number(x.deductions||0),
       net_salary:Number(x.net||0),source:'guest_import',notes:x.note||'Imported from local PWA'
-    })}).catch(()=>{});
+    })});
   }
   for(const x of (w.leave||[])){
-    await api('/api/my-leave-records',{method:'POST',body:JSON.stringify({
+    if(!x.start_date||!x.end_date)continue;
+    await push('/api/my-leave-records',{method:'POST',body:JSON.stringify({
       leave_type:x.type||'other',start_date:x.start_date||'',end_date:x.end_date||'',
       day_mode:'full',total_days:Number(x.total_days||0),notes:x.note||'Imported from local PWA'
-    })}).catch(()=>{});
+    })});
   }
-  localStorage.setItem(markerKey,localStamp);
-  localStorage.setItem('hisab_guest_last_cloud_sync_at',new Date().toISOString());
-  return {synced:true};
+
+  if(attempted>0&&failed===0){
+    localStorage.setItem(markerKey,localStamp);
+    localStorage.setItem('hisab_guest_last_cloud_sync_at',new Date().toISOString());
+    localStorage.removeItem('hisab_guest_last_cloud_sync_error');
+    return {synced:true,attempted};
+  }
+  if(failed>0)localStorage.setItem('hisab_guest_last_cloud_sync_error',new Date().toISOString());
+  return {synced:false,reason:failed?'partial-failure':'nothing-to-sync',attempted,failed};
 }
 
 function pwaInstallId(){
