@@ -11,6 +11,7 @@ const state={
   // Current install state must reflect the real display mode. A historical localStorage hint
   // survives an uninstall and must never block a future reinstall.
   installed:isStandalone(),
+  previouslyInstalled:localStorage.getItem('du_pwa_installed_hint')==='1',
   canInstall:false,
   iosInstallHint:isIos&&!isStandalone(),
   build:null,
@@ -44,6 +45,7 @@ window.addEventListener('appinstalled',()=>{
   localStorage.setItem('du_pwa_installed_at',new Date().toISOString());
   state.canInstall=false;
   state.installed=true;
+  state.previouslyInstalled=true;
   state.iosInstallHint=false;
   emit();
 });
@@ -177,6 +179,7 @@ export function initPwaRuntime(){
   window.matchMedia?.('(display-mode: standalone)').addEventListener?.('change',()=>{
     if(isStandalone()){
       localStorage.setItem('du_pwa_installed_hint','1');
+      state.previouslyInstalled=true;
       if(!localStorage.getItem('du_pwa_installed_at'))localStorage.setItem('du_pwa_installed_at',new Date().toISOString());
     }
     state.installed=isStandalone();
