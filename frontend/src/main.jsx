@@ -2533,8 +2533,10 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
 
     const julyIncrementEligible=f.incrementEligible2026==='yes';
     const oldJulyBasic=incremented2015Basic(grade,currentBasic,julyIncrementEligible?1:0);
+    const legacyIncrementPaid=Math.max(0,Number(oldJulyBasic||0)-Number(currentBasic||0));
     const legacyJuly=make('2026-06-30',en?'Legacy July 2026 payroll':'জুলাই ২০২৬ পুরোনো পে-রোল',{currentBasic:oldJulyBasic,incrementEligible:false});
     const october=make('2026-10-01',en?'October 2026':'অক্টোবর ২০২৬');
+    const newScaleIncrementAmount=Math.max(0,Number(october.fixedWithFirstIncrement||0)-Number(october.fixed||0));
     const special=specialBenefit2025(grade,oldJulyBasic);
     const receivedMonths=3;
     const specialBenefitReceivedAmount=special.monthly*receivedMonths;
@@ -2554,7 +2556,7 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
       specialBenefitMode:'auto',specialBenefitReceivedMonths:receivedMonths,
       specialBenefitReceivedAmount,specialBenefitMonthly:special.monthly,
       specialBenefitThreeMonths:specialBenefitReceivedAmount,
-      oldJuneBasic:currentBasic,oldJulyBasic,
+      oldJuneBasic:currentBasic,oldJulyBasic,legacyIncrementPaid,newScaleIncrementAmount,
       legacyBasic:legacyJuly.payableBasic,legacyGross:legacyJuly.gross,legacyNet:legacyJuly.net,
       octoberBasic:october.payableBasic,octoberGross:october.gross,octoberCurrentNet:october.net,
       monthlyBasicArrear,monthlyGrossArrear,monthlyDeductionIncrease,monthlyNetArrear,
@@ -2875,8 +2877,11 @@ function SalaryResult({r,lang='bn',compact=false,initialCompactTab='now',onReset
         <div className="pwa-compact-section-head"><small>{en?'OCTOBER 2026':'অক্টোবর ২০২৬'}</small><h3>{en?'Salary + arrear':'বেতন + বকেয়া'}</h3></div>
         <div className="pwa-arrear-total"><small>{en?'Estimated total receivable':'আনুমানিক মোট প্রাপ্য'}</small><b>{amt(arrear.octoberBillNet||0)}</b></div>
         <div className="pwa-arrear-lines">
+          <div><span>{en?'30 Jun 2026 basic':'৩০ জুন ২০২৬ মূল বেতন'}</span><b>{amt(arrear.oldJuneBasic||0)}</b></div>
+          <div><span>{en?'Old-scale July increment already paid':'পুরোনো স্কেলের জুলাই ইনক্রিমেন্ট ইতোমধ্যে পাওয়া'}</span><b>{amt(arrear.legacyIncrementPaid||0)}</b></div>
+          <div><span>{en?'2026-scale increment step':'২০২৬ স্কেলের ইনক্রিমেন্ট ধাপ'}</span><b>{amt(arrear.newScaleIncrementAmount||0)}</b></div>
           <div><span>{en?'October current net':'অক্টোবর চলতি নিট'}</span><b>{amt(arrear.octoberCurrentNet||0)}</b></div>
-          <div><span>{en?'Jul–Sep arrear':'জুলাই–সেপ্টেম্বর বকেয়া'}</span><b>+ {amt(arrear.priorThreeNetArrear||0)}</b></div>
+          <div><span>{en?'Jul–Sep arrear (old payroll already offset)':'জুলাই–সেপ্টেম্বর বকেয়া (পুরোনো পে-রোল বাদসহ)'}</span><b>+ {amt(arrear.priorThreeNetArrear||0)}</b></div>
           <div><span>{en?'Special benefit adjustment':'বিশেষ সুবিধা সমন্বয়'}</span><b>− {amt(arrear.specialBenefitReceivedAmount||0)}</b></div>
         </div>
         <button className="pwa-arrear-pdf" disabled={!!pdfBusy} onClick={()=>directPdf(arrearReport,'arrear')}><FileText/>{en?'Arrear PDF':'বকেয়া PDF'}<Save/></button>
@@ -2991,7 +2996,7 @@ function SalaryResult({r,lang='bn',compact=false,initialCompactTab='now',onReset
 
     {activeYear===2026&&resultView==='arrear'&&<section className="arrear-v2">
       <div className="arrear-v2-head">
-        <div><span>{en?'OCTOBER 2026 ARREAR':'অক্টোবর ২০২৬ বকেয়া'}</span><h3>{en?'October bill + July–September arrears':'অক্টোবর বিল + জুলাই–সেপ্টেম্বরের বকেয়া'}</h3><p>{en?'October is counted once. July–September arrears are settled separately and only the special benefit actually received is adjusted.':'অক্টোবরের চলতি বেতন একবারই ধরা হয়েছে। জুলাই–সেপ্টেম্বরের বকেয়া আলাদা হিসাব করে কেবল বাস্তবে পাওয়া বিশেষ সুবিধা সমন্বয় করা হয়েছে।'}</p></div>
+        <div><span>{en?'OCTOBER 2026 ARREAR':'অক্টোবর ২০২৬ বকেয়া'}</span><h3>{en?'October bill + July–September arrears':'অক্টোবর বিল + জুলাই–সেপ্টেম্বরের বকেয়া'}</h3><p>{en?'October is counted once. The July–September 2015-scale payroll, including any eligible July increment, is treated as already paid; only the special benefit actually received is then adjusted separately.':'অক্টোবরের চলতি বেতন একবারই ধরা হয়েছে। জুলাই–সেপ্টেম্বরের পুরোনো ২০১৫ স্কেলের পে-রোল (প্রাপ্য জুলাই ইনক্রিমেন্টসহ) ইতোমধ্যে পাওয়া অংশ হিসেবে ধরা হয়েছে; এরপর কেবল বাস্তবে পাওয়া বিশেষ সুবিধা আলাদাভাবে সমন্বয় করা হয়েছে।'}</p></div>
         <div className="arrear-v2-total"><small>{en?'Estimated October total':'অক্টোবরে আনুমানিক মোট'}</small><b>{amt(arrear.octoberBillNet||0)}</b></div>
       </div>
 
@@ -3016,7 +3021,11 @@ function SalaryResult({r,lang='bn',compact=false,initialCompactTab='now',onReset
         <div className="details-body">
           <div className="arrear-detail-grid-v2">
             <div><small>{en?'Selected grade':'নির্বাচিত গ্রেড'}</small><b>{en?'Grade ':'গ্রেড '}{numLang(arrear.selectedGrade||r.grade||0,lang,0)}</b></div>
+            <div><small>{en?'30 June old-scale basic':'৩০ জুন পুরোনো স্কেলের মূল বেতন'}</small><b>{amt(arrear.oldJuneBasic||0)}</b></div>
             <div><small>{en?'1 July old-scale basic':'১ জুলাই পুরোনো স্কেলের মূল বেতন'}</small><b>{amt(arrear.oldJulyBasic||0)}</b></div>
+            <div><small>{en?'Old-scale July increment already paid':'পুরোনো স্কেলের জুলাই ইনক্রিমেন্ট ইতোমধ্যে পাওয়া'}</small><b>{amt(arrear.legacyIncrementPaid||0)}</b></div>
+            <div><small>{en?'2026 fixed basic':'২০২৬ স্কেলে ফিক্সড মূল বেতন'}</small><b>{amt(r.fixed||0)}</b></div>
+            <div><small>{en?'2026-scale increment step':'২০২৬ স্কেলের ইনক্রিমেন্ট ধাপ'}</small><b>{amt(arrear.newScaleIncrementAmount||0)}</b></div>
             <div><small>{en?'Special-benefit rate':'বিশেষ সুবিধার হার'}</small><b>{numLang((arrear.specialBenefitRate||0)*100,lang,0)}%</b></div>
             <div><small>{en?'Monthly special benefit':'মাসিক বিশেষ সুবিধা'}</small><b>{amt(arrear.specialBenefitMonthly||0)}</b></div>
             <div><small>{en?'Special benefit actually received':'বাস্তবে পাওয়া বিশেষ সুবিধা'}</small><b>{amt(arrear.specialBenefitReceivedAmount||0)}</b></div>
