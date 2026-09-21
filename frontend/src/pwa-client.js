@@ -13,6 +13,7 @@ const state={
   iosInstallHint:isIos&&!isStandalone(),
   build:null,
   lastAutoUpdateAt:localStorage.getItem('du_pwa_last_auto_update_at')||'',
+  justUpdatedAt:localStorage.getItem('du_pwa_update_notice_at')||'',
   checking:false,
   updating:false,
   offline:!navigator.onLine,
@@ -126,7 +127,9 @@ export async function checkBuildVersion(forceReload=false){
       localStorage.setItem('du_pwa_build_id',remote.id);
       const appliedAt=new Date().toISOString();
       localStorage.setItem('du_pwa_last_auto_update_at',appliedAt);
+      localStorage.setItem('du_pwa_update_notice_at',appliedAt);
       state.lastAutoUpdateAt=appliedAt;
+      state.justUpdatedAt=appliedAt;
       state.updating=true;
       emit();
 
@@ -149,6 +152,12 @@ export async function checkBuildVersion(forceReload=false){
     state.checking=false;
     emit();
   }
+}
+
+export function consumePwaUpdateNotice(){
+  localStorage.removeItem('du_pwa_update_notice_at');
+  state.justUpdatedAt='';
+  emit();
 }
 
 export async function manualPwaUpdateCheck(){
