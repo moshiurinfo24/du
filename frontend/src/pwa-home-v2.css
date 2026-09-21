@@ -1,13 +1,13 @@
 /* PWA Home V2 — wallet-style standalone home for Hisab Sahayika */
 .pwa-app-shell{
-  --pwa-rose:#C2185B;
-  --pwa-rose-2:#E83E7D;
-  --pwa-plum:#8E1748;
+  --pwa-indigo:#3F51B5;
+  --pwa-indigo-2:#5062CA;
+  --pwa-deep:#293A8C;
   --pwa-soft:#FFF5F8;
-  --pwa-ink:#32242b;
-  --pwa-muted:#7f6f77;
+  --pwa-ink:#27313A;
+  --pwa-muted:#667690;
   min-height:100dvh;
-  background:linear-gradient(180deg,#fff7fa 0,#fff 190px,#faf9fb 100%)!important;
+  background:linear-gradient(180deg,#F7F9FC 0,#fff 190px,#F7F9FC 100%)!important;
   color:var(--pwa-ink);
   padding-bottom:calc(82px + env(safe-area-inset-bottom));
 }
@@ -16,8 +16,8 @@
   display:flex;align-items:center;justify-content:space-between;gap:10px;
   min-height:70px;padding:calc(10px + env(safe-area-inset-top)) 14px 10px;
   border-radius:0 0 22px 22px;
-  background:linear-gradient(135deg,#E83E7D 0%,#C2185B 58%,#8E1748 100%);
-  color:#fff;box-shadow:0 9px 24px rgba(142,23,72,.18)
+  background:linear-gradient(135deg,#5062CA 0%,#3F51B5 58%,#293A8C 100%);
+  color:#fff;box-shadow:0 9px 24px rgba(41,58,140,.18)
 }
 .pwa-app-topbar.tool{justify-content:flex-start}
 .pwa-app-topbar.tool>div:nth-child(2){min-width:0;flex:1}
@@ -27,7 +27,7 @@
 .pwa-app-brand>span{
   width:40px;height:40px;display:grid;place-items:center;flex:0 0 auto;
   border-radius:13px;background:#fff;color:#B31153;
-  box-shadow:0 7px 16px rgba(66,8,34,.16);font-weight:900
+  box-shadow:0 7px 16px rgba(41,58,140,.16);font-weight:900
 }
 .pwa-app-brand b{display:block;color:#fff;font-size:14px}
 .pwa-app-brand small{display:block;margin-top:2px;color:rgba(255,255,255,.78);font-size:8.5px}
@@ -43,8 +43,8 @@
   position:relative;overflow:hidden;padding:18px 16px;border-radius:22px;
   background:
     radial-gradient(circle at 92% 10%,rgba(255,255,255,.17),transparent 28%),
-    linear-gradient(135deg,#9A194C,#C2185B 58%,#DF3475);
-  color:#fff;box-shadow:0 15px 32px rgba(155,24,78,.20)
+    linear-gradient(135deg,#35479B,#3F51B5 58%,#5062CA);
+  color:#fff;box-shadow:0 15px 32px rgba(63,81,181,.20)
 }
 .pwa-welcome-card:after{
   content:"";position:absolute;right:-20px;bottom:-46px;width:145px;height:145px;
@@ -61,14 +61,14 @@
   display:flex;align-items:center;gap:8px;min-width:0;padding:8px 9px;
   border:1px solid rgba(255,255,255,.14);border-radius:11px;background:rgba(255,255,255,.09)
 }
-.pwa-welcome-meta svg{width:16px;height:16px;flex:0 0 auto;color:#ffd6e6}
+.pwa-welcome-meta svg{width:16px;height:16px;flex:0 0 auto;color:#DDE4FF}
 .pwa-welcome-meta small{display:block;font-size:7.5px;opacity:.7}
 .pwa-welcome-meta b{display:block;margin-top:1px;font-size:8.8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 .pwa-home-section{margin-top:17px}
 .pwa-section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-bottom:9px}
 .pwa-section-head small{display:block;color:#B11753;font:900 7.5px/1 Inter,sans-serif;letter-spacing:.08em}
-.pwa-section-head h2{margin:4px 0 0;color:#432d37;font-size:15px}
+.pwa-section-head h2{margin:4px 0 0;color:#3D4759;font-size:15px}
 .pwa-section-head>button{
   border:0;background:transparent;color:#B11753;display:flex;align-items:center;gap:2px;
   padding:4px 0;font-size:9px;font-weight:800
@@ -79,7 +79,7 @@
 .pwa-quick-grid button{
   min-width:0;min-height:88px;padding:9px 4px 7px;border:0;border-radius:16px;background:#fff;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;
-  box-shadow:0 6px 18px rgba(89,28,55,.055);cursor:pointer
+  box-shadow:0 6px 18px rgba(63,81,181,.055);cursor:pointer
 }
 .pwa-quick-grid button:active{transform:scale(.96)}
 .pwa-quick-grid button>span{
@@ -87,9 +87,9 @@
 }
 .pwa-quick-grid button>span svg{width:21px;height:21px}
 .pwa-quick-grid button b{
-  max-width:74px;color:#55424b;font-size:9.2px;line-height:1.25;text-align:center;font-weight:800
+  max-width:74px;color:#526075;font-size:9.2px;line-height:1.25;text-align:center;font-weight:800
 }
-.pwa-quick-grid .rose{background:#FFE7F0;color:#C2185B}
+.pwa-quick-grid .rose{background:#FFE7F0;color:#3F51B5}
 .pwa-quick-grid .violet{background:#F2EAFE;color:#7843B3}
 .pwa-quick-grid .gold{background:#FFF2DD;color:#A56A1E}
 .pwa-quick-grid .mint{background:#E6F6EF;color:#177252}
@@ -102,26 +102,26 @@
   margin-top:18px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:11px;align-items:center;
   padding:15px;border:1px solid #EFDBE5;border-radius:18px;
   background:
-    radial-gradient(circle at 100% 0,rgba(194,24,91,.07),transparent 35%),
-    linear-gradient(145deg,#fff,#fff7fa);
-  box-shadow:0 8px 24px rgba(91,31,58,.06);cursor:pointer
+    radial-gradient(circle at 100% 0,rgba(63,81,181,.07),transparent 35%),
+    linear-gradient(145deg,#fff,#F7F9FC);
+  box-shadow:0 8px 24px rgba(63,81,181,.06);cursor:pointer
 }
 .pwa-personal-icon{
   width:48px;height:48px;display:grid;place-items:center;border-radius:15px;
-  background:linear-gradient(145deg,#E83E7D,#C2185B);color:#fff;box-shadow:0 8px 17px rgba(194,24,91,.18)
+  background:linear-gradient(145deg,#5062CA,#3F51B5);color:#fff;box-shadow:0 8px 17px rgba(63,81,181,.18)
 }
 .pwa-personal-icon svg{width:22px;height:22px}
 .pwa-personal-card small{display:block;color:#B11753;font:900 7.5px/1 Inter,sans-serif;letter-spacing:.07em}
-.pwa-personal-card h3{margin:4px 0 3px;color:#4b2f3c;font-size:14px}
-.pwa-personal-card p{margin:0;color:#806f78;font-size:9px;line-height:1.45}
+.pwa-personal-card h3{margin:4px 0 3px;color:#465166;font-size:14px}
+.pwa-personal-card p{margin:0;color:#667690;font-size:9px;line-height:1.45}
 .pwa-personal-card>svg{width:17px;height:17px;color:#B66A8B}
 
 .pwa-recent-row{display:grid;gap:6px}
 .pwa-recent-row button{
   display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:9px;
-  min-height:48px;padding:7px 10px;border:1px solid #F0E2E8;border-radius:13px;background:#fff;color:#4d3d45
+  min-height:48px;padding:7px 10px;border:1px solid #F0E2E8;border-radius:13px;background:#fff;color:#465166
 }
-.pwa-recent-row button>span{width:32px;height:32px;display:grid;place-items:center;border-radius:10px;background:#FFF0F6;color:#C2185B}
+.pwa-recent-row button>span{width:32px;height:32px;display:grid;place-items:center;border-radius:10px;background:#FFF0F6;color:#3F51B5}
 .pwa-recent-row button>span svg{width:16px;height:16px}
 .pwa-recent-row b{font-size:10px;text-align:left}
 .pwa-recent-row>button>svg{width:14px;height:14px;color:#A58A96}
@@ -130,9 +130,9 @@
 .pwa-info-cards article{
   display:flex;align-items:flex-start;gap:9px;padding:10px;border:1px solid #EEE1E7;border-radius:13px;background:#fff
 }
-.pwa-info-cards>article>svg{width:30px;height:30px;padding:7px;border-radius:9px;background:#FFF0F6;color:#C2185B;flex:0 0 auto}
+.pwa-info-cards>article>svg{width:30px;height:30px;padding:7px;border-radius:9px;background:#FFF0F6;color:#3F51B5;flex:0 0 auto}
 .pwa-info-cards small{display:block;color:#9B7D8B;font-size:7.5px}
-.pwa-info-cards b{display:block;margin-top:2px;color:#514049;font-size:9.5px;line-height:1.35}
+.pwa-info-cards b{display:block;margin-top:2px;color:#465166;font-size:9.5px;line-height:1.35}
 
 .pwa-home-footer-note{
   display:flex;align-items:flex-start;gap:7px;margin:18px 0 4px;padding:9px 10px;
@@ -145,14 +145,14 @@
   height:calc(69px + env(safe-area-inset-bottom));padding:7px 6px env(safe-area-inset-bottom);
   display:grid;grid-template-columns:repeat(5,1fr);gap:2px;
   border-top:1px solid #F0DDE6;border-radius:20px 20px 0 0;background:rgba(255,255,255,.98);
-  box-shadow:0 -10px 28px rgba(84,24,50,.10);backdrop-filter:blur(16px)
+  box-shadow:0 -10px 28px rgba(41,58,140,.10);backdrop-filter:blur(16px)
 }
 .pwa-app-bottom button{
   border:0;background:transparent;color:#8D7A83;display:flex;flex-direction:column;
   align-items:center;justify-content:center;gap:3px;border-radius:12px;font-size:8.5px;font-weight:800;cursor:pointer
 }
 .pwa-app-bottom button svg{width:20px;height:20px}
-.pwa-app-bottom button.active{background:#FFF0F6;color:#C2185B}
+.pwa-app-bottom button.active{background:#FFF0F6;color:#3F51B5}
 
 .pwa-service-sheet-backdrop{
   position:fixed;z-index:1200;inset:0;display:flex;align-items:flex-end;
@@ -160,7 +160,7 @@
 }
 .pwa-service-sheet{
   width:100%;max-height:78dvh;overflow:auto;padding:15px 13px calc(18px + env(safe-area-inset-bottom));
-  border-radius:24px 24px 0 0;background:#fff;box-shadow:0 -18px 45px rgba(59,19,37,.18)
+  border-radius:24px 24px 0 0;background:#fff;box-shadow:0 -18px 45px rgba(41,58,140,.18)
 }
 .pwa-service-sheet-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
 .pwa-service-sheet-head small{display:block;color:#B11753;font:900 7.5px/1 Inter,sans-serif;letter-spacing:.08em}
@@ -171,14 +171,14 @@
 .pwa-sheet-grid button{
   min-height:82px;border:1px solid #F0E2E8;border-radius:14px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px
 }
-.pwa-sheet-grid button>span{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:#FFF0F6;color:#C2185B}
+.pwa-sheet-grid button>span{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:#FFF0F6;color:#3F51B5}
 .pwa-sheet-grid button>span svg{width:19px;height:19px}
 .pwa-sheet-grid button b{font-size:8.6px;color:#59464F}
 .pwa-sheet-dashboard{
   width:100%;margin-top:11px;padding:11px;border:1px solid #EEDCE5;border-radius:14px;background:linear-gradient(145deg,#FFF,#FFF6FA);
   display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:9px;align-items:center;text-align:left
 }
-.pwa-sheet-dashboard>svg:first-child{width:35px;height:35px;padding:8px;border-radius:11px;background:#FFE9F2;color:#C2185B}
+.pwa-sheet-dashboard>svg:first-child{width:35px;height:35px;padding:8px;border-radius:11px;background:#FFE9F2;color:#3F51B5}
 .pwa-sheet-dashboard b{display:block;font-size:10px;color:#4F3742}
 .pwa-sheet-dashboard small{display:block;margin-top:2px;font-size:8px;color:#8E7782;line-height:1.35}
 .pwa-sheet-dashboard>svg:last-child{width:15px;height:15px;color:#AA8596}
