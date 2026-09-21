@@ -383,3 +383,64 @@
   .pwa-app-topbar .pwa-install-button svg{width:16px!important;height:16px!important}
   .pwa-app-topbar .pwa-status-button small{font-size:9px!important}
 }
+
+
+/* Desktop palette V5 — softer text contrast, light hero */
+@media(min-width:901px){
+  .pwa-desktop-sidebar{
+    background:
+      radial-gradient(circle at 12% 0,rgba(90,107,214,.22),transparent 30%),
+      linear-gradient(180deg,#26377F 0%,#243477 56%,#202F6C 100%);
+  }
+  .pwa-desktop-brand{color:#F4F6FF}
+  .pwa-desktop-brand b{color:#F4F6FF}
+  .pwa-desktop-brand small{color:#BFC9EE}
+  .pwa-desktop-nav-group>small{color:#97A7DA}
+  .pwa-desktop-nav-group button{color:#D7DEF6}
+  .pwa-desktop-nav-group button svg{color:#AEBBE6}
+  .pwa-desktop-nav-group button:hover{color:#F7F8FF;background:rgba(255,255,255,.065)}
+  .pwa-desktop-nav-group button.active{
+    color:#F8FAFF;
+    background:linear-gradient(90deg,rgba(92,111,214,.26),rgba(24,167,160,.14));
+    border-color:rgba(142,229,224,.16);
+    box-shadow:inset 3px 0 0 #55D2CB,0 8px 18px rgba(13,25,79,.09)
+  }
+  .pwa-desktop-nav-group button.active svg{color:#8EE5E0}
+  .pwa-desktop-sync{
+    background:rgba(24,167,160,.09);
+    border-color:rgba(142,229,224,.18);
+    color:#EEF9F8
+  }
+  .pwa-desktop-sync small{color:#AFC8D8}
+  .pwa-desktop-disclaimer{color:#9EACD5}
+
+  .pwa-welcome-card{
+    background:
+      radial-gradient(circle at 88% 18%,rgba(24,167,160,.15),transparent 30%),
+      radial-gradient(circle at 10% 0,rgba(80,98,202,.13),transparent 34%),
+      linear-gradient(135deg,#F4F6FF 0%,#EDF3FF 54%,#EAF8F7 100%);
+    border:1px solid #D7DFF2;
+    color:#293A8C;
+    box-shadow:0 16px 34px rgba(41,58,140,.10)
+  }
+  .pwa-welcome-card:after{
+    border-color:rgba(63,81,181,.055)
+  }
+  .pwa-welcome-copy>small{color:#5D6DB5;opacity:1}
+  .pwa-welcome-copy h1{color:#27377F}
+  .pwa-welcome-copy p{color:#65728C}
+  .pwa-welcome-meta>span{
+    border-color:#D9E1F3;
+    background:rgba(255,255,255,.72);
+    box-shadow:0 5px 16px rgba(41,58,140,.045)
+  }
+  .pwa-welcome-meta svg{color:#3F51B5}
+  .pwa-welcome-meta small{color:#7A879B;opacity:1}
+  .pwa-welcome-meta b{color:#35466F}
+
+  .pwa-personal-card{
+    background:
+      radial-gradient(circle at 100% 0,rgba(24,167,160,.08),transparent 36%),
+      linear-gradient(145deg,#FFFFFF,#F7F9FC)
+  }
+}
