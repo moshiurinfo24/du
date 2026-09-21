@@ -8,7 +8,9 @@ let updateTimer=null;
 let versionTimer=null;
 
 const state={
-  installed:isStandalone()||localStorage.getItem('du_pwa_installed_hint')==='1',
+  // Current install state must reflect the real display mode. A historical localStorage hint
+  // survives an uninstall and must never block a future reinstall.
+  installed:isStandalone(),
   canInstall:false,
   iosInstallHint:isIos&&!isStandalone(),
   build:null,
@@ -177,7 +179,7 @@ export function initPwaRuntime(){
       localStorage.setItem('du_pwa_installed_hint','1');
       if(!localStorage.getItem('du_pwa_installed_at'))localStorage.setItem('du_pwa_installed_at',new Date().toISOString());
     }
-    state.installed=isStandalone()||localStorage.getItem('du_pwa_installed_hint')==='1';
+    state.installed=isStandalone();
     document.documentElement.classList.toggle('pwa-standalone',isStandalone());
     emit();
   });
