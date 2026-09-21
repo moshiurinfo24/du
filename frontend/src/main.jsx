@@ -1281,7 +1281,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
         <PwaControls lang={lang}/>
       </header>
       <main className="pwa-tool-content">
-        {activePublicTool==='salary'&&<PublicPayScaleHub lang={lang}/>}
+        {activePublicTool==='salary'&&<SalaryCalculator lang={lang} publicMode={true}/>}
         {activePublicTool==='promotion'&&<section className="public-tool-only-shell"><PromotionCenter lang={lang} publicMode={true}/></section>}
         {activePublicTool==='house'&&<section className="public-tool-only-shell"><HouseAllocationPoints lang={lang} publicMode={true}/></section>}
         {['service','age','gap','retire'].includes(activePublicTool)&&<section className="public-tool-only-shell"><CalculatorCenter lang={lang} publicMode={true} initialTool={activePublicTool} singleTool={true}/></section>}
