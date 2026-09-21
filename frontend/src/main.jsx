@@ -46,7 +46,7 @@ import './public-premium-v2-1.css';
 import './du-payroll-v2-2.css';
 import './du-experience-v2-3.css';
 import './pwa-mobile-v1.css';
-import {initPwaRuntime,subscribePwa,getPwaState,promptPwaInstall,formatPwaTime,manualPwaUpdateCheck} from './pwa-client.js';
+import {initPwaRuntime,subscribePwa,getPwaState,promptPwaInstall,formatPwaTime,manualPwaUpdateCheck,consumePwaUpdateNotice} from './pwa-client.js';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import {
   PAY2015,PAY2026,PAY_SCALE_2026_META,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
@@ -122,7 +122,8 @@ function PwaControls({lang='bn'}){
   const [open,setOpen]=useState(false);
   const [nudge,setNudge]=useState(false);
   const [checkNote,setCheckNote]=useState('');
-  useEffect(()=>subscribePwa(setPwa),[]);
+  const [updatedNotice,setUpdatedNotice]=useState(()=>getPwaState().justUpdatedAt||'');
+  useEffect(()=>subscribePwa(next=>{setPwa(next);if(next.justUpdatedAt)setUpdatedNotice(next.justUpdatedAt)}),[]);
   useEffect(()=>{
     if((pwa.canInstall||pwa.iosInstallHint)&&!pwa.installed&&sessionStorage.getItem('du_pwa_install_nudge_dismissed')!=='1'){
       const t=setTimeout(()=>setNudge(true),1200);
@@ -162,6 +163,7 @@ function PwaControls({lang='bn'}){
       </div>
     </div>}
     {pwa.updating&&<div className="pwa-update-toast"><RefreshCw/><span>{en?'New version found. Updating automatically…':'নতুন ভার্সন পাওয়া গেছে। অটো আপডেট হচ্ছে…'}</span></div>}
+    {updatedNotice&&!pwa.updating&&<div className="pwa-update-toast pwa-update-complete"><CheckCircle2/><span><b>{en?'Automatic update complete':'অটো আপডেট সম্পন্ন'}</b><small>{formatPwaTime(updatedNotice,lang)}</small></span><button onClick={()=>{setUpdatedNotice('');consumePwaUpdateNotice()}} aria-label={en?'Close':'বন্ধ'}><X size={15}/></button></div>}
     {nudge&&<div className="pwa-install-nudge">
       <span className="app-mark">DU</span>
       <div><b>{en?'Install DU Service App':'DU Service App ইনস্টল করুন'}</b><small>{pwa.iosInstallHint?(en?'Add it to your Home Screen for app-like use.':'Home Screen-এ যোগ করলে অ্যাপের মতো ব্যবহার করতে পারবেন।'):(en?'One tap to install. Future updates will be automatic.':'এক ট্যাপে ইনস্টল করুন। পরের আপডেটগুলো অটো হবে।')}</small></div>
