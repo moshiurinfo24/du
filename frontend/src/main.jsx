@@ -45,11 +45,15 @@ import './public-experience-v2.css';
 import './public-premium-v2-1.css';
 import './du-payroll-v2-2.css';
 import './du-experience-v2-3.css';
+import './pwa-mobile-v1.css';
+import {initPwaRuntime,subscribePwa,getPwaState,promptPwaInstall,formatPwaTime,manualPwaUpdateCheck} from './pwa-client.js';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import {
   PAY2015,PAY2026,PAY_SCALE_2026_META,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
   annualPromotionCycle,futureRoadmap,serviceExperiencePoints,fixed2026,implementationRate,houseRent2015,salary2026Snapshot,incremented2015Basic,specialBenefit2025
 } from './rules';
+
+initPwaRuntime();
 
 const API=import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE||'';
 async function api(path,opts={}){
@@ -111,6 +115,61 @@ const I18N={
   }
 };
 function LangToggle({lang,setLang}){return <button className="lang-btn" onClick={()=>setLang(lang==='bn'?'en':'bn')}>{I18N[lang].language}</button>}
+
+function PwaControls({lang='bn'}){
+  const en=lang==='en';
+  const [pwa,setPwa]=useState(()=>getPwaState());
+  const [open,setOpen]=useState(false);
+  const [nudge,setNudge]=useState(false);
+  const [checkNote,setCheckNote]=useState('');
+  useEffect(()=>subscribePwa(setPwa),[]);
+  useEffect(()=>{
+    if((pwa.canInstall||pwa.iosInstallHint)&&!pwa.installed&&sessionStorage.getItem('du_pwa_install_nudge_dismissed')!=='1'){
+      const t=setTimeout(()=>setNudge(true),1200);
+      return()=>clearTimeout(t);
+    }
+    setNudge(false);
+  },[pwa.canInstall,pwa.iosInstallHint,pwa.installed]);
+  const shownTime=pwa.lastAutoUpdateAt||pwa.build?.built_at||'';
+  const timeText=formatPwaTime(shownTime,lang);
+  const doInstall=async()=>{
+    if(pwa.iosInstallHint){setOpen(true);setNudge(false);return}
+    await promptPwaInstall();
+    setNudge(false);
+  };
+  const dismiss=()=>{sessionStorage.setItem('du_pwa_install_nudge_dismissed','1');setNudge(false)};
+  const check=async()=>{
+    setCheckNote(en?'Checking...':'চেক হচ্ছে...');
+    await manualPwaUpdateCheck();
+    setCheckNote(en?'Update check complete':'আপডেট চেক সম্পন্ন');
+    setTimeout(()=>setCheckNote(''),1800);
+  };
+  return <div className="pwa-controls">
+    {(pwa.canInstall||pwa.iosInstallHint)&&!pwa.installed&&<button className="pwa-install-button" onClick={doInstall} title={en?'Install app':'অ্যাপ ইনস্টল করুন'}><Save/><span>{en?'Install':'ইনস্টল'}</span></button>}
+    <button className={`pwa-status-button ${pwa.updating?'updating':''}`} onClick={()=>setOpen(v=>!v)} title={en?'App update status':'অ্যাপ আপডেট অবস্থা'}><RefreshCw/><span><b>{pwa.offline?(en?'Offline':'অফলাইন'):(pwa.updating?(en?'Updating':'আপডেট হচ্ছে'):(en?'App':'অ্যাপ'))}</b><small>{timeText}</small></span></button>
+    {open&&<div className="pwa-status-popover">
+      <div className="pwa-status-head"><span>{pwa.updating?<RefreshCw/>:<CheckCircle2/>}</span><div><b>{en?'DU Digital Service App':'DU ডিজিটাল সেবা অ্যাপ'}</b><small>{pwa.installed?(en?'Installed PWA':'ইনস্টল করা PWA'):(en?'Web + PWA ready':'Web + PWA প্রস্তুত')}</small></div></div>
+      <div className="pwa-status-grid">
+        <div><small>{en?'Automatic updates':'অটো আপডেট'}</small><b>{en?'Enabled — checked automatically':'চালু — স্বয়ংক্রিয়ভাবে চেক হবে'}</b></div>
+        <div><small>{en?'Last update':'সর্বশেষ আপডেট'}</small><b>{timeText}</b></div>
+        <div><small>{en?'Connection':'সংযোগ'}</small><b>{pwa.offline?(en?'Offline — cached app available':'অফলাইন — ক্যাশ করা অ্যাপ চলবে'):(en?'Online':'অনলাইন')}</b></div>
+      </div>
+      {pwa.iosInstallHint&&<div className="pwa-ios-help">{en?'On iPhone/iPad: tap Share, then “Add to Home Screen”. iOS does not allow silent installation.':'iPhone/iPad-এ Share চাপুন, তারপর “Add to Home Screen” নির্বাচন করুন। iOS নীরবে অটো ইনস্টল অনুমতি দেয় না।'}</div>}
+      {checkNote&&<div className="pwa-ios-help">{checkNote}</div>}
+      <div className="pwa-status-actions">
+        <button className="check" onClick={check}>{en?'Check update':'আপডেট চেক'}</button>
+        {(pwa.canInstall||pwa.iosInstallHint)&&!pwa.installed&&<button className="install" onClick={doInstall}>{en?'Install app':'অ্যাপ ইনস্টল'}</button>}
+      </div>
+    </div>}
+    {pwa.updating&&<div className="pwa-update-toast"><RefreshCw/><span>{en?'New version found. Updating automatically…':'নতুন ভার্সন পাওয়া গেছে। অটো আপডেট হচ্ছে…'}</span></div>}
+    {nudge&&<div className="pwa-install-nudge">
+      <span className="app-mark">DU</span>
+      <div><b>{en?'Install DU Service App':'DU Service App ইনস্টল করুন'}</b><small>{pwa.iosInstallHint?(en?'Add it to your Home Screen for app-like use.':'Home Screen-এ যোগ করলে অ্যাপের মতো ব্যবহার করতে পারবেন।'):(en?'One tap to install. Future updates will be automatic.':'এক ট্যাপে ইনস্টল করুন। পরের আপডেটগুলো অটো হবে।')}</small></div>
+      <button onClick={doInstall}>{en?'Install':'ইনস্টল'}</button>
+      <button className="dismiss" onClick={dismiss} aria-label={en?'Dismiss':'বন্ধ'}><X size={15}/></button>
+    </div>}
+  </div>
+}
 
 function todayLocalIso(){const d=new Date();const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,'0');const day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`}
 function fmtDateLang(d,lang='bn'){if(!d||isNaN(new Date(d)))return '—';return new Intl.DateTimeFormat(lang==='en'?'en-GB':'bn-BD-u-nu-latn',{day:'2-digit',month:'long',year:'numeric'}).format(new Date(d))}
@@ -1190,6 +1249,7 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
       </nav>
 
       <div className="approved-actions">
+        <PwaControls lang={lang}/>
         <LangToggle lang={lang} setLang={setLang}/>
         <button className="sign-in" onClick={onLogin}>{en?'Sign in':'লগইন'}</button>
         <button className="new-account" onClick={onSignup}>{en?'New Account':'নতুন অ্যাকাউন্ট'}</button>
@@ -1327,8 +1387,9 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
 
     <nav className="public-mobile-dock" aria-label={en?'Mobile quick navigation':'মোবাইল দ্রুত মেনু'}>
       <button className={!activePublicTool?'active':''} onClick={()=>go('home')}><Home/><span>{en?'Home':'হোম'}</span></button>
-      <button className={activePublicTool==='salary'?'active':''} onClick={()=>openPublicTool('salary')}><WalletCards/><span>{en?'Pay Scale':'পে-স্কেল'}</span></button>
-      <button className={mobileCalcOpen||(['promotion','house','service','age','gap','retire'].includes(activePublicTool))?'active':''} onClick={()=>setMobileCalcOpen(v=>!v)}><Calculator/><span>{en?'Calculate':'ক্যালকুলেটর'}</span></button>
+      <button className={activePublicTool==='salary'?'active':''} onClick={()=>openPublicTool('salary')}><WalletCards/><span>{en?'Salary':'বেতন'}</span></button>
+      <button className={activePublicTool==='promotion'?'active':''} onClick={()=>openPublicTool('promotion')}><TrendingUp/><span>{en?'Career':'ক্যারিয়ার'}</span></button>
+      <button className={mobileCalcOpen||(['house','service','age','gap','retire'].includes(activePublicTool))?'active':''} onClick={()=>setMobileCalcOpen(v=>!v)}><Boxes/><span>{en?'Services':'সেবা'}</span></button>
       <button onClick={onLogin}><UserRound/><span>{en?'Login':'লগইন'}</span></button>
     </nav>
 
@@ -3745,7 +3806,7 @@ function App(){
         {admin&&<button className={page==='admin'?'active':''} onClick={()=>setPage('admin')}><ShieldCheck size={18}/>{lang==='en'?'System Control':'সিস্টেম কন্ট্রোল'}</button>}
       </div>
     </nav></aside>
-    <main><header className="app-topbar"><div className="mobile-topbar-left"><button className={`mobile-menu-trigger text-menu-trigger ${mobileMenu?'active':''}`} onClick={()=>setMobileMenu(v=>!v)} aria-expanded={mobileMenu} aria-label={lang==='en'?(mobileMenu?'Close menu':'Open menu'):(mobileMenu?'মেনু বন্ধ করুন':'মেনু খুলুন')}><span>{lang==='en'?(mobileMenu?'Close Menu':'Menu'):(mobileMenu?'মেনু বন্ধ':'মেনু')}</span></button><div><h2>{lang==='en'?`Welcome, ${user.name}`:`স্বাগতম, ${user.name}`}</h2><p>{lang==='en'?(roleLabel[user.role]||user.role):({super_admin:'সিস্টেম ব্যবস্থাপক',admin:'অ্যাডমিন',department_admin:'বিভাগীয় অ্যাডমিন',editor:'সম্পাদক',employee:'কর্মকর্তা-কর্মচারী'}[user.role]||user.role)}</p></div></div><div className="header-actions"><LangToggle lang={lang} setLang={setLang}/><button className="logout" onClick={logout}><LogOut size={16}/><span>{lang==='en'?'Logout':'লগআউট'}</span></button></div></header>
+    <main><header className="app-topbar"><div className="mobile-topbar-left"><button className={`mobile-menu-trigger text-menu-trigger ${mobileMenu?'active':''}`} onClick={()=>setMobileMenu(v=>!v)} aria-expanded={mobileMenu} aria-label={lang==='en'?(mobileMenu?'Close menu':'Open menu'):(mobileMenu?'মেনু বন্ধ করুন':'মেনু খুলুন')}><span>{lang==='en'?(mobileMenu?'Close Menu':'Menu'):(mobileMenu?'মেনু বন্ধ':'মেনু')}</span></button><div><h2>{lang==='en'?`Welcome, ${user.name}`:`স্বাগতম, ${user.name}`}</h2><p>{lang==='en'?(roleLabel[user.role]||user.role):({super_admin:'সিস্টেম ব্যবস্থাপক',admin:'অ্যাডমিন',department_admin:'বিভাগীয় অ্যাডমিন',editor:'সম্পাদক',employee:'কর্মকর্তা-কর্মচারী'}[user.role]||user.role)}</p></div></div><div className="header-actions"><PwaControls lang={lang}/><LangToggle lang={lang} setLang={setLang}/><button className="logout" onClick={logout}><LogOut size={16}/><span>{lang==='en'?'Logout':'লগআউট'}</span></button></div></header>
       {page==='dashboard'&&<DashboardHome user={user} onPage={setPage} lang={lang}/>} 
       {page==='career'&&<MyCareer lang={lang}/>}
       {page==='promotion'&&<PromotionCenter lang={lang}/>}
@@ -3768,10 +3829,10 @@ function App(){
     </main>
     <nav className="mobile-bottom-nav" aria-label={lang==='en'?'Mobile navigation':'মোবাইল নেভিগেশন'}>
       <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}><LayoutDashboard/><span>{lang==='en'?'Home':'হোম'}</span></button>
-      <button className={page==='career'?'active':''} onClick={()=>setPage('career')}><BookUser/><span>{lang==='en'?'Career':'চাকরি'}</span></button>
-      <button className={page==='points'?'active':''} onClick={()=>setPage('points')}><Award/><span>{lang==='en'?'Points':'পয়েন্ট'}</span></button>
-      <button className={page==='calendar'?'active':''} onClick={()=>setPage('calendar')}><CalendarDays/><span>{lang==='en'?'Calendar':'ক্যালেন্ডার'}</span></button>
-      <button className={mobileMenu?'active':''} onClick={()=>setMobileMenu(v=>!v)}><Boxes/><span>{lang==='en'?'Menu':'মেনু'}</span></button>
+      <button className={page==='salary'?'active':''} onClick={()=>setPage('salary')}><WalletCards/><span>{lang==='en'?'Salary':'বেতন'}</span></button>
+      <button className={['promotion','promotion-timeline'].includes(page)?'active':''} onClick={()=>setPage('promotion')}><TrendingUp/><span>{lang==='en'?'Career':'ক্যারিয়ার'}</span></button>
+      <button className={mobileMenu?'active':''} onClick={()=>setMobileMenu(v=>!v)}><Boxes/><span>{lang==='en'?'Services':'সেবা'}</span></button>
+      <button className={page==='career'?'active':''} onClick={()=>setPage('career')}><UserRound/><span>{lang==='en'?'Profile':'প্রোফাইল'}</span></button>
     </nav>
     <a className="floating-whatsapp logged-in-whatsapp" href={`https://wa.me/8801759084692?text=${encodeURIComponent(lang==='en'?'Hello, I need help with the Employee Digital Service Platform.':'আসসালামু আলাইকুম, কর্মকর্তা-কর্মচারী ডিজিটাল সেবা প্ল্যাটফর্ম বিষয়ে সহায়তা প্রয়োজন।')}`} target="_blank" rel="noreferrer" aria-label={lang==='en'?'Message on WhatsApp':'হোয়াটসঅ্যাপে মেসেজ করুন'}><MessageCircle/><span>{lang==='en'?'WhatsApp':'হোয়াটসঅ্যাপ'}</span></a>
   </div>
