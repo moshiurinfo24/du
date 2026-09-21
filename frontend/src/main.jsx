@@ -4055,11 +4055,33 @@ function MasterDirectory(){
 
 
 
+function leaveUsageInYear(item,year){
+  const y=Number(year),mode=item?.day_mode||'full';
+  const start=String(item?.start_date||''),end=String(item?.end_date||start);
+  if(!start||!end)return 0;
+  const a=new Date(start+'T00:00:00'),b=new Date(end+'T00:00:00');
+  if(isNaN(a)||isNaN(b)||b<a)return 0;
+  if(mode==='half')return a.getFullYear()===y?0.5:0;
+  const ys=new Date(y,0,1),ye=new Date(y,11,31),from=a>ys?a:ys,to=b<ye?b:ye;
+  return to<from?0:Math.floor((to-from)/86400000)+1;
+}
+function normalizeLeaveEntitlementMap(raw={}){
+  const allowed=['casual','earned','medical','maternity','paternity','study','special','other'],out={};
+  for(const k of allowed){
+    const v=raw?.[k];
+    if(v===''||v===null||v===undefined)continue;
+    const n=Number(v);
+    if(Number.isFinite(n)&&n>=0&&n<=366)out[k]=Math.round(n*100)/100;
+  }
+  return out;
+}
 function PersonalLeaveRecord({lang='bn'}){
-  const en=lang==='en';
+  const en=lang==='en',currentYear=String(new Date().getFullYear());
   const blank={leave_type:'casual',start_date:'',end_date:'',day_mode:'full',notes:''};
   const [items,setItems]=useState([]),[form,setForm]=useState(blank),[editing,setEditing]=useState(null),
     [busy,setBusy]=useState(false),[err,setErr]=useState(''),[msg,setMsg]=useState('');
+  const [selectedYear,setSelectedYear]=useState(currentYear),[entitlements,setEntitlements]=useState({}),
+    [sourceNote,setSourceNote]=useState(''),[entBusy,setEntBusy]=useState(false),[entMsg,setEntMsg]=useState('');
   const labels=en?{
     casual:'Casual Leave',earned:'Earned Leave',medical:'Medical Leave',maternity:'Maternity Leave',
     paternity:'Paternity Leave',study:'Study Leave',special:'Special Leave',other:'Other'
@@ -4067,38 +4089,58 @@ function PersonalLeaveRecord({lang='bn'}){
     casual:'নৈমিত্তিক ছুটি',earned:'অর্জিত ছুটি',medical:'চিকিৎসা ছুটি',maternity:'মাতৃত্বকালীন ছুটি',
     paternity:'পিতৃত্বকালীন ছুটি',study:'শিক্ষা ছুটি',special:'বিশেষ ছুটি',other:'অন্যান্য'
   };
+  const leaveTypes=Object.keys(labels);
 
   async function load(){
     setBusy(true);setErr('');
     try{const x=await api('/api/my-leave-records');setItems(x.items||[])}
     catch(e){setErr(e.message)}finally{setBusy(false)}
   }
+  async function loadEntitlements(year){
+    setEntBusy(true);setEntMsg('');
+    try{
+      const x=await api('/api/my-leave-entitlements?year='+encodeURIComponent(year));
+      setEntitlements(normalizeLeaveEntitlementMap(x.entitlements||{}));setSourceNote(x.source_note||'');
+    }catch(e){setEntitlements({});setSourceNote('');setEntMsg(en?'Entitlement settings could not be loaded.':'ছুটির প্রাপ্যতার সেটিং লোড করা যায়নি।')}
+    finally{setEntBusy(false)}
+  }
   useEffect(()=>{load()},[]);
+  useEffect(()=>{loadEntitlements(selectedYear)},[selectedYear]);
 
   function calcDays(start,end,mode='full'){
-    if(!start||!end)return 0;
+    if(!start)return 0;
+    if(mode==='half')return 0.5;
+    if(!end)return 0;
     const a=new Date(start+'T00:00:00'),b=new Date(end+'T00:00:00');
     if(isNaN(a)||isNaN(b)||b<a)return 0;
-    const days=Math.floor((b-a)/86400000)+1;
-    return mode==='half'?0.5:days;
+    return Math.floor((b-a)/86400000)+1;
   }
-  const days=calcDays(form.start_date,form.end_date,form.day_mode);
+  const effectiveEnd=form.day_mode==='half'?form.start_date:form.end_date;
+  const days=calcDays(form.start_date,effectiveEnd,form.day_mode);
 
   async function save(e){
     e.preventDefault();setErr('');setMsg('');
-    if(!form.start_date||!form.end_date)return setErr(en?'Start and end dates are required.':'শুরুর ও শেষের তারিখ প্রয়োজন।');
-    if(new Date(form.end_date)<new Date(form.start_date))return setErr(en?'End date cannot be earlier than start date.':'শেষের তারিখ শুরুর তারিখের আগে হতে পারে না।');
+    if(!form.start_date||(form.day_mode!=='half'&&!form.end_date))return setErr(en?'Required leave dates are missing.':'প্রয়োজনীয় ছুটির তারিখ দিন।');
+    if(form.day_mode!=='half'&&new Date(form.end_date)<new Date(form.start_date))return setErr(en?'End date cannot be earlier than start date.':'শেষের তারিখ শুরুর তারিখের আগে হতে পারে না।');
     setBusy(true);
     try{
-      const payload={...form,total_days:days};
+      const payload={...form,end_date:effectiveEnd,total_days:days};
       if(editing)await api('/api/my-leave-records/'+editing.id,{method:'PUT',body:JSON.stringify(payload)});
       else await api('/api/my-leave-records',{method:'POST',body:JSON.stringify(payload)});
       setForm(blank);setEditing(null);setMsg(en?'Leave record saved.':'ছুটির রেকর্ড সংরক্ষণ হয়েছে।');await load();
     }catch(e){setErr(e.message)}finally{setBusy(false)}
   }
+  async function saveEntitlements(){
+    setEntBusy(true);setEntMsg('');
+    try{
+      const clean=normalizeLeaveEntitlementMap(entitlements);
+      await api('/api/my-leave-entitlements',{method:'PUT',body:JSON.stringify({year:Number(selectedYear),entitlements:clean,source_note:sourceNote})});
+      setEntitlements(clean);setEntMsg(en?'Leave entitlement settings saved.':'ছুটির প্রাপ্যতার সেটিং সংরক্ষণ হয়েছে।');
+    }catch(e){setEntMsg(e.message||'Save failed')}
+    finally{setEntBusy(false)}
+  }
   function edit(x){
-    setEditing(x);
-    setForm({leave_type:x.leave_type,start_date:x.start_date,end_date:x.end_date,day_mode:x.day_mode||'full',notes:x.notes||''});
+    setEditing(x);setForm({leave_type:x.leave_type,start_date:x.start_date,end_date:x.end_date,day_mode:x.day_mode||'full',notes:x.notes||''});
     window.scrollTo({top:0,behavior:'smooth'});
   }
   async function remove(id){
@@ -4106,34 +4148,59 @@ function PersonalLeaveRecord({lang='bn'}){
     try{await api('/api/my-leave-records/'+id,{method:'DELETE'});await load()}catch(e){alert(e.message)}
   }
 
-  const thisYear=String(new Date().getFullYear());
-  const yearItems=items.filter(x=>String(x.start_date||'').startsWith(thisYear));
-  const yearDays=yearItems.reduce((s,x)=>s+Number(x.total_days||0),0);
-  const typeTotals=Object.entries(yearItems.reduce((m,x)=>{m[x.leave_type]=(m[x.leave_type]||0)+Number(x.total_days||0);return m},{}))
-    .map(([type,value])=>({type,label:labels[type]||type,value})).sort((a,b)=>b.value-a.value);
+  const years=Array.from(new Set([currentYear,selectedYear,...items.map(x=>String(x.start_date||'').slice(0,4)).filter(x=>/^\d{4}$/.test(x))])).sort((a,b)=>Number(b)-Number(a));
+  const yearItems=items.filter(x=>leaveUsageInYear(x,selectedYear)>0);
+  const usage=leaveTypes.reduce((m,type)=>{m[type]=yearItems.filter(x=>x.leave_type===type).reduce((sum,x)=>sum+leaveUsageInYear(x,selectedYear),0);return m},{});
+  const yearDays=Object.values(usage).reduce((sum,x)=>sum+Number(x||0),0);
+  const typeTotals=leaveTypes.map(type=>({type,label:labels[type],value:Number(usage[type]||0)})).filter(x=>x.value>0).sort((a,b)=>b.value-a.value);
   const maxType=Math.max(1,...typeTotals.map(x=>x.value));
+  const configured=leaveTypes.filter(type=>entitlements[type]!==undefined&&entitlements[type]!==''&&Number.isFinite(Number(entitlements[type])));
+  const totalEntitlement=configured.reduce((sum,type)=>sum+Number(entitlements[type]||0),0);
+  const usedConfigured=configured.reduce((sum,type)=>sum+Number(usage[type]||0),0);
+  const remainingTotal=totalEntitlement-usedConfigured;
 
   return <div className="leave-page">
     <section className="leave-hero">
-      <div><span>{en?'PERSONAL LEAVE RECORD':'ব্যক্তিগত ছুটির হিসাব'}</span><h2>{en?'My Leave Record':'আমার ছুটির হিসাব'}</h2><p>{en?'Keep your own leave history for personal planning. This is not an official leave approval or HR record.':'নিজের পরিকল্পনার জন্য ছুটির ইতিহাস সংরক্ষণ করুন। এটি অফিসিয়াল ছুটি অনুমোদন বা HR রেকর্ড নয়।'}</p></div>
+      <div><span>{en?'LEAVE BALANCE & PERSONAL RECORD':'ছুটি ব্যালেন্স ও ব্যক্তিগত হিসাব'}</span><h2>{en?'My Leave Balance':'আমার ছুটি ব্যালেন্স'}</h2><p>{en?'Track entitlement, used days and remaining balance by year. Entitlements are never assumed—enter only the rule that applies to you.':'বছরভিত্তিক প্রাপ্য, ব্যবহৃত ও অবশিষ্ট ছুটি দেখুন। কোনো entitlement অ্যাপ নিজে থেকে ধরে নেয় না—আপনার ক্ষেত্রে প্রযোজ্য নিয়ম অনুযায়ী দিন লিখুন।'}</p></div>
       <div className="leave-chip"><CalendarDays size={17}/>{en?'Self-service only':'শুধু ব্যক্তিগত ব্যবহারের জন্য'}</div>
     </section>
 
-    <section className="leave-summary-grid">
-      <article><CalendarDays/><div><small>{en?'This Year Records':'চলতি বছরের রেকর্ড'}</small><b>{numLang(yearItems.length,lang,0)}</b><span>{thisYear}</span></div></article>
-      <article><Clock3/><div><small>{en?'Recorded Leave Days':'রেকর্ডকৃত ছুটির দিন'}</small><b>{numLang(yearDays,lang,1)}</b><span>{en?'Personal total':'ব্যক্তিগত মোট'}</span></div></article>
-      <article><PieChart/><div><small>{en?'Leave Types Used':'ব্যবহৃত ছুটির ধরন'}</small><b>{numLang(typeTotals.length,lang,0)}</b><span>{en?'This year':'চলতি বছর'}</span></div></article>
+    <section className="leave-summary-grid balance">
+      <article><CalendarDays/><div><small>{en?'Selected year':'নির্বাচিত বছর'}</small><b>{numLang(selectedYear,lang,0)}</b><span>{numLang(yearItems.length,lang,0)} {en?'record(s)':'রেকর্ড'}</span></div></article>
+      <article><Clock3/><div><small>{en?'Used leave days':'ব্যবহৃত ছুটির দিন'}</small><b>{numLang(yearDays,lang,1)}</b><span>{en?'Calculated from saved records':'সংরক্ষিত রেকর্ড থেকে'}</span></div></article>
+      <article><PieChart/><div><small>{en?'Configured entitlement':'সেট করা প্রাপ্য ছুটি'}</small><b>{configured.length?numLang(totalEntitlement,lang,1):'—'}</b><span>{configured.length?numLang(configured.length,lang,0)+' '+(en?'type(s)':'ধরন'):(en?'Not set yet':'এখনও সেট করা হয়নি')}</span></div></article>
+      <article className={configured.length&&remainingTotal<0?'over':''}><CheckCircle2/><div><small>{en?'Remaining balance':'অবশিষ্ট ব্যালেন্স'}</small><b>{configured.length?numLang(remainingTotal,lang,1):'—'}</b><span>{configured.length?(remainingTotal<0?(en?'Usage exceeds configured entitlement':'ব্যবহার সেট করা প্রাপ্যের বেশি'):(en?'Across configured leave types':'সেট করা ছুটির ধরনগুলো মিলিয়ে')):(en?'Set entitlement first':'আগে প্রাপ্য দিন সেট করুন')}</span></div></article>
     </section>
 
     {err&&<div className="error">{err}</div>}{msg&&<div className="auth-success">{msg}</div>}
+
+    <section className="leave-card leave-balance-card">
+      <div className="leave-balance-toolbar">
+        <div className="leave-head"><div><Gauge/><div><h3>{en?'Entitlement & Balance':'প্রাপ্য ও অবশিষ্ট'}</h3><p>{en?'Set only the entitlement confirmed by your applicable office rule/order.':'আপনার ক্ষেত্রে প্রযোজ্য অফিস আদেশ/নিয়মে নিশ্চিত entitlement-ই সেট করুন।'}</p></div></div></div>
+        <label>{en?'Balance year':'ব্যালেন্স বছর'}<select value={selectedYear} onChange={e=>setSelectedYear(e.target.value)}>{years.map(y=><option key={y} value={y}>{numLang(y,lang,0)}</option>)}</select></label>
+      </div>
+      <div className="leave-entitlement-note"><ShieldAlert/><span>{en?'No default leave entitlement is built into this app. Blank means “not configured”, not zero entitlement.':'এই অ্যাপে কোনো default ছুটি entitlement বসানো নেই। ফাঁকা মানে “সেট করা হয়নি”—শূন্য entitlement নয়।'}</span></div>
+      <div className="leave-balance-grid">
+        {leaveTypes.map(type=>{
+          const used=Number(usage[type]||0),raw=entitlements[type],has=raw!==undefined&&raw!=='',ent=has?Number(raw):null,remaining=has?ent-used:null;
+          return <article key={type} className={has&&remaining<0?'over':''}>
+            <div><b>{labels[type]}</b><small>{en?'Used':'ব্যবহৃত'} {numLang(used,lang,1)} {en?'day(s)':'দিন'}</small></div>
+            <label>{en?'Entitlement days':'প্রাপ্য দিন'}<input type="number" min="0" max="366" step="0.5" value={raw??''} placeholder={en?'Not set':'সেট করা নেই'} onChange={e=>setEntitlements({...entitlements,[type]:e.target.value})}/></label>
+            <span><small>{en?'Remaining':'অবশিষ্ট'}</small><strong>{has?numLang(remaining,lang,1):'—'}</strong></span>
+          </article>
+        })}
+      </div>
+      <div className="leave-entitlement-source"><label>{en?'Rule / source reference (optional)':'নিয়ম / উৎস রেফারেন্স (ঐচ্ছিক)'}<input value={sourceNote} maxLength="500" onChange={e=>setSourceNote(e.target.value)} placeholder={en?'e.g. office order or rule reference':'যেমন: অফিস আদেশ বা বিধির রেফারেন্স'}/></label><button className="primary" disabled={entBusy} onClick={saveEntitlements}><Save/>{entBusy?(en?'Saving...':'সংরক্ষণ হচ্ছে...'):(en?'Save Entitlement':'প্রাপ্যতা সংরক্ষণ')}</button></div>
+      {entMsg&&<div className="leave-entitlement-message">{entMsg}</div>}
+    </section>
 
     <section className="leave-card">
       <div className="leave-head"><div><CalendarDays/><div><h3>{editing?(en?'Edit Leave Record':'ছুটির রেকর্ড সম্পাদনা'):(en?'Add Leave Record':'ছুটির রেকর্ড যোগ করুন')}</h3><p>{en?'Dates and total days are calculated automatically.':'তারিখ অনুযায়ী মোট দিন স্বয়ংক্রিয়ভাবে হিসাব হবে।'}</p></div></div>{editing&&<button className="secondary" onClick={()=>{setEditing(null);setForm(blank)}}>{en?'Cancel Edit':'সম্পাদনা বাতিল'}</button>}</div>
       <form className="form-grid" onSubmit={save}>
         <label>{en?'Leave type':'ছুটির ধরন'}<select value={form.leave_type} onChange={e=>setForm({...form,leave_type:e.target.value})}>{Object.entries(labels).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
-        <label>{en?'Day mode':'দিনের ধরন'}<select value={form.day_mode} onChange={e=>setForm({...form,day_mode:e.target.value})}><option value="full">{en?'Full day(s)':'পূর্ণ দিন'}</option><option value="half">{en?'Half day':'অর্ধদিবস'}</option></select></label>
-        <label>{en?'Start date':'শুরুর তারিখ'}<input type="date" value={form.start_date} onChange={e=>setForm({...form,start_date:e.target.value})} required/></label>
-        <label>{en?'End date':'শেষের তারিখ'}<input type="date" value={form.end_date} onChange={e=>setForm({...form,end_date:e.target.value})} required/></label>
+        <label>{en?'Day mode':'দিনের ধরন'}<select value={form.day_mode} onChange={e=>setForm({...form,day_mode:e.target.value,end_date:e.target.value==='half'?form.start_date:form.end_date})}><option value="full">{en?'Full day(s)':'পূর্ণ দিন'}</option><option value="half">{en?'Half day':'অর্ধদিবস'}</option></select></label>
+        <label>{en?'Start date':'শুরুর তারিখ'}<input type="date" value={form.start_date} onChange={e=>setForm({...form,start_date:e.target.value,...(form.day_mode==='half'?{end_date:e.target.value}:{})})} required/></label>
+        <label>{en?'End date':'শেষের তারিখ'}<input type="date" value={effectiveEnd} disabled={form.day_mode==='half'} onChange={e=>setForm({...form,end_date:e.target.value})} required={form.day_mode!=='half'}/></label>
         <label>{en?'Total days':'মোট দিন'}<input value={numLang(days,lang,1)} readOnly/></label>
         <label className="span-2">{en?'Personal note':'ব্যক্তিগত নোট'}<textarea rows="3" value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})}/></label>
         <div className="span-2"><button className="primary" disabled={busy}><Save size={16}/>{busy?(en?'Saving...':'সংরক্ষণ হচ্ছে...'):(editing?(en?'Update Record':'রেকর্ড আপডেট'):(en?'Save Record':'রেকর্ড সংরক্ষণ'))}</button></div>
@@ -4142,9 +4209,9 @@ function PersonalLeaveRecord({lang='bn'}){
 
     <section className="leave-grid">
       <article className="leave-card">
-        <div className="leave-head"><div><BarChart3/><div><h3>{en?'Leave by Type':'ধরনভিত্তিক ছুটি'}</h3><p>{en?'Current year personal usage.':'চলতি বছরের ব্যক্তিগত হিসাব।'}</p></div></div></div>
-        {typeTotals.length===0?<div className="empty">{en?'No leave data for this year.':'চলতি বছরে কোনো ছুটির রেকর্ড নেই।'}</div>:<div className="leave-bars">
-          {typeTotals.map(x=><div key={x.type}><div className="leave-bar-label"><span>{x.label}</span><b>{numLang(x.value,lang,1)}</b></div><div className="leave-bar-track"><i style={{width:`${Math.max(5,(x.value/maxType)*100)}%`}}></i></div></div>)}
+        <div className="leave-head"><div><BarChart3/><div><h3>{en?'Leave by Type':'ধরনভিত্তিক ছুটি'}</h3><p>{en?'Usage in '+selectedYear:numLang(selectedYear,lang,0)+' সালের ব্যবহার'}</p></div></div></div>
+        {typeTotals.length===0?<div className="empty">{en?'No leave data for this year.':'এই বছরে কোনো ছুটির রেকর্ড নেই।'}</div>:<div className="leave-bars">
+          {typeTotals.map(x=><div key={x.type}><div className="leave-bar-label"><span>{x.label}</span><b>{numLang(x.value,lang,1)}</b></div><div className="leave-bar-track"><i style={{width:String(Math.max(5,(x.value/maxType)*100))+'%'}}></i></div></div>)}
         </div>}
       </article>
 
@@ -4153,14 +4220,14 @@ function PersonalLeaveRecord({lang='bn'}){
         {items.length===0?<div className="empty">{en?'No leave record yet.':'এখনো কোনো ছুটির রেকর্ড নেই।'}</div>:<div className="leave-history">
           {items.map(x=><div className="leave-history-row" key={x.id}>
             <div className="leave-history-icon"><CalendarDays/></div>
-            <div><small>{fmtDateLang(x.start_date,lang)} → {fmtDateLang(x.end_date,lang)}</small><b>{labels[x.leave_type]||x.leave_type}</b><span>{numLang(x.total_days,lang,1)} {en?'day(s)':'দিন'}{x.notes?` · ${x.notes}`:''}</span></div>
+            <div><small>{fmtDateLang(x.start_date,lang)} → {fmtDateLang(x.end_date,lang)}</small><b>{labels[x.leave_type]||x.leave_type}</b><span>{numLang(x.total_days,lang,1)} {en?'day(s)':'দিন'}{x.day_mode==='half'?' · '+(en?'Half day':'অর্ধদিবস'):''}{x.notes?' · '+x.notes:''}</span></div>
             <div className="leave-actions"><button className="icon-btn" onClick={()=>edit(x)}><Edit3 size={15}/></button><button className="icon-btn danger" onClick={()=>remove(x.id)}><Trash2 size={15}/></button></div>
           </div>)}
         </div>}
       </article>
     </section>
 
-    <section className="calculator-safety-note"><ShieldCheck/><div><b>{en?'Personal record only':'শুধু ব্যক্তিগত রেকর্ড'}</b><p>{en?'This module does not approve, reject or certify leave. Official leave records remain with the competent authority.':'এই মডিউল ছুটি অনুমোদন, প্রত্যাখ্যান বা প্রত্যয়ন করে না। অফিসিয়াল ছুটির রেকর্ড সংশ্লিষ্ট কর্তৃপক্ষের অধীন।'}</p></div></section>
+    <section className="calculator-safety-note"><ShieldCheck/><div><b>{en?'Personal planning balance only':'শুধু ব্যক্তিগত পরিকল্পনার ব্যালেন্স'}</b><p>{en?'Remaining balance is calculated only for leave types where you entered an entitlement. It does not approve, certify or replace the competent authority’s official leave ledger.':'আপনি যে ছুটির ধরনে entitlement লিখেছেন শুধু সেগুলোর অবশিষ্ট হিসাব করা হয়। এটি ছুটি অনুমোদন/প্রত্যয়ন করে না এবং কর্তৃপক্ষের অফিসিয়াল leave ledger-এর বিকল্প নয়।'}</p></div></section>
   </div>
 }
 
