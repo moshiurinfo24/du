@@ -2632,15 +2632,20 @@ function duPayrollDeductionRules({category,date,basic,grade}={}){
   const pfRate=.10;
   const health=149.34;
 
-  // Group-insurance deductions are used automatically only where the category/grade/date
-  // amount has been verified. The supplied DU payslips verify Class III, Grade 13:
-  // June 2026 = 192.50 and July 2026 onward = 174.
-  const verifiedGroupByGradeDate={
-    'class3:13': d>='2026-07-01'?174:192.50
-  };
-  const groupKey=`${c}:${g}`;
-  const groupRuleVerified=Object.prototype.hasOwnProperty.call(verifiedGroupByGradeDate,groupKey);
-  const group=groupRuleVerified?verifiedGroupByGradeDate[groupKey]:null;
+  // Group-insurance deductions are auto-applied only to the exact payroll state
+  // verified by evidence. The supplied DU payslips verify Class III, Grade 13:
+  // June 2026 basic 14,760 => group insurance 192.50
+  // July-Sep 2026 old-scale basic 15,500 => group insurance 174.
+  // Do not generalize either amount to every pay step within Grade 13.
+  const verifiedGroupSamples=[
+    {category:'class3',grade:13,from:'2026-06-01',to:'2026-06-30',basic:14760,amount:192.50},
+    {category:'class3',grade:13,from:'2026-07-01',to:'2026-09-30',basic:15500,amount:174}
+  ];
+  const groupSample=verifiedGroupSamples.find(x=>
+    x.category===c&&x.grade===g&&b===x.basic&&d>=x.from&&d<=x.to
+  );
+  const groupRuleVerified=Boolean(groupSample);
+  const group=groupSample?.amount??null;
 
   return {
     category:c,date:d,basic:b,grade:g,
