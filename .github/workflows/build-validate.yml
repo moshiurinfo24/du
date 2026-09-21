@@ -1,0 +1,76 @@
+name: Build & Validate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - 'worker/**'
+      - '.github/workflows/build-validate.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - 'worker/**'
+      - '.github/workflows/build-validate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend-build:
+    name: Frontend · Vite build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install frontend dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Verify build output
+        run: test -f dist/index.html
+
+  worker-validate:
+    name: Worker · Syntax & dry run
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: worker
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check Worker JavaScript syntax
+        run: node --check src/index.js
+
+      - name: Install Worker dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Validate Wrangler bundle
+        run: npx wrangler deploy --dry-run --outdir dist
