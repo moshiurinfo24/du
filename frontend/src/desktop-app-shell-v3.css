@@ -368,3 +368,18 @@
   .pwa-welcome-copy h1{font-size:31px}
   .pwa-quick-grid button b{font-size:11.5px}
 }
+
+
+@media(min-width:901px){
+  .pwa-app-topbar .pwa-controls{gap:9px}
+  .pwa-app-topbar .pwa-status-button,
+  .pwa-app-topbar .pwa-install-button{
+    min-height:42px!important;
+    padding:0 13px!important;
+    border-radius:12px!important;
+    font-size:11.5px!important
+  }
+  .pwa-app-topbar .pwa-status-button svg,
+  .pwa-app-topbar .pwa-install-button svg{width:16px!important;height:16px!important}
+  .pwa-app-topbar .pwa-status-button small{font-size:9px!important}
+}
