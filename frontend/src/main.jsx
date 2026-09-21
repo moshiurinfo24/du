@@ -1273,7 +1273,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
 
   if(activePublicTool){
     const title=labels[activePublicTool]||'';
-    return <div className="pwa-app-shell pwa-tool-shell">
+    return <div className="pwa-app-shell approved-home pwa-tool-shell">
       <header className="pwa-app-topbar tool">
         <button className="pwa-round-btn" onClick={goHome} aria-label={en?'Back':'ফিরুন'}><ArrowLeft/></button>
         <div><small>{en?'HISAB SAHAYIKA':'হিসাব সহায়িকা'}</small><b>{title}</b></div>
@@ -1302,7 +1302,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     </div>;
   }
 
-  return <div className="pwa-app-shell">
+  return <div className="pwa-app-shell approved-home">
     <header className="pwa-app-topbar">
       <div className="pwa-app-brand"><span>হি</span><div><b>{en?'Hisab Sahayika':'হিসাব সহায়িকা'}</b><small>{en?'Independent calculation assistant':'স্বাধীন হিসাব সহায়ক অ্যাপ'}</small></div></div>
       <div className="pwa-app-head-actions"><button className="pwa-round-btn" onClick={()=>setLang(lang==='bn'?'en':'bn')}>{en?'বাং':'EN'}</button><PwaControls lang={lang}/><button className="pwa-round-btn" onClick={onLogin}><UserRound/></button></div>
