@@ -1292,7 +1292,7 @@ function AuthPortal({onLogin,onBack,lang,setLang,initialMode='login'}) {
   return <div className="login-shell phase8-auth"><form className="login-card phase8-card" onSubmit={submit}>
     <div className="login-top"><button type="button" className="back-link" onClick={onBack}>{en?'← Back to Home':'← হোমে ফিরুন'}</button><LangToggle lang={lang} setLang={setLang}/></div>
     <div className="auth-badge"><ShieldCheck size={15}/>{en?'OPTIONAL BACKUP & SYNC':'ঐচ্ছিক BACKUP & SYNC'}</div>
-    <h1>{title}</h1><p>{en?'Hisab Sahayika · Independent calculation assistant':'হিসাব সহায়িকা · স্বাধীন হিসাব সহায়ক প্ল্যাটফর্ম'}</p><div className="auth-guest-note"><CheckCircle2/><span>{en?'No login is required for calculators, local profile, salary history, leave records or reports. Login is only for backup and sync.':'ক্যালকুলেটর, Local Profile, বেতন ইতিহাস, ছুটি বা রিপোর্ট ব্যবহারে লগইন লাগবে না। লগইন শুধু Cloud Backup, Sync, Recovery ও একাধিক ডিভাইসে ব্যবহারের জন্য।'}</span></div>
+    <h1>{title}</h1><p>{en?'Hisab Sahayika · Independent calculation assistant':'হিসাব সহায়িকা · স্বাধীন হিসাব সহায়ক প্ল্যাটফর্ম'}</p><div className="auth-guest-note"><CheckCircle2/><span>{en?'No login is required for calculators, local profile, salary history, leave records or reports. Login is only for Cloud Backup, Sync, Recovery and multi-device use.':'ক্যালকুলেটর, Local Profile, বেতন ইতিহাস, ছুটি বা রিপোর্ট ব্যবহারে লগইন লাগবে না। লগইন শুধু Cloud Backup, Sync, Recovery ও একাধিক ডিভাইসে ব্যবহারের জন্য।'}</span></div>
     <label>{en?'Email':'ইমেইল'}<input value={form.email} onChange={e=>change('email',e.target.value)} type="email" required/></label>
     {mode==='forgot'&&<label>{en?'Recovery code':'রিকভারি কোড'}<input value={form.recovery_code} onChange={e=>change('recovery_code',e.target.value)} placeholder="XXXX-XXXX-XXXX-XXXX" required/></label>}
     <label>{mode==='forgot'?(en?'New password':'নতুন পাসওয়ার্ড'):(en?'Password':'পাসওয়ার্ড')}<input value={form.password} onChange={e=>change('password',e.target.value)} type="password" minLength="10" required/></label>
@@ -1453,7 +1453,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
           <div className="pwa-sheet-group-title">{en?'PERSONAL · NO LOGIN REQUIRED':'ব্যক্তিগত · লগইন লাগবে না'}</div>
           <div className="pwa-sheet-grid personal">{localServices.map(([key,I,title])=><button key={key} onClick={()=>{setMobileCalcOpen(false);open(key)}}><span className="local"><I/></span><b>{title}</b></button>)}</div>
           <button className="pwa-sheet-dashboard" onClick={()=>{setMobileCalcOpen(false);open('local-dashboard')}}><LayoutDashboard/><div><b>{en?'My Local Dashboard':'আমার Local ড্যাশবোর্ড'}</b><small>{en?'Profile, salary history, leave, reports and more without login':'চাকরি তথ্য, বেতন ইতিহাস, ছুটি, রিপোর্টসহ সবকিছু লগইন ছাড়াই'}</small></div><ChevronRight/></button>
-          <button className="pwa-sheet-sync" onClick={onLogin}><Cloud/><span>{en?'Backup & Sync login only':'শুধু Backup & Sync-এর জন্য লগইন'}</span></button>
+          <button className="pwa-sheet-sync" onClick={onLogin}><Cloud/><span>{en?'Login only for Backup & Sync':'শুধু Backup & Sync-এর জন্য লগইন'}</span></button>
         </section>
       </div>}
     </div>;
@@ -1519,7 +1519,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
         <div className="pwa-sheet-group-title">{en?'PERSONAL · NO LOGIN REQUIRED':'ব্যক্তিগত · লগইন লাগবে না'}</div>
         <div className="pwa-sheet-grid personal">{localServices.map(([key,I,title])=><button key={key} onClick={()=>{setMobileCalcOpen(false);open(key)}}><span className="local"><I/></span><b>{title}</b></button>)}</div>
         <button className="pwa-sheet-dashboard" onClick={()=>{setMobileCalcOpen(false);open('local-dashboard')}}><LayoutDashboard/><div><b>{en?'My Local Dashboard':'আমার Local ড্যাশবোর্ড'}</b><small>{en?'Profile, salary history, leave, reports and more without login':'চাকরি তথ্য, বেতন ইতিহাস, ছুটি, রিপোর্টসহ সবকিছু লগইন ছাড়াই'}</small></div><ChevronRight/></button>
-        <button className="pwa-sheet-sync" onClick={onLogin}><Cloud/><span>{en?'Backup & Sync login only':'শুধু Backup & Sync-এর জন্য লগইন'}</span></button>
+        <button className="pwa-sheet-sync" onClick={onLogin}><Cloud/><span>{en?'Login only for Backup & Sync':'শুধু Backup & Sync-এর জন্য লগইন'}</span></button>
       </section>
     </div>}
   </div>;
@@ -1768,7 +1768,7 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
     </section>
 
     <section className="approved-section approved-benefits" id="benefits">
-      <div className="approved-section-title"><span>{en?'YOUR DATA, YOUR CONTROL':'নিজের তথ্য, নিজের নিয়ন্ত্রণ'}</span><h2>{en?'Personal calculations without mandatory login':'বাধ্যতামূলক login ছাড়াই ব্যক্তিগত হিসাব'}</h2><p>{en?'In the installed app, local profile, salary history, leave, reports and core calculators work without login. Account login is optional for cloud backup and sync.':'ইনস্টল করা অ্যাপে Local Profile, বেতন ইতিহাস, ছুটি, রিপোর্ট ও মূল calculator login ছাড়াই চলবে। Cloud backup ও sync-এর জন্য account login ঐচ্ছিক।'}</p></div>
+      <div className="approved-section-title"><span>{en?'YOUR DATA, YOUR CONTROL':'নিজের তথ্য, নিজের নিয়ন্ত্রণ'}</span><h2>{en?'Personal calculations without mandatory login':'বাধ্যতামূলক login ছাড়াই ব্যক্তিগত হিসাব'}</h2><p>{en?'In the installed app, local profile, salary history, leave, reports and core calculators work without login. Account login is optional only for Cloud Backup, Sync, Recovery and multi-device use.':'ইনস্টল করা অ্যাপে Local Profile, বেতন ইতিহাস, ছুটি, রিপোর্ট ও মূল calculator login ছাড়াই চলবে। Cloud Backup, Sync, Recovery ও একাধিক ডিভাইসে ব্যবহারের জন্য account login ঐচ্ছিক।'}</p></div>
       <div className="approved-benefit-layout">
         <DashboardPreview/>
         <div className="approved-benefit-grid">{benefits.map(([I,t,d],i)=><article key={t}><span className={`tone t${i%4}`}><I/></span><div><h3>{t}</h3><p>{d}</p></div></article>)}</div>
@@ -1776,8 +1776,8 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
     </section>
 
     <section className="approved-cta">
-      <div><h2>{en?'Use all core services without login':'লগইন ছাড়াই মূল সব সেবা ব্যবহার করুন'}</h2><p>{en?'Your local profile and records can stay on this device. Create an account only if you want cloud backup and sync.':'Local Profile ও ব্যক্তিগত রেকর্ড এই ডিভাইসেই রাখা যাবে। শুধু Cloud Backup ও Sync চাইলে অ্যাকাউন্ট তৈরি করুন।'}</p></div>
-      <div><button className="white" onClick={onSignup}>{en?'Enable Backup & Sync':'Backup & Sync চালু করুন'}<ArrowRight/></button><button className="outline" onClick={onLogin}>{en?'লগইন ও সিঙ্ক':'লগইন ও সিঙ্ক'}</button></div>
+      <div><h2>{en?'Use all core services without login':'লগইন ছাড়াই মূল সব সেবা ব্যবহার করুন'}</h2><p>{en?'Your local profile and records can stay on this device. Create an account only for Cloud Backup, Sync, Recovery and multi-device use.':'Local Profile ও ব্যক্তিগত রেকর্ড এই ডিভাইসেই থাকবে। শুধু Cloud Backup, Sync, Recovery ও একাধিক ডিভাইসে ব্যবহারের জন্য অ্যাকাউন্ট তৈরি করুন।'}</p></div>
+      <div><button className="white" onClick={onSignup}>{en?'Enable Backup & Sync':'Backup & Sync চালু করুন'}<ArrowRight/></button><button className="outline" onClick={onLogin}>{en?'Login & Sync':'লগইন ও সিঙ্ক'}</button></div>
     </section>
 
 
