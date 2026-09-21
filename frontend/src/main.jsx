@@ -48,6 +48,7 @@ import './du-experience-v2-3.css';
 import './pwa-mobile-v1.css';
 import './hisab-brand-v1.css';
 import './pwa-home-v2.css';
+import './pwa-salary-compact-v1.css';
 import {initPwaRuntime,subscribePwa,getPwaState,promptPwaInstall,formatPwaTime,manualPwaUpdateCheck,consumePwaUpdateNotice} from './pwa-client.js';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import {
@@ -2271,6 +2272,7 @@ function duCategoryInfo(category,lang='bn'){
 }
 function SalaryCalculator({lang='bn',publicMode=false}){
   const en=lang==='en',today=todayLocalIso();
+  const compactPwa=typeof window!=='undefined'&&(window.matchMedia?.('(display-mode: standalone)').matches||window.navigator.standalone===true);
   const [f,setF]=useState({
     grade:'13',currentStage:'0',date:today,housing:'none',duQuarterRent:'0',duQuarterOther:'0',
     children:'0',educationClaimedElsewhere:'no',tiffin:'yes',zone:'dhaka',
@@ -2386,6 +2388,79 @@ function SalaryCalculator({lang='bn',publicMode=false}){
   ]:[
     ['teacher','শিক্ষক'],['officer','কর্মকর্তা'],['class3','৩য় শ্রেণির কর্মচারী'],['class4','৪র্থ শ্রেণির কর্মচারী']
   ];
+
+  if(compactPwa){
+    return <div className="pwa-salary-compact">
+      {!r?<>
+        <section className="pwa-salary-form-card">
+          <div className="pwa-salary-mini-head"><span>3</span><div><b>{en?'Start with 3 details':'৩টি তথ্য দিয়ে শুরু করুন'}</b><small>{en?'Everything else is automatic or optional':'বাকি সব অটো অথবা প্রয়োজন হলে পরিবর্তনযোগ্য'}</small></div></div>
+
+          <div className="pwa-salary-fields">
+            <label><span>{en?'Category':'শ্রেণি'}</span><select value={f.category} onChange={e=>setF({...f,category:e.target.value})}>{categoryOpts.map(([v,l])=><option value={v} key={v}>{l}</option>)}</select></label>
+            <label><span>{en?'Grade':'গ্রেড'}</span><select value={f.grade} onChange={e=>setF({...f,grade:e.target.value})}>{Array.from({length:20},(_,i)=>i+1).map(g=><option key={g} value={g}>{en?`Grade ${g}`:`গ্রেড ${numLang(g,'bn',0)}`}</option>)}</select></label>
+            <label><span>{en?'Basic on 30 Jun':'৩০ জুনের মূল বেতন'}</span><select value={f.currentStage} onChange={e=>setF({...f,currentStage:e.target.value})}>{stages.map((v,i)=><option value={i} key={i}>{en?`Stage ${i+1} · Tk ${moneyLang(v,'en')}`:`ধাপ ${numLang(i+1,'bn',0)} · ৳${moneyLang(v,'bn')}`}</option>)}</select></label>
+          </div>
+
+          <div className="pwa-salary-auto-row">
+            <span><MapPin/>{en?'Dhaka rate':'ঢাকা হার'}</span>
+            <span><CheckCircle2/>{en?'Automatic deductions':'অটো কর্তন'}</span>
+            <span><RefreshCw/>{en?'Arrear auto':'বকেয়া অটো'}</span>
+          </div>
+
+          <div className="pwa-salary-options-title"><span>{en?'Change only if needed':'শুধু প্রয়োজন হলে পরিবর্তন করুন'}</span></div>
+
+          <details className="pwa-salary-option">
+            <summary><UserCheck/><span>{en?'July increment exception':'জুলাই ইনক্রিমেন্ট প্রাপ্য নয়?'}</span><ChevronDown/></summary>
+            <div className="pwa-option-body">
+              <label><span>{en?'1 July 2026 increment':'১ জুলাই ২০২৬ ইনক্রিমেন্ট'}</span><select value={f.incrementEligible2026} onChange={e=>setF({...f,incrementEligible2026:e.target.value})}><option value="yes">{en?'Eligible':'প্রাপ্য'}</option><option value="no">{en?'Not eligible':'প্রাপ্য নয়'}</option></select></label>
+            </div>
+          </details>
+
+          <details className="pwa-salary-option">
+            <summary><Home/><span>{en?'Housing & family':'বাসা ও পরিবার'}</span><ChevronDown/></summary>
+            <div className="pwa-option-body">
+              <label><span>{en?'DU quarter?':'DU কোয়ার্টারে থাকেন?'}</span><select value={f.housing} onChange={e=>setF({...f,housing:e.target.value})}><option value="none">{en?'No':'না'}</option><option value="du_quarter">{en?'Yes':'হ্যাঁ'}</option></select></label>
+              {f.housing==='du_quarter'&&<>
+                <label><span>{en?'Monthly quarter rent':'মাসিক কোয়ার্টার ভাড়া'}</span><input type="number" inputMode="decimal" min="0" value={f.duQuarterRent} onChange={e=>setF({...f,duQuarterRent:e.target.value})}/></label>
+                <label><span>{en?'Other housing deduction':'অন্যান্য বাসা কর্তন'}</span><input type="number" inputMode="decimal" min="0" value={f.duQuarterOther} onChange={e=>setF({...f,duQuarterOther:e.target.value})}/></label>
+              </>}
+              <label><span>{en?'Medical age':'চিকিৎসা ভাতার বয়স'}</span><select value={f.ageBand} onChange={e=>setF({...f,ageBand:e.target.value})}><option value="under50">{en?'Up to 50':'৫০ পর্যন্ত'}</option><option value="over50">{en?'Above 50':'৫০-এর বেশি'}</option></select></label>
+              <label><span>{en?'Children':'শিক্ষা ভাতার সন্তান'}</span><select value={f.children} onChange={e=>setF({...f,children:e.target.value})}><option value="0">0</option><option value="1">1</option><option value="2">2</option></select></label>
+              {Number(f.children)>0&&<label><span>{en?'Already claimed by spouse?':'স্বামী/স্ত্রী আগে নিচ্ছেন?'}</span><select value={f.educationClaimedElsewhere} onChange={e=>setF({...f,educationClaimedElsewhere:e.target.value})}><option value="no">{en?'No':'না'}</option><option value="yes">{en?'Yes':'হ্যাঁ'}</option></select></label>}
+              {Number(f.grade)>=11&&<label><span>{en?'Tiffin allowance':'টিফিন ভাতা'}</span><select value={f.tiffin} onChange={e=>setF({...f,tiffin:e.target.value})}><option value="yes">{en?'Applicable':'প্রযোজ্য'}</option><option value="no">{en?'Not applicable':'প্রযোজ্য নয়'}</option></select></label>}
+            </div>
+          </details>
+
+          <details className="pwa-salary-option">
+            <summary><Plus/><span>{en?'Additional allowances':'অতিরিক্ত ভাতা'}</span><ChevronDown/></summary>
+            <div className="pwa-option-body">
+              <label><span>{en?'Mobile':'মোবাইল'}</span><select value={f.mobile} onChange={e=>setF({...f,mobile:e.target.value})}><option value="yes">{en?'Applicable':'প্রযোজ্য'}</option><option value="no">{en?'Not applicable':'প্রযোজ্য নয়'}</option></select></label>
+              <label><span>{en?'Laundry':'ধোলাই'}</span><select value={f.laundry} onChange={e=>setF({...f,laundry:e.target.value})}><option value="no">{en?'Not applicable':'প্রযোজ্য নয়'}</option><option value="yes">{en?'Applicable':'প্রযোজ্য'}</option></select></label>
+              <label><span>{en?'Special-needs children':'বিশেষ চাহিদাসম্পন্ন সন্তান'}</span><select value={f.disabledChildren} onChange={e=>setF({...f,disabledChildren:e.target.value})}><option value="0">0</option><option value="1">1</option><option value="2">2</option></select></label>
+              {Number(f.disabledChildren)>0&&<label><span>{en?'Same benefit elsewhere?':'একই ভাতা অন্যত্র পাওয়া হচ্ছে?'}</span><select value={f.disabledBenefitElsewhere} onChange={e=>setF({...f,disabledBenefitElsewhere:e.target.value})}><option value="no">{en?'No':'না'}</option><option value="yes">{en?'Yes':'হ্যাঁ'}</option></select></label>}
+              <label><span>{en?'Charge allowance':'কার্যভার ভাতা'}</span><select value={f.chargeAllowance} onChange={e=>setF({...f,chargeAllowance:e.target.value})}><option value="no">{en?'No':'না'}</option><option value="yes">{en?'Yes':'হ্যাঁ'}</option></select></label>
+              <label><span>{en?'Other approved amount':'অন্যান্য অনুমোদিত ভাতা'}</span><input type="number" inputMode="decimal" min="0" value={f.otherSpecialAllowance} onChange={e=>setF({...f,otherSpecialAllowance:e.target.value})}/></label>
+            </div>
+          </details>
+
+          <details className="pwa-salary-option">
+            <summary><ShieldCheck/><span>{en?'Deductions':'কর্তন'} · {f.deductionMode==='du_auto'?(en?'Auto':'অটো'):(en?'Custom':'কাস্টম')}</span><ChevronDown/></summary>
+            <div className="pwa-option-body">
+              <label><span>{en?'Mode':'পদ্ধতি'}</span><select value={f.deductionMode} onChange={e=>setF({...f,deductionMode:e.target.value})}><option value="du_auto">{en?'Automatic preset':'অটো প্রিসেট'}</option><option value="custom">{en?'Custom':'কাস্টম'}</option></select></label>
+              {f.deductionMode==='du_auto'
+                ?<div className="pwa-auto-deduction-note"><CheckCircle2/><span>{en?'PF, benevolent fund, insurance, stamp and association are calculated automatically.':'PF, কল্যাণ তহবিল, বীমা, স্ট্যাম্প ও সমিতি অটো হিসাব হবে।'}</span></div>
+                :<>
+                  <label><span>{en?'PF rate':'PF হার'}</span><select value={f.gpfRate} onChange={e=>setF({...f,gpfRate:e.target.value})}><option value="0">0%</option>{Array.from({length:21},(_,i)=>i+5).map(x=><option key={x} value={x}>{x}%</option>)}</select></label>
+                  {(en?[['benevolent','Benevolent'],['health','Health insurance'],['group','Group insurance'],['stamp','Stamp'],['association','Association'],['tax','Tax'],['loan','Loan'],['other','Other']]:[['benevolent','কল্যাণ'],['health','স্বাস্থ্য বীমা'],['group','গ্রুপ বীমা'],['stamp','স্ট্যাম্প'],['association','সমিতি'],['tax','আয়কর'],['loan','ঋণ'],['other','অন্যান্য']]).map(([k,l])=><label key={k}><span>{l}</span><input type="number" inputMode="decimal" min="0" value={f[k]} onChange={e=>setF({...f,[k]:e.target.value})}/></label>)}
+                </>}
+            </div>
+          </details>
+        </section>
+
+        <div className="pwa-salary-sticky-calc"><button onClick={calc}><Calculator/><span>{en?'Show calculation':'হিসাব দেখুন'}</span><ArrowRight/></button></div>
+      </>:<div id="salary-result"><SalaryResult r={r} lang={lang} compact={true} onReset={()=>{setR(null);window.scrollTo({top:0,behavior:'smooth'})}}/></div>}
+    </div>;
+  }
 
   return <div className={publicMode?'public-salary-calculator':''}>
     <div className="page-head pay-calc-head simple-pay-head"><div><span className="pay-head-eyebrow">{en?'UNIVERSITY OF DHAKA':'ঢাকা বিশ্ববিদ্যালয়'}</span><h2>{en?'Salary & Arrear Calculator':'বেতন ও বকেয়া হিসাব'}</h2><p>{en?'Start with just three pieces of information. Date, Dhaka location, regular increment flow and arrear adjustment are automatic.':'শুরুতে শুধু ৩টি তথ্য দিন। তারিখ, ঢাকা লোকেশন, নিয়মিত ইনক্রিমেন্ট ধাপ ও বকেয়া সমন্বয় সিস্টেম নিজে করবে।'}</p></div></div>
