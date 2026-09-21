@@ -53,6 +53,7 @@ import './hisab-indigo-aqua-v2.css';
 import './desktop-app-shell-v3.css';
 import './salary-wizard-v27.css';
 import './salary-service-split-v29.css';
+import './calculation-history-v32.css';
 import {initPwaRuntime,subscribePwa,getPwaState,promptPwaInstall,formatPwaTime,manualPwaUpdateCheck,consumePwaUpdateNotice} from './pwa-client.js';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import GuestLocalCenter from './guest-local-v1.jsx';
@@ -824,6 +825,106 @@ function ReportShareActions({html,filename,title,summary='',lang='bn',existingUr
     <button disabled={!!busy} onClick={moreShare}><Share2/>{en?'All Apps':'সব অ্যাপ'}</button>
     <button className="share-pdf-file" disabled={!!busy} onClick={sharePdfFile}><FileText/>{en?'Share PDF':'PDF শেয়ার'}</button>
   </div>
+}
+
+const CALC_HISTORY_KEY='hisab_calculation_history_v1';
+const CALC_HISTORY_LIMIT=80;
+function readCalculationHistory(){
+  try{
+    const rows=JSON.parse(localStorage.getItem(CALC_HISTORY_KEY)||'[]');
+    return Array.isArray(rows)?rows.filter(x=>x&&x.id&&x.tool).slice(0,CALC_HISTORY_LIMIT):[];
+  }catch{return []}
+}
+function calculationFingerprint(value=''){
+  let h=2166136261;
+  const s=String(value||'');
+  for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}
+  return (h>>>0).toString(36);
+}
+function rememberCalculationHistory({tool,title_bn,title_en,summary_bn='',summary_en='',metrics={},input={}}){
+  if(!tool||!title_bn)return null;
+  try{
+    const now=new Date().toISOString();
+    const cleanMetrics=metrics&&typeof metrics==='object'?metrics:{};
+    const cleanInput=input&&typeof input==='object'?input:{};
+    const fingerprint=calculationFingerprint(JSON.stringify([tool,title_bn,summary_bn,cleanMetrics,cleanInput]));
+    const existing=readCalculationHistory();
+    const duplicate=existing.find(x=>x.fingerprint===fingerprint&&(Date.now()-new Date(x.created_at||0).getTime())<5000);
+    if(duplicate)return duplicate;
+    const item={
+      id:`${Date.now()}-${Math.random().toString(36).slice(2,8)}`,
+      fingerprint,tool:String(tool),title_bn:String(title_bn),title_en:String(title_en||title_bn),
+      summary_bn:String(summary_bn||''),summary_en:String(summary_en||summary_bn||''),
+      metrics:cleanMetrics,input:cleanInput,created_at:now
+    };
+    localStorage.setItem(CALC_HISTORY_KEY,JSON.stringify([item,...existing].slice(0,CALC_HISTORY_LIMIT)));
+    window.dispatchEvent(new CustomEvent('hisab-calculation-history-updated',{detail:item}));
+    return item;
+  }catch{return null}
+}
+function CalculationHistoryCenter({lang='bn',onOpen}){
+  const en=lang==='en';
+  const [items,setItems]=useState(()=>readCalculationHistory());
+  const [filter,setFilter]=useState('all');
+  useEffect(()=>{
+    const refresh=()=>setItems(readCalculationHistory());
+    window.addEventListener('hisab-calculation-history-updated',refresh);
+    window.addEventListener('storage',refresh);
+    return()=>{window.removeEventListener('hisab-calculation-history-updated',refresh);window.removeEventListener('storage',refresh)}
+  },[]);
+  const cfg={
+    salary:{icon:WalletCards,bn:'পে-স্কেল ও বেতন',en:'Pay Scale & Salary'},
+    arrear:{icon:ReceiptText,bn:'বকেয়া / এরিয়ার',en:'Arrear / Outstanding'},
+    promotion:{icon:TrendingUp,bn:'পদোন্নতি',en:'Promotion'},
+    points:{icon:Award,bn:'পয়েন্ট হিসাব',en:'Points'},
+    house:{icon:Home,bn:'বাসা বরাদ্দ পয়েন্ট',en:'House Allocation'},
+    service:{icon:Clock3,bn:'চাকরিকাল',en:'Service Length'},
+    age:{icon:UserRound,bn:'বয়স',en:'Age'},
+    gap:{icon:CalendarDays,bn:'তারিখের ব্যবধান',en:'Date Difference'},
+    retire:{icon:FileClock,bn:'অবসর তারিখ',en:'Retirement'},
+    basic:{icon:BadgeDollarSign,bn:'মূল বেতন প্রক্ষেপণ',en:'Basic Projection'}
+  };
+  const groups=[['all',en?'All':'সব'],['salary',en?'Salary':'বেতন'],['arrear',en?'Arrear':'বকেয়া'],['promotion',en?'Promotion':'পদোন্নতি'],['other',en?'Other':'অন্যান্য']];
+  const visible=items.filter(x=>filter==='all'?true:filter==='other'?!['salary','arrear','promotion'].includes(x.tool):x.tool===filter);
+  const remove=id=>{
+    const next=readCalculationHistory().filter(x=>x.id!==id);
+    try{localStorage.setItem(CALC_HISTORY_KEY,JSON.stringify(next))}catch{}
+    setItems(next);
+  };
+  const clearAll=()=>{
+    if(!confirm(en?'Clear all saved calculation history on this device?':'এই ডিভাইসে সংরক্ষিত সব হিসাবের ইতিহাস মুছবেন?'))return;
+    try{localStorage.removeItem(CALC_HISTORY_KEY)}catch{}
+    setItems([]);
+  };
+  const dateTime=v=>{
+    try{return new Intl.DateTimeFormat(en?'en-GB':'bn-BD',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(v))}
+    catch{return v||'—'}
+  };
+  const metricLabel=k=>en?({grade:'Grade',basic:'Basic',net:'Net',gross:'Gross',arrear:'Arrear',points:'Points',date:'Date',target:'Target',duration:'Duration',retirement:'Retirement',payable:'Payable basic'}[k]||k):({grade:'গ্রেড',basic:'মূল বেতন',net:'নিট',gross:'মোট',arrear:'বকেয়া',points:'পয়েন্ট',date:'তারিখ',target:'লক্ষ্য',duration:'সময়কাল',retirement:'অবসর',payable:'প্রাপ্য মূল বেতন'}[k]||k);
+  return <div className="calc-history-center">
+    <section className="calc-history-hero">
+      <div className="calc-history-hero-icon"><History/></div>
+      <div><small>{en?'LOCAL CALCULATION LIBRARY':'LOCAL হিসাব লাইব্রেরি'}</small><h2>{en?'My Calculations':'আমার হিসাব'}</h2><p>{en?'Successful calculations from salary, arrear, promotion, points and other tools are kept together on this device.':'বেতন, বকেয়া, পদোন্নতি, পয়েন্ট ও অন্যান্য টুলের সফল হিসাবগুলো এই ডিভাইসে এক জায়গায় সংরক্ষিত থাকবে।'}</p></div>
+      <div className="calc-history-count"><b>{numLang(items.length,lang,0)}</b><span>{en?'saved':'সংরক্ষিত'}</span></div>
+    </section>
+    <section className="calc-history-toolbar">
+      <div className="calc-history-filters">{groups.map(([k,l])=><button key={k} className={filter===k?'active':''} onClick={()=>setFilter(k)}>{l}</button>)}</div>
+      <div className="calc-history-toolbar-actions"><button onClick={()=>onOpen?.('pdf-center')}><FileText/>{en?'PDF Center':'PDF সেন্টার'}</button>{items.length>0&&<button className="danger" onClick={clearAll}><Trash2/>{en?'Clear all':'সব মুছুন'}</button>}</div>
+    </section>
+    {visible.length===0?<section className="calc-history-empty"><History/><h3>{items.length?(en?'No calculation in this filter':'এই বিভাগে কোনো হিসাব নেই'):(en?'No saved calculation yet':'এখনও কোনো হিসাব সংরক্ষিত নেই')}</h3><p>{en?'Run a supported calculator; successful results will appear here automatically.':'সমর্থিত কোনো ক্যালকুলেটর ব্যবহার করুন; সফল ফলাফল এখানে স্বয়ংক্রিয়ভাবে দেখা যাবে।'}</p></section>:
+    <section className="calc-history-list">{visible.map(x=>{
+      const c=cfg[x.tool]||cfg.service,Icon=c.icon;
+      const title=en?(x.title_en||x.title_bn):(x.title_bn||x.title_en);
+      const summary=en?(x.summary_en||x.summary_bn):(x.summary_bn||x.summary_en);
+      const metrics=Object.entries(x.metrics||{}).filter(([,v])=>v!==''&&v!==null&&v!==undefined).slice(0,4);
+      return <article className="calc-history-card" key={x.id}>
+        <div className="calc-history-card-top"><span className={"calc-history-type "+x.tool}><Icon/></span><div><small>{en?c.en:c.bn} · {dateTime(x.created_at)}</small><h3>{title}</h3>{summary&&<p>{summary}</p>}</div></div>
+        {metrics.length>0&&<div className="calc-history-metrics">{metrics.map(([k,v])=><span key={k}><small>{metricLabel(k)}</small><b>{String(v)}</b></span>)}</div>}
+        <div className="calc-history-actions"><button className="primary" onClick={()=>onOpen?.(x.tool)}><RefreshCw/>{en?'Calculate again':'আবার হিসাব'}</button><button className="danger-icon" onClick={()=>remove(x.id)} aria-label={en?'Delete':'মুছুন'}><Trash2/></button></div>
+      </article>
+    })}</section>}
+    <section className="calc-history-note"><ShieldCheck/><span>{en?'Calculation history is stored locally on this device. PDF files remain in the separate PDF Center to avoid duplicating large reports.':'হিসাবের ইতিহাস এই ডিভাইসেই Localভাবে থাকে। বড় PDF রিপোর্ট duplicate না করে আলাদা PDF Center-এ রাখা হয়।'}</span></section>
+  </div>;
 }
 
 const PDF_CENTER_KEY='hisab_pdf_center_v1';
@@ -1628,6 +1729,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     points:en?'Points Center':'পয়েন্ট',
     calendar:en?'Calendar':'ক্যালেন্ডার',
     reference:en?'Notices & Policies':'নোটিশ ও নীতিমালা',
+    history:en?'My Calculations':'আমার হিসাব',
     'pdf-center':en?'PDF Center':'PDF সেন্টার',
     'local-dashboard':en?'My Workspace':'আমার',
     'local-profile':en?'Career Profile':'চাকরি তথ্য',
@@ -1638,7 +1740,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     'local-reports':en?'My Reports':'রিপোর্ট',
     'local-privacy':en?'Data & Backup':'ডাটা ও ব্যাকআপ'
   };
-  const icons={salary:WalletCards,arrear:ReceiptText,promotion:TrendingUp,house:Home,service:Clock3,age:UserRound,gap:CalendarDays,retire:FileClock,basic:BadgeDollarSign,points:Award,calendar:CalendarDays,reference:BookOpen,'pdf-center':FileText,'local-dashboard':LayoutDashboard,'local-profile':Briefcase,'local-education':GraduationCap,'local-timeline':Route,'local-salary':WalletCards,'local-leave':CalendarDays,'local-reports':FileText,'local-privacy':ShieldCheck};
+  const icons={salary:WalletCards,arrear:ReceiptText,promotion:TrendingUp,house:Home,service:Clock3,age:UserRound,gap:CalendarDays,retire:FileClock,basic:BadgeDollarSign,points:Award,calendar:CalendarDays,reference:BookOpen,history:History,'pdf-center':FileText,'local-dashboard':LayoutDashboard,'local-profile':Briefcase,'local-education':GraduationCap,'local-timeline':Route,'local-salary':WalletCards,'local-leave':CalendarDays,'local-reports':FileText,'local-privacy':ShieldCheck};
   const open=(tool)=>{
     const next=[tool,...recent.filter(x=>x!==tool)].slice(0,3);
     setRecent(next);
@@ -1663,6 +1765,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     ['age',UserRound,en?'Age':'বয়স','sky'],
     ['gap',CalendarDays,en?'Date Difference':'তারিখের ব্যবধান','blue'],
     ['basic',BadgeDollarSign,en?'Basic Projection':'মূল বেতন প্রক্ষেপণ','indigo'],
+    ['history',History,en?'My Calculations':'আমার হিসাব','aqua'],
     ['pdf-center',FileText,en?'PDF Center':'PDF সেন্টার','violet'],
     ['reference',BookOpen,en?'Notices & Policies':'নোটিশ ও নীতিমালা','teal']
   ];
@@ -1704,6 +1807,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
         <button className={activePublicTool==='age'?'active':''} onClick={()=>open('age')}><UserRound/><span>{en?'Age':'বয়স'}</span></button>
         <button className={activePublicTool==='gap'?'active':''} onClick={()=>open('gap')}><CalendarDays/><span>{en?'Date Difference':'তারিখের ব্যবধান'}</span></button>
         <button className={activePublicTool==='basic'?'active':''} onClick={()=>open('basic')}><BadgeDollarSign/><span>{en?'Basic Projection':'মূল বেতন প্রক্ষেপণ'}</span></button>
+        <button className={activePublicTool==='history'?'active':''} onClick={()=>open('history')}><History/><span>{en?'My Calculations':'আমার হিসাব'}</span></button>
         <button className={activePublicTool==='pdf-center'?'active':''} onClick={()=>open('pdf-center')}><FileText/><span>{en?'PDF Center':'PDF সেন্টার'}</span></button>
         <button className={activePublicTool==='reference'?'active':''} onClick={()=>open('reference')}><BookOpen/><span>{en?'Notices & Policies':'নোটিশ ও নীতিমালা'}</span></button>
       </div>
@@ -1742,6 +1846,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
         {activePublicTool==='points'&&<section className="public-tool-only-shell"><PointsCalculator lang={lang} publicMode={true}/></section>}
         {activePublicTool==='calendar'&&<section className="public-tool-only-shell"><FiscalOfficeCalendar lang={lang}/></section>}
         {activePublicTool==='reference'&&<PwaReferenceCenter lang={lang} notices={notices} policies={policies}/>}
+        {activePublicTool==='history'&&<CalculationHistoryCenter lang={lang} onOpen={open}/>}
         {activePublicTool==='pdf-center'&&<PdfCenter lang={lang}/>}
         {activePublicTool?.startsWith('local-')&&<GuestLocalCenter mode={localMode(activePublicTool)} lang={lang} onOpen={open} onLogin={onLogin}/>}
       </main>
@@ -2656,7 +2761,16 @@ function PromotionCenter({lang='bn',publicMode=false}){
   function calc(){
     const asOf=todayLocalIso(); const next={...f,calcDate:asOf}; setF(next);
     const rule=PROMO_RULES[next.grade]; if(!rule)return setResult({error:en?'No rule was found for this grade.':'এই গ্রেডের নিয়ম পাওয়া যায়নি।',input:next});
-    if(rule.noPromotion||rule.top)return setResult({stop:true,rule,input:next});
+    if(rule.noPromotion||rule.top){
+      const stopResult={stop:true,rule,input:next};
+      setResult(stopResult);
+      rememberCalculationHistory({
+        tool:'promotion',title_bn:`গ্রেড ${numLang(next.grade,'bn',0)} · পদোন্নতি অবস্থা`,title_en:`Grade ${next.grade} · Promotion status`,
+        summary_bn:String(rule.target||'এই গ্রেডের পদোন্নতি অবস্থা'),summary_en:String(rule.target||'Promotion status for this grade'),
+        metrics:{grade:next.grade,target:rule.targetGrade||rule.target||'—'},input:next
+      });
+      return;
+    }
     if(!next.currentDate||!next.firstJoinDate)return setResult({error:en?'Enter the first joining date and the current post joining date.':'প্রথম যোগদানের তারিখ ও বর্তমান পদে যোগদানের তারিখ দিন।',input:next});
     const current=new Date(next.currentDate),first=new Date(next.firstJoinDate),calcDate=new Date(asOf);
     if(first>current)return setResult({error:en?'The first joining date cannot be later than the current post joining date.':'প্রথম যোগদানের তারিখ বর্তমান পদে যোগদানের তারিখের পরে হতে পারে না।',input:next});
@@ -2667,7 +2781,14 @@ function PromotionCenter({lang='bn',publicMode=false}){
     const cycle=annualPromotionCycle(eligible);
     const roadmap=futureRoadmap(next.grade,next.currentDate,next.edu,6);
     const projectedExp=serviceExperiencePoints({currentPostStart:next.currentDate,firstJoin:next.firstJoinDate,asOf:eligible});
-    setResult({rule,req,eligible,elapsed,remaining,exp,points:exp.valid?exp.points:0,projectedExp,prelim,cycle,roadmap,input:next});
+    const promotionResult={rule,req,eligible,elapsed,remaining,exp,points:exp.valid?exp.points:0,projectedExp,prelim,cycle,roadmap,input:next};
+    setResult(promotionResult);
+    rememberCalculationHistory({
+      tool:'promotion',title_bn:`গ্রেড ${numLang(next.grade,'bn',0)} → ${rule.target||'পদোন্নতি'}`,title_en:`Grade ${next.grade} → ${rule.target||'Promotion'}`,
+      summary_bn:`যোগ্যতার তারিখ ${fmtDateLang(eligible,'bn')} · সার্ভিস পয়েন্ট ${numLang(promotionResult.points,'bn')}`,
+      summary_en:`Eligibility date ${fmtDateLang(eligible,'en')} · Service points ${numLang(promotionResult.points,'en')}`,
+      metrics:{grade:next.grade,target:rule.targetGrade||rule.target||'—',date:fmtDateLang(eligible,'bn'),points:numLang(promotionResult.points,'bn')},input:next
+    });
   }
   const eduOptions=en?[['masters','Masters'],['bachelor',"Bachelor's"],['hsc','HSC'],['diploma','Diploma'],['bsceng','BSc Engineering'],['mbbs','MBBS']]:[['masters','মাস্টার্স'],['bachelor','স্নাতক'],['hsc','এইচএসসি'],['diploma','ডিপ্লোমা'],['bsceng','বিএসসি ইঞ্জিনিয়ারিং'],['mbbs','এমবিবিএস']];
   return <div>
@@ -3053,10 +3174,32 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
       tiffin=chosen.allowances.tiffin,conveyance=chosen.allowances.conveyance,mobile=chosen.allowances.mobile,
       laundry=chosen.allowances.laundry,disabledChild=chosen.allowances.disabledChild,
       charge=chosen.allowances.charge,otherSpecial=chosen.allowances.otherSpecial,gross=chosen.gross;
-    setR({
+    const finalResult={
       ...chosen,currentIndex,currentBasic,payable:chosen.payableBasic,house,medical,education,tiffin,conveyance,mobile,laundry,
       disabledChild,area:0,training:0,charge,entertainment:0,otherSpecial,gross,projections,arrear2026,input
-    });
+    };
+    setR(finalResult);
+    if(arrearMode){
+      rememberCalculationHistory({
+        tool:'arrear',
+        title_bn:`গ্রেড ${numLang(grade,'bn',0)} · জুলাই–অক্টোবর ২০২৬ বকেয়া`,
+        title_en:`Grade ${grade} · July–October 2026 arrear`,
+        summary_bn:`জুলাই–সেপ্টেম্বর চূড়ান্ত বকেয়া ৳${moneyLang(arrear2026.priorNetAfterSpecial||0,'bn')} · অক্টোবর বিল নিট ৳${moneyLang(arrear2026.octoberBillNet||0,'bn')}`,
+        summary_en:`Final Jul–Sep arrear Tk ${moneyLang(arrear2026.priorNetAfterSpecial||0,'en')} · October bill net Tk ${moneyLang(arrear2026.octoberBillNet||0,'en')}`,
+        metrics:{grade,basic:`৳${moneyLang(currentBasic,'bn')}`,arrear:`৳${moneyLang(arrear2026.priorNetAfterSpecial||0,'bn')}`,net:`৳${moneyLang(arrear2026.octoberBillNet||0,'bn')}`},
+        input:{grade:String(f.grade),currentStage:String(currentIndex),category:f.category,incrementEligible2026:f.incrementEligible2026}
+      });
+    }else{
+      rememberCalculationHistory({
+        tool:'salary',
+        title_bn:`গ্রেড ${numLang(grade,'bn',0)} · পে-স্কেল ও বেতন`,
+        title_en:`Grade ${grade} · Pay Scale & Salary`,
+        summary_bn:`প্রাপ্য মূল বেতন ৳${moneyLang(chosen.payableBasic||0,'bn')} · মোট ৳${moneyLang(gross||0,'bn')} · নিট ৳${moneyLang(chosen.net||0,'bn')}`,
+        summary_en:`Payable basic Tk ${moneyLang(chosen.payableBasic||0,'en')} · Gross Tk ${moneyLang(gross||0,'en')} · Net Tk ${moneyLang(chosen.net||0,'en')}`,
+        metrics:{grade,basic:`৳${moneyLang(currentBasic,'bn')}`,gross:`৳${moneyLang(gross||0,'bn')}`,net:`৳${moneyLang(chosen.net||0,'bn')}`},
+        input:{grade:String(f.grade),currentStage:String(currentIndex),category:f.category}
+      });
+    }
   }
 
   useEffect(()=>{setR(null)},[f.grade]);
@@ -4205,7 +4348,14 @@ function PointsCalculator({lang='bn',publicMode=false}){
     if(!exp?.valid){
       return setServiceResult({error:en?'Service points could not be calculated from these dates.':'এই তারিখগুলো থেকে সার্ভিস পয়েন্ট হিসাব করা যায়নি।'});
     }
-    setServiceResult({...exp,asOf});
+    const finalPoints={...exp,asOf};
+    setServiceResult(finalPoints);
+    rememberCalculationHistory({
+      tool:'points',title_bn:'সার্ভিস ও শিক্ষাগত পয়েন্ট হিসাব',title_en:'Service & education points',
+      summary_bn:`সার্ভিস পয়েন্ট ${numLang(finalPoints.points||0,'bn')} · শিক্ষাগত পয়েন্ট ${numLang(educationTotal||0,'bn',0)}`,
+      summary_en:`Service points ${numLang(finalPoints.points||0,'en')} · Education points ${numLang(educationTotal||0,'en',0)}`,
+      metrics:{points:numLang(Number(finalPoints.points||0)+Number(educationTotal||0),'bn'),date:fmtDateLang(asOf,'bn')},input:{...service,asOf,education:{...edu}}
+    });
   }
 
   const eduRows=useMemo(()=>{
@@ -4465,7 +4615,7 @@ function HouseAllocationPoints({lang='bn',publicMode=false}){
         <div className="house-detail-row"><span>{en?'Point based on Gender':'লিঙ্গভিত্তিক পয়েন্ট'} <small>({en?'female +3, male 0':'নারী +৩, পুরুষ ০'})</small></span><b>{numLang(genderPoint,lang,0)}</b></div>
         <div className="house-detail-row total"><span>{en?'Total Point':'মোট বাসা বরাদ্দ পয়েন্ট'}</span><b>{totalPoint?fmtYmd(totalPoint):'—'}</b></div>
       </div>
-      {houseResult&&<><button className="primary wide house-pdf-btn" onClick={()=>setPreview(true)}><FileText size={17}/>{en?'A4 PDF Preview & Download':'A4 PDF প্রিভিউ ও ডাউনলোড'}</button>{preview&&<PdfPreviewModal html={houseReport} filename={houseFilename} onClose={()=>setPreview(false)} lang={lang} shareTitle={en?'House Allocation Point Report':'বাসা বরাদ্দ পয়েন্ট রিপোর্ট'} shareSummary={en?'House allocation point calculation report.':'বাসা বরাদ্দ পয়েন্ট হিসাবের রিপোর্ট।'}/>}</>}
+      {houseResult&&<><div className="house-result-actions"><button className="secondary" onClick={()=>rememberCalculationHistory({tool:'house',title_bn:'বাসা বরাদ্দ পয়েন্ট হিসাব',title_en:'House allocation points',summary_bn:`মোট পয়েন্ট ${fmtYmd(totalPoint)} · মূল বেতন ৳${moneyLang(basic,'bn')}`,summary_en:`Total points ${fmtYmd(totalPoint)} · Basic Tk ${moneyLang(basic,'en')}`,metrics:{points:fmtYmd(totalPoint),basic:`৳${moneyLang(basic,'bn')}`},input:{kind,...form}})}><History size={17}/>{en?'Save to My Calculations':'আমার হিসাবে সংরক্ষণ'}</button><button className="primary house-pdf-btn" onClick={()=>{rememberCalculationHistory({tool:'house',title_bn:'বাসা বরাদ্দ পয়েন্ট হিসাব',title_en:'House allocation points',summary_bn:`মোট পয়েন্ট ${fmtYmd(totalPoint)} · মূল বেতন ৳${moneyLang(basic,'bn')}`,summary_en:`Total points ${fmtYmd(totalPoint)} · Basic Tk ${moneyLang(basic,'en')}`,metrics:{points:fmtYmd(totalPoint),basic:`৳${moneyLang(basic,'bn')}`},input:{kind,...form}});setPreview(true)}}><FileText size={17}/>{en?'A4 PDF Preview & Download':'A4 PDF প্রিভিউ ও ডাউনলোড'}</button></div>{preview&&<PdfPreviewModal html={houseReport} filename={houseFilename} onClose={()=>setPreview(false)} lang={lang} shareTitle={en?'House Allocation Point Report':'বাসা বরাদ্দ পয়েন্ট রিপোর্ট'} shareSummary={en?'House allocation point calculation report.':'বাসা বরাদ্দ পয়েন্ট হিসাবের রিপোর্ট।'}/>}</>}
     </div>:<div className="house-pending-panel">
       <div className="house-coming-icon"><Clock3/></div>
       <span>{en?'COMING SOON':'শীঘ্রই আসছে'}</span>
@@ -4519,20 +4669,24 @@ function CalculatorCenter({lang='bn',onPage,publicMode=false,initialTool='servic
     return diffYMD(a,b);
   }
   function calcService(){
-    const end=todayLocalIso();
-    const d=cleanDuration(service.start,end);
+    const end=todayLocalIso(),d=cleanDuration(service.start,end);
     setService(x=>({...x,end}));
-    setResult(d?{type:'service',d,start:service.start,end}:{error:en?'Enter a valid joining/start date.':'সঠিক যোগদান/শুরুর তারিখ দিন।'});
+    if(!d)return setResult({error:en?'Enter a valid joining/start date.':'সঠিক যোগদান/শুরুর তারিখ দিন।'});
+    const value={type:'service',d,start:service.start,end};setResult(value);
+    rememberCalculationHistory({tool:'service',title_bn:'চাকরিকাল হিসাব',title_en:'Service length calculation',summary_bn:durationBn(d),summary_en:`${d.y} years ${d.m} months ${d.d} days`,metrics:{duration:durationBn(d),date:fmtDateLang(end,'bn')},input:{start:service.start}});
   }
   function calcAge(){
-    const asOf=todayLocalIso();
-    const d=cleanDuration(age.dob,asOf);
+    const asOf=todayLocalIso(),d=cleanDuration(age.dob,asOf);
     setAge(x=>({...x,asOf}));
-    setResult(d?{type:'age',d,dob:age.dob,asOf}:{error:en?'Enter a valid date of birth.':'সঠিক জন্মতারিখ দিন।'});
+    if(!d)return setResult({error:en?'Enter a valid date of birth.':'সঠিক জন্মতারিখ দিন।'});
+    const value={type:'age',d,dob:age.dob,asOf};setResult(value);
+    rememberCalculationHistory({tool:'age',title_bn:'বয়স হিসাব',title_en:'Age calculation',summary_bn:durationBn(d),summary_en:`${d.y} years ${d.m} months ${d.d} days`,metrics:{duration:durationBn(d),date:fmtDateLang(asOf,'bn')},input:{dob:age.dob}});
   }
   function calcGap(){
     const d=cleanDuration(gap.from,gap.to);
-    setResult(d?{type:'gap',d,from:gap.from,to:gap.to}:{error:en?'Enter two valid dates in chronological order.':'সঠিক ক্রমে দুটি তারিখ দিন।'});
+    if(!d)return setResult({error:en?'Enter two valid dates in chronological order.':'সঠিক ক্রমে দুটি তারিখ দিন।'});
+    const value={type:'gap',d,from:gap.from,to:gap.to};setResult(value);
+    rememberCalculationHistory({tool:'gap',title_bn:'তারিখের ব্যবধান',title_en:'Date difference',summary_bn:durationBn(d),summary_en:`${d.y} years ${d.m} months ${d.d} days`,metrics:{duration:durationBn(d),date:`${fmtDateLang(gap.from,'bn')} → ${fmtDateLang(gap.to,'bn')}`},input:{...gap}});
   }
   function calcRetire(){
     const years=Number(retire.age);
@@ -4542,12 +4696,14 @@ function CalculatorCenter({lang='bn',onPage,publicMode=false,initialTool='servic
     const retirement=addYears(retire.dob,years);
     const today=todayLocalIso();
     const remaining=dateObj(retirement)>=dateObj(today)?cleanDuration(today,retirement):null;
-    setResult({type:'retire',dob:retire.dob,years,retirement,remaining,passed:dateObj(retirement)<dateObj(today)});
+    const value={type:'retire',dob:retire.dob,years,retirement,remaining,passed:dateObj(retirement)<dateObj(today)};setResult(value);
+    rememberCalculationHistory({tool:'retire',title_bn:'অবসর তারিখ হিসাব',title_en:'Retirement date calculation',summary_bn:`সম্ভাব্য অবসর: ${fmtDateLang(retirement,'bn')}`,summary_en:`Estimated retirement: ${fmtDateLang(retirement,'en')}`,metrics:{retirement:fmtDateLang(retirement,'bn'),date:fmtDateLang(retire.dob,'bn')},input:{...retire}});
   }
   function calcBasicProjection(){
     const grade=Number(basicProj.grade),stages=PAY2015[String(grade)]||[],idx=Math.min(Math.max(0,Number(basicProj.stage||0)),Math.max(0,stages.length-1));
     const current=stages[idx]||0,fixed=fixed2026(grade,current),rate=implementationRate(grade,basicProj.date),increase=Math.max(0,fixed-current),payable=Math.round(current+increase*rate);
-    setResult({type:'basicProjection',grade,stage:idx+1,current,fixed,rate,payable,date:basicProj.date});
+    const value={type:'basicProjection',grade,stage:idx+1,current,fixed,rate,payable,date:basicProj.date};setResult(value);
+    rememberCalculationHistory({tool:'basic',title_bn:`গ্রেড ${numLang(grade,'bn',0)} · মূল বেতন প্রক্ষেপণ`,title_en:`Grade ${grade} · Basic pay projection`,summary_bn:`২০১৫ মূল ৳${moneyLang(current,'bn')} → প্রাপ্য ৳${moneyLang(payable,'bn')}`,summary_en:`2015 basic Tk ${moneyLang(current,'en')} → payable Tk ${moneyLang(payable,'en')}`,metrics:{grade,basic:`৳${moneyLang(current,'bn')}`,payable:`৳${moneyLang(payable,'bn')}`,date:fmtDateLang(basicProj.date,'bn')},input:{...basicProj}});
   }
   const showDur=d=>en?`${numLang(d.y,lang,0)} years ${numLang(d.m,lang,0)} months ${numLang(d.d,lang,0)} days`:durationBn(d);
   const tools=[
