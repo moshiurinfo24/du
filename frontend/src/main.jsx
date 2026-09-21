@@ -2692,10 +2692,10 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
       monthlyBasicArrear,monthlyGrossArrear,monthlyDeductionIncrease,monthlyNetArrear,
       priorThreeBasicArrear,priorThreeGrossArrear,priorThreeDeductionIncrease,priorThreeNetArrear,
       priorGrossAfterSpecial,priorNetAfterSpecial,
-      totalBasicArrear:priorThreeBasicArrear+Math.max(0,Number(october.payableBasic||0)-Number(legacyJuly.payableBasic||0)),
-      totalGrossArrear:priorThreeGrossArrear+monthlyGrossArrear,
-      totalDeductionIncrease:priorThreeDeductionIncrease+monthlyDeductionIncrease,
-      totalNetAdjustment:priorThreeNetArrear+monthlyNetArrear,
+      totalBasicArrear:priorThreeBasicArrear,
+      totalGrossArrear:priorThreeGrossArrear,
+      totalDeductionIncrease:priorThreeDeductionIncrease,
+      totalNetAdjustment:priorNetAfterSpecial,
       octoberBillGross:october.gross+priorGrossAfterSpecial,
       octoberBillNet:october.net+priorNetAfterSpecial
     };
@@ -2928,7 +2928,7 @@ function SalaryResult({r,lang='bn',compact=false,initialCompactTab='now',onReset
   const activeShareSummary=en?`${activeYear} salary calculation, allowances, deductions and net payable.`:`${numLang(activeYear,lang,0)} সালের বেতন, ভাতা, কর্তন ও নিট প্রাপ্যের হিসাব।`;
 
   async function directPdf(item,key){
-    try{setPdfBusy(key);await downloadA4Html(item.html,item.filename);trackPublic('download',key==='all'?'salary_2026_2028_pdf':key==='arrear'?'october_2026_arrear_pdf':`salary_${key}_pdf`)}
+    try{setPdfBusy(key);await downloadA4Html(item.html,item.filename);trackPublic('download',key==='all'?'salary_2026_2028_pdf':key==='arrear'?'monthly_2026_arrear_pdf':`salary_${key}_pdf`)}
     catch(e){alert((en?'PDF could not be created: ':'PDF তৈরি করা যায়নি: ')+e.message)}
     finally{setPdfBusy('')}
   }
