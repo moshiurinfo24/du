@@ -1,6 +1,6 @@
 
 import React,{useEffect,useState} from 'react';
-import {UserRound,Briefcase,GraduationCap,Route,WalletCards,CalendarDays,FileText,ShieldCheck,Cloud,Download,Trash2,Plus,Save,ChevronRight,Clock3,Database,CheckCircle2} from 'lucide-react';
+import {UserRound,Briefcase,GraduationCap,Route,WalletCards,CalendarDays,FileText,ShieldCheck,Cloud,Download,Trash2,Plus,Save,ChevronRight,Clock3,Database,CheckCircle2,Pencil,X} from 'lucide-react';
 import './guest-local-v1.css';
 
 const KEY='hisab_guest_workspace_v1';
@@ -136,28 +136,64 @@ function Profile({en,data,commit}){
 }
 
 function Education({en,data,commit}){
-  const [f,setF]=useState({level:'',institution:'',subject:'',passing_year:'',result:''});
-  const add=e=>{e.preventDefault();if(!f.level)return;commit({...data,education:[{id:uid(),...f},...data.education]});setF({level:'',institution:'',subject:'',passing_year:'',result:''})};
-  return <div className="guest-two-part"><form className="guest-card guest-form" onSubmit={add}><Title icon={GraduationCap} title={en?'Add education':'শিক্ষাগত যোগ্যতা যোগ করুন'}/><div className="guest-fields"><label>{en?'Level':'স্তর'}<input value={f.level} onChange={e=>setF({...f,level:e.target.value})}/></label><label>{en?'Institution':'প্রতিষ্ঠান'}<input value={f.institution} onChange={e=>setF({...f,institution:e.target.value})}/></label><label>{en?'Subject':'বিষয়'}<input value={f.subject} onChange={e=>setF({...f,subject:e.target.value})}/></label><label>{en?'Passing year':'পাসের বছর'}<input inputMode="numeric" value={f.passing_year} onChange={e=>setF({...f,passing_year:e.target.value})}/></label><label>{en?'Result':'ফলাফল'}<input value={f.result} onChange={e=>setF({...f,result:e.target.value})}/></label></div><button className="guest-primary"><Plus/>{en?'Add':'যোগ করুন'}</button></form><List items={data.education} empty={en?'No education saved yet.':'এখনও কোনো শিক্ষাগত তথ্য নেই।'} remove={id=>commit({...data,education:data.education.filter(x=>x.id!==id)})} render={x=><div><b>{x.level}</b><span>{[x.subject,x.institution,x.passing_year,x.result].filter(Boolean).join(' · ')}</span></div>}/></div>;
+  const blank={level:'',institution:'',subject:'',passing_year:'',result:''};
+  const [f,setF]=useState(blank);
+  const [editing,setEditing]=useState('');
+  const reset=()=>{setF(blank);setEditing('')};
+  const save=e=>{
+    e.preventDefault();if(!f.level)return;
+    const item=editing?{...f,id:editing}:{id:uid(),...f};
+    const next=editing?data.education.map(x=>x.id===editing?item:x):[item,...data.education];
+    commit({...data,education:next});reset();
+  };
+  const beginEdit=x=>{setEditing(x.id);setF({...blank,...x})};
+  return <div className="guest-two-part"><form className="guest-card guest-form" onSubmit={save}><Title icon={GraduationCap} title={editing?(en?'Edit education':'শিক্ষাগত তথ্য সম্পাদনা'):(en?'Add education':'শিক্ষাগত যোগ্যতা যোগ করুন')}/><div className="guest-fields"><label>{en?'Level':'স্তর'}<input value={f.level} onChange={e=>setF({...f,level:e.target.value})}/></label><label>{en?'Institution':'প্রতিষ্ঠান'}<input value={f.institution} onChange={e=>setF({...f,institution:e.target.value})}/></label><label>{en?'Subject':'বিষয়'}<input value={f.subject} onChange={e=>setF({...f,subject:e.target.value})}/></label><label>{en?'Passing year':'পাসের বছর'}<input inputMode="numeric" value={f.passing_year} onChange={e=>setF({...f,passing_year:e.target.value})}/></label><label>{en?'Result':'ফলাফল'}<input value={f.result} onChange={e=>setF({...f,result:e.target.value})}/></label></div><div className="guest-form-actions"><button className="guest-primary">{editing?<Save/>:<Plus/>}{editing?(en?'Save changes':'পরিবর্তন সংরক্ষণ'):(en?'Add':'যোগ করুন')}</button>{editing&&<button type="button" className="guest-cancel" onClick={reset}><X/>{en?'Cancel':'বাতিল'}</button>}</div></form><List items={data.education} empty={en?'No education saved yet.':'এখনও কোনো শিক্ষাগত তথ্য নেই।'} edit={beginEdit} remove={id=>commit({...data,education:data.education.filter(x=>x.id!==id)})} render={x=><div><b>{x.level}</b><span>{[x.subject,x.institution,x.passing_year,x.result].filter(Boolean).join(' · ')}</span></div>}/></div>;
 }
 
 function Timeline({en,lang,data,commit}){
-  const [f,setF]=useState({event_date:'',type:'promotion',title:'',post_name:'',grade:'',office_name:''});
-  const add=e=>{e.preventDefault();if(!f.event_date||!f.title)return;commit({...data,events:[{id:uid(),...f},...data.events].sort((a,b)=>String(b.event_date).localeCompare(String(a.event_date))) });setF({event_date:'',type:'promotion',title:'',post_name:'',grade:'',office_name:''})};
-  return <div className="guest-two-part"><form className="guest-card guest-form" onSubmit={add}><Title icon={Route} title={en?'Add career event':'ক্যারিয়ার ইভেন্ট যোগ করুন'}/><div className="guest-fields"><label>{en?'Date':'তারিখ'}<input type="date" value={f.event_date} onChange={e=>setF({...f,event_date:e.target.value})}/></label><label>{en?'Type':'ধরন'}<select value={f.type} onChange={e=>setF({...f,type:e.target.value})}><option value="appointment">{en?'Appointment':'যোগদান'}</option><option value="promotion">{en?'Promotion':'পদোন্নতি'}</option><option value="transfer">{en?'Transfer / posting':'বদলি / পোস্টিং'}</option><option value="increment">{en?'Increment':'ইনক্রিমেন্ট'}</option><option value="training">{en?'Training':'প্রশিক্ষণ'}</option><option value="other">{en?'Other':'অন্যান্য'}</option></select></label><label>{en?'Title':'শিরোনাম'}<input value={f.title} onChange={e=>setF({...f,title:e.target.value})}/></label><label>{en?'Post':'পদ'}<input value={f.post_name} onChange={e=>setF({...f,post_name:e.target.value})}/></label><label>{en?'Grade':'গ্রেড'}<input inputMode="numeric" value={f.grade} onChange={e=>setF({...f,grade:e.target.value})}/></label><label>{en?'Office':'অফিস'}<input value={f.office_name} onChange={e=>setF({...f,office_name:e.target.value})}/></label></div><button className="guest-primary"><Plus/>{en?'Add event':'ইভেন্ট যোগ করুন'}</button></form><List items={data.events} empty={en?'No career event saved yet.':'এখনও কোনো ক্যারিয়ার ইভেন্ট নেই।'} remove={id=>commit({...data,events:data.events.filter(x=>x.id!==id)})} render={x=><div><b>{dateFmt(x.event_date,lang)} · {x.title}</b><span>{[x.post_name,x.grade?(en?'Grade ':'গ্রেড ')+x.grade:'',x.office_name].filter(Boolean).join(' · ')}</span></div>}/></div>;
+  const blank={event_date:'',type:'promotion',title:'',post_name:'',grade:'',office_name:''};
+  const [f,setF]=useState(blank);
+  const [editing,setEditing]=useState('');
+  const reset=()=>{setF(blank);setEditing('')};
+  const save=e=>{
+    e.preventDefault();if(!f.event_date||!f.title)return;
+    const item=editing?{...f,id:editing}:{id:uid(),...f};
+    const next=(editing?data.events.map(x=>x.id===editing?item:x):[item,...data.events]).sort((a,b)=>String(b.event_date).localeCompare(String(a.event_date)));
+    commit({...data,events:next});reset();
+  };
+  const beginEdit=x=>{setEditing(x.id);setF({...blank,...x})};
+  return <div className="guest-two-part"><form className="guest-card guest-form" onSubmit={save}><Title icon={Route} title={editing?(en?'Edit career event':'ক্যারিয়ার ইভেন্ট সম্পাদনা'):(en?'Add career event':'ক্যারিয়ার ইভেন্ট যোগ করুন')}/><div className="guest-fields"><label>{en?'Date':'তারিখ'}<input type="date" value={f.event_date} onChange={e=>setF({...f,event_date:e.target.value})}/></label><label>{en?'Type':'ধরন'}<select value={f.type} onChange={e=>setF({...f,type:e.target.value})}><option value="appointment">{en?'Appointment':'যোগদান'}</option><option value="promotion">{en?'Promotion':'পদোন্নতি'}</option><option value="transfer">{en?'Transfer / posting':'বদলি / পোস্টিং'}</option><option value="increment">{en?'Increment':'ইনক্রিমেন্ট'}</option><option value="training">{en?'Training':'প্রশিক্ষণ'}</option><option value="other">{en?'Other':'অন্যান্য'}</option></select></label><label>{en?'Title':'শিরোনাম'}<input value={f.title} onChange={e=>setF({...f,title:e.target.value})}/></label><label>{en?'Post':'পদ'}<input value={f.post_name} onChange={e=>setF({...f,post_name:e.target.value})}/></label><label>{en?'Grade':'গ্রেড'}<input inputMode="numeric" value={f.grade} onChange={e=>setF({...f,grade:e.target.value})}/></label><label>{en?'Office':'অফিস'}<input value={f.office_name} onChange={e=>setF({...f,office_name:e.target.value})}/></label></div><div className="guest-form-actions"><button className="guest-primary">{editing?<Save/>:<Plus/>}{editing?(en?'Save changes':'পরিবর্তন সংরক্ষণ'):(en?'Add event':'ইভেন্ট যোগ করুন')}</button>{editing&&<button type="button" className="guest-cancel" onClick={reset}><X/>{en?'Cancel':'বাতিল'}</button>}</div></form><List items={data.events} empty={en?'No career event saved yet.':'এখনও কোনো ক্যারিয়ার ইভেন্ট নেই।'} edit={beginEdit} remove={id=>commit({...data,events:data.events.filter(x=>x.id!==id)})} render={x=><div><b>{dateFmt(x.event_date,lang)} · {x.title}</b><span>{[x.post_name,x.grade?(en?'Grade ':'গ্রেড ')+x.grade:'',x.office_name].filter(Boolean).join(' · ')}</span></div>}/></div>;
 }
 
 function Salary({en,lang,data,commit}){
-  const [f,setF]=useState({effective_date:'',grade:'',basic:'',gross:'',deductions:'',net:'',note:''});
-  const add=e=>{e.preventDefault();if(!f.effective_date)return;commit({...data,salary_history:[{id:uid(),...f},...data.salary_history].sort((a,b)=>String(b.effective_date).localeCompare(String(a.effective_date))) });setF({effective_date:'',grade:'',basic:'',gross:'',deductions:'',net:'',note:''})};
-  return <div className="guest-two-part"><form className="guest-card guest-form" onSubmit={add}><Title icon={WalletCards} title={en?'Save salary snapshot':'বেতন স্ন্যাপশট সংরক্ষণ'} sub={en?'Works without login.':'লগইন ছাড়াই কাজ করবে।'}/><div className="guest-fields"><label>{en?'Effective date':'কার্যকর তারিখ'}<input type="date" value={f.effective_date} onChange={e=>setF({...f,effective_date:e.target.value})}/></label><label>{en?'Grade':'গ্রেড'}<input inputMode="numeric" value={f.grade} onChange={e=>setF({...f,grade:e.target.value})}/></label>{[['basic',en?'Basic':'মূল বেতন'],['gross',en?'Gross':'মোট'],['deductions',en?'Deductions':'কর্তন'],['net',en?'Net':'নিট']].map(([k,l])=><label key={k}>{l}<input type="number" inputMode="decimal" min="0" value={f[k]} onChange={e=>setF({...f,[k]:e.target.value})}/></label>)}</div><button className="guest-primary"><Save/>{en?'Save':'সংরক্ষণ'}</button></form><List items={data.salary_history} empty={en?'No salary snapshot saved yet.':'এখনও কোনো বেতন স্ন্যাপশট নেই।'} remove={id=>commit({...data,salary_history:data.salary_history.filter(x=>x.id!==id)})} render={x=><div><b>{dateFmt(x.effective_date,lang)} · {en?'Net ':'নিট ৳'}{num(x.net,lang)}</b><span>{en?'Basic ':'মূল '}{num(x.basic,lang)} · {en?'Gross ':'মোট '}{num(x.gross,lang)}</span></div>}/></div>;
+  const blank={effective_date:'',grade:'',basic:'',gross:'',deductions:'',net:'',note:''};
+  const [f,setF]=useState(blank);
+  const [editing,setEditing]=useState('');
+  const reset=()=>{setF(blank);setEditing('')};
+  const save=e=>{
+    e.preventDefault();if(!f.effective_date)return;
+    const item=editing?{...f,id:editing}:{id:uid(),...f};
+    const next=(editing?data.salary_history.map(x=>x.id===editing?item:x):[item,...data.salary_history]).sort((a,b)=>String(b.effective_date).localeCompare(String(a.effective_date)));
+    commit({...data,salary_history:next});reset();
+  };
+  const beginEdit=x=>{setEditing(x.id);setF({...blank,...x})};
+  return <div className="guest-two-part"><form className="guest-card guest-form" onSubmit={save}><Title icon={WalletCards} title={editing?(en?'Edit salary snapshot':'বেতন স্ন্যাপশট সম্পাদনা'):(en?'Save salary snapshot':'বেতন স্ন্যাপশট সংরক্ষণ')} sub={en?'Works without login.':'লগইন ছাড়াই কাজ করবে।'}/><div className="guest-fields"><label>{en?'Effective date':'কার্যকর তারিখ'}<input type="date" value={f.effective_date} onChange={e=>setF({...f,effective_date:e.target.value})}/></label><label>{en?'Grade':'গ্রেড'}<input inputMode="numeric" value={f.grade} onChange={e=>setF({...f,grade:e.target.value})}/></label>{[['basic',en?'Basic':'মূল বেতন'],['gross',en?'Gross':'মোট'],['deductions',en?'Deductions':'কর্তন'],['net',en?'Net':'নিট']].map(([k,l])=><label key={k}>{l}<input type="number" inputMode="decimal" min="0" value={f[k]} onChange={e=>setF({...f,[k]:e.target.value})}/></label>)}<label>{en?'Note':'নোট'}<input value={f.note} onChange={e=>setF({...f,note:e.target.value})}/></label></div><div className="guest-form-actions"><button className="guest-primary"><Save/>{editing?(en?'Save changes':'পরিবর্তন সংরক্ষণ'):(en?'Save':'সংরক্ষণ')}</button>{editing&&<button type="button" className="guest-cancel" onClick={reset}><X/>{en?'Cancel':'বাতিল'}</button>}</div></form><List items={data.salary_history} empty={en?'No salary snapshot saved yet.':'এখনও কোনো বেতন স্ন্যাপশট নেই।'} edit={beginEdit} remove={id=>commit({...data,salary_history:data.salary_history.filter(x=>x.id!==id)})} render={x=><div><b>{dateFmt(x.effective_date,lang)} · {en?'Net ':'নিট ৳'}{num(x.net,lang)}</b><span>{en?'Basic ':'মূল '}{num(x.basic,lang)} · {en?'Gross ':'মোট '}{num(x.gross,lang)}</span></div>}/></div>;
 }
 
 function Leave({en,lang,data,commit}){
-  const [f,setF]=useState({type:'casual',start_date:'',end_date:'',note:''});
+  const blank={type:'casual',start_date:'',end_date:'',note:''};
+  const [f,setF]=useState(blank);
+  const [editing,setEditing]=useState('');
   const names=en?{casual:'Casual',earned:'Earned',medical:'Medical',maternity:'Maternity',paternity:'Paternity',study:'Study',special:'Special',other:'Other'}:{casual:'নৈমিত্তিক',earned:'অর্জিত',medical:'চিকিৎসা',maternity:'মাতৃত্বকালীন',paternity:'পিতৃত্বকালীন',study:'শিক্ষা',special:'বিশেষ',other:'অন্যান্য'};
-  const add=e=>{e.preventDefault();const total=inclusiveDays(f.start_date,f.end_date);if(!total)return;commit({...data,leave:[{id:uid(),...f,total_days:total},...data.leave].sort((a,b)=>String(b.start_date).localeCompare(String(a.start_date))) });setF({type:'casual',start_date:'',end_date:'',note:''})};
-  return <div className="guest-two-part"><form className="guest-card guest-form" onSubmit={add}><Title icon={CalendarDays} title={en?'Add leave record':'ছুটির রেকর্ড যোগ করুন'}/><div className="guest-fields"><label>{en?'Leave type':'ছুটির ধরন'}<select value={f.type} onChange={e=>setF({...f,type:e.target.value})}>{Object.entries(names).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label><label>{en?'Start':'শুরু'}<input type="date" value={f.start_date} onChange={e=>setF({...f,start_date:e.target.value})}/></label><label>{en?'End':'শেষ'}<input type="date" value={f.end_date} onChange={e=>setF({...f,end_date:e.target.value})}/></label><label>{en?'Note':'নোট'}<input value={f.note} onChange={e=>setF({...f,note:e.target.value})}/></label></div><button className="guest-primary"><Plus/>{en?'Add':'যোগ করুন'}</button></form><List items={data.leave} empty={en?'No leave record saved yet.':'এখনও কোনো ছুটির রেকর্ড নেই।'} remove={id=>commit({...data,leave:data.leave.filter(x=>x.id!==id)})} render={x=><div><b>{names[x.type]||x.type} · {num(x.total_days,lang,1)} {en?'day(s)':'দিন'}</b><span>{dateFmt(x.start_date,lang)} — {dateFmt(x.end_date,lang)}</span></div>}/></div>;
+  const reset=()=>{setF(blank);setEditing('')};
+  const save=e=>{
+    e.preventDefault();const total=inclusiveDays(f.start_date,f.end_date);if(!total)return;
+    const item=editing?{...f,id:editing,total_days:total}:{id:uid(),...f,total_days:total};
+    const next=(editing?data.leave.map(x=>x.id===editing?item:x):[item,...data.leave]).sort((a,b)=>String(b.start_date).localeCompare(String(a.start_date)));
+    commit({...data,leave:next});reset();
+  };
+  const beginEdit=x=>{setEditing(x.id);setF({...blank,...x})};
+  return <div className="guest-two-part"><form className="guest-card guest-form" onSubmit={save}><Title icon={CalendarDays} title={editing?(en?'Edit leave record':'ছুটির রেকর্ড সম্পাদনা'):(en?'Add leave record':'ছুটির রেকর্ড যোগ করুন')}/><div className="guest-fields"><label>{en?'Leave type':'ছুটির ধরন'}<select value={f.type} onChange={e=>setF({...f,type:e.target.value})}>{Object.entries(names).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label><label>{en?'Start':'শুরু'}<input type="date" value={f.start_date} onChange={e=>setF({...f,start_date:e.target.value})}/></label><label>{en?'End':'শেষ'}<input type="date" value={f.end_date} onChange={e=>setF({...f,end_date:e.target.value})}/></label><label>{en?'Note':'নোট'}<input value={f.note} onChange={e=>setF({...f,note:e.target.value})}/></label></div><div className="guest-form-actions"><button className="guest-primary">{editing?<Save/>:<Plus/>}{editing?(en?'Save changes':'পরিবর্তন সংরক্ষণ'):(en?'Add':'যোগ করুন')}</button>{editing&&<button type="button" className="guest-cancel" onClick={reset}><X/>{en?'Cancel':'বাতিল'}</button>}</div></form><List items={data.leave} empty={en?'No leave record saved yet.':'এখনও কোনো ছুটির রেকর্ড নেই।'} edit={beginEdit} remove={id=>commit({...data,leave:data.leave.filter(x=>x.id!==id)})} render={x=><div><b>{names[x.type]||x.type} · {num(x.total_days,lang,1)} {en?'day(s)':'দিন'}</b><span>{dateFmt(x.start_date,lang)} — {dateFmt(x.end_date,lang)}</span></div>}/></div>;
 }
 
 function Reports({en,lang,data,service,leaveDays,latestSalary}){
@@ -173,6 +209,6 @@ function Privacy({en,data,onLogin}){
 function Title({icon:Icon,title,sub}){
   return <div className="guest-card-title"><Icon/><div><h3>{title}</h3>{sub&&<p>{sub}</p>}</div></div>;
 }
-function List({items,empty,remove,render}){
-  return <section className="guest-record-list">{!items?.length?<div className="guest-empty">{empty}</div>:items.map(x=><article key={x.id}>{render(x)}<button onClick={()=>remove(x.id)}><Trash2/></button></article>)}</section>;
+function List({items,empty,remove,edit,render}){
+  return <section className="guest-record-list">{!items?.length?<div className="guest-empty">{empty}</div>:items.map(x=><article key={x.id}>{render(x)}<div className="guest-record-actions">{edit&&<button type="button" className="edit" onClick={()=>edit(x)} aria-label="Edit"><Pencil/></button>}<button type="button" className="delete" onClick={()=>remove(x.id)} aria-label="Delete"><Trash2/></button></div></article>)}</section>;
 }
