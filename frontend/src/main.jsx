@@ -1335,6 +1335,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     age:en?'Age':'বয়স',
     gap:en?'Date Gap':'তারিখ ব্যবধান',
     retire:en?'Retirement':'অবসর',
+    basic:en?'Basic Projection':'মূল বেতন প্রক্ষেপণ',
     points:en?'Points Center':'পয়েন্ট',
     calendar:en?'Calendar':'ক্যালেন্ডার',
     reference:en?'Notices & Policies':'নোটিশ ও নীতিমালা',
@@ -1347,7 +1348,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     'local-reports':en?'My Reports':'রিপোর্ট',
     'local-privacy':en?'Data & Backup':'ডাটা ও ব্যাকআপ'
   };
-  const icons={salary:WalletCards,promotion:TrendingUp,house:Home,service:Clock3,age:UserRound,gap:CalendarDays,retire:FileClock,points:Award,calendar:CalendarDays,reference:BookOpen,'local-dashboard':UserRound};
+  const icons={salary:WalletCards,promotion:TrendingUp,house:Home,service:Clock3,age:UserRound,gap:CalendarDays,retire:FileClock,basic:BadgeDollarSign,points:Award,calendar:CalendarDays,reference:BookOpen,'local-dashboard':UserRound};
   const open=(tool)=>{
     const next=[tool,...recent.filter(x=>x!==tool)].slice(0,3);
     setRecent(next);
@@ -1364,6 +1365,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     ['age',UserRound,en?'Age':'বয়স','sky'],
     ['gap',CalendarDays,en?'Date Gap':'তারিখ ব্যবধান','blue'],
     ['retire',FileClock,en?'Retirement':'অবসর','amber'],
+    ['basic',BadgeDollarSign,en?'Basic Projection':'মূল বেতন প্রক্ষেপণ','indigo'],
     ['points',Award,en?'Points Center':'পয়েন্ট','teal']
   ];
   const localServices=[
@@ -1392,7 +1394,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
         {activePublicTool==='salary'&&<SalaryCalculator lang={lang} publicMode={true}/>}
         {activePublicTool==='promotion'&&<section className="public-tool-only-shell"><PromotionCenter lang={lang} publicMode={true}/></section>}
         {activePublicTool==='house'&&<section className="public-tool-only-shell"><HouseAllocationPoints lang={lang} publicMode={true}/></section>}
-        {['service','age','gap','retire'].includes(activePublicTool)&&<section className="public-tool-only-shell"><CalculatorCenter lang={lang} publicMode={true} initialTool={activePublicTool} singleTool={true}/></section>}
+        {['service','age','gap','retire','basic'].includes(activePublicTool)&&<section className="public-tool-only-shell"><CalculatorCenter lang={lang} publicMode={true} initialTool={activePublicTool} singleTool={true}/></section>}
         {activePublicTool==='points'&&<section className="public-tool-only-shell"><PointsCalculator lang={lang}/></section>}
         {activePublicTool==='calendar'&&<section className="public-tool-only-shell"><FiscalOfficeCalendar lang={lang}/></section>}
         {activePublicTool==='reference'&&<PwaReferenceCenter lang={lang} notices={notices} policies={policies}/>}
@@ -1500,8 +1502,8 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
     const loadPwaStats=()=>api('/api/public/pwa-install-stats').then(x=>{if(alive)setPwaStats(x)}).catch(()=>{});
     trackPublic('page_view','home').finally(()=>{loadStats();loadPwaStats()});
     Promise.allSettled([
-      api('/api/public/notices?limit=4'),
-      api('/api/public/policies?limit=4')
+      api('/api/public/notices?limit=100'),
+      api('/api/public/policies?limit=100')
     ]).then(([n,p])=>{
       if(!alive)return;
       if(n.status==='fulfilled')setNotices(n.value.items||n.value.notices||[]);
@@ -2001,7 +2003,7 @@ function UnifiedEmployeeDashboard({user,onPage,lang='bn'}){
       api('/api/my-career'),
       api('/api/my-salary-history'),
       api('/api/my-leave-records'),
-      api('/api/public/notices?limit=4')
+      api('/api/public/notices?limit=100')
     ]).then(rs=>{
       if(!alive)return;
       const c=rs[0].status==='fulfilled'?rs[0].value:{};
