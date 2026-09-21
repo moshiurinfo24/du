@@ -1,6 +1,6 @@
 
 import React,{useEffect,useState} from 'react';
-import {UserRound,Briefcase,GraduationCap,Route,WalletCards,CalendarDays,FileText,ShieldCheck,Cloud,Download,Trash2,Plus,Save,ChevronRight,Clock3,Database,CheckCircle2,Pencil,X} from 'lucide-react';
+import {UserRound,Briefcase,GraduationCap,Route,WalletCards,CalendarDays,FileText,ShieldCheck,Cloud,Download,Upload,Trash2,Plus,Save,ChevronRight,Clock3,Database,CheckCircle2,AlertTriangle,Pencil,X} from 'lucide-react';
 import './guest-local-v1.css';
 
 const KEY='hisab_guest_workspace_v1';
@@ -41,11 +41,107 @@ function inclusiveDays(a,b){
   if(Number.isNaN(x.getTime())||Number.isNaN(y.getTime())||y<x)return 0;
   return Math.floor((y-x)/86400000)+1;
 }
+const HISTORY_KEY='hisab_calculation_history_v1';
+const PDF_KEY='hisab_pdf_center_v1';
+const BACKUP_FORMAT='hisab-sahayika-backup';
+const BACKUP_VERSION=2;
+const MAX_BACKUP_BYTES=12*1024*1024;
+
+function plainObject(v){return !!v&&typeof v==='object'&&!Array.isArray(v)}
+function safeRows(v,max=2500){return Array.isArray(v)?v.filter(plainObject).slice(0,max).map(x=>({...x})):[]}
+function normalizeWorkspace(raw={}){
+  const source=plainObject(raw)?raw:{};
+  const profileSource=plainObject(source.profile)?source.profile:{};
+  const profile={...emptyData.profile};
+  for(const key of Object.keys(profile)){
+    const v=profileSource[key];
+    if(['string','number','boolean'].includes(typeof v))profile[key]=v;
+  }
+  return {
+    ...emptyData,
+    profile,
+    education:safeRows(source.education),
+    events:safeRows(source.events),
+    salary_history:safeRows(source.salary_history),
+    leave:safeRows(source.leave),
+    updated_at:typeof source.updated_at==='string'?source.updated_at:''
+  };
+}
+function readLocalRows(key,max){
+  try{return safeRows(JSON.parse(localStorage.getItem(key)||'[]'),max)}catch{return []}
+}
+function fullBackupPayload(data){
+  return {
+    format:BACKUP_FORMAT,
+    version:BACKUP_VERSION,
+    app:'Hisab Sahayika',
+    exported_at:new Date().toISOString(),
+    data:{
+      workspace:normalizeWorkspace(data),
+      calculation_history:readLocalRows(HISTORY_KEY,80),
+      pdf_center:readLocalRows(PDF_KEY,16)
+    }
+  };
+}
 function downloadData(data){
-  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json;charset=utf-8'});
+  const payload=fullBackupPayload(data);
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'});
   const url=URL.createObjectURL(blob),a=document.createElement('a');
-  a.href=url;a.download='hisab-sahayika-local-data-'+new Date().toISOString().slice(0,10)+'.json';
+  a.href=url;a.download='hisab-sahayika-backup-'+new Date().toISOString().slice(0,10)+'.json';
   document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+}
+function parseBackup(raw){
+  if(!plainObject(raw))throw new Error('Invalid backup file');
+  if(raw.format===BACKUP_FORMAT&&plainObject(raw.data)&&plainObject(raw.data.workspace)){
+    return {
+      legacy:false,
+      version:Number(raw.version||1),
+      exported_at:String(raw.exported_at||''),
+      workspace:normalizeWorkspace(raw.data.workspace),
+      hasHistory:Object.prototype.hasOwnProperty.call(raw.data,'calculation_history'),
+      calculation_history:safeRows(raw.data.calculation_history,80),
+      hasPdf:Object.prototype.hasOwnProperty.call(raw.data,'pdf_center'),
+      pdf_center:safeRows(raw.data.pdf_center,16)
+    };
+  }
+  if(plainObject(raw.profile)||Array.isArray(raw.education)||Array.isArray(raw.events)||Array.isArray(raw.salary_history)||Array.isArray(raw.leave)){
+    return {legacy:true,version:1,exported_at:String(raw.updated_at||''),workspace:normalizeWorkspace(raw),hasHistory:false,calculation_history:[],hasPdf:false,pdf_center:[]};
+  }
+  throw new Error('This JSON file is not a supported Hisab Sahayika backup.');
+}
+function meaningful(v){return !(v===undefined||v===null||v==='')}
+function mergeProfile(current={},incoming={}){
+  const next={...emptyData.profile,...current};
+  for(const key of Object.keys(emptyData.profile))if(meaningful(incoming[key]))next[key]=incoming[key];
+  return next;
+}
+function rowIdentity(x,index,prefix){
+  if(x?.id!==undefined&&x?.id!==null&&String(x.id)!=='')return 'id:'+String(x.id);
+  if(x?.fingerprint)return 'fp:'+String(x.fingerprint);
+  const core=[x?.effective_date,x?.event_date,x?.start_date,x?.title,x?.level,x?.type,x?.leave_type,x?.updated_at].filter(Boolean).join('|');
+  return core?'core:'+core:prefix+':'+index+':'+JSON.stringify(x);
+}
+function mergeRows(current,incoming,max=2500,prefix='row'){
+  const map=new Map();
+  safeRows(current,max).forEach((x,i)=>map.set(rowIdentity(x,i,prefix),x));
+  safeRows(incoming,max).forEach((x,i)=>map.set(rowIdentity(x,i,prefix),{...(map.get(rowIdentity(x,i,prefix))||{}),...x}));
+  return Array.from(map.values()).slice(0,max);
+}
+function mergeWorkspace(current,incoming){
+  return {
+    ...emptyData,
+    ...current,
+    ...incoming,
+    profile:mergeProfile(current?.profile,incoming?.profile),
+    education:mergeRows(current?.education,incoming?.education,2500,'edu'),
+    events:mergeRows(current?.events,incoming?.events,2500,'event').sort((a,b)=>String(b.event_date||'').localeCompare(String(a.event_date||''))),
+    salary_history:mergeRows(current?.salary_history,incoming?.salary_history,2500,'salary').sort((a,b)=>String(b.effective_date||'').localeCompare(String(a.effective_date||''))),
+    leave:mergeRows(current?.leave,incoming?.leave,2500,'leave').sort((a,b)=>String(b.start_date||'').localeCompare(String(a.start_date||''))),
+    updated_at:new Date().toISOString()
+  };
+}
+function profileFilledCount(profile={}){
+  return Object.values(profile||{}).filter(meaningful).length;
 }
 
 export default function GuestLocalCenter({mode='dashboard',lang='bn',onOpen,onLogin}){
@@ -87,7 +183,7 @@ export default function GuestLocalCenter({mode='dashboard',lang='bn',onOpen,onLo
     {tab==='salary'&&<Salary en={en} lang={lang} data={data} commit={commit}/>}
     {tab==='leave'&&<Leave en={en} lang={lang} data={data} commit={commit}/>}
     {tab==='reports'&&<Reports en={en} lang={lang} data={data} service={service} leaveDays={leaveDays} latestSalary={latestSalary} onOpen={onOpen}/>}
-    {tab==='privacy'&&<Privacy en={en} data={data} onLogin={onLogin}/>}
+    {tab==='privacy'&&<Privacy en={en} data={data} onLogin={onLogin} onRestore={next=>{setData(next);setSaved(en?'Backup restored on this device':'ব্যাকআপ এই ডিভাইসে রিস্টোর হয়েছে');setTimeout(()=>setSaved(''),2200)}}/>}
   </div>;
 }
 
@@ -207,12 +303,80 @@ function Leave({en,lang,data,commit}){
 
 function Reports({en,lang,data,service,leaveDays,latestSalary,onOpen}){
   const p=data.profile||{};
-  return <div className="guest-card guest-report"><Title icon={FileText} title={en?'Local personal summary':'Local ব্যক্তিগত সারসংক্ষেপ'} sub={en?'Created from records on this device.':'এই ডিভাইসের তথ্য থেকে তৈরি।'}/><div className="guest-report-kpis"><span><small>{en?'Post':'পদ'}</small><b>{p.current_post||'—'}</b></span><span><small>{en?'Grade':'গ্রেড'}</small><b>{p.grade||'—'}</b></span><span><small>{en?'Career events':'ক্যারিয়ার ইভেন্ট'}</small><b>{num(data.events.length,lang)}</b></span><span><small>{en?'Education':'শিক্ষা রেকর্ড'}</small><b>{num(data.education.length,lang)}</b></span><span><small>{en?'Salary records':'বেতন রেকর্ড'}</small><b>{num(data.salary_history.length,lang)}</b></span><span><small>{en?'Leave days':'ছুটির দিন'}</small><b>{num(leaveDays,lang,1)}</b></span></div><div className="guest-report-actions"><button onClick={()=>window.print()}><FileText/>{en?'Print / PDF':'প্রিন্ট / PDF'}</button><button onClick={()=>onOpen?.('pdf-center')}><FileText/>{en?'PDF Center':'PDF সেন্টার'}</button><button onClick={()=>downloadData(data)}><Download/>JSON</button></div><div className="guest-disclaimer"><ShieldCheck/>{en?'Personal reference only; not an official record or order.':'শুধু ব্যক্তিগত রেফারেন্স; কোনো অফিসিয়াল রেকর্ড বা আদেশ নয়।'}</div></div>;
+  return <div className="guest-card guest-report"><Title icon={FileText} title={en?'Local personal summary':'Local ব্যক্তিগত সারসংক্ষেপ'} sub={en?'Created from records on this device.':'এই ডিভাইসের তথ্য থেকে তৈরি।'}/><div className="guest-report-kpis"><span><small>{en?'Post':'পদ'}</small><b>{p.current_post||'—'}</b></span><span><small>{en?'Grade':'গ্রেড'}</small><b>{p.grade||'—'}</b></span><span><small>{en?'Career events':'ক্যারিয়ার ইভেন্ট'}</small><b>{num(data.events.length,lang)}</b></span><span><small>{en?'Education':'শিক্ষা রেকর্ড'}</small><b>{num(data.education.length,lang)}</b></span><span><small>{en?'Salary records':'বেতন রেকর্ড'}</small><b>{num(data.salary_history.length,lang)}</b></span><span><small>{en?'Leave days':'ছুটির দিন'}</small><b>{num(leaveDays,lang,1)}</b></span></div><div className="guest-report-actions"><button onClick={()=>window.print()}><FileText/>{en?'Print / PDF':'প্রিন্ট / PDF'}</button><button onClick={()=>onOpen?.('pdf-center')}><FileText/>{en?'PDF Center':'PDF সেন্টার'}</button><button onClick={()=>downloadData(data)}><Download/>{en?'Backup JSON':'ব্যাকআপ JSON'}</button></div><div className="guest-disclaimer"><ShieldCheck/>{en?'Personal reference only; not an official record or order.':'শুধু ব্যক্তিগত রেফারেন্স; কোনো অফিসিয়াল রেকর্ড বা আদেশ নয়।'}</div></div>;
 }
 
-function Privacy({en,data,onLogin}){
+function Privacy({en,data,onLogin,onRestore}){
+  const [backup,setBackup]=useState(null),[fileName,setFileName]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false);
   const clear=()=>{if(!confirm(en?'Delete all local personal records?':'সব Local ব্যক্তিগত রেকর্ড মুছে ফেলবেন?'))return;localStorage.removeItem(KEY);location.reload()};
-  return <div className="guest-privacy-grid"><article><Download/><h3>{en?'Download local data':'Local ডাটা ডাউনলোড'}</h3><p>{en?'Export this device data as JSON.':'এই ডিভাইসের তথ্য JSON হিসেবে নিন।'}</p><button onClick={()=>downloadData(data)}><Download/>Export</button></article><article><Cloud/><h3>Backup & Sync</h3><p>{en?'Optional login for Cloud Backup, Sync, Recovery and multiple-device use.':'Cloud Backup, Sync, Recovery ও একাধিক ডিভাইসে ব্যবহারের জন্য ঐচ্ছিক লগইন।'}</p><button onClick={onLogin}><Cloud/>{en?'Login for Backup & Sync':'Backup & Sync-এর জন্য লগইন'}</button></article><article><Trash2/><h3>{en?'Clear local records':'Local রেকর্ড মুছুন'}</h3><p>{en?'Deletes only records on this device.':'শুধু এই ডিভাইসের রেকর্ড মুছবে।'}</p><button className="danger" onClick={clear}><Trash2/>{en?'Clear':'মুছুন'}</button></article></div>;
+  async function chooseBackup(e){
+    const file=e.target.files?.[0];e.target.value='';setError('');setBackup(null);setFileName('');
+    if(!file)return;
+    if(file.size>MAX_BACKUP_BYTES){setError(en?'Backup file is too large. Maximum supported size is 12 MB.':'ব্যাকআপ ফাইলটি অনেক বড়। সর্বোচ্চ ১২ MB পর্যন্ত সমর্থিত।');return}
+    try{
+      const parsed=parseBackup(JSON.parse(await file.text()));
+      setBackup(parsed);setFileName(file.name);
+    }catch(err){setError(en?'This file could not be read as a valid Hisab Sahayika backup.':'ফাইলটি বৈধ হিসাব সহায়িকা ব্যাকআপ হিসেবে পড়া যায়নি।')}
+  }
+  function restore(mode){
+    if(!backup)return;
+    const replace=mode==='replace';
+    const prompt=replace
+      ?(en?'Replace the local records included in this backup? Current records in those included sections will be replaced.':'ব্যাকআপে থাকা Local রেকর্ড দিয়ে বর্তমান অন্তর্ভুক্ত অংশগুলো Replace করবেন? ঐ অংশের বর্তমান রেকর্ড প্রতিস্থাপিত হবে।')
+      :(en?'Merge this backup with the records already on this device? Imported non-empty profile fields will update matching fields.':'এই ব্যাকআপটি বর্তমান Local রেকর্ডের সঙ্গে Merge করবেন? Import করা Profile-এর পূরণ করা তথ্য একই field আপডেট করবে।');
+    if(!confirm(prompt))return;
+    setBusy(true);setError('');
+    try{
+      const current=readData();
+      const next=replace?normalizeWorkspace(backup.workspace):mergeWorkspace(current,backup.workspace);
+      const saved=writeData(next);
+      if(backup.hasHistory){
+        const rows=replace?backup.calculation_history:mergeRows(readLocalRows(HISTORY_KEY,80),backup.calculation_history,80,'history').sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
+        localStorage.setItem(HISTORY_KEY,JSON.stringify(rows.slice(0,80)));
+        window.dispatchEvent(new CustomEvent('hisab-calculation-history-updated'));
+      }
+      if(backup.hasPdf){
+        const rows=replace?backup.pdf_center:mergeRows(readLocalRows(PDF_KEY,16),backup.pdf_center,16,'pdf').sort((a,b)=>String(b.updated_at||'').localeCompare(String(a.updated_at||'')));
+        localStorage.setItem(PDF_KEY,JSON.stringify(rows.slice(0,16)));
+        window.dispatchEvent(new CustomEvent('hisab-pdf-center-updated'));
+      }
+      onRestore?.(saved);setBackup(null);setFileName('');
+    }catch(err){setError(en?'Restore failed. No further changes were applied.':'রিস্টোর সম্পন্ন করা যায়নি।')}
+    finally{setBusy(false)}
+  }
+  const counts=backup?{
+    profile:profileFilledCount(backup.workspace.profile),
+    education:backup.workspace.education.length,
+    events:backup.workspace.events.length,
+    salary:backup.workspace.salary_history.length,
+    leave:backup.workspace.leave.length,
+    history:backup.calculation_history.length,
+    pdf:backup.pdf_center.length
+  }:null;
+  return <div className="guest-data-center">
+    <div className="guest-privacy-grid">
+      <article><Download/><h3>{en?'Export full backup':'সম্পূর্ণ ব্যাকআপ Export'}</h3><p>{en?'Download profile, records, calculation history and PDF Center as one JSON backup.':'Profile, রেকর্ড, হিসাবের ইতিহাস ও PDF Center এক JSON ব্যাকআপে ডাউনলোড করুন।'}</p><button onClick={()=>downloadData(data)}><Download/>{en?'Export Backup':'ব্যাকআপ Export'}</button></article>
+      <article><Upload/><h3>{en?'Import / Restore backup':'ব্যাকআপ Import / Restore'}</h3><p>{en?'Choose a current or older Hisab Sahayika JSON file. You will preview it before anything changes.':'বর্তমান বা পুরোনো হিসাব সহায়িকা JSON ফাইল নির্বাচন করুন। পরিবর্তনের আগে Preview দেখাবে।'}</p><label className="guest-import-button"><Upload/>{en?'Choose JSON Backup':'JSON ব্যাকআপ নির্বাচন'}<input type="file" accept=".json,application/json" onChange={chooseBackup}/></label></article>
+      <article><Cloud/><h3>Backup & Sync</h3><p>{en?'Optional login for Cloud Backup, Sync, Recovery and multiple-device use.':'Cloud Backup, Sync, Recovery ও একাধিক ডিভাইসে ব্যবহারের জন্য ঐচ্ছিক লগইন।'}</p><button onClick={onLogin}><Cloud/>{en?'Login for Backup & Sync':'Backup & Sync-এর জন্য লগইন'}</button></article>
+      <article><Trash2/><h3>{en?'Clear local records':'Local রেকর্ড মুছুন'}</h3><p>{en?'Deletes only personal workspace records on this device.':'শুধু এই ডিভাইসের ব্যক্তিগত workspace রেকর্ড মুছবে।'}</p><button className="danger" onClick={clear}><Trash2/>{en?'Clear':'মুছুন'}</button></article>
+    </div>
+    {error&&<div className="guest-backup-error"><AlertTriangle/>{error}</div>}
+    {backup&&<section className="guest-backup-preview">
+      <div className="guest-backup-preview-head"><div><Upload/><div><small>{backup.legacy?(en?'LEGACY BACKUP':'পুরোনো ব্যাকআপ'):`BACKUP V${backup.version}`}</small><h3>{en?'Backup preview':'ব্যাকআপ Preview'}</h3><p>{fileName}{backup.exported_at?` · ${dateFmt(String(backup.exported_at).slice(0,10),en?'en':'bn')}`:''}</p></div></div><button onClick={()=>{setBackup(null);setFileName('')}}><X/></button></div>
+      <div className="guest-backup-counts">
+        <span><small>{en?'Profile fields':'Profile তথ্য'}</small><b>{counts.profile}</b></span>
+        <span><small>{en?'Education':'শিক্ষা'}</small><b>{counts.education}</b></span>
+        <span><small>{en?'Timeline':'টাইমলাইন'}</small><b>{counts.events}</b></span>
+        <span><small>{en?'Salary records':'বেতন রেকর্ড'}</small><b>{counts.salary}</b></span>
+        <span><small>{en?'Leave records':'ছুটি রেকর্ড'}</small><b>{counts.leave}</b></span>
+        <span className={!backup.hasHistory?'muted':''}><small>{en?'Calculations':'হিসাবের ইতিহাস'}</small><b>{backup.hasHistory?counts.history:'—'}</b></span>
+        <span className={!backup.hasPdf?'muted':''}><small>PDF Center</small><b>{backup.hasPdf?counts.pdf:'—'}</b></span>
+      </div>
+      {backup.legacy&&<div className="guest-backup-legacy"><ShieldCheck/><span>{en?'Older backup detected. It contains personal workspace records only; Calculation History and PDF Center will not be changed.':'পুরোনো ব্যাকআপ পাওয়া গেছে। এতে শুধু ব্যক্তিগত workspace রেকর্ড আছে; হিসাবের ইতিহাস ও PDF Center পরিবর্তন হবে না।'}</span></div>}
+      <div className="guest-backup-mode-note"><b>{en?'Merge':'Merge'}:</b> {en?'keeps current records and adds/updates imported records.':'বর্তমান রেকর্ড রেখে Import করা রেকর্ড যোগ/আপডেট করবে।'} <b>{en?'Replace':'Replace'}:</b> {en?'replaces the sections included in this backup.':'এই ব্যাকআপে থাকা অংশগুলোর বর্তমান data প্রতিস্থাপন করবে।'}</div>
+      <div className="guest-backup-actions"><button disabled={busy} className="merge" onClick={()=>restore('merge')}><Plus/>{busy?(en?'Restoring...':'রিস্টোর হচ্ছে'):(en?'Merge Restore':'Merge করে Restore')}</button><button disabled={busy} className="replace" onClick={()=>restore('replace')}><Save/>{en?'Replace & Restore':'Replace করে Restore'}</button></div>
+    </section>}
+  </div>;
 }
 
 function Title({icon:Icon,title,sub}){
