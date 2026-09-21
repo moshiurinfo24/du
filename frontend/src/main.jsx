@@ -144,7 +144,6 @@ function LangToggle({lang,setLang}){return <button className="lang-btn" onClick=
 function PwaMobileInstallGate({lang='bn'}){
   const en=lang==='en';
   const [pwa,setPwa]=useState(()=>getPwaState());
-  const [bypass,setBypass]=useState(()=>sessionStorage.getItem('du_pwa_browser_continue')==='1');
   const [installing,setInstalling]=useState(false);
   const [installResult,setInstallResult]=useState('');
   const [installStats,setInstallStats]=useState({total_installs:null,today_installs:null});
@@ -163,15 +162,11 @@ function PwaMobileInstallGate({lang='bn'}){
   );
   const standalone=typeof window!=='undefined'&&(window.matchMedia?.('(display-mode: standalone)').matches||window.navigator.standalone===true);
   const mainEntry=typeof window!=='undefined'&&window.location.pathname==='/'&&!new URLSearchParams(window.location.search).has('shared_report');
-  if(!mobile||standalone||!mainEntry||bypass)return null;
+  if(!mobile||standalone||!mainEntry)return null;
 
   const lastTime=formatPwaTime(pwa.lastAutoUpdateAt||pwa.build?.built_at||'',lang);
   const installedAt=formatPwaTime(localStorage.getItem('du_pwa_installed_at')||'',lang);
 
-  const continueBrowser=()=>{
-    sessionStorage.setItem('du_pwa_browser_continue','1');
-    setBypass(true);
-  };
   const install=async()=>{
     if(pwa.iosInstallHint){
       setInstallResult('ios');
@@ -214,9 +209,9 @@ function PwaMobileInstallGate({lang='bn'}){
       <div className="pwa-gate-update">
         <RefreshCw/><div><small>{en?'Automatic updates':'অটো আপডেট'}</small><b>{en?'Enabled':'চালু'}</b><em>{en?'Latest app update':'সর্বশেষ অ্যাপ আপডেট'}: {lastTime}</em>{localStorage.getItem('du_pwa_installed_at')&&<em>{en?'Installed':'ইনস্টল হয়েছে'}: {installedAt}</em>}</div>
       </div>
+      <div className="pwa-browser-locked-note"><Smartphone/><div><b>{en?'Continue in the installed app':'এখন ইনস্টল করা অ্যাপে প্রবেশ করুন'}</b><span>{en?'This browser page will not continue to the calculators. Open “Hisab Sahayika” from your Home Screen.':'এই ব্রাউজার পেজ থেকে আর সামনে যাওয়া যাবে না। Home Screen থেকে “হিসাব সহায়িকা” অ্যাপটি খুলুন।'}</span></div></div>
       <div className="pwa-gate-actions single">
-        <button className="pwa-gate-primary home-open-info" onClick={()=>{}}><Home/><span>{en?'Open Hisab Sahayika from Home Screen':'Home Screen থেকে হিসাব সহায়িকা খুলুন'}</span></button>
-        <button className="pwa-gate-link" onClick={continueBrowser}>{en?'Continue in browser instead':'ব্রাউজারে সেবা দেখুন'}</button>
+        <button className="pwa-gate-primary home-open-info" onClick={()=>{}}><Home/><span>{en?'Home Screen → Hisab Sahayika → Open':'Home Screen → হিসাব সহায়িকা → খুলুন'}</span></button>
       </div>
     </div>
   </div>;
@@ -254,7 +249,7 @@ function PwaMobileInstallGate({lang='bn'}){
         <span>{installing?(en?'Installing…':'ইনস্টল হচ্ছে…'):(pwa.iosInstallHint?(en?'Show install steps':'ইনস্টল করার নিয়ম দেখুন'):(pwa.canInstall?(en?'Install App':'অ্যাপ ইনস্টল করুন'):(en?'Prepare Install':'ইনস্টল প্রস্তুত করুন')))}</span>
       </button>
       <small className="pwa-gate-auto-note"><CheckCircle2/>{en?'After installation, future app updates will be applied automatically.':'একবার ইনস্টল হলে পরবর্তী অ্যাপ আপডেটগুলো স্বয়ংক্রিয়ভাবে হবে।'}</small>
-      <button className="pwa-gate-link" onClick={continueBrowser}>{en?'Not now — continue in browser':'এখন নয় — ব্রাউজারে দেখুন'}</button>
+      <div className="pwa-gate-browser-rule"><Smartphone/><span>{en?'On mobile, calculations are available through the installed app. Install the app to continue.':'মোবাইলে হিসাব ও সেবা ব্যবহার করতে অ্যাপটি ইনস্টল করতে হবে। ইনস্টল ছাড়া এই পেজ থেকে সামনে যাওয়া যাবে না।'}</span></div>
       <div className="pwa-gate-foot">{en?'Secure install through your browser · No Play Store needed':'ব্রাউজারের নিরাপদ ইনস্টল · Play Store লাগবে না'}</div>
     </div>
   </div>;
@@ -1211,7 +1206,7 @@ function PublicPayScaleHub({lang='bn'}){
     <div className="approved-section-title">
       <span>{en?'OFFICIAL GAZETTE · 17 SEP 2026':'সরকারি গেজেট · ১৭ সেপ্টেম্বর ২০২৬'}</span>
       <h2>{en?'Dhaka University Pay Scale 2026 Calculator':'ঢাকা বিশ্ববিদ্যালয় পে-স্কেল ২০২৬ ক্যালকুলেটর'}</h2>
-      <p>{en?'Independent calculation assistant teachers, officers and employees only. SRO 348/2026 Public Bodies rules, DU-specific deductions and fixed Dhaka location are applied.':'শুধু ঢাকা বিশ্ববিদ্যালয়ের শিক্ষক, কর্মকর্তা ও কর্মচারীদের জন্য। SRO 348/2026 Public Bodies বিধান, DU-নির্দিষ্ট কর্তন এবং নির্দিষ্ট ঢাকা লোকেশন প্রয়োগ করা হয়।'}</p>
+      <p>{en?'Independent calculation assistant using the applicable Public Bodies pay rules and supported DU-related calculation inputs. This is not an official University of Dhaka service.':'প্রযোজ্য Public Bodies বেতন বিধান ও সমর্থিত ঢাকা বিশ্ববিদ্যালয়-সংশ্লিষ্ট হিসাব তথ্য ব্যবহার করে এই স্বাধীন ক্যালকুলেটর কাজ করে। এটি ঢাকা বিশ্ববিদ্যালয়ের কোনো অফিসিয়াল সেবা নয়।'}</p>
     </div>
     <div className="public-pay-facts">
       <article><b>{en?'1 Jul 2026':'১ জুলাই ২০২৬'}</b><span>{en?'Phase 1: 40% (Grade 1–9) / 50% (Grade 10–20) of the difference':'১ম কিস্তি: পার্থক্যের ৪০% (গ্রেড ১–৯) / ৫০% (গ্রেড ১০–২০)'}</span></article>
@@ -1466,7 +1461,7 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
     </section>
 
     <section className="approved-cta">
-      <div><h2>{en?'Start your digital service journey now':'এখনই শুরু করুন আপনার ডিজিটাল সেবা যাত্রা'}</h2><p>{en?'Create one account and use all supported services from one place.':'একবার অ্যাকাউন্ট তৈরি করুন এবং সব সুবিধা নিজের জন্য ব্যবহার করুন।'}</p></div>
+      <div><h2>{en?'Keep your calculations and references in one place':'আপনার হিসাব ও প্রয়োজনীয় তথ্য এক জায়গায় রাখুন'}</h2><p>{en?'Create an account to save supported personal calculations and records. This is an independent, unofficial platform.':'অ্যাকাউন্ট তৈরি করে সমর্থিত ব্যক্তিগত হিসাব ও রেকর্ড সংরক্ষণ করুন। এটি একটি স্বাধীন ও অনানুষ্ঠানিক প্ল্যাটফর্ম।'}</p></div>
       <div><button className="white" onClick={onSignup}>{en?'Create new account':'নতুন অ্যাকাউন্ট তৈরি করুন'}<ArrowRight/></button><button className="outline" onClick={onLogin}>{en?'Sign in':'সাইন ইন'}</button></div>
     </section>
 
@@ -1506,7 +1501,7 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
     </main>}
 
     <footer className="approved-footer">
-      <button className="approved-brand brand-button footer-brand" onClick={()=>go('home')}><span><Landmark/></span><div><b>{en?'Employee Digital Service':'কর্মকর্তা-কর্মচারী ডিজিটাল সেবা'}</b><small>{en?'Personal Career & Service Management':'ব্যক্তিগত ক্যারিয়ার ও সেবা ব্যবস্থাপনা'}</small></div></button>
+      <button className="approved-brand brand-button footer-brand" onClick={()=>go('home')}><span><Calculator/></span><div><b>{en?'Hisab Sahayika':'হিসাব সহায়িকা'}</b><small>{en?'Independent · unofficial calculation assistant':'স্বাধীন · অনানুষ্ঠানিক হিসাব সহায়ক প্ল্যাটফর্ম'}</small></div></button>
       <div className="approved-footer-links">
         <button onClick={()=>go('home')}>{en?'Home':'হোম'}</button>
         <button onClick={()=>go('services')}>{en?'Services':'সেবা সমূহ'}</button>
