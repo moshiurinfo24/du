@@ -2610,12 +2610,10 @@ function duCategoryInfo(category,lang='bn'){
 function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
   const en=lang==='en',today=todayLocalIso();
   const compactPwa=typeof window!=='undefined'&&(
-    window.matchMedia?.('(display-mode: standalone)').matches||
-    window.navigator.standalone===true||
     window.matchMedia?.('(max-width: 900px)').matches||
     /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent||'')
   );
-  const guestProfile=compactPwa?guestLocalProfile():{};
+  const guestProfile=publicMode?guestLocalProfile():{};
   const [f,setF]=useState({
     grade:String(guestProfile.grade||'13'),currentStage:'0',date:today,housing:'none',duQuarterRent:'0',duQuarterOther:'0',
     children:'0',educationClaimedElsewhere:'no',tiffin:'yes',zone:'dhaka',
