@@ -67,6 +67,13 @@ async function api(path,opts={}){
   return d;
 }
 
+function guestLocalProfile(){
+  try{
+    const x=JSON.parse(localStorage.getItem('hisab_guest_workspace_v1')||'null');
+    return x?.profile||{};
+  }catch{return {}}
+}
+
 function pwaInstallId(){
   let id=localStorage.getItem('hisab_pwa_install_id');
   if(!id){
@@ -2197,7 +2204,8 @@ function DMY({label,value,onChange}){
 
 function PromotionCenter({lang='bn'}){
   const en=lang==='en', today=todayLocalIso();
-  const [f,setF]=useState({grade:'13',edu:'bachelor',currentDate:'',firstJoinDate:'',calcDate:today,computer:'yes',acr:'yes'}),[result,setResult]=useState(null);
+  const gp=guestLocalProfile();
+  const [f,setF]=useState({grade:String(gp.grade||'13'),edu:'bachelor',currentDate:gp.current_post_joining_date||'',firstJoinDate:gp.first_joining_date||'',calcDate:today,computer:'yes',acr:'yes'}),[result,setResult]=useState(null);
   useEffect(()=>{setF(x=>({...x,calcDate:todayLocalIso()}))},[]);
   function calc(){
     const asOf=todayLocalIso(); const next={...f,calcDate:asOf}; setF(next);
@@ -2322,12 +2330,13 @@ function duCategoryInfo(category,lang='bn'){
 function SalaryCalculator({lang='bn',publicMode=false}){
   const en=lang==='en',today=todayLocalIso();
   const compactPwa=typeof window!=='undefined'&&(window.matchMedia?.('(display-mode: standalone)').matches||window.navigator.standalone===true);
+  const guestProfile=compactPwa?guestLocalProfile():{};
   const [f,setF]=useState({
-    grade:'13',currentStage:'0',date:today,housing:'none',duQuarterRent:'0',duQuarterOther:'0',
+    grade:String(guestProfile.grade||'13'),currentStage:'0',date:today,housing:'none',duQuarterRent:'0',duQuarterOther:'0',
     children:'0',educationClaimedElsewhere:'no',tiffin:'yes',zone:'dhaka',
     ageBand:'under50',incrementEligible2026:'yes',mobile:'yes',laundry:'no',
     disabledChildren:'0',disabledBenefitElsewhere:'no',chargeAllowance:'no',otherSpecialAllowance:'0',
-    deductionMode:'du_auto',category:'class3',gpfRate:'10',benevolent:'0',
+    deductionMode:'du_auto',category:guestProfile.category||'class3',gpfRate:'10',benevolent:'0',
     health:'149.34',group:'192.50',stamp:'10',association:'10',tax:'0',loan:'0',other:'0'
   });
   const [r,setR]=useState(null);
@@ -3414,6 +3423,10 @@ function PointsCalculator({lang='bn'}){
   });
 
   useEffect(()=>{
+    const gp=guestLocalProfile();
+    if(gp.first_joining_date||gp.current_post_joining_date){
+      setService(v=>({...v,firstJoin:gp.first_joining_date||v.firstJoin,currentPostStart:gp.current_post_joining_date||v.currentPostStart,asOf:todayLocalIso()}));
+    }
     api('/api/my-career').then(x=>{
       const p=x.profile||{};
       setService(v=>({
@@ -3581,6 +3594,17 @@ function HouseAllocationPoints({lang='bn',publicMode=false}){
   const current=groups.find(x=>x.id===kind)||groups[0];
 
   useEffect(()=>{
+    const gp=guestLocalProfile();
+    const localFirst=gp.first_joining_date||'';
+    if(localFirst||gp.third_class_start_date||gp.previous_promotions||gp.marital_status||gp.gender){
+      setForm(v=>({...v,
+        firstJoin:v.firstJoin||localFirst,
+        thirdClassStart:v.thirdClassStart||gp.third_class_start_date||localFirst,
+        previousPromotions:String(gp.previous_promotions??v.previousPromotions??0),
+        marital:gp.marital_status||v.marital,
+        gender:gp.gender||v.gender
+      }));
+    }
     if(publicMode)return;
     api('/api/my-career').then(x=>{
       const p=x?.profile||{};
