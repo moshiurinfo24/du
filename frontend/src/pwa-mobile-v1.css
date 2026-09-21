@@ -186,3 +186,142 @@
   .mobile-bottom-nav button svg,.public-mobile-dock button svg{width:19px!important;height:19px!important}
   .pwa-status-popover{left:10px;right:10px;width:auto}
 }
+
+
+/* Main-link mobile install landing */
+.pwa-install-gate{
+  position:fixed;z-index:20000;inset:0;
+  display:none;
+  overflow:auto;
+  padding:calc(18px + env(safe-area-inset-top)) 14px calc(22px + env(safe-area-inset-bottom));
+  background:
+    radial-gradient(circle at 90% 8%,rgba(255,255,255,.22),transparent 24%),
+    radial-gradient(circle at 8% 95%,rgba(255,219,234,.44),transparent 30%),
+    linear-gradient(150deg,#e7277b 0%,#c5105f 48%,#950844 100%);
+}
+.pwa-gate-card{
+  width:min(100%,430px);margin:auto;
+  border:1px solid rgba(255,255,255,.70);
+  border-radius:26px;
+  padding:20px;
+  background:rgba(255,255,255,.97);
+  box-shadow:0 28px 70px rgba(74,8,38,.28);
+  color:#352d31;
+}
+.pwa-gate-card.success{padding-top:24px}
+.pwa-gate-top{display:flex;align-items:center;gap:11px;margin-bottom:16px}
+.pwa-gate-logo{
+  width:48px;height:48px;display:grid;place-items:center;flex:0 0 auto;
+  border-radius:15px;background:linear-gradient(145deg,#ef2b82,#ad0c51);color:#fff;
+  box-shadow:0 9px 20px rgba(212,20,104,.25);font:900 15px/1 "Inter",sans-serif
+}
+.pwa-gate-top b{display:block;color:#502038;font:800 14px/1.25 "Inter","Hind Siliguri",sans-serif}
+.pwa-gate-top small{display:block;margin-top:3px;color:#997886;font-size:10px}
+.pwa-gate-badge{
+  display:inline-flex;align-items:center;
+  padding:5px 9px;border-radius:999px;background:#fff0f6;color:#bc1059;
+  font:900 9px/1 "Inter","Hind Siliguri",sans-serif;letter-spacing:.06em
+}
+.pwa-gate-card h1{
+  margin:12px 0 8px;color:#4d1832;
+  font-size:29px;line-height:1.14;letter-spacing:-.02em
+}
+.pwa-gate-card>p{
+  margin:0;color:#78656e;font-size:12.5px;line-height:1.7
+}
+.pwa-gate-quick{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0
+}
+.pwa-gate-quick span{
+  min-height:48px;display:flex;align-items:center;gap:8px;
+  padding:9px 10px;border:1px solid #f0dce5;border-radius:12px;
+  background:linear-gradient(145deg,#fff,#fff7fb);color:#5d3b4b;
+  font-size:10.5px;font-weight:800
+}
+.pwa-gate-quick svg{width:17px;height:17px;color:#d41468}
+.pwa-gate-primary{
+  width:100%;min-height:52px;margin-top:3px;
+  border:0;border-radius:14px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  background:linear-gradient(135deg,#e62779,#b80d56);color:#fff;
+  box-shadow:0 11px 24px rgba(196,15,91,.23);
+  font-size:13px;font-weight:900;cursor:pointer
+}
+.pwa-gate-primary:disabled{opacity:.7;cursor:wait}
+.pwa-gate-primary svg{width:18px;height:18px}
+.pwa-gate-primary .spin{animation:duPwaSpin 1s linear infinite}
+.pwa-gate-auto-note{
+  margin:10px auto 0;display:flex;align-items:flex-start;justify-content:center;gap:5px;
+  color:#6f7775;font-size:9.5px;line-height:1.45;text-align:center
+}
+.pwa-gate-auto-note svg{width:13px;height:13px;flex:0 0 auto;color:#17845d;margin-top:1px}
+.pwa-gate-link{
+  display:block;margin:10px auto 0;border:0;background:transparent;
+  color:#9c6c82;font-size:10px;font-weight:700;cursor:pointer
+}
+.pwa-gate-foot{
+  margin-top:14px;padding-top:11px;border-top:1px solid #f1e4ea;
+  color:#a18b95;font-size:8.7px;text-align:center
+}
+.pwa-gate-message,.pwa-gate-ios{
+  margin:10px 0;padding:11px 12px;border:1px solid #efd9e3;border-radius:12px;
+  background:#fff7fb;color:#785263;font-size:10px;line-height:1.5
+}
+.pwa-gate-message.success{border-color:#cce8d9;background:#effaf4;color:#31684f}
+.pwa-gate-ios{display:flex;align-items:flex-start;gap:9px;background:#fff8e7;border-color:#eddfb8;color:#725c2c}
+.pwa-gate-ios svg{width:18px;height:18px;flex:0 0 auto;margin-top:2px}
+.pwa-gate-ios b{display:block;font-size:11px}
+.pwa-gate-ios span{display:block;margin-top:2px;font-size:9.5px}
+.pwa-gate-icon.success{
+  width:62px;height:62px;margin:0 auto 12px;display:grid;place-items:center;
+  border-radius:20px;background:linear-gradient(145deg,#1da66f,#12774f);color:#fff;
+  box-shadow:0 12px 28px rgba(20,132,91,.20)
+}
+.pwa-gate-icon.success svg{width:30px;height:30px}
+.pwa-gate-card.success{text-align:center}
+.pwa-gate-card.success>p{max-width:360px;margin-inline:auto}
+.pwa-home-hint{
+  display:flex;align-items:center;gap:11px;margin:16px 0 14px;padding:12px;
+  border:1px solid #efdbe5;border-radius:14px;background:linear-gradient(145deg,#fff,#fff6fa);text-align:left
+}
+.pwa-home-app-icon{
+  width:48px;height:48px;display:grid;place-items:center;flex:0 0 auto;
+  border-radius:14px;background:linear-gradient(145deg,#ef2b82,#ad0c51);color:#fff;
+  box-shadow:0 8px 18px rgba(212,20,104,.22);font:900 14px/1 "Inter",sans-serif
+}
+.pwa-home-hint b{display:block;color:#5a3144;font-size:11px}
+.pwa-home-hint small{display:block;margin-top:3px;color:#9a7b89;font-size:9px}
+.pwa-gate-service-title{
+  margin:3px 0 8px;color:#816a75;font-size:9px;font-weight:800;text-align:left
+}
+.pwa-gate-services{display:grid;grid-template-columns:1fr 1fr;gap:7px;text-align:left}
+.pwa-gate-services span{
+  display:flex;align-items:center;gap:7px;min-height:43px;padding:8px 9px;
+  border:1px solid #f0e2e8;border-radius:11px;background:#fff;color:#57424c
+}
+.pwa-gate-services svg{width:15px;height:15px;color:#cb145f}
+.pwa-gate-services b{font-size:9.5px;line-height:1.3}
+.pwa-gate-update{
+  display:flex;align-items:flex-start;gap:10px;margin:14px 0 3px;padding:12px;
+  border:1px solid #cee5d8;border-radius:13px;background:linear-gradient(145deg,#f0faf5,#fff);
+  text-align:left
+}
+.pwa-gate-update>svg{
+  width:30px;height:30px;padding:7px;border-radius:9px;background:#e2f5eb;color:#147550;flex:0 0 auto
+}
+.pwa-gate-update small{display:block;color:#708178;font-size:8.5px}
+.pwa-gate-update b{display:block;margin-top:1px;color:#216044;font-size:11px}
+.pwa-gate-update em{display:block;margin-top:2px;color:#7b8982;font-size:8.7px;font-style:normal}
+.pwa-gate-actions.single{margin-top:6px}
+.pwa-gate-actions.single .home-open-info{margin-top:0;background:linear-gradient(135deg,#e62779,#b80d56)}
+.pwa-gate-actions.single .home-open-info{pointer-events:none}
+
+@media(max-width:900px){
+  .pwa-install-gate{display:flex}
+}
+@media(max-width:390px){
+  .pwa-gate-card{padding:17px;border-radius:22px}
+  .pwa-gate-card h1{font-size:25px}
+  .pwa-gate-card>p{font-size:11.5px}
+  .pwa-gate-quick,.pwa-gate-services{grid-template-columns:1fr 1fr}
+}
