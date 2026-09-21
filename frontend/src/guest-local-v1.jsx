@@ -5,7 +5,7 @@ import './guest-local-v1.css';
 
 const KEY='hisab_guest_workspace_v1';
 const emptyData={
-  profile:{name:'',category:'',grade:'',first_joining_date:'',current_post:'',current_post_joining_date:'',retirement_age:'59',office_name:'',department_name:''},
+  profile:{name:'',category:'',grade:'',date_of_birth:'',gender:'',marital_status:'',first_joining_date:'',current_post:'',current_post_joining_date:'',third_class_start_date:'',fourth_class_start_date:'',previous_promotions:'0',retirement_age:'59',office_name:'',department_name:''},
   education:[],events:[],salary_history:[],leave:[],updated_at:''
 };
 function readData(){
@@ -120,8 +120,14 @@ function Profile({en,data,commit}){
       <label>{en?'Category':'শ্রেণি'}<select value={f.category||''} onChange={e=>setF({...f,category:e.target.value})}><option value="">{en?'Select':'নির্বাচন করুন'}</option><option value="teacher">{en?'Teacher':'শিক্ষক'}</option><option value="officer">{en?'Officer':'কর্মকর্তা'}</option><option value="class3">{en?'Class III employee':'৩য় শ্রেণির কর্মচারী'}</option><option value="class4">{en?'Class IV employee':'৪র্থ শ্রেণির কর্মচারী'}</option></select></label>
       <label>{en?'Current grade':'বর্তমান গ্রেড'}<select value={f.grade||''} onChange={e=>setF({...f,grade:e.target.value})}><option value="">{en?'Select':'নির্বাচন করুন'}</option>{Array.from({length:20},(_,i)=>i+1).map(x=><option key={x} value={x}>{en?'Grade ':'গ্রেড '}{x}</option>)}</select></label>
       <label>{en?'Current post':'বর্তমান পদ'}<input value={f.current_post||''} onChange={e=>setF({...f,current_post:e.target.value})}/></label>
+      <label>{en?'Date of birth':'জন্মতারিখ'}<input type="date" value={f.date_of_birth||''} onChange={e=>setF({...f,date_of_birth:e.target.value})}/></label>
+      <label>{en?'Gender':'লিঙ্গ'}<select value={f.gender||''} onChange={e=>setF({...f,gender:e.target.value})}><option value="">{en?'Select':'নির্বাচন করুন'}</option><option value="male">{en?'Male':'পুরুষ'}</option><option value="female">{en?'Female':'নারী'}</option></select></label>
+      <label>{en?'Marital status':'বৈবাহিক অবস্থা'}<select value={f.marital_status||''} onChange={e=>setF({...f,marital_status:e.target.value})}><option value="">{en?'Select':'নির্বাচন করুন'}</option><option value="married">{en?'Married':'বিবাহিত'}</option><option value="unmarried">{en?'Unmarried':'অবিবাহিত'}</option></select></label>
       <label>{en?'First joining date':'প্রথম যোগদানের তারিখ'}<input type="date" value={f.first_joining_date||''} onChange={e=>setF({...f,first_joining_date:e.target.value})}/></label>
       <label>{en?'Current post joining':'বর্তমান পদে যোগদান'}<input type="date" value={f.current_post_joining_date||''} onChange={e=>setF({...f,current_post_joining_date:e.target.value})}/></label>
+      <label>{en?'Entered 3rd class':'৩য় শ্রেণিতে প্রবেশ'}<input type="date" value={f.third_class_start_date||''} onChange={e=>setF({...f,third_class_start_date:e.target.value})}/></label>
+      <label>{en?'Entered 4th class':'৪র্থ শ্রেণিতে প্রবেশ'}<input type="date" value={f.fourth_class_start_date||''} onChange={e=>setF({...f,fourth_class_start_date:e.target.value})}/></label>
+      <label>{en?'Previous promotions':'আগের পদোন্নতির সংখ্যা'}<input type="number" min="0" value={f.previous_promotions||0} onChange={e=>setF({...f,previous_promotions:e.target.value})}/></label>
       <label>{en?'Office / unit':'অফিস / ইউনিট'}<input value={f.office_name||''} onChange={e=>setF({...f,office_name:e.target.value})}/></label>
       <label>{en?'Department / branch':'বিভাগ / শাখা'}<input value={f.department_name||''} onChange={e=>setF({...f,department_name:e.target.value})}/></label>
       <label>{en?'Retirement age':'অবসরের বয়স'}<input type="number" min="40" max="75" value={f.retirement_age||59} onChange={e=>setF({...f,retirement_age:e.target.value})}/></label>
