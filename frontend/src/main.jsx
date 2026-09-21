@@ -49,6 +49,7 @@ import './pwa-mobile-v1.css';
 import './hisab-brand-v1.css';
 import './pwa-home-v2.css';
 import './pwa-salary-compact-v1.css';
+import './hisab-indigo-aqua-v2.css';
 import {initPwaRuntime,subscribePwa,getPwaState,promptPwaInstall,formatPwaTime,manualPwaUpdateCheck,consumePwaUpdateNotice} from './pwa-client.js';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import GuestLocalCenter from './guest-local-v1.jsx';
