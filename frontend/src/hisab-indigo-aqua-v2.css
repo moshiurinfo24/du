@@ -238,3 +238,30 @@
 .app .smart-side-nav button.active{color:#3F51B5!important;border-color:#ced6fa!important;background:#eef2ff!important}
 .app .smart-side-nav .side-group>small{color:#4c5fbd!important}
 .app .primary,.app button.primary{background:linear-gradient(135deg,#5062ca,#3F51B5)!important;border-color:#3F51B5!important}
+
+
+/* Optional-login/auth clarity */
+.auth-guest-note{
+  display:flex;align-items:flex-start;gap:7px;margin:10px 0 12px;padding:9px 10px;
+  border:1px solid #cfe8e5;border-radius:10px;background:#eefaf8;color:#496f6b;font-size:9px;line-height:1.45
+}
+.auth-guest-note svg{width:14px;height:14px;flex:0 0 auto;margin-top:1px;color:#18875F}
+
+/* PWA status / update surfaces */
+.pwa-status-button{border-color:#dce2f3!important;background:#fff!important;color:#3F51B5!important}
+.pwa-install-button{background:linear-gradient(135deg,#5062CA,#3F51B5)!important}
+.pwa-status-popover{border-color:#dce2f3!important;box-shadow:0 20px 48px rgba(41,58,140,.16)!important}
+.pwa-status-popover:before{border-color:#dce2f3!important}
+.pwa-status-head>span{background:linear-gradient(145deg,#3F51B5,#18A7A0)!important}
+.pwa-status-head b{color:#2f3d66!important}
+.pwa-status-grid>div{border-color:#e2e6f0!important;background:linear-gradient(145deg,#fff,#f7f9ff)!important}
+.pwa-status-actions .check{background:#eef2ff!important;color:#3F51B5!important}
+.pwa-status-actions .install{background:linear-gradient(135deg,#5062CA,#3F51B5)!important}
+.pwa-update-toast{background:#28365f!important}
+.pwa-update-complete{background:linear-gradient(135deg,#293A8C,#246e83)!important}
+.pwa-install-nudge{border-color:#d4dcf5!important;background:linear-gradient(135deg,#fff,#f2f5ff)!important;box-shadow:0 18px 40px rgba(41,58,140,.15)!important}
+.pwa-install-nudge button{background:#3F51B5!important}
+
+/* Service sheet group */
+.pwa-sheet-grid.personal{margin-top:2px}
+.pwa-sheet-grid.personal button{background:#fbfcff}
