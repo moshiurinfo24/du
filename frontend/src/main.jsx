@@ -1914,8 +1914,7 @@ function SalaryCalculator({lang='bn',publicMode=false}){
     ageBand:'under50',incrementEligible2026:'yes',mobile:'yes',laundry:'no',
     disabledChildren:'0',disabledBenefitElsewhere:'no',chargeAllowance:'no',otherSpecialAllowance:'0',
     deductionMode:'du_auto',category:'class3',gpfRate:'10',benevolent:'0',
-    health:'149.34',group:'192.50',stamp:'10',association:'10',tax:'0',loan:'0',other:'0',
-    specialBenefitMode:'auto',specialBenefitMonths:'3',specialBenefitActual:'0'
+    health:'149.34',group:'192.50',stamp:'10',association:'10',tax:'0',loan:'0',other:'0'
   });
   const [r,setR]=useState(null);
   const stages=PAY2015[f.grade]||[];
@@ -1923,7 +1922,7 @@ function SalaryCalculator({lang='bn',publicMode=false}){
   const categoryInfo=duCategoryInfo(f.category,lang);
 
   function calc(){
-    const grade=Number(f.grade),currentBasic=stages[currentIndex]||0,input={...f,zone:'dhaka'};
+    const grade=Number(f.grade),currentBasic=stages[currentIndex]||0,input={...f,date:today,zone:'dhaka'};
     const make=(date,label,opts={})=>{
       const baseBasic=Number(opts.currentBasic??currentBasic);
       const eligible=opts.incrementEligible??(f.incrementEligible2026==='yes');
@@ -1959,7 +1958,7 @@ function SalaryCalculator({lang='bn',publicMode=false}){
       };
     };
 
-    const chosen=make(f.date||today,en?'Selected date':'নির্বাচিত তারিখ');
+    const chosen=make(today,en?'Current calculation':'বর্তমান হিসাব');
     const projections=[
       make('2026-07-01',en?'2026 · 1 July':'২০২৬ · ১ জুলাই'),
       make('2027-01-01',en?'2027 · 1 January':'২০২৭ · ১ জানুয়ারি'),
@@ -1973,10 +1972,8 @@ function SalaryCalculator({lang='bn',publicMode=false}){
     const legacyJuly=make('2026-06-30',en?'Legacy July 2026 payroll':'জুলাই ২০২৬ পুরোনো পে-রোল',{currentBasic:oldJulyBasic,incrementEligible:false});
     const october=make('2026-10-01',en?'October 2026':'অক্টোবর ২০২৬');
     const special=specialBenefit2025(grade,oldJulyBasic);
-    const receivedMonths=Math.max(0,Math.min(3,Math.floor(Number(f.specialBenefitMonths||0))));
-    const specialBenefitReceivedAmount=f.specialBenefitMode==='custom'
-      ?Math.max(0,Number(f.specialBenefitActual||0))
-      :special.monthly*receivedMonths;
+    const receivedMonths=3;
+    const specialBenefitReceivedAmount=special.monthly*receivedMonths;
     const monthlyBasicArrear=Math.max(0,Number(october.payableBasic||0)-Number(legacyJuly.payableBasic||0));
     const monthlyGrossArrear=Math.max(0,Number(october.gross||0)-Number(legacyJuly.gross||0));
     const monthlyDeductionIncrease=Number(october.deductions||0)-Number(legacyJuly.deductions||0);
@@ -1990,7 +1987,7 @@ function SalaryCalculator({lang='bn',publicMode=false}){
     const arrear2026={
       startDate:'2026-07-01',endDate:'2026-10-31',months:4,previousMonths:3,
       selectedGrade:grade,specialBenefitRate:special.rate,specialBenefitMinimum:special.minimum,
-      specialBenefitMode:f.specialBenefitMode,specialBenefitReceivedMonths:receivedMonths,
+      specialBenefitMode:'auto',specialBenefitReceivedMonths:receivedMonths,
       specialBenefitReceivedAmount,specialBenefitMonthly:special.monthly,
       specialBenefitThreeMonths:specialBenefitReceivedAmount,
       oldJuneBasic:currentBasic,oldJulyBasic,
@@ -2028,7 +2025,7 @@ function SalaryCalculator({lang='bn',publicMode=false}){
   ];
 
   return <div className={publicMode?'public-salary-calculator':''}>
-    <div className="page-head pay-calc-head"><div><h2>{en?'Dhaka University Pay Scale 2026 Calculator':'ঢাকা বিশ্ববিদ্যালয় পে-স্কেল ২০২৬ হিসাব'}</h2><p>{en?'Designed only for Dhaka University teachers, officers and employees. Location and Dhaka-city house-rent rules are fixed automatically.':'শুধু ঢাকা বিশ্ববিদ্যালয়ের শিক্ষক, কর্মকর্তা ও কর্মচারীদের জন্য। কর্মস্থল ও ঢাকা সিটির বাড়িভাড়া হার স্বয়ংক্রিয়ভাবে নির্ধারিত।'}</p></div></div>
+    <div className="page-head pay-calc-head"><div><h2>{en?'Dhaka University Pay Scale 2026 Calculator':'ঢাকা বিশ্ববিদ্যালয় পে-স্কেল ২০২৬ হিসাব'}</h2><p>{en?'Only the minimum required information is requested. Date, location and arrear special-benefit adjustment are handled automatically.':'শুধু প্রয়োজনীয় ন্যূনতম তথ্য দিন। তারিখ, কর্মস্থল এবং বকেয়ার বিশেষ সুবিধা সমন্বয় সিস্টেম স্বয়ংক্রিয়ভাবে করবে।'}</p></div></div>
 
     <div className="salary-step-strip" aria-label={en?'Calculation steps':'হিসাবের ধাপ'}>
       <div><span>1</span><div><b>{en?'DU profile & salary basis':'DU প্রোফাইল ও বেতনের ভিত্তি'}</b><small>{en?'Category, grade, old basic':'শ্রেণি, গ্রেড, পুরোনো বেতন'}</small></div></div>
@@ -2042,7 +2039,6 @@ function SalaryCalculator({lang='bn',publicMode=false}){
         <label>{en?'DU category':'ঢাকা বিশ্ববিদ্যালয়ের শ্রেণি'}<select value={f.category} onChange={e=>setF({...f,category:e.target.value})}>{categoryOpts.map(([v,l])=><option value={v} key={v}>{l}</option>)}</select></label>
         <label>{en?'Substantive / selected grade':'মূল/নির্বাচিত গ্রেড'}<select value={f.grade} onChange={e=>setF({...f,grade:e.target.value})}>{Array.from({length:20},(_,i)=>i+1).map(g=><option key={g} value={g}>{en?`Grade ${g}`:`গ্রেড ${numLang(g,'bn',0)}`}</option>)}</select></label>
         <label>{en?'2015 basic on 30 June 2026':'৩০ জুন ২০২৬-এর ২০১৫ মূল বেতন'}<select value={f.currentStage} onChange={e=>setF({...f,currentStage:e.target.value})}>{stages.map((v,i)=><option value={i} key={i}>{en?`Stage ${i+1} — Tk ${moneyLang(v,'en')}`:`ধাপ ${numLang(i+1,'bn',0)} — ৳${moneyLang(v,'bn')}`}</option>)}</select></label>
-        <label>{en?'Calculation date':'হিসাবের তারিখ'}<input type="date" min="2026-07-01" value={f.date} onChange={e=>setF({...f,date:e.target.value})}/></label>
         <label>{en?'1 July 2026 annual increment':'১ জুলাই ২০২৬ বার্ষিক ইনক্রিমেন্ট'}<select value={f.incrementEligible2026} onChange={e=>setF({...f,incrementEligible2026:e.target.value})}><option value="yes">{en?'Eligible / regular employee':'প্রাপ্য / নিয়মিতভাবে প্রাপ্য'}</option><option value="no">{en?'New appointee: 6 months not completed / not eligible':'নতুন যোগদানকারী: ৬ মাস পূর্ণ হয়নি / প্রাপ্য নয়'}</option></select><small>{en?'The six-month condition applies to newly appointed employees.':'৬ মাসের শর্ত নতুন যোগদানকারী কর্মচারীর ক্ষেত্রে প্রযোজ্য।'}</small></label>
         <div className="salary-fixed-field"><small>{en?'Work location — fixed':'কর্মস্থল — নির্দিষ্ট'}</small><b>{en?'University of Dhaka, Dhaka':'ঢাকা বিশ্ববিদ্যালয়, ঢাকা'}</b><span>{en?'Dhaka-city allowance rate is locked':'ঢাকা সিটির ভাতার হার পরিবর্তনযোগ্য নয়'}</span></div>
       </div>
@@ -2094,15 +2090,7 @@ function SalaryCalculator({lang='bn',publicMode=false}){
         </div>
       </details>
 
-      <details className="deduction-box arrear-adjustment-options"><summary>{en?'2026 special-benefit adjustment for arrears':'২০২৬ বকেয়ার বিশেষ সুবিধা সমন্বয়'}</summary>
-        <div className="form-grid compact">
-          <label>{en?'Adjustment method':'সমন্বয়ের পদ্ধতি'}<select value={f.specialBenefitMode} onChange={e=>setF({...f,specialBenefitMode:e.target.value})}><option value="auto">{en?'Auto from months actually received':'যে কয় মাস পেয়েছেন তা থেকে অটো'}</option><option value="custom">{en?'Enter actual total received':'প্রকৃত মোট প্রাপ্ত অংক লিখব'}</option></select></label>
-          {f.specialBenefitMode==='auto'
-            ?<label>{en?'Months of special benefit actually received':'বিশেষ সুবিধা বাস্তবে পেয়েছেন কত মাস'}<select value={f.specialBenefitMonths} onChange={e=>setF({...f,specialBenefitMonths:e.target.value})}>{[0,1,2,3].map(x=><option key={x} value={x}>{numLang(x,lang,0)} {en?'month(s)':'মাস'}</option>)}</select></label>
-            :<label>{en?'Actual special benefit received — total':'বাস্তবে পাওয়া বিশেষ সুবিধার মোট অংক'}<input type="number" min="0" step="1" value={f.specialBenefitActual} onChange={e=>setF({...f,specialBenefitActual:e.target.value})} placeholder="0"/></label>}
-        </div>
-        <div className="notice auto-special-benefit-note"><b>{en?'Gazette adjustment:':'গেজেট অনুযায়ী সমন্বয়:'}</b> {en?'Only the special benefit actually received is deducted from arrears; it is not forced to three months.':'বকেয়া থেকে কেবল বাস্তবে পাওয়া বিশেষ সুবিধাই বাদ যাবে; ৩ মাস বাধ্যতামূলক ধরে নেওয়া হবে না।'}</div>
-      </details>
+      <div className="notice auto-special-benefit-note"><b>{en?'Arrear adjustment:':'বকেয়া সমন্বয়:'}</b> {en?'The system automatically adjusts the July–September special benefit in the arrear calculation. No input is required here.':'জুলাই–সেপ্টেম্বরের বিশেষ সুবিধা বকেয়ার হিসাবে সিস্টেম স্বয়ংক্রিয়ভাবে সমন্বয় করবে। এখানে কোনো তথ্য দিতে হবে না।'}</div>
 
       <div className="salary-submit-bar">
         <p>{en?'DU location is fixed. If you live in a DU quarter, enter the actual approved unit rent; the system will stop house-rent allowance and deduct that rent automatically.':'কর্মস্থল ঢাকা বিশ্ববিদ্যালয় হিসেবে স্থির। ঢাবি বাসায় থাকলে প্রকৃত অনুমোদিত ইউনিট ভাড়া দিন; সিস্টেম বাড়িভাড়া ভাতা বন্ধ করে ওই ভাড়া স্বয়ংক্রিয়ভাবে কর্তন করবে।'}</p>
