@@ -1238,11 +1238,13 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
   const [notices,setNotices]=useState([]);
   const [policies,setPolicies]=useState([]);
   const [visitorStats,setVisitorStats]=useState({today_unique:null,month_unique:null,total_unique:null,total_views:null});
+  const [pwaStats,setPwaStats]=useState({total_installs:null});
 
   useEffect(()=>{
     let alive=true;
     const loadStats=()=>api('/api/public/stats').then(x=>{if(alive)setVisitorStats(x)}).catch(()=>{});
-    trackPublic('page_view','home').finally(loadStats);
+    const loadPwaStats=()=>api('/api/public/pwa-install-stats').then(x=>{if(alive)setPwaStats(x)}).catch(()=>{});
+    trackPublic('page_view','home').finally(()=>{loadStats();loadPwaStats()});
     Promise.allSettled([
       api('/api/public/notices?limit=4'),
       api('/api/public/policies?limit=4')
@@ -1251,7 +1253,7 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
       if(n.status==='fulfilled')setNotices(n.value.items||n.value.notices||[]);
       if(p.status==='fulfilled')setPolicies(p.value.items||p.value.policies||[]);
     });
-    const timer=setInterval(loadStats,60000);
+    const timer=setInterval(()=>{loadStats();loadPwaStats()},60000);
     return ()=>{alive=false;clearInterval(timer)};
   },[]);
 
@@ -1422,6 +1424,7 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
           <span><CheckCircle2/>{en?'A4 PDF reports':'A4 PDF রিপোর্ট'}</span>
         </div>
         <div className="hero-nonofficial-note"><ShieldAlert/><span>{en?'Independent and unofficial. No official affiliation with the University of Dhaka.':'স্বাধীন ও অনানুষ্ঠানিক। ঢাকা বিশ্ববিদ্যালয়ের সঙ্গে এই প্ল্যাটফর্মের কোনো অফিসিয়াল সম্পর্ক নেই।'}</span></div>
+        <div className="public-install-stat"><Users/><span>{pwaStats.total_installs==null?(en?'Install count loading…':'ইনস্টল সংখ্যা লোড হচ্ছে…'):(en?`Total app installs: ${numLang(pwaStats.total_installs,'en',0)}`:`অ্যাপ ইনস্টল: ${numLang(pwaStats.total_installs,'bn',0)}`)}</span></div>
       </div>
       <HeroDevice/>
     </section>
