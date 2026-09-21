@@ -89,11 +89,11 @@
 .pwa-quick-grid button b{
   max-width:74px;color:#526075;font-size:9.2px;line-height:1.25;text-align:center;font-weight:800
 }
-.pwa-quick-grid .rose{background:#FFE7F0;color:#3F51B5}
+.pwa-quick-grid .indigo{background:#E9EDFF;color:#3F51B5}
 .pwa-quick-grid .violet{background:#F2EAFE;color:#7843B3}
 .pwa-quick-grid .gold{background:#FFF2DD;color:#A56A1E}
-.pwa-quick-grid .mint{background:#E6F6EF;color:#177252}
-.pwa-quick-grid .pink{background:#FCEAF2;color:#B43C6E}
+.pwa-quick-grid .aqua,.pwa-quick-grid .teal{background:#E5F8F6;color:#168B84}
+.pwa-quick-grid .sky{background:#EAF6FF;color:#357BA8}
 .pwa-quick-grid .blue{background:#EAF3FD;color:#3B73A9}
 .pwa-quick-grid .amber{background:#FFF1E8;color:#B56734}
 .pwa-quick-grid .more{background:#F3EFF2;color:#6E5D66}
