@@ -799,11 +799,85 @@ function ReportShareActions({html,filename,title,summary='',lang='bn',existingUr
   </div>
 }
 
+const PDF_CENTER_KEY='hisab_pdf_center_v1';
+function readPdfCenter(){
+  try{
+    const rows=JSON.parse(localStorage.getItem(PDF_CENTER_KEY)||'[]');
+    return Array.isArray(rows)?rows.filter(x=>x&&x.html&&x.title).slice(0,16):[];
+  }catch{return []}
+}
+function rememberPdfReport({html,filename,title,summary=''}) {
+  if(!html||!title)return;
+  try{
+    const now=new Date().toISOString();
+    const item={id:String(title),title:String(title),summary:String(summary||''),filename:String(filename||'report.pdf'),html:String(html),updated_at:now};
+    const rows=readPdfCenter().filter(x=>x.id!==item.id);
+    localStorage.setItem(PDF_CENTER_KEY,JSON.stringify([item,...rows].slice(0,16)));
+    window.dispatchEvent(new CustomEvent('hisab-pdf-center-updated'));
+  }catch{}
+}
+function PdfCenter({lang='bn'}){
+  const en=lang==='en';
+  const [items,setItems]=useState(()=>readPdfCenter());
+  const [preview,setPreview]=useState(null);
+  useEffect(()=>{
+    const refresh=()=>setItems(readPdfCenter());
+    window.addEventListener('hisab-pdf-center-updated',refresh);
+    window.addEventListener('storage',refresh);
+    return()=>{window.removeEventListener('hisab-pdf-center-updated',refresh);window.removeEventListener('storage',refresh)};
+  },[]);
+  const remove=id=>{
+    const next=readPdfCenter().filter(x=>x.id!==id);
+    try{localStorage.setItem(PDF_CENTER_KEY,JSON.stringify(next))}catch{}
+    setItems(next);
+  };
+  const clearAll=()=>{
+    if(!confirm(en?'Clear all reports saved in PDF Center on this device?':'এই ডিভাইসের PDF Center-এ রাখা সব রিপোর্ট মুছবেন?'))return;
+    try{localStorage.removeItem(PDF_CENTER_KEY)}catch{}
+    setItems([]);
+  };
+  return <div className="pdf-center">
+    <section className="pdf-center-hero">
+      <div><small>{en?'LOCAL REPORT LIBRARY':'LOCAL রিপোর্ট লাইব্রেরি'}</small><h2>{en?'PDF Center':'PDF সেন্টার'}</h2><p>{en?'Salary, arrear, promotion, house and other report previews you create are kept together on this device.':'বেতন, বকেয়া, পদোন্নতি, বাসা ও অন্যান্য যে রিপোর্ট প্রিভিউ করবেন—সব এই ডিভাইসে এক জায়গায় থাকবে।'}</p></div>
+      <div className="pdf-center-badge"><FileText/><b>{numLang(items.length,lang,0)}</b><span>{en?'reports':'রিপোর্ট'}</span></div>
+    </section>
+    {items.length?<div className="pdf-center-grid">{items.map(item=><article key={item.id} className="pdf-center-card">
+      <div className="pdf-center-icon"><FileText/></div>
+      <div className="pdf-center-copy"><small>{item.updated_at?new Intl.DateTimeFormat(en?'en-GB':'bn-BD',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(item.updated_at)):''}</small><h3>{item.title}</h3>{item.summary&&<p>{item.summary}</p>}</div>
+      <div className="pdf-center-actions">
+        <button className="primary" onClick={()=>setPreview(item)}><Eye/>{en?'Preview':'প্রিভিউ'}</button>
+        <button onClick={()=>remove(item.id)} aria-label={en?'Remove report':'রিপোর্ট সরান'}><Trash2/></button>
+      </div>
+    </article>)}</div>:<div className="pdf-center-empty"><FileText/><h3>{en?'No saved report yet':'এখনও কোনো রিপোর্ট নেই'}</h3><p>{en?'Open any PDF preview from Salary, Arrear, Promotion or House; it will appear here automatically.':'বেতন, বকেয়া, পদোন্নতি বা বাসা থেকে যেকোনো PDF প্রিভিউ খুলুন—এখানে অটো যোগ হবে।'}</p></div>}
+    {items.length>0&&<div className="pdf-center-footer"><span><ShieldCheck/>{en?'Stored only on this device unless you explicitly share it.':'আপনি নিজে শেয়ার না করা পর্যন্ত রিপোর্ট শুধু এই ডিভাইসেই থাকবে।'}</span><button onClick={clearAll}><Trash2/>{en?'Clear all':'সব মুছুন'}</button></div>}
+    {preview&&<PdfPreviewModal html={preview.html} filename={preview.filename} onClose={()=>setPreview(null)} lang={lang} shareTitle={preview.title} shareSummary={preview.summary||''}/>}
+  </div>;
+}
+
 function PdfPreviewModal({html,filename,onClose,lang='bn',shareTitle='',shareSummary=''}) {
-  const reportRef=useRef(null); const[busy,setBusy]=useState(false); const en=lang==='en';
-  async function download(){try{setBusy(true);await saveA4Pdf(reportRef.current,filename);trackPublic('download','report_pdf')}catch(e){alert((en?'PDF could not be created: ':'PDF তৈরি করা যায়নি: ')+e.message)}finally{setBusy(false)}}
-  useEffect(()=>{const onKey=e=>{if(e.key==='Escape')onClose?.()};document.addEventListener('keydown',onKey);const prev=document.body.style.overflow;document.body.style.overflow='hidden';return()=>{document.removeEventListener('keydown',onKey);document.body.style.overflow=prev}},[onClose]);
+  const reportRef=useRef(null),viewportRef=useRef(null),paperRef=useRef(null);
+  const[busy,setBusy]=useState(false),[fit,setFit]=useState({scale:1,width:0,height:0}); const en=lang==='en';
   const title=shareTitle||(en?'Calculation Report':'হিসাবের রিপোর্ট');
+  async function download(){try{setBusy(true);await downloadA4Html(html,filename);trackPublic('download','report_pdf')}catch(e){alert((en?'PDF could not be created: ':'PDF তৈরি করা যায়নি: ')+e.message)}finally{setBusy(false)}}
+  useEffect(()=>{rememberPdfReport({html,filename,title,summary:shareSummary})},[html,filename,title,shareSummary]);
+  useEffect(()=>{const onKey=e=>{if(e.key==='Escape')onClose?.()};document.addEventListener('keydown',onKey);const prev=document.body.style.overflow;document.body.style.overflow='hidden';return()=>{document.removeEventListener('keydown',onKey);document.body.style.overflow=prev}},[onClose]);
+  useEffect(()=>{
+    const update=()=>{
+      const paper=paperRef.current,viewport=viewportRef.current;
+      if(!paper||!viewport)return;
+      const mobile=window.matchMedia?.('(max-width: 760px)').matches;
+      const naturalWidth=paper.scrollWidth||paper.getBoundingClientRect().width||1;
+      const naturalHeight=paper.scrollHeight||paper.getBoundingClientRect().height||1;
+      const available=Math.max(240,viewport.clientWidth-8);
+      const scale=mobile?Math.min(1,available/naturalWidth):1;
+      setFit({scale,width:naturalWidth*scale,height:naturalHeight*scale});
+    };
+    const id=requestAnimationFrame(()=>requestAnimationFrame(update));
+    const ro=typeof ResizeObserver!=='undefined'?new ResizeObserver(update):null;
+    if(paperRef.current)ro?.observe(paperRef.current);
+    window.addEventListener('resize',update);
+    return()=>{cancelAnimationFrame(id);ro?.disconnect();window.removeEventListener('resize',update)};
+  },[html]);
   return <div className="pdf-preview-modal">
     <div className="pdf-preview-topbar">
       <div><b>{en?'A4 PDF Preview':'A4 PDF প্রিভিউ'}</b><div>{en?'Check, download or share this report.':'রিপোর্ট যাচাই করুন, ডাউনলোড বা শেয়ার করুন।'}</div></div>
@@ -813,7 +887,13 @@ function PdfPreviewModal({html,filename,onClose,lang='bn',shareTitle='',shareSum
       </div>
     </div>
     <div className="pdf-preview-sharebar"><ReportShareActions html={html} filename={filename} title={title} summary={shareSummary} lang={lang}/></div>
-    <div className="pdf-preview-scroll"><div className="pdf-preview-paper" style={{overflowX:'hidden'}}><div ref={reportRef} style={{background:'#fff',width:'100%',maxWidth:'100%',overflowX:'hidden'}} dangerouslySetInnerHTML={{__html:html}}/></div></div>
+    <div className="pdf-preview-scroll" ref={viewportRef}>
+      <div className="pdf-preview-fit-shell" style={fit.scale<1?{width:fit.width,height:fit.height}:undefined}>
+        <div ref={paperRef} className="pdf-preview-paper" style={fit.scale<1?{transform:`scale(${fit.scale})`,transformOrigin:'top left'}:undefined}>
+          <div ref={reportRef} style={{background:'#fff',width:'100%',maxWidth:'100%',overflowX:'hidden'}} dangerouslySetInnerHTML={{__html:html}}/>
+        </div>
+      </div>
+    </div>
   </div>
 }
 
@@ -1484,6 +1564,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     points:en?'Points Center':'পয়েন্ট',
     calendar:en?'Calendar':'ক্যালেন্ডার',
     reference:en?'Notices & Policies':'নোটিশ ও নীতিমালা',
+    'pdf-center':en?'PDF Center':'PDF সেন্টার',
     'local-dashboard':en?'My Workspace':'আমার',
     'local-profile':en?'Career Profile':'চাকরি তথ্য',
     'local-education':en?'Education':'শিক্ষা',
@@ -1493,7 +1574,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     'local-reports':en?'My Reports':'রিপোর্ট',
     'local-privacy':en?'Data & Backup':'ডাটা ও ব্যাকআপ'
   };
-  const icons={salary:WalletCards,arrear:ReceiptText,promotion:TrendingUp,house:Home,service:Clock3,age:UserRound,gap:CalendarDays,retire:FileClock,basic:BadgeDollarSign,points:Award,calendar:CalendarDays,reference:BookOpen,'local-dashboard':UserRound};
+  const icons={salary:WalletCards,arrear:ReceiptText,promotion:TrendingUp,house:Home,service:Clock3,age:UserRound,gap:CalendarDays,retire:FileClock,basic:BadgeDollarSign,points:Award,calendar:CalendarDays,reference:BookOpen,'pdf-center':FileText,'local-dashboard':UserRound};
   const open=(tool)=>{
     const next=[tool,...recent.filter(x=>x!==tool)].slice(0,3);
     setRecent(next);
@@ -1517,6 +1598,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     ['age',UserRound,en?'Age':'বয়স','sky'],
     ['gap',CalendarDays,en?'Date Difference':'তারিখের ব্যবধান','blue'],
     ['basic',BadgeDollarSign,en?'Basic Projection':'মূল বেতন প্রক্ষেপণ','indigo'],
+    ['pdf-center',FileText,en?'PDF Center':'PDF সেন্টার','violet'],
     ['reference',BookOpen,en?'Notices & Policies':'নোটিশ ও নীতিমালা','teal']
   ];
   const localServices=[
@@ -1556,6 +1638,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
         <button className={activePublicTool==='age'?'active':''} onClick={()=>open('age')}><UserRound/><span>{en?'Age':'বয়স'}</span></button>
         <button className={activePublicTool==='gap'?'active':''} onClick={()=>open('gap')}><CalendarDays/><span>{en?'Date Difference':'তারিখের ব্যবধান'}</span></button>
         <button className={activePublicTool==='basic'?'active':''} onClick={()=>open('basic')}><BadgeDollarSign/><span>{en?'Basic Projection':'মূল বেতন প্রক্ষেপণ'}</span></button>
+        <button className={activePublicTool==='pdf-center'?'active':''} onClick={()=>open('pdf-center')}><FileText/><span>{en?'PDF Center':'PDF সেন্টার'}</span></button>
         <button className={activePublicTool==='reference'?'active':''} onClick={()=>open('reference')}><BookOpen/><span>{en?'Notices & Policies':'নোটিশ ও নীতিমালা'}</span></button>
       </div>
       <div className="pwa-desktop-nav-group personal">
@@ -1593,6 +1676,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
         {activePublicTool==='points'&&<section className="public-tool-only-shell"><PointsCalculator lang={lang} publicMode={true}/></section>}
         {activePublicTool==='calendar'&&<section className="public-tool-only-shell"><FiscalOfficeCalendar lang={lang}/></section>}
         {activePublicTool==='reference'&&<PwaReferenceCenter lang={lang} notices={notices} policies={policies}/>}
+        {activePublicTool==='pdf-center'&&<PdfCenter lang={lang}/>}
         {activePublicTool?.startsWith('local-')&&<GuestLocalCenter mode={localMode(activePublicTool)} lang={lang} onOpen={open} onLogin={onLogin}/>}
       </main>
       <nav className="pwa-app-bottom">
@@ -1990,6 +2074,7 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
       {activePublicTool==='points'&&<section className="public-tool-only-shell"><PointsCalculator lang={lang} publicMode={true}/></section>}
       {activePublicTool==='calendar'&&<section className="public-tool-only-shell"><FiscalOfficeCalendar lang={lang}/></section>}
       {activePublicTool==='reference'&&<PwaReferenceCenter lang={lang} notices={notices} policies={policies}/>}
+      {activePublicTool==='pdf-center'&&<PdfCenter lang={lang}/>}
       {activePublicTool?.startsWith('local-')&&<GuestLocalCenter mode={activePublicTool.slice(6)} lang={lang} onOpen={openPublicTool} onLogin={onLogin}/>}
     </main>}
 
