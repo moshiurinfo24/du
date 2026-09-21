@@ -604,6 +604,44 @@ export default{async fetch(req,env){
       return json({ok:true},200,C);
     }
 
+    // Phase 36: user-defined year-wise leave entitlements
+    if(u.pathname==='/api/my-leave-entitlements'&&(req.method==='GET'||req.method==='PUT')){
+      if(!user)return json({error:'Unauthenticated'},401,C);
+      await env.DB.prepare(`CREATE TABLE IF NOT EXISTS personal_leave_entitlement_settings(
+        user_id INTEGER NOT NULL,
+        year INTEGER NOT NULL,
+        entitlements_json TEXT NOT NULL DEFAULT '{}',
+        source_note TEXT,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY(user_id,year)
+      )`).run();
+      const allowed=['casual','earned','medical','maternity','paternity','study','special','other'];
+      if(req.method==='GET'){
+        const year=Number(u.searchParams.get('year')||new Date().getFullYear());
+        if(!Number.isInteger(year)||year<2000||year>2100)return json({error:'Invalid year'},400,C);
+        const row=await d1First(env,`SELECT entitlements_json,source_note,updated_at FROM personal_leave_entitlement_settings WHERE user_id=? AND year=?`,[user.id,year]).catch(()=>null);
+        let entitlements={};
+        try{entitlements=JSON.parse(row?.entitlements_json||'{}')}catch{}
+        return json({year,entitlements,source_note:row?.source_note||'',updated_at:row?.updated_at||null},200,C);
+      }
+      const b=await req.json(),year=Number(b.year);
+      if(!Number.isInteger(year)||year<2000||year>2100)return json({error:'Invalid year'},400,C);
+      const raw=b.entitlements&&typeof b.entitlements==='object'&&!Array.isArray(b.entitlements)?b.entitlements:{},clean={};
+      for(const type of allowed){
+        const value=raw[type];
+        if(value===''||value===null||value===undefined)continue;
+        const n=Number(value);
+        if(!Number.isFinite(n)||n<0||n>366)return json({error:'Entitlement days must be between 0 and 366'},400,C);
+        clean[type]=Math.round(n*100)/100;
+      }
+      const sourceNote=String(b.source_note||'').trim().slice(0,500)||null;
+      await env.DB.prepare(`INSERT INTO personal_leave_entitlement_settings(user_id,year,entitlements_json,source_note,updated_at)
+        VALUES(?,?,?,?,CURRENT_TIMESTAMP)
+        ON CONFLICT(user_id,year) DO UPDATE SET entitlements_json=excluded.entitlements_json,source_note=excluded.source_note,updated_at=CURRENT_TIMESTAMP`)
+        .bind(user.id,year,JSON.stringify(clean),sourceNote).run();
+      await audit(env,user,'leave_entitlement_update','personal_leave_entitlement',year,{types:Object.keys(clean)});
+      return json({ok:true,year,entitlements:clean,source_note:sourceNote||''},200,C);
+    }
     // Phase 14: Personal Leave Record
     if(u.pathname==='/api/my-leave-records'&&req.method==='GET'){
       if(!user)return json({error:'Unauthenticated'},401,C);
@@ -939,7 +977,7 @@ export default{async fetch(req,env){
         if(other<1)return json({error:'At least one active Super Admin account must remain'},400,C);
       }
       // Remove personal data first. These operations are intentionally explicit so the account is fully removed.
-      for(const table of ['sessions','career_education','career_events','career_profiles','salary_history','personal_leave_records','usage_events','login_events']){
+      for(const table of ['sessions','career_education','career_events','career_profiles','salary_history','personal_leave_records','personal_leave_entitlement_settings','usage_events','login_events']){
         try{await env.DB.prepare(`DELETE FROM ${table} WHERE user_id=?`).bind(id).run()}catch{}
       }
       try{await env.DB.prepare(`UPDATE audit_logs SET user_id=NULL WHERE user_id=?`).bind(id).run()}catch{}
