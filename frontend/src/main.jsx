@@ -63,6 +63,31 @@ async function api(path,opts={}){
   return d;
 }
 
+function pwaInstallId(){
+  let id=localStorage.getItem('hisab_pwa_install_id');
+  if(!id){
+    id=(crypto.randomUUID?.()||`install-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    localStorage.setItem('hisab_pwa_install_id',id);
+  }
+  return id;
+}
+function pwaPlatform(){
+  const ua=navigator.userAgent||'';
+  if(/iphone|ipad|ipod/i.test(ua))return 'ios';
+  if(/android/i.test(ua))return 'android';
+  return 'other';
+}
+async function recordPwaInstall(){
+  const standalone=window.matchMedia?.('(display-mode: standalone)').matches||window.navigator.standalone===true;
+  const source=standalone?'standalone_first_open':'browser_install';
+  const result=await api('/api/public/pwa-install',{
+    method:'POST',
+    body:JSON.stringify({install_id:pwaInstallId(),platform:pwaPlatform(),source})
+  });
+  localStorage.setItem('hisab_pwa_install_reported','1');
+  return result;
+}
+
 function visitorId(){
   let id=localStorage.getItem('public_visitor_id');
   if(!id){
@@ -122,7 +147,15 @@ function PwaMobileInstallGate({lang='bn'}){
   const [bypass,setBypass]=useState(()=>sessionStorage.getItem('du_pwa_browser_continue')==='1');
   const [installing,setInstalling]=useState(false);
   const [installResult,setInstallResult]=useState('');
+  const [installStats,setInstallStats]=useState({total_installs:null,today_installs:null});
   useEffect(()=>subscribePwa(setPwa),[]);
+  useEffect(()=>{
+    let alive=true;
+    const load=()=>api('/api/public/pwa-install-stats').then(x=>{if(alive)setInstallStats(x)}).catch(()=>{});
+    load();
+    const t=setInterval(load,60000);
+    return()=>{alive=false;clearInterval(t)};
+  },[pwa.installed]);
 
   const mobile=typeof window!=='undefined'&&(
     window.matchMedia?.('(max-width: 900px)').matches||
@@ -168,19 +201,21 @@ function PwaMobileInstallGate({lang='bn'}){
     <div className="pwa-gate-card success">
       <div className="pwa-gate-icon success"><CheckCircle2/></div>
       <span className="pwa-gate-badge">{en?'INSTALLATION COMPLETE':'ইনস্টল সম্পন্ন'}</span>
-      <h1>{en?'DU Service App is installed':'DU Service App ইনস্টল হয়েছে'}</h1>
-      <p>{en?'Open DU Service App from your phone Home Screen and use all services from the app.':'এখন আপনার মোবাইলের Home Screen থেকে DU Service App খুলে যাবতীয় সেবা ব্যবহার করুন।'}</p>
+      <div className="pwa-install-count"><Users/><span>{installStats.total_installs==null?(en?'Loading install count…':'ইনস্টল সংখ্যা লোড হচ্ছে…'):(en?`${numLang(installStats.total_installs,'en',0)} total installs`:`মোট ${numLang(installStats.total_installs,'bn',0)} বার ইনস্টল হয়েছে`)}</span></div>
+      <h1>{en?'Hisab Sahayika is installed':'হিসাব সহায়িকা ইনস্টল হয়েছে'}</h1>
+      <p>{en?'Open Hisab Sahayika from your phone Home Screen and use the calculation services from the app.':'এখন আপনার মোবাইলের Home Screen থেকে হিসাব সহায়িকা খুলে প্রয়োজনীয় হিসাব ও সেবাগুলো ব্যবহার করুন।'}</p>
       <div className="pwa-home-hint">
-        <span className="pwa-home-app-icon">DU</span>
-        <div><b>{en?'Look for this app on your Home Screen':'Home Screen-এ এই অ্যাপটি খুঁজুন'}</b><small>{en?'DU Service · magenta icon':'DU Service · ম্যাজেন্টা আইকন'}</small></div>
+        <span className="pwa-home-app-icon">হি</span>
+        <div><b>{en?'Look for this app on your Home Screen':'Home Screen-এ এই অ্যাপটি খুঁজুন'}</b><small>{en?'Hisab Sahayika · rose icon':'হিসাব সহায়িকা · রোজ আইকন'}</small></div>
       </div>
       <div className="pwa-gate-service-title">{en?'Services available in the app':'অ্যাপে যা যা পাবেন'}</div>
       <div className="pwa-gate-services">{services.map(([I,t])=><span key={t}><I/><b>{t}</b></span>)}</div>
+      <div className="pwa-gate-disclaimer compact"><ShieldAlert/><div><b>{en?'Independent, unofficial app':'স্বাধীন ও অনানুষ্ঠানিক অ্যাপ'}</b><span>{en?'No official affiliation with the University of Dhaka.':'ঢাকা বিশ্ববিদ্যালয়ের সঙ্গে এই অ্যাপের কোনো অফিসিয়াল সম্পর্ক নেই।'}</span></div></div>
       <div className="pwa-gate-update">
         <RefreshCw/><div><small>{en?'Automatic updates':'অটো আপডেট'}</small><b>{en?'Enabled':'চালু'}</b><em>{en?'Latest app update':'সর্বশেষ অ্যাপ আপডেট'}: {lastTime}</em>{localStorage.getItem('du_pwa_installed_at')&&<em>{en?'Installed':'ইনস্টল হয়েছে'}: {installedAt}</em>}</div>
       </div>
       <div className="pwa-gate-actions single">
-        <button className="pwa-gate-primary home-open-info" onClick={()=>{}}><Home/><span>{en?'Open DU Service App from Home Screen':'Home Screen থেকে DU Service App খুলুন'}</span></button>
+        <button className="pwa-gate-primary home-open-info" onClick={()=>{}}><Home/><span>{en?'Open Hisab Sahayika from Home Screen':'Home Screen থেকে হিসাব সহায়িকা খুলুন'}</span></button>
         <button className="pwa-gate-link" onClick={continueBrowser}>{en?'Continue in browser instead':'ব্রাউজারে সেবা দেখুন'}</button>
       </div>
     </div>
@@ -189,12 +224,13 @@ function PwaMobileInstallGate({lang='bn'}){
   return <div className="pwa-install-gate">
     <div className="pwa-gate-card">
       <div className="pwa-gate-top">
-        <span className="pwa-gate-logo">DU</span>
-        <div><b>DU Employee Digital Service</b><small>{en?'For University of Dhaka':'ঢাকা বিশ্ববিদ্যালয়ের জন্য'}</small></div>
+        <span className="pwa-gate-logo">হি</span>
+        <div><b>Hisab Sahayika</b><small>{en?'Independent calculation assistant':'স্বাধীন হিসাব সহায়ক অ্যাপ'}</small></div>
       </div>
-      <span className="pwa-gate-badge">{en?'MOBILE APP':'মোবাইল অ্যাপ'}</span>
-      <h1>{en?'Install DU Service App':'DU Service App ইনস্টল করুন'}</h1>
-      <p>{en?'Salary, arrears, promotion, points, housing and essential digital services for University of Dhaka teachers, officers and employees — all in one app.':'ঢাকা বিশ্ববিদ্যালয়ের শিক্ষক, কর্মকর্তা ও কর্মচারীদের বেতন, বকেয়া, পদোন্নতি, পয়েন্ট, বাসা ও প্রয়োজনীয় ডিজিটাল সেবা—সব এখন একটি অ্যাপে।'}</p>
+      <span className="pwa-gate-badge">{en?'INDEPENDENT CALCULATION APP':'স্বাধীন হিসাব সহায়ক অ্যাপ'}</span>
+      <div className="pwa-install-count"><Users/><span>{installStats.total_installs==null?(en?'Loading install count…':'ইনস্টল সংখ্যা লোড হচ্ছে…'):(en?`${numLang(installStats.total_installs,'en',0)} total installs`:`মোট ${numLang(installStats.total_installs,'bn',0)} বার ইনস্টল হয়েছে`)}</span></div>
+      <h1>{en?'Install Hisab Sahayika':'হিসাব সহায়িকা ইনস্টল করুন'}</h1>
+      <p>{en?'A convenient independent app for viewing salary, arrears, promotion, points, housing and other supported calculations.':'বেতন, বকেয়া, পদোন্নতি, পয়েন্ট, বাসা, চাকরিকাল ও অন্যান্য সমর্থিত হিসাব জানা ও দেখার জন্য একটি স্বাধীন সহায়ক অ্যাপ।'}</p>
 
       <div className="pwa-gate-quick">
         <span><WalletCards/>{en?'Salary & arrears':'বেতন ও বকেয়া'}</span>
@@ -202,6 +238,8 @@ function PwaMobileInstallGate({lang='bn'}){
         <span><Award/>{en?'Points':'পয়েন্ট'}</span>
         <span><Home/>{en?'Housing':'বাসা'}</span>
       </div>
+
+      <div className="pwa-gate-disclaimer"><ShieldAlert/><div><b>{en?'Not an official University of Dhaka app':'ঢাকা বিশ্ববিদ্যালয়ের অফিসিয়াল অ্যাপ নয়'}</b><span>{en?'This is an independent and unofficial calculation assistant. It is not operated, approved or published by the University of Dhaka.':'এটি একটি স্বাধীন ও অনানুষ্ঠানিক হিসাব সহায়ক অ্যাপ। ঢাকা বিশ্ববিদ্যালয় কর্তৃপক্ষ এটি পরিচালনা, অনুমোদন বা প্রকাশ করেনি।'}</span></div></div>
 
       {pwa.iosInstallHint||installResult==='ios'?<div className="pwa-gate-ios">
         <Share2/><div><b>{en?'Install on iPhone / iPad':'iPhone / iPad-এ ইনস্টল'}</b><span>{en?'Tap Share in Safari, then choose “Add to Home Screen”.':'Safari-তে Share চাপুন, তারপর “Add to Home Screen” নির্বাচন করুন।'}</span></div>
@@ -255,7 +293,7 @@ function PwaControls({lang='bn'}){
     {(pwa.canInstall||pwa.iosInstallHint)&&!pwa.installed&&<button className="pwa-install-button" onClick={doInstall} title={en?'Install app':'অ্যাপ ইনস্টল করুন'}><Save/><span>{en?'Install':'ইনস্টল'}</span></button>}
     <button className={`pwa-status-button ${pwa.updating?'updating':''}`} onClick={()=>setOpen(v=>!v)} title={en?'App update status':'অ্যাপ আপডেট অবস্থা'}><RefreshCw/><span><b>{pwa.offline?(en?'Offline':'অফলাইন'):(pwa.updating?(en?'Updating':'আপডেট হচ্ছে'):(en?'App':'অ্যাপ'))}</b><small>{timeText}</small></span></button>
     {open&&<div className="pwa-status-popover">
-      <div className="pwa-status-head"><span>{pwa.updating?<RefreshCw/>:<CheckCircle2/>}</span><div><b>{en?'DU Digital Service App':'DU ডিজিটাল সেবা অ্যাপ'}</b><small>{pwa.installed?(en?'Installed PWA':'ইনস্টল করা PWA'):(en?'Web + PWA ready':'Web + PWA প্রস্তুত')}</small></div></div>
+      <div className="pwa-status-head"><span>{pwa.updating?<RefreshCw/>:<CheckCircle2/>}</span><div><b>{en?'Hisab Sahayika':'হিসাব সহায়িকা'}</b><small>{en?'Independent · unofficial calculation app':'স্বাধীন · অনানুষ্ঠানিক হিসাব সহায়ক অ্যাপ'}</small></div></div>
       <div className="pwa-status-grid">
         <div><small>{en?'Automatic updates':'অটো আপডেট'}</small><b>{en?'Enabled — checked automatically':'চালু — স্বয়ংক্রিয়ভাবে চেক হবে'}</b></div>
         <div><small>{en?'Last update':'সর্বশেষ আপডেট'}</small><b>{timeText}</b></div>
@@ -271,8 +309,8 @@ function PwaControls({lang='bn'}){
     {pwa.updating&&<div className="pwa-update-toast"><RefreshCw/><span>{en?'New version found. Updating automatically…':'নতুন ভার্সন পাওয়া গেছে। অটো আপডেট হচ্ছে…'}</span></div>}
     {updatedNotice&&!pwa.updating&&<div className="pwa-update-toast pwa-update-complete"><CheckCircle2/><span><b>{en?'Automatic update complete':'অটো আপডেট সম্পন্ন'}</b><small>{formatPwaTime(updatedNotice,lang)}</small></span><button onClick={()=>{setUpdatedNotice('');consumePwaUpdateNotice()}} aria-label={en?'Close':'বন্ধ'}><X size={15}/></button></div>}
     {nudge&&<div className="pwa-install-nudge">
-      <span className="app-mark">DU</span>
-      <div><b>{en?'Install DU Service App':'DU Service App ইনস্টল করুন'}</b><small>{pwa.iosInstallHint?(en?'Add it to your Home Screen for app-like use.':'Home Screen-এ যোগ করলে অ্যাপের মতো ব্যবহার করতে পারবেন।'):(en?'One tap to install. Future updates will be automatic.':'এক ট্যাপে ইনস্টল করুন। পরের আপডেটগুলো অটো হবে।')}</small></div>
+      <span className="app-mark">হি</span>
+      <div><b>{en?'Install Hisab Sahayika':'হিসাব সহায়িকা ইনস্টল করুন'}</b><small>{pwa.iosInstallHint?(en?'Add it to your Home Screen for app-like use.':'Home Screen-এ যোগ করলে অ্যাপের মতো ব্যবহার করতে পারবেন।'):(en?'One tap to install. Future updates will be automatic.':'এক ট্যাপে ইনস্টল করুন। পরের আপডেটগুলো অটো হবে।')}</small></div>
       <button onClick={doInstall}>{en?'Install':'ইনস্টল'}</button>
       <button className="dismiss" onClick={dismiss} aria-label={en?'Dismiss':'বন্ধ'}><X size={15}/></button>
     </div>}
@@ -1173,7 +1211,7 @@ function PublicPayScaleHub({lang='bn'}){
     <div className="approved-section-title">
       <span>{en?'OFFICIAL GAZETTE · 17 SEP 2026':'সরকারি গেজেট · ১৭ সেপ্টেম্বর ২০২৬'}</span>
       <h2>{en?'Dhaka University Pay Scale 2026 Calculator':'ঢাকা বিশ্ববিদ্যালয় পে-স্কেল ২০২৬ ক্যালকুলেটর'}</h2>
-      <p>{en?'For University of Dhaka teachers, officers and employees only. SRO 348/2026 Public Bodies rules, DU-specific deductions and fixed Dhaka location are applied.':'শুধু ঢাকা বিশ্ববিদ্যালয়ের শিক্ষক, কর্মকর্তা ও কর্মচারীদের জন্য। SRO 348/2026 Public Bodies বিধান, DU-নির্দিষ্ট কর্তন এবং নির্দিষ্ট ঢাকা লোকেশন প্রয়োগ করা হয়।'}</p>
+      <p>{en?'Independent calculation assistant teachers, officers and employees only. SRO 348/2026 Public Bodies rules, DU-specific deductions and fixed Dhaka location are applied.':'শুধু ঢাকা বিশ্ববিদ্যালয়ের শিক্ষক, কর্মকর্তা ও কর্মচারীদের জন্য। SRO 348/2026 Public Bodies বিধান, DU-নির্দিষ্ট কর্তন এবং নির্দিষ্ট ঢাকা লোকেশন প্রয়োগ করা হয়।'}</p>
     </div>
     <div className="public-pay-facts">
       <article><b>{en?'1 Jul 2026':'১ জুলাই ২০২৬'}</b><span>{en?'Phase 1: 40% (Grade 1–9) / 50% (Grade 10–20) of the difference':'১ম কিস্তি: পার্থক্যের ৪০% (গ্রেড ১–৯) / ৫০% (গ্রেড ১০–২০)'}</span></article>
@@ -1371,9 +1409,9 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
     {!activePublicTool&&<>
     <section className="approved-hero du-home-hero">
       <div className="approved-hero-copy">
-        <span className="approved-kicker"><Landmark/>{en?'FOR UNIVERSITY OF DHAKA ONLY':'শুধু ঢাকা বিশ্ববিদ্যালয়ের জন্য'}</span>
+        <span className="approved-kicker"><Landmark/>{en?'FOR UNIVERSITY OF DHAKA ONLY':'শুধু স্বাধীন হিসাব সহায়ক অ্যাপ'}</span>
         <h1>{en?'Salary, promotion and points — simple calculations in one place':'বেতন, পদোন্নতি ও পয়েন্ট হিসাব—সহজভাবে এক জায়গায়'}</h1>
-        <p>{en?'A simple digital service for University of Dhaka teachers, officers and employees. Calculate salary, arrears, promotion and related points without unnecessary steps.':'ঢাকা বিশ্ববিদ্যালয়ের শিক্ষক, কর্মকর্তা ও কর্মচারীদের জন্য সহজ ডিজিটাল সেবা। অপ্রয়োজনীয় ধাপ ছাড়াই বেতন, বকেয়া, পদোন্নতি ও প্রয়োজনীয় পয়েন্ট হিসাব করুন।'}</p>
+        <p>{en?'A simple independent calculator for salary, arrears, promotion, points and related information. It is not an official University of Dhaka service.':'বেতন, বকেয়া, পদোন্নতি, পয়েন্ট ও সংশ্লিষ্ট হিসাব জানা ও দেখার জন্য একটি স্বাধীন সহায়ক প্ল্যাটফর্ম। এটি ঢাকা বিশ্ববিদ্যালয়ের কোনো অফিসিয়াল সেবা নয়।'}</p>
         <div className="approved-hero-buttons">
           <button className="primary" onClick={()=>openPublicTool('salary')}>{en?'Calculate salary':'বেতন হিসাব করুন'}<ArrowRight/></button>
           <button className="secondary" onClick={()=>openPublicTool('promotion')}>{en?'Check promotion':'পদোন্নতি হিসাব'}<TrendingUp/></button>
@@ -3864,6 +3902,16 @@ function App(){
     const apply=()=>document.documentElement.classList.toggle('mobile-device',touch&&window.innerWidth<=1180);
     apply();window.addEventListener('resize',apply);
     return()=>window.removeEventListener('resize',apply);
+  },[]);
+  useEffect(()=>{
+    let alive=true;
+    const report=async(next)=>{
+      if(!alive||!next.installed||localStorage.getItem('hisab_pwa_install_reported')==='1')return;
+      try{await recordPwaInstall()}catch{}
+    };
+    report(getPwaState());
+    const unsub=subscribePwa(report);
+    return()=>{alive=false;unsub?.()};
   },[]);
   const params=new URLSearchParams(window.location.search);
   const queryAuth=params.get('auth')||'';
