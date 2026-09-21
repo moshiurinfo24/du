@@ -1434,7 +1434,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
         {activePublicTool==='promotion'&&<section className="public-tool-only-shell"><PromotionCenter lang={lang} publicMode={true}/></section>}
         {activePublicTool==='house'&&<section className="public-tool-only-shell"><HouseAllocationPoints lang={lang} publicMode={true}/></section>}
         {['service','age','gap','retire','basic'].includes(activePublicTool)&&<section className="public-tool-only-shell"><CalculatorCenter lang={lang} publicMode={true} initialTool={activePublicTool} singleTool={true}/></section>}
-        {activePublicTool==='points'&&<section className="public-tool-only-shell"><PointsCalculator lang={lang}/></section>}
+        {activePublicTool==='points'&&<section className="public-tool-only-shell"><PointsCalculator lang={lang} publicMode={true}/></section>}
         {activePublicTool==='calendar'&&<section className="public-tool-only-shell"><FiscalOfficeCalendar lang={lang}/></section>}
         {activePublicTool==='reference'&&<PwaReferenceCenter lang={lang} notices={notices} policies={policies}/>}
         {activePublicTool?.startsWith('local-')&&<GuestLocalCenter mode={localMode(activePublicTool)} lang={lang} onOpen={open} onLogin={onLogin}/>}
@@ -3515,7 +3515,7 @@ const EDUCATION_POINT_RULES={
   masters:{bn:'স্নাতকোত্তর',en:"Master's",points:{first:3,second:2,third:1}}
 };
 
-function PointsCalculator({lang='bn'}){
+function PointsCalculator({lang='bn',publicMode=false}){
   const en=lang==='en';
   const today=todayLocalIso();
   const [tab,setTab]=useState('service');
@@ -3530,6 +3530,7 @@ function PointsCalculator({lang='bn'}){
     if(gp.first_joining_date||gp.current_post_joining_date){
       setService(v=>({...v,firstJoin:gp.first_joining_date||v.firstJoin,currentPostStart:gp.current_post_joining_date||v.currentPostStart,asOf:todayLocalIso()}));
     }
+    if(publicMode)return;
     api('/api/my-career').then(x=>{
       const p=x.profile||{};
       setService(v=>({
