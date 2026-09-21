@@ -2542,12 +2542,13 @@ function SalaryCalculator({lang='bn',publicMode=false}){
     {r&&<div id="salary-result" className="salary-result-anchor"><SalaryResult r={r} lang={lang}/></div>}
   </div>
 }
-function SalaryResult({r,lang='bn'}){
+function SalaryResult({r,lang='bn',compact=false,onReset}){
   const en=lang==='en';
   const [activeYear,setActiveYear]=useState(2026);
   const [resultView,setResultView]=useState('salary');
+  const [compactTab,setCompactTab]=useState('now');
   const [pdfBusy,setPdfBusy]=useState('');
-  useEffect(()=>{setActiveYear(2026);setResultView('salary')},[r]);
+  useEffect(()=>{setActiveYear(2026);setResultView('salary');setCompactTab('now')},[r]);
   useEffect(()=>{if(activeYear!==2026)setResultView('salary')},[activeYear]);
 
   const amt=v=>`${en?'Tk':'৳'} ${moneyLang(v,lang)}`;
@@ -2597,6 +2598,97 @@ function SalaryResult({r,lang='bn'}){
     try{setPdfBusy(key);await downloadA4Html(item.html,item.filename);trackPublic('download',key==='all'?'salary_2026_2028_pdf':key==='arrear'?'october_2026_arrear_pdf':`salary_${key}_pdf`)}
     catch(e){alert((en?'PDF could not be created: ':'PDF তৈরি করা যায়নি: ')+e.message)}
     finally{setPdfBusy('')}
+  }
+
+  if(compact){
+    const cc=r.allowances||{};
+    const compactAllowances=(en?[
+      ['House rent',cc.house],['Medical',cc.medical],['Education',cc.education],['Tiffin',cc.tiffin],
+      ['Conveyance',cc.conveyance],['Mobile',cc.mobile],['Laundry',cc.laundry],['Special-needs child',cc.disabledChild],
+      ['Charge',cc.charge],['Other approved',cc.otherSpecial]
+    ]:[
+      ['বাড়িভাড়া',cc.house],['চিকিৎসা',cc.medical],['শিক্ষা',cc.education],['টিফিন',cc.tiffin],
+      ['যাতায়াত',cc.conveyance],['মোবাইল',cc.mobile],['ধোলাই',cc.laundry],['বিশেষ চাহিদাসম্পন্ন সন্তান',cc.disabledChild],
+      ['কার্যভার',cc.charge],['অন্যান্য অনুমোদিত',cc.otherSpecial]
+    ]).filter(([,v])=>Number(v)>0);
+    const compactDeds=(en?[
+      ['PF',r.pf],['Benevolent',r.bene],['Health insurance',r.health],['Group insurance',r.group],
+      ['Stamp',r.stamp],['Association',r.association],['Quarter rent',r.quarterRent],['Housing recovery',r.quarterOther],
+      ['Tax',r.tax],['Loan',r.loan],['Other',r.other]
+    ]:[
+      ['PF',r.pf],['কল্যাণ তহবিল',r.bene],['স্বাস্থ্য বীমা',r.health],['গ্রুপ বীমা',r.group],
+      ['স্ট্যাম্প',r.stamp],['সমিতি',r.association],['কোয়ার্টার ভাড়া',r.quarterRent],['বাসা কর্তন',r.quarterOther],
+      ['আয়কর',r.tax],['ঋণ',r.loan],['অন্যান্য',r.other]
+    ]).filter(([,v])=>Number(v)>0);
+
+    return <div className="pwa-salary-result">
+      <div className="pwa-result-tabs">
+        <button className={compactTab==='now'?'active':''} onClick={()=>setCompactTab('now')}>{en?'Now':'এখন'}</button>
+        <button className={compactTab==='timeline'?'active':''} onClick={()=>setCompactTab('timeline')}>{en?'2026–2028':'২০২৬–২০২৮'}</button>
+        <button className={compactTab==='details'?'active':''} onClick={()=>setCompactTab('details')}>{en?'Details':'বিস্তারিত'}</button>
+      </div>
+
+      {compactTab==='now'&&<>
+        <section className="pwa-result-hero">
+          <div><small>{en?'ESTIMATED TAKE-HOME':'আনুমানিক হাতে পাবেন'}</small><b>{amt(r.net??0)}</b><span>{r.phase?.label||''}</span></div>
+          <CheckCircle2/>
+        </section>
+        <div className="pwa-result-kpis">
+          <article><small>{en?'Basic':'মূল বেতন'}</small><b>{amt(r.payableBasic??r.payable)}</b></article>
+          <article><small>{en?'Allowances':'মোট ভাতা'}</small><b>{amt(r.totalAllowances??0)}</b></article>
+          <article><small>{en?'Deductions':'মোট কর্তন'}</small><b>{amt(r.deductions??0)}</b></article>
+          <article className="net"><small>{en?'Take-home':'হাতে পাবেন'}</small><b>{amt(r.net??0)}</b></article>
+        </div>
+        <button className="pwa-arrear-card" onClick={()=>setCompactTab('arrear')}>
+          <span><ReceiptText/></span><div><small>{en?'OCTOBER 2026':'অক্টোবর ২০২৬'}</small><b>{en?'View arrear calculation':'বকেয়া হিসাব দেখুন'}</b><em>{amt(arrear.octoberBillNet||0)}</em></div><ChevronRight/>
+        </button>
+      </>}
+
+      {compactTab==='timeline'&&<section className="pwa-timeline-card">
+        <div className="pwa-compact-section-head"><small>{en?'PAY SCALE STAGES':'বেতন ধাপ'}</small><h3>{en?'2026–2028 timeline':'২০২৬–২০২৮ টাইমলাইন'}</h3></div>
+        <div className="pwa-salary-timeline">
+          {projections.map((p,i)=><article key={p.date} className={i===projections.length-1?'latest':''}>
+            <span className="dot"></span>
+            <div className="copy"><small>{p.label}</small><b>{amt(p.payableBasic)}</b></div>
+            <div className="net"><small>{en?'Net':'নিট'}</small><b>{amt(p.net)}</b></div>
+          </article>)}
+        </div>
+      </section>}
+
+      {compactTab==='details'&&<>
+        <section className="pwa-compact-profile">
+          <span><small>{en?'Category':'শ্রেণি'}</small><b>{duCategoryInfo(r.category,lang).label}</b></span>
+          <span><small>{en?'Grade':'গ্রেড'}</small><b>{numLang(r.grade||0,lang,0)}</b></span>
+          <span><small>{en?'Housing':'বাসা'}</small><b>{r.housingMode==='du_quarter'?(en?'DU quarter':'DU কোয়ার্টার'):(en?'No quarter':'কোয়ার্টার নেই')}</b></span>
+        </section>
+        <section className="pwa-compact-money-list">
+          <div className="pwa-compact-section-head"><small>{en?'ALLOWANCES':'ভাতা'}</small><h3>{en?'Monthly allowances':'মাসিক ভাতা'}</h3></div>
+          {compactAllowances.length?compactAllowances.map(([l,v])=><div key={l}><span>{l}</span><b>+ {amt(v)}</b></div>):<p>{en?'No allowance amount in this stage.':'এই ধাপে কোনো ভাতার অংক নেই।'}</p>}
+        </section>
+        <section className="pwa-compact-money-list deductions">
+          <div className="pwa-compact-section-head"><small>{en?'DEDUCTIONS':'কর্তন'}</small><h3>{en?'Monthly deductions':'মাসিক কর্তন'}</h3></div>
+          {compactDeds.map(([l,v])=><div key={l}><span>{l}</span><b>− {amt(v)}</b></div>)}
+        </section>
+      </>}
+
+      {compactTab==='arrear'&&<section className="pwa-compact-arrear">
+        <button className="pwa-inline-back" onClick={()=>setCompactTab('now')}><ArrowLeft/>{en?'Back':'ফিরুন'}</button>
+        <div className="pwa-compact-section-head"><small>{en?'OCTOBER 2026':'অক্টোবর ২০২৬'}</small><h3>{en?'Salary + arrear':'বেতন + বকেয়া'}</h3></div>
+        <div className="pwa-arrear-total"><small>{en?'Estimated total receivable':'আনুমানিক মোট প্রাপ্য'}</small><b>{amt(arrear.octoberBillNet||0)}</b></div>
+        <div className="pwa-arrear-lines">
+          <div><span>{en?'October current net':'অক্টোবর চলতি নিট'}</span><b>{amt(arrear.octoberCurrentNet||0)}</b></div>
+          <div><span>{en?'Jul–Sep arrear':'জুলাই–সেপ্টেম্বর বকেয়া'}</span><b>+ {amt(arrear.priorThreeNetArrear||0)}</b></div>
+          <div><span>{en?'Special benefit adjustment':'বিশেষ সুবিধা সমন্বয়'}</span><b>− {amt(arrear.specialBenefitReceivedAmount||0)}</b></div>
+        </div>
+        <button className="pwa-arrear-pdf" disabled={!!pdfBusy} onClick={()=>directPdf(arrearReport,'arrear')}><FileText/>{en?'Arrear PDF':'বকেয়া PDF'}<Save/></button>
+      </section>}
+
+      <div className="pwa-result-sticky-actions">
+        <button disabled={!!pdfBusy} onClick={()=>directPdf(combinedReport,'all')}><FileText/><span>PDF</span></button>
+        <button className={compactTab==='details'?'active':''} onClick={()=>setCompactTab(compactTab==='details'?'now':'details')}><SlidersHorizontal/><span>{en?'Details':'বিস্তারিত'}</span></button>
+        <button onClick={()=>onReset?.()}><RefreshCw/><span>{en?'New':'নতুন হিসাব'}</span></button>
+      </div>
+    </div>;
   }
 
   return <div className="result-stack year-tab-result salary-v2-result">
