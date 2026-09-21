@@ -223,3 +223,16 @@
   .pwa-result-kpis b{font-size:12.5px}
   .pwa-salary-fields select,.pwa-option-body select,.pwa-option-body input{font-size:10.5px}
 }
+
+
+/* Monthly arrear cards */
+.pwa-month-settlements{display:grid;gap:8px;margin-top:9px}
+.pwa-month-settlements>article{padding:10px;border:1px solid #E5E9F2;border-radius:13px;background:#fff}
+.pwa-month-settlement-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:7px;border-bottom:1px solid #EDF0F5}
+.pwa-month-settlement-head span{color:#526075;font-size:9.5px;font-weight:900}
+.pwa-month-settlement-head b{color:#14756F;font-size:12px}
+.pwa-month-settlement-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:7px}
+.pwa-month-settlement-grid>span{min-width:0;padding:7px;border-radius:9px;background:#F7F9FC}
+.pwa-month-settlement-grid small{display:block;color:#7B8797;font-size:7.4px;line-height:1.25}
+.pwa-month-settlement-grid b{display:block;margin-top:3px;color:#4D5A70;font-size:8.8px;font-variant-numeric:tabular-nums}
+.pwa-arrear-method-note{margin-top:8px;padding:9px 10px;border:1px solid #D8E5E0;border-radius:10px;background:#F2FAF7;color:#5C7369;font-size:8.4px;line-height:1.45}
