@@ -5,7 +5,7 @@ import './guest-local-v1.css';
 
 const KEY='hisab_guest_workspace_v1';
 const emptyData={
-  profile:{name:'',category:'',grade:'',date_of_birth:'',gender:'',marital_status:'',first_joining_date:'',current_post:'',current_post_joining_date:'',third_class_start_date:'',fourth_class_start_date:'',previous_promotions:'0',retirement_age:'59',office_name:'',department_name:''},
+  profile:{name:'',category:'',employee_category:'',grade:'',date_of_birth:'',mobile:'',gender:'',marital_status:'',first_joining_date:'',current_post:'',current_post_joining_date:'',third_class_start_date:'',fourth_class_start_date:'',previous_promotions:'0',retirement_age:'59',office_name:'',department_name:'',current_basic_salary:'',salary_effective_date:'',employment_type:'',employee_reference:''},
   education:[],events:[],salary_history:[],leave:[],updated_at:''
 };
 function readData(){
@@ -113,14 +113,22 @@ function Dashboard({en,lang,data,service,leaveDays,latestSalary,onTab,onOpen,onL
 function Profile({en,data,commit}){
   const [f,setF]=useState(data.profile||emptyData.profile);
   useEffect(()=>setF(data.profile||emptyData.profile),[data.profile]);
+  const setDetailedCategory=value=>{
+    const broad=value==='teacher'?'teacher':value==='officer'?'officer':value.startsWith('third_')?'class3':value.startsWith('fourth_')?'class4':f.category||'';
+    setF({...f,employee_category:value,category:broad});
+  };
   return <form className="guest-card guest-form" onSubmit={e=>{e.preventDefault();commit({...data,profile:f})}}>
     <Title icon={Briefcase} title={en?'Career profile':'চাকরি প্রোফাইল'} sub={en?'Saved locally on this device.':'এই ডিভাইসে সংরক্ষিত হবে।'}/>
     <div className="guest-fields">
       <label>{en?'Name (optional)':'নাম (ঐচ্ছিক)'}<input value={f.name||''} onChange={e=>setF({...f,name:e.target.value})}/></label>
-      <label>{en?'Category':'শ্রেণি'}<select value={f.category||''} onChange={e=>setF({...f,category:e.target.value})}><option value="">{en?'Select':'নির্বাচন করুন'}</option><option value="teacher">{en?'Teacher':'শিক্ষক'}</option><option value="officer">{en?'Officer':'কর্মকর্তা'}</option><option value="class3">{en?'Class III employee':'৩য় শ্রেণির কর্মচারী'}</option><option value="class4">{en?'Class IV employee':'৪র্থ শ্রেণির কর্মচারী'}</option></select></label>
+      <label>{en?'Payroll category':'পে-রোল শ্রেণি'}<select value={f.category||''} onChange={e=>setF({...f,category:e.target.value})}><option value="">{en?'Select':'নির্বাচন করুন'}</option><option value="teacher">{en?'Teacher':'শিক্ষক'}</option><option value="officer">{en?'Officer':'কর্মকর্তা'}</option><option value="class3">{en?'Class III employee':'৩য় শ্রেণির কর্মচারী'}</option><option value="class4">{en?'Class IV employee':'৪র্থ শ্রেণির কর্মচারী'}</option></select></label>
+      <label>{en?'Detailed employee category':'বিস্তারিত কর্মী শ্রেণি'}<select value={f.employee_category||''} onChange={e=>setDetailedCategory(e.target.value)}><option value="">{en?'Optional':'ঐচ্ছিক'}</option><option value="third_general">{en?'3rd Class General':'৩য় শ্রেণির সাধারণ'}</option><option value="third_technical">{en?'3rd Class Technical':'৩য় শ্রেণির কারিগরি'}</option><option value="fourth_general">{en?'4th Class General':'৪র্থ শ্রেণির সাধারণ'}</option><option value="fourth_technical">{en?'4th Class Technical':'৪র্থ শ্রেণির কারিগরি'}</option><option value="officer">{en?'Officer':'কর্মকর্তা'}</option><option value="teacher">{en?'Teacher':'শিক্ষক'}</option></select></label>
       <label>{en?'Current grade':'বর্তমান গ্রেড'}<select value={f.grade||''} onChange={e=>setF({...f,grade:e.target.value})}><option value="">{en?'Select':'নির্বাচন করুন'}</option>{Array.from({length:20},(_,i)=>i+1).map(x=><option key={x} value={x}>{en?'Grade ':'গ্রেড '}{x}</option>)}</select></label>
       <label>{en?'Current post':'বর্তমান পদ'}<input value={f.current_post||''} onChange={e=>setF({...f,current_post:e.target.value})}/></label>
+      <label>{en?'Current basic salary':'বর্তমান মূল বেতন'}<input type="number" min="0" inputMode="decimal" value={f.current_basic_salary||''} onChange={e=>setF({...f,current_basic_salary:e.target.value})}/></label>
+      <label>{en?'Basic effective date':'মূল বেতন কার্যকর তারিখ'}<input type="date" value={f.salary_effective_date||''} onChange={e=>setF({...f,salary_effective_date:e.target.value})}/></label>
       <label>{en?'Date of birth':'জন্মতারিখ'}<input type="date" value={f.date_of_birth||''} onChange={e=>setF({...f,date_of_birth:e.target.value})}/></label>
+      <label>{en?'Mobile number':'মোবাইল নম্বর'}<input inputMode="tel" value={f.mobile||''} onChange={e=>setF({...f,mobile:e.target.value})}/></label>
       <label>{en?'Gender':'লিঙ্গ'}<select value={f.gender||''} onChange={e=>setF({...f,gender:e.target.value})}><option value="">{en?'Select':'নির্বাচন করুন'}</option><option value="male">{en?'Male':'পুরুষ'}</option><option value="female">{en?'Female':'নারী'}</option></select></label>
       <label>{en?'Marital status':'বৈবাহিক অবস্থা'}<select value={f.marital_status||''} onChange={e=>setF({...f,marital_status:e.target.value})}><option value="">{en?'Select':'নির্বাচন করুন'}</option><option value="married">{en?'Married':'বিবাহিত'}</option><option value="unmarried">{en?'Unmarried':'অবিবাহিত'}</option></select></label>
       <label>{en?'First joining date':'প্রথম যোগদানের তারিখ'}<input type="date" value={f.first_joining_date||''} onChange={e=>setF({...f,first_joining_date:e.target.value})}/></label>
@@ -166,7 +174,8 @@ function Timeline({en,lang,data,commit}){
 }
 
 function Salary({en,lang,data,commit}){
-  const blank={effective_date:'',grade:'',basic:'',gross:'',deductions:'',net:'',note:''};
+  const p=data.profile||{};
+  const blank={effective_date:p.salary_effective_date||'',grade:String(p.grade||''),basic:String(p.current_basic_salary||''),gross:'',deductions:'',net:'',note:''};
   const [f,setF]=useState(blank);
   const [editing,setEditing]=useState('');
   const reset=()=>{setF(blank);setEditing('')};

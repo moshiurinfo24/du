@@ -421,11 +421,31 @@ export default{async fetch(req,env){
     if(u.pathname==='/api/my-career/profile'&&req.method==='PUT'){
       if(!user)return json({error:'Unauthenticated'},401,C);
       const b=await req.json();
-      await env.DB.prepare(`INSERT INTO career_profiles(user_id,first_joining_date,current_post,current_grade,current_post_joining_date,employment_type,office_name,department_name,employee_reference,retirement_age,notes,updated_at)
-        VALUES(?,?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP)
-        ON CONFLICT(user_id) DO UPDATE SET first_joining_date=excluded.first_joining_date,current_post=excluded.current_post,current_grade=excluded.current_grade,current_post_joining_date=excluded.current_post_joining_date,employment_type=excluded.employment_type,office_name=excluded.office_name,department_name=excluded.department_name,employee_reference=excluded.employee_reference,retirement_age=excluded.retirement_age,notes=excluded.notes,updated_at=CURRENT_TIMESTAMP`)
-        .bind(user.id,b.first_joining_date||null,b.current_post||null,b.current_grade?Number(b.current_grade):null,b.current_post_joining_date||null,b.employment_type||null,b.office_name||null,b.department_name||null,b.employee_reference||null,b.retirement_age?Number(b.retirement_age):null,b.notes||null).run();
-      await audit(env,user,'career_profile_update','career_profile',user.id,{});
+      const previous=await env.DB.prepare(`SELECT * FROM career_profiles WHERE user_id=?`).bind(user.id).first();
+      const has=k=>Object.prototype.hasOwnProperty.call(b,k);
+      const pick=k=>has(k)?b[k]:(previous?.[k]??null);
+      const currentGrade=pick('current_grade'),retirementAge=pick('retirement_age'),
+        previousPromotions=pick('previous_promotions'),currentBasic=pick('current_basic_salary');
+      await env.DB.prepare(`INSERT INTO career_profiles(
+          user_id,first_joining_date,current_post,current_grade,current_post_joining_date,employment_type,office_name,department_name,employee_reference,retirement_age,notes,updated_at,
+          date_of_birth,mobile,gender,marital_status,employee_category,third_class_start_date,fourth_class_start_date,previous_promotions,current_basic_salary,salary_effective_date
+        ) VALUES(?,?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,?,?,?,?,?,?,?,?,?,?)
+        ON CONFLICT(user_id) DO UPDATE SET
+          first_joining_date=excluded.first_joining_date,current_post=excluded.current_post,current_grade=excluded.current_grade,
+          current_post_joining_date=excluded.current_post_joining_date,employment_type=excluded.employment_type,office_name=excluded.office_name,
+          department_name=excluded.department_name,employee_reference=excluded.employee_reference,retirement_age=excluded.retirement_age,notes=excluded.notes,
+          date_of_birth=excluded.date_of_birth,mobile=excluded.mobile,gender=excluded.gender,marital_status=excluded.marital_status,
+          employee_category=excluded.employee_category,third_class_start_date=excluded.third_class_start_date,fourth_class_start_date=excluded.fourth_class_start_date,
+          previous_promotions=excluded.previous_promotions,current_basic_salary=excluded.current_basic_salary,salary_effective_date=excluded.salary_effective_date,
+          updated_at=CURRENT_TIMESTAMP`)
+        .bind(
+          user.id,pick('first_joining_date')||null,pick('current_post')||null,currentGrade?Number(currentGrade):null,pick('current_post_joining_date')||null,
+          pick('employment_type')||null,pick('office_name')||null,pick('department_name')||null,pick('employee_reference')||null,retirementAge?Number(retirementAge):null,pick('notes')||null,
+          pick('date_of_birth')||null,pick('mobile')||null,pick('gender')||null,pick('marital_status')||null,pick('employee_category')||null,
+          pick('third_class_start_date')||null,pick('fourth_class_start_date')||null,Math.max(0,Number(previousPromotions)||0),
+          currentBasic!==null&&currentBasic!==''?Number(currentBasic):null,pick('salary_effective_date')||null
+        ).run();
+      await audit(env,user,'career_profile_update','career_profile',user.id,{fields:Object.keys(b||{})});
       return json({ok:true},200,C);
     }
     if(u.pathname==='/api/my-career/education'&&req.method==='POST'){

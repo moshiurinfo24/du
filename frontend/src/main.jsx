@@ -71,11 +71,20 @@ async function api(path,opts={}){
   return d;
 }
 
-function guestLocalProfile(){
+function guestLocalWorkspace(){
   try{
     const x=JSON.parse(localStorage.getItem('hisab_guest_workspace_v1')||'null');
-    return x?.profile||{};
+    return x&&typeof x==='object'?x:{};
   }catch{return {}}
+}
+function guestLocalProfile(){
+  const x=guestLocalWorkspace(),p=x?.profile||{},latest=(x?.salary_history||[])[0]||{};
+  return {
+    ...p,
+    grade:p.grade||latest.grade||'',
+    current_basic_salary:p.current_basic_salary||latest.basic||latest.basic_2015||'',
+    salary_effective_date:p.salary_effective_date||latest.effective_date||''
+  };
 }
 
 async function syncGuestWorkspaceToAccount(user){
@@ -111,19 +120,34 @@ async function syncGuestWorkspaceToAccount(user){
     }));
   };
 
-  const p=w.profile||{};
+  const p=w.profile||{},latestLocalSalary=(w.salary_history||[])[0]||{};
   const profilePayload={
     first_joining_date:p.first_joining_date||'',
     current_post:p.current_post||'',
     current_grade:p.grade?Number(p.grade):null,
     current_post_joining_date:p.current_post_joining_date||'',
-    employment_type:p.category||'',
+    employment_type:p.employment_type||'',
     office_name:p.office_name||'',
     department_name:p.department_name||'',
+    employee_reference:p.employee_reference||'',
     retirement_age:p.retirement_age?Number(p.retirement_age):null,
+    date_of_birth:p.date_of_birth||'',
+    mobile:p.mobile||'',
+    gender:p.gender||'',
+    marital_status:p.marital_status||'',
+    employee_category:p.employee_category||p.category||'',
+    third_class_start_date:p.third_class_start_date||'',
+    fourth_class_start_date:p.fourth_class_start_date||'',
+    previous_promotions:Math.max(0,Number(p.previous_promotions)||0),
+    current_basic_salary:Number(p.current_basic_salary||latestLocalSalary.basic||latestLocalSalary.basic_2015||0)||null,
+    salary_effective_date:p.salary_effective_date||latestLocalSalary.effective_date||'',
     notes:'Imported from Hisab Sahayika local PWA'
   };
-  const profileHasData=[profilePayload.first_joining_date,profilePayload.current_post,profilePayload.current_grade,profilePayload.current_post_joining_date,profilePayload.office_name,profilePayload.department_name].some(Boolean);
+  const profileHasData=[
+    profilePayload.first_joining_date,profilePayload.current_post,profilePayload.current_grade,
+    profilePayload.current_post_joining_date,profilePayload.office_name,profilePayload.department_name,
+    profilePayload.date_of_birth,profilePayload.employee_category,profilePayload.current_basic_salary
+  ].some(Boolean);
   const profileKey=JSON.stringify(profilePayload);
   if(profileHasData&&map.profileKey!==profileKey){
     if(await push('/api/my-career/profile',{method:'PUT',body:JSON.stringify(profilePayload)})){
@@ -2607,11 +2631,25 @@ function DMY({label,value,onChange}){
   return <label>{label}<div className="dmy"><select value={day} onChange={e=>setPart('d',e.target.value)}><option value="">{en?'Day':'দিন'}</option>{days.map(x=><option key={x}>{x}</option>)}</select><select value={month} onChange={e=>setPart('m',e.target.value)}><option value="">{en?'Month':'মাস'}</option>{months.map(x=><option key={x} value={x}>{en?new Intl.DateTimeFormat('en',{month:'short'}).format(new Date(2020,x-1,1)):new Intl.DateTimeFormat('bn-BD',{month:'long'}).format(new Date(2020,x-1,1))}</option>)}</select><select value={year} onChange={e=>setPart('y',e.target.value)}><option value="">{en?'Year':'বছর'}</option>{years.map(x=><option key={x}>{x}</option>)}</select></div></label>
 }
 
-function PromotionCenter({lang='bn'}){
+function PromotionCenter({lang='bn',publicMode=false}){
   const en=lang==='en', today=todayLocalIso();
-  const gp=guestLocalProfile();
-  const [f,setF]=useState({grade:String(gp.grade||'13'),edu:'bachelor',currentDate:gp.current_post_joining_date||'',firstJoinDate:gp.first_joining_date||'',calcDate:today,computer:'yes',acr:'yes'}),[result,setResult]=useState(null);
-  useEffect(()=>{setF(x=>({...x,calcDate:todayLocalIso()}))},[]);
+  const gp=guestLocalProfile(),localEdu=promotionEducationPrefill(guestLocalWorkspace().education||[]);
+  const initialGrade=PROMO_RULES[String(gp.grade||'')]?String(gp.grade):'13';
+  const [f,setF]=useState({grade:initialGrade,edu:localEdu||'bachelor',currentDate:gp.current_post_joining_date||'',firstJoinDate:gp.first_joining_date||'',calcDate:today,computer:'yes',acr:'yes'}),[result,setResult]=useState(null);
+  useEffect(()=>{
+    setF(x=>({...x,calcDate:todayLocalIso()}));
+    if(publicMode)return;
+    api('/api/my-career').then(x=>{
+      const p=x?.profile||{},edu=promotionEducationPrefill(x?.education||[]);
+      setF(v=>({
+        ...v,
+        ...(PROMO_RULES[String(p.current_grade||'')]?{grade:String(p.current_grade)}:{}),
+        ...(p.current_post_joining_date?{currentDate:p.current_post_joining_date}:{}),
+        ...(p.first_joining_date?{firstJoinDate:p.first_joining_date}:{}),
+        ...(edu?{edu}:{})
+      }));
+    }).catch(()=>{});
+  },[publicMode]);
   function calc(){
     const asOf=todayLocalIso(); const next={...f,calcDate:asOf}; setF(next);
     const rule=PROMO_RULES[next.grade]; if(!rule)return setResult({error:en?'No rule was found for this grade.':'এই গ্রেডের নিয়ম পাওয়া যায়নি।',input:next});
@@ -2731,11 +2769,63 @@ function normalizeDuCategory(value){
   if(['class4','fourth','fourth_general','fourth_technical','4th','4th_class','class_iv'].includes(v)||v.includes('fourth')||v.includes('4th')||v.includes('class_iv'))return 'class4';
   return '';
 }
+function exactPay2015Stage(grade,basic){
+  const rows=PAY2015[String(grade)]||[],amount=Number(basic||0);
+  if(!(amount>0))return '';
+  const idx=rows.findIndex(v=>Number(v)===amount);
+  return idx>=0?String(idx):'';
+}
+function detailedEmployeeCategory(profile={}){
+  const raw=String(profile.employee_category||profile.category||'').trim().toLowerCase().replace(/[\s-]+/g,'_');
+  const allowed=['third_general','third_technical','fourth_general','fourth_technical','officer','teacher'];
+  return allowed.includes(raw)?raw:'';
+}
+function normalizeEducationPointResult(value){
+  const v=String(value||'').trim().toLowerCase();
+  if(['first','1st','1','১ম','প্রথম'].some(x=>v===x||v.includes(x)))return 'first';
+  if(['second','2nd','2','২য়','দ্বিতীয়'].some(x=>v===x||v.includes(x)))return 'second';
+  if(['third','3rd','3','৩য়','তৃতীয়'].some(x=>v===x||v.includes(x)))return 'third';
+  return '';
+}
+function educationPointPrefill(rows=[]){
+  const out={ssc:'',hsc:'',graduationType:'honours',graduationResult:'',masters:''};
+  for(const x of rows||[]){
+    const level=String(x?.level||'').trim().toLowerCase().replace(/[\s-]+/g,'_');
+    const result=normalizeEducationPointResult(x?.result);
+    if(!result)continue;
+    if(level==='ssc'||level.includes('secondary'))out.ssc=out.ssc||result;
+    else if(level==='hsc'||level.includes('higher_secondary'))out.hsc=out.hsc||result;
+    else if(level.includes('master'))out.masters=out.masters||result;
+    else if(level.includes('honour')){out.graduationType='honours';out.graduationResult=out.graduationResult||result}
+    else if(level.includes('bachelor')||level.includes('degree')||level.includes('pass')){if(!out.graduationResult){out.graduationType='bachelor';out.graduationResult=result}}
+  }
+  return out;
+}
+function promotionEducationPrefill(rows=[]){
+  let best='',rank=-1;
+  const priorities={hsc:1,diploma:2,bachelor:3,bsceng:4,mbbs:4,masters:5};
+  for(const x of rows||[]){
+    const level=String(x?.level||'').trim().toLowerCase().replace(/[\s-]+/g,'_');
+    let key='';
+    if(level.includes('master'))key='masters';
+    else if(level.includes('mbbs'))key='mbbs';
+    else if((level.includes('bsc')||level.includes('bachelor'))&&level.includes('eng'))key='bsceng';
+    else if(level.includes('diploma'))key='diploma';
+    else if(level.includes('bachelor')||level.includes('honour')||level.includes('degree'))key='bachelor';
+    else if(level==='hsc'||level.includes('higher_secondary'))key='hsc';
+    if(key&&priorities[key]>rank){best=key;rank=priorities[key]}
+  }
+  return best;
+}
 function salaryProfilePrefill(profile={}){
   const category=normalizeDuCategory(profile.category||profile.employee_category||profile.employment_type);
   const rawGrade=String(profile.grade??profile.current_grade??'').trim();
   const grade=/^(?:[1-9]|1\d|20)$/.test(rawGrade)?rawGrade:'';
-  return {category,grade};
+  const basic=Number(profile.current_basic_salary??profile.basic_2015??profile.basic??0)||0;
+  const effectiveDate=String(profile.salary_effective_date||profile.effective_date||'').slice(0,10);
+  const stage=grade?exactPay2015Stage(grade,basic):'';
+  const safeJuneStage=stage!==''&&(!effectiveDate||effectiveDate<='2026-06-30')?stage:'';
+  return {category,grade,basic,effectiveDate,currentStage:safeJuneStage,basicMatched:safeJuneStage!==''};
 }
 function duCategoryInfo(category,lang='bn'){
   const en=lang==='en';
@@ -2805,7 +2895,7 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
   const guestProfile=publicMode?guestLocalProfile():{};
   const initialProfilePrefill=salaryProfilePrefill(guestProfile);
   const [f,setF]=useState({
-    grade:initialProfilePrefill.grade||'13',currentStage:'0',date:today,housing:'none',duQuarterRent:'0',duQuarterOther:'0',
+    grade:initialProfilePrefill.grade||'13',currentStage:initialProfilePrefill.currentStage||'0',date:today,housing:'none',duQuarterRent:'0',duQuarterOther:'0',
     children:'0',educationClaimedElsewhere:'no',tiffin:'yes',zone:'dhaka',
     ageBand:'under50',incrementEligible2026:'yes',mobile:'yes',laundry:'no',
     disabledChildren:'0',disabledBenefitElsewhere:'no',chargeAllowance:'no',otherSpecialAllowance:'0',
@@ -2814,7 +2904,7 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
   });
   const [r,setR]=useState(null);
   const [formStep,setFormStep]=useState(1);
-  const [profileAuto,setProfileAuto]=useState(Boolean(initialProfilePrefill.category||initialProfilePrefill.grade));
+  const [profileAuto,setProfileAuto]=useState(Boolean(initialProfilePrefill.category||initialProfilePrefill.grade||initialProfilePrefill.basicMatched));
   useEffect(()=>{
     if(publicMode)return;
     let alive=true;
@@ -2825,9 +2915,9 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
       setF(v=>({
         ...v,
         ...(pref.category?{category:pref.category}:{}),
-        ...(pref.grade?{grade:pref.grade,currentStage:'0'}:{})
+        ...(pref.grade?{grade:pref.grade,currentStage:pref.currentStage||'0'}:{})
       }));
-      setProfileAuto(true);
+      setProfileAuto(Boolean(pref.category||pref.grade||pref.basicMatched));
     }).catch(()=>{});
     return()=>{alive=false};
   },[publicMode]);
@@ -2966,7 +3056,7 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
     });
   }
 
-  useEffect(()=>{setF(x=>({...x,currentStage:'0'}));setR(null)},[f.grade]);
+  useEffect(()=>{setR(null)},[f.grade]);
   useEffect(()=>{
     if(!r)return;
     window.requestAnimationFrame(()=>document.getElementById('salary-result')?.scrollIntoView({behavior:'smooth',block:'start'}));
@@ -4067,21 +4157,23 @@ function PointsCalculator({lang='bn',publicMode=false}){
   });
 
   useEffect(()=>{
-    const gp=guestLocalProfile();
+    const workspace=guestLocalWorkspace(),gp=guestLocalProfile(),localEdu=educationPointPrefill(workspace.education||[]);
     if(gp.first_joining_date||gp.current_post_joining_date){
       setService(v=>({...v,firstJoin:gp.first_joining_date||v.firstJoin,currentPostStart:gp.current_post_joining_date||v.currentPostStart,asOf:todayLocalIso()}));
     }
+    if(localEdu.ssc||localEdu.hsc||localEdu.graduationResult||localEdu.masters)setEdu(v=>({...v,...localEdu}));
     if(publicMode)return;
     api('/api/my-career').then(x=>{
-      const p=x.profile||{};
+      const p=x.profile||{},accountEdu=educationPointPrefill(x.education||[]);
       setService(v=>({
         ...v,
         firstJoin:p.first_joining_date||v.firstJoin,
         currentPostStart:p.current_post_start_date||p.current_post_joining_date||v.currentPostStart,
         asOf:todayLocalIso()
       }));
+      if(accountEdu.ssc||accountEdu.hsc||accountEdu.graduationResult||accountEdu.masters)setEdu(v=>({...v,...accountEdu}));
     }).catch(()=>{});
-  },[]);
+  },[publicMode]);
 
   const classOptions=[
     ['',en?'Select result':'ফলাফল নির্বাচন করুন'],
@@ -4208,7 +4300,7 @@ function PointsCalculator({lang='bn',publicMode=false}){
       <div className="points-rule-note caution"><AlertTriangle size={17}/><div><b>{en?'Advanced degrees':'উচ্চতর ডিগ্রি'}</b><p>{en?'Additional higher-degree points will be added soon.':'এম.ফিল/পিএইচডি ও অন্যান্য উচ্চতর ডিগ্রির অতিরিক্ত পয়েন্ট শীঘ্রই যোগ হবে।'}</p></div></div>
     </section>}
 
-    {tab==='house'&&<HouseAllocationPoints lang={lang}/>}
+    {tab==='house'&&<HouseAllocationPoints lang={lang} publicMode={publicMode}/>}
   </div>
 }
 
@@ -4239,12 +4331,14 @@ function HouseAllocationPoints({lang='bn',publicMode=false}){
   const current=groups.find(x=>x.id===kind)||groups[0];
 
   useEffect(()=>{
-    const gp=guestLocalProfile();
+    const gp=guestLocalProfile(),localKind=detailedEmployeeCategory(gp);
     const localFirst=gp.first_joining_date||'';
-    if(localFirst||gp.third_class_start_date||gp.previous_promotions||gp.marital_status||gp.gender){
+    if(localKind)setKind(localKind);
+    if(localFirst||gp.third_class_start_date||gp.previous_promotions||gp.marital_status||gp.gender||gp.current_basic_salary){
       setForm(v=>({...v,
         firstJoin:v.firstJoin||localFirst,
         thirdClassStart:v.thirdClassStart||gp.third_class_start_date||localFirst,
+        basicSalary:v.basicSalary||String(gp.current_basic_salary||''),
         previousPromotions:String(gp.previous_promotions??v.previousPromotions??0),
         marital:gp.marital_status||v.marital,
         gender:gp.gender||v.gender
@@ -4252,8 +4346,9 @@ function HouseAllocationPoints({lang='bn',publicMode=false}){
     }
     if(publicMode)return;
     api('/api/my-career').then(x=>{
-      const p=x?.profile||{};
+      const p=x?.profile||{},accountKind=detailedEmployeeCategory(p);
       const first=p.first_joining_date||p.first_join_date||'';
+      if(accountKind)setKind(accountKind);
       setForm(v=>({...v,
         firstJoin:v.firstJoin||first,
         thirdClassStart:v.thirdClassStart||p.third_class_start_date||first,
@@ -4389,25 +4484,25 @@ function CalculatorCenter({lang='bn',onPage,publicMode=false,initialTool='servic
 
   useEffect(()=>{setTool(initialTool||'service');setResult(null)},[initialTool]);
   useEffect(()=>{
-    const gp=guestLocalProfile();
+    const gp=guestLocalProfile(),localPay=salaryProfilePrefill(gp),localExactStage=exactPay2015Stage(localPay.grade,gp.current_basic_salary);
     if(gp.first_joining_date)setService(v=>({...v,start:gp.first_joining_date}));
     if(gp.date_of_birth){
       setAge(v=>({...v,dob:gp.date_of_birth}));
       setRetire(v=>({...v,dob:gp.date_of_birth}));
     }
     if(gp.retirement_age)setRetire(v=>({...v,age:String(gp.retirement_age)}));
-    if(gp.grade)setBasicProj(v=>({...v,grade:String(gp.grade),stage:'0'}));
+    if(localPay.grade)setBasicProj(v=>({...v,grade:String(localPay.grade),stage:localExactStage||'0'}));
     if(publicMode)return;
     api('/api/my-career').then(x=>{
       setCareer({profile:x.profile||null,education:x.education||[],events:x.events||[]});
-      const p=x.profile||{};
+      const p=x.profile||{},accountPay=salaryProfilePrefill(p),accountExactStage=exactPay2015Stage(accountPay.grade,p.current_basic_salary);
       if(p.first_joining_date)setService(v=>({...v,start:p.first_joining_date}));
       if(p.date_of_birth){
         setAge(v=>({...v,dob:p.date_of_birth}));
         setRetire(v=>({...v,dob:p.date_of_birth}));
       }
       if(p.retirement_age)setRetire(v=>({...v,age:String(p.retirement_age)}));
-      if(p.current_grade)setBasicProj(v=>({...v,grade:String(p.current_grade),stage:'0'}));
+      if(accountPay.grade)setBasicProj(v=>({...v,grade:String(accountPay.grade),stage:accountExactStage||'0'}));
     }).catch(()=>{});
   },[publicMode]);
 
@@ -4527,7 +4622,7 @@ function CalculatorCenter({lang='bn',onPage,publicMode=false,initialTool='servic
 
 function MyCareer({lang='bn'}){
   const en=lang==='en';
-  const blankProfile={first_joining_date:'',current_post:'',current_grade:'',current_post_joining_date:'',employment_type:'',office_name:'',department_name:'',employee_reference:'',retirement_age:'',notes:''};
+  const blankProfile={first_joining_date:'',current_post:'',current_grade:'',current_post_joining_date:'',employment_type:'',office_name:'',department_name:'',employee_reference:'',retirement_age:'',notes:'',date_of_birth:'',mobile:'',gender:'',marital_status:'',employee_category:'',third_class_start_date:'',fourth_class_start_date:'',previous_promotions:'0',current_basic_salary:'',salary_effective_date:''};
   const [profile,setProfile]=useState(blankProfile),[education,setEducation]=useState([]),[events,setEvents]=useState([]),
     [loading,setLoading]=useState(true),[saving,setSaving]=useState(false),[err,setErr]=useState(''),[msg,setMsg]=useState('');
   const [eduForm,setEduForm]=useState({level:'',institution:'',subject:'',passing_year:'',result:'',notes:''});
@@ -4588,10 +4683,20 @@ function MyCareer({lang='bn'}){
     <section className="career-card">
       <div className="career-section-head"><div><BookUser/><div><h3>{en?'Career Profile':'চাকরি প্রোফাইল'}</h3><p>{en?'Core employment information used by your personal dashboard and future calculators.':'ব্যক্তিগত ড্যাশবোর্ড ও ভবিষ্যৎ হিসাবের জন্য মূল চাকরি তথ্য।'}</p></div></div></div>
       <form className="form-grid" onSubmit={saveProfile}>
+        <DMY label={en?'Date of birth':'জন্মতারিখ'} value={profile.date_of_birth||''} onChange={v=>c('date_of_birth',v)}/>
+        <label>{en?'Mobile number':'মোবাইল নম্বর'}<input inputMode="tel" value={profile.mobile||''} onChange={e=>c('mobile',e.target.value)}/></label>
+        <label>{en?'Gender':'লিঙ্গ'}<select value={profile.gender||''} onChange={e=>c('gender',e.target.value)}><option value="">{en?'Select':'নির্বাচন'}</option><option value="male">{en?'Male':'পুরুষ'}</option><option value="female">{en?'Female':'নারী'}</option></select></label>
+        <label>{en?'Marital status':'বৈবাহিক অবস্থা'}<select value={profile.marital_status||''} onChange={e=>c('marital_status',e.target.value)}><option value="">{en?'Select':'নির্বাচন'}</option><option value="unmarried">{en?'Unmarried':'অবিবাহিত'}</option><option value="married">{en?'Married':'বিবাহিত'}</option></select></label>
+        <label>{en?'Employee category':'কর্মী শ্রেণি'}<select value={profile.employee_category||''} onChange={e=>c('employee_category',e.target.value)}><option value="">{en?'Select':'নির্বাচন'}</option><option value="third_general">{en?'3rd Class General Employee':'৩য় শ্রেণির সাধারণ কর্মচারী'}</option><option value="third_technical">{en?'3rd Class Technical Employee':'৩য় শ্রেণির কারিগরি কর্মচারী'}</option><option value="fourth_general">{en?'4th Class General Employee':'৪র্থ শ্রেণির সাধারণ কর্মচারী'}</option><option value="fourth_technical">{en?'4th Class Technical Employee':'৪র্থ শ্রেণির কারিগরি কর্মচারী'}</option><option value="officer">{en?'Officer':'কর্মকর্তা'}</option><option value="teacher">{en?'Teacher':'শিক্ষক'}</option></select></label>
         <DMY label={en?'First joining date':'প্রথম যোগদানের তারিখ'} value={profile.first_joining_date||''} onChange={v=>c('first_joining_date',v)}/>
         <label>{en?'Current post':'বর্তমান পদ'}<input value={profile.current_post||''} onChange={e=>c('current_post',e.target.value)}/></label>
         <label>{en?'Current grade':'বর্তমান গ্রেড'}<select value={profile.current_grade||''} onChange={e=>c('current_grade',e.target.value)}><option value="">{en?'Select':'নির্বাচন'}</option>{Array.from({length:20},(_,i)=>i+1).map(g=><option key={g} value={g}>{en?`Grade ${g}`:`গ্রেড ${g.toLocaleString('bn-BD')}`}</option>)}</select></label>
+        <label>{en?'Current basic salary':'বর্তমান মূল বেতন'}<input type="number" min="0" value={profile.current_basic_salary||''} onChange={e=>c('current_basic_salary',e.target.value)}/></label>
+        <DMY label={en?'Basic salary effective date':'মূল বেতন কার্যকর তারিখ'} value={profile.salary_effective_date||''} onChange={v=>c('salary_effective_date',v)}/>
         <DMY label={en?'Current post joining date':'বর্তমান পদে যোগদানের তারিখ'} value={profile.current_post_joining_date||''} onChange={v=>c('current_post_joining_date',v)}/>
+        {(profile.employee_category==='third_general'||profile.employee_category==='third_technical')&&<DMY label={en?'Entered 3rd Class on':'৩য় শ্রেণিতে প্রবেশের তারিখ'} value={profile.third_class_start_date||''} onChange={v=>c('third_class_start_date',v)}/>}
+        {(profile.employee_category==='third_general'||profile.employee_category==='third_technical'||profile.employee_category==='fourth_general'||profile.employee_category==='fourth_technical')&&<DMY label={en?'Entered 4th Class on':'৪র্থ শ্রেণিতে প্রবেশের তারিখ'} value={profile.fourth_class_start_date||''} onChange={v=>c('fourth_class_start_date',v)}/>}
+        <label>{en?'Previous promotions':'আগে পাওয়া পদোন্নতির সংখ্যা'}<input type="number" min="0" value={profile.previous_promotions||0} onChange={e=>c('previous_promotions',e.target.value)}/></label>
         <label>{en?'Employment type':'চাকরির ধরন'}<select value={profile.employment_type||''} onChange={e=>c('employment_type',e.target.value)}><option value="">{en?'Select':'নির্বাচন'}</option><option value="permanent">{en?'Permanent':'স্থায়ী'}</option><option value="temporary">{en?'Temporary':'অস্থায়ী'}</option><option value="contract">{en?'Contract':'চুক্তিভিত্তিক'}</option></select></label>
         <label>{en?'Office / Unit':'অফিস / ইউনিট'}<input value={profile.office_name||''} onChange={e=>c('office_name',e.target.value)}/></label>
         <label>{en?'Department / Section':'বিভাগ / শাখা'}<input value={profile.department_name||''} onChange={e=>c('department_name',e.target.value)}/></label>
