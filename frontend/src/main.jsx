@@ -75,6 +75,65 @@ function guestLocalProfile(){
   }catch{return {}}
 }
 
+async function syncGuestWorkspaceToAccount(user){
+  let w=null;
+  try{w=JSON.parse(localStorage.getItem('hisab_guest_workspace_v1')||'null')}catch{}
+  if(!w||typeof w!=='object')return {synced:false,reason:'no-local-data'};
+  const hasData=!!(
+    Object.values(w.profile||{}).some(v=>String(v||'').trim())||
+    (w.education||[]).length||(w.events||[]).length||(w.salary_history||[]).length||(w.leave||[]).length
+  );
+  if(!hasData)return {synced:false,reason:'empty'};
+  const accountKey=String(user?.id||user?.email||user?.employee_reference||'account');
+  const markerKey='hisab_guest_synced_'+accountKey;
+  const localStamp=String(w.updated_at||'local');
+  if(localStorage.getItem(markerKey)===localStamp)return {synced:false,reason:'already-synced'};
+
+  const p=w.profile||{};
+  await api('/api/my-career/profile',{method:'PUT',body:JSON.stringify({
+    first_joining_date:p.first_joining_date||'',
+    current_post:p.current_post||'',
+    current_grade:p.grade?Number(p.grade):null,
+    current_post_joining_date:p.current_post_joining_date||'',
+    employment_type:p.category||'',
+    office_name:p.office_name||'',
+    department_name:p.department_name||'',
+    retirement_age:p.retirement_age?Number(p.retirement_age):null,
+    notes:'Imported from Hisab Sahayika local PWA'
+  })}).catch(()=>{});
+
+  for(const x of (w.education||[])){
+    await api('/api/my-career/education',{method:'POST',body:JSON.stringify({
+      level:x.level||'',institution:x.institution||'',subject:x.subject||'',
+      passing_year:x.passing_year||'',result:x.result||'',notes:'Imported from local PWA'
+    })}).catch(()=>{});
+  }
+  for(const x of (w.events||[])){
+    await api('/api/my-career/events',{method:'POST',body:JSON.stringify({
+      event_type:x.type||'other',event_date:x.event_date||'',title:x.title||'',
+      post_name:x.post_name||'',grade:x.grade||'',office_name:x.office_name||'',
+      reference_no:'',notes:'Imported from local PWA'
+    })}).catch(()=>{});
+  }
+  for(const x of (w.salary_history||[])){
+    await api('/api/my-salary-history',{method:'POST',body:JSON.stringify({
+      effective_date:x.effective_date||'',grade:Number(x.grade||p.grade||13),stage_2015:0,
+      basic_2015:Number(x.basic||0),fixed_2026:0,payable_basic:Number(x.basic||0),
+      gross_salary:Number(x.gross||0),total_deduction:Number(x.deductions||0),
+      net_salary:Number(x.net||0),source:'guest_import',notes:x.note||'Imported from local PWA'
+    })}).catch(()=>{});
+  }
+  for(const x of (w.leave||[])){
+    await api('/api/my-leave-records',{method:'POST',body:JSON.stringify({
+      leave_type:x.type||'other',start_date:x.start_date||'',end_date:x.end_date||'',
+      day_mode:'full',total_days:Number(x.total_days||0),notes:x.note||'Imported from local PWA'
+    })}).catch(()=>{});
+  }
+  localStorage.setItem(markerKey,localStamp);
+  localStorage.setItem('hisab_guest_last_cloud_sync_at',new Date().toISOString());
+  return {synced:true};
+}
+
 function pwaInstallId(){
   let id=localStorage.getItem('hisab_pwa_install_id');
   if(!id){
@@ -1072,7 +1131,9 @@ function AuthPortal({onLogin,onBack,lang,setLang,initialMode='login'}) {
     setBusy(true);
     try{
       if(mode==='login'){
-        const x=await api('/api/login',{method:'POST',body:JSON.stringify({email:form.email,password:form.password})});onLogin(x.user);return;
+        const x=await api('/api/login',{method:'POST',body:JSON.stringify({email:form.email,password:form.password})});
+        await syncGuestWorkspaceToAccount(x.user).catch(()=>{});
+        onLogin(x.user);return;
       }
       if(mode==='register'){
         const x=await api('/api/register-complete',{method:'POST',body:JSON.stringify(form)});
