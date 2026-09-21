@@ -33,7 +33,7 @@
 .pwa-status-head b{display:block;font-size:13px;color:#293A8C}
 .pwa-status-head small{display:block;margin-top:1px;font-size:9px;color:#7B8594}
 .pwa-status-grid{display:grid;gap:7px}
-.pwa-status-grid>div{padding:10px 11px;border:1px solid #E5E9F2;border-radius:11px;background:linear-gradient(145deg,#fff,#fff8fb)}
+.pwa-status-grid>div{padding:10px 11px;border:1px solid #E5E9F2;border-radius:11px;background:linear-gradient(145deg,#fff,#F7F9FC)}
 .pwa-status-grid small{display:block;font-size:8.5px;color:#7B8594}
 .pwa-status-grid b{display:block;margin-top:2px;font-size:10.5px;color:#465166}
 .pwa-status-actions{display:flex;gap:7px;margin-top:11px}
@@ -47,7 +47,7 @@
   background:#36232d;color:#fff;box-shadow:0 15px 35px rgba(37,15,26,.25);
   display:flex;align-items:center;gap:10px;font:700 11px/1.35 "Hind Siliguri","Inter",sans-serif
 }
-.pwa-update-toast svg{width:18px;height:18px;animation:duPwaSpin 1s linear infinite;color:#ff82b7}
+.pwa-update-toast svg{width:18px;height:18px;animation:duPwaSpin 1s linear infinite;color:#18A7A0}
 .pwa-update-complete{background:linear-gradient(135deg,#3b2631,#33457F)}
 .pwa-update-complete svg{animation:none!important;color:#8ff0bd!important}
 .pwa-update-complete>span{min-width:0;flex:1;display:flex;flex-direction:column;gap:1px}
@@ -109,7 +109,7 @@
   .side .brand{background:linear-gradient(135deg,#5062CA,#293A8C)!important;color:#fff!important}
   .side .brand b,.side .brand small{color:#fff!important}
   .smart-side-nav button.active{background:#EEF2FF!important;color:#3F51B5!important;border-color:#D9E0FA!important}
-  .smart-side-nav .side-group>small{color:#c25383!important}
+  .smart-side-nav .side-group>small{color:#18A7A0!important}
 
   .app .calc-card,.app .dashboard-card,.app .panel,.app section{
     border-color:#E5E9F2;
@@ -196,7 +196,7 @@
   padding:calc(18px + env(safe-area-inset-top)) 14px calc(22px + env(safe-area-inset-bottom));
   background:
     radial-gradient(circle at 90% 8%,rgba(255,255,255,.22),transparent 24%),
-    radial-gradient(circle at 8% 95%,rgba(255,219,234,.44),transparent 30%),
+    radial-gradient(circle at 8% 95%,rgba(238,242,255,.44),transparent 30%),
     linear-gradient(150deg,#5062CA 0%,#3F51B5 48%,#293A8C 100%);
 }
 .pwa-gate-card{
@@ -352,7 +352,7 @@
 .hero-nonofficial-note svg{width:15px;height:15px;flex:0 0 auto;margin-top:1px;color:#ffe3a5}
 @media(min-width:901px){
   .approved-home .hero-nonofficial-note{
-    border-color:#E5E9F2;background:#fff8fb;color:#667690
+    border-color:#E5E9F2;background:#F7F9FC;color:#667690
   }
   .approved-home .hero-nonofficial-note svg{color:#a87920}
 }
@@ -366,7 +366,7 @@
 .public-install-stat svg{width:13px;height:13px}
 @media(min-width:901px){
   .approved-home .public-install-stat{
-    border-color:#E5E9F2;background:#fff8fb;color:#667690
+    border-color:#E5E9F2;background:#F7F9FC;color:#667690
   }
   .approved-home .public-install-stat svg{color:#3F51B5}
 }
