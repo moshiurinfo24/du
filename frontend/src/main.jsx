@@ -628,28 +628,35 @@ function houseAllocationReportHtml(r,lang='bn'){
 function salaryOctoberArrearReportHtml(base,lang='bn'){
   const en=lang==='en',a=base?.arrear2026||{};
   const amt=v=>`${en?'Tk':'৳'} ${moneyLang(v,lang)}`;
+  const receivedAmount=a.specialBenefitReceivedAmount??a.specialBenefitThreeMonths??0;
+  const receivedBasis=a.specialBenefitMode==='custom'
+    ?(en?'Actual total entered':'প্রকৃত মোট অংক')
+    :`${numLang(a.specialBenefitReceivedMonths||0,lang,0)} ${en?'month(s) actually received':'মাস বাস্তবে পেয়েছেন'}`;
+
   const summary=pdfSummaryCards([
     {label:en?'October current net':'অক্টোবর চলতি নিট',value:amt(a.octoberCurrentNet||0)},
     {label:en?'July–September final arrear':'জুলাই–সেপ্টেম্বর চূড়ান্ত বকেয়া',value:amt(a.priorNetAfterSpecial||0)},
-    {label:en?'Special benefit deducted':'বিশেষ সুবিধা বিয়োগ',value:amt(a.specialBenefitThreeMonths||0)},
+    {label:en?'Special benefit actually adjusted':'বাস্তবে পাওয়া বিশেষ সুবিধা সমন্বয়',value:amt(receivedAmount)},
     {label:en?'Estimated October total':'অক্টোবরে আনুমানিক মোট',value:amt(a.octoberBillNet||0),accent:true}
   ],4);
+
   const coreRows=[
     {label:en?'Arrear period':'বকেয়া/সমন্বয় সময়কাল',detail:en?'4 months':'৪ মাস',value:en?'1 Jul–31 Oct 2026':'১ জুলাই–৩১ অক্টোবর ২০২৬'},
     {label:en?'30 June 2026 basic':'৩০ জুন ২০২৬ মূল বেতন',detail:en?'Old scale':'পুরোনো স্কেল',value:amt(a.oldJuneBasic||base.currentBasic||0)},
     {label:en?'1 July 2026 old-scale basic':'১ জুলাই ২০২৬ পুরোনো স্কেলের মূল বেতন',detail:en?'Increment included if eligible':'প্রাপ্য হলে ইনক্রিমেন্টসহ',value:amt(a.oldJulyBasic||a.legacyBasic||0)},
     {label:en?'Selected grade':'নির্বাচিত গ্রেড',detail:`${numLang((a.specialBenefitRate||0)*100,lang,0)}% ${en?'special benefit':'বিশেষ সুবিধা'}`,value:`${en?'Grade':'গ্রেড'} ${numLang(a.selectedGrade||base.grade||0,lang,0)}`},
-    {label:en?'Monthly special benefit':'মাসিক বিশেষ সুবিধা',detail:en?'Minimum Tk 1,500 applies':'ন্যূনতম ৳১,৫০০ প্রযোজ্য',value:amt(a.specialBenefitMonthly||0)},
-    {label:en?'July–September special benefit':'জুলাই–সেপ্টেম্বর বিশেষ সুবিধা',detail:en?'3 months':'৩ মাস',value:amt(a.specialBenefitThreeMonths||0)},
+    {label:en?'Monthly special benefit basis':'মাসিক বিশেষ সুবিধার ভিত্তি',detail:en?'Minimum Tk 1,500 applies':'ন্যূনতম ৳১,৫০০ প্রযোজ্য',value:amt(a.specialBenefitMonthly||0)},
+    {label:en?'Special benefit actually received':'বাস্তবে পাওয়া বিশেষ সুবিধা',detail:receivedBasis,value:amt(receivedAmount)},
     {label:en?'October payable basic':'অক্টোবর প্রাপ্য মূল বেতন',detail:en?'2026 implemented rate':'২০২৬ বাস্তবায়িত হার',value:amt(a.octoberBasic||0)},
     {label:en?'Monthly implemented increase':'মাসিক বাস্তবায়িত বৃদ্ধি',detail:en?'Old vs new payable basic':'পুরোনো বনাম নতুন মূল বেতন',value:amt(a.monthlyBasicArrear||0)}
   ];
+
   const settlementRows=[
     {label:en?'July–September basic arrear':'জুলাই–সেপ্টেম্বর মূল বেতন বকেয়া',detail:en?'3 previous months':'আগের ৩ মাস',value:amt(a.priorThreeBasicArrear||0)},
     {label:en?'October current-month increase':'অক্টোবর চলতি মাসের বৃদ্ধি',detail:en?'Not added twice':'দুইবার যোগ নয়',value:amt(a.monthlyBasicArrear||0)},
     {label:en?'July–October total basic adjustment':'জুলাই–অক্টোবর মোট মূল বেতন সমন্বয়',detail:en?'4 months':'৪ মাস',value:amt(a.totalBasicArrear||0)},
-    {label:en?'July–September net arrear before adjustment':'সমন্বয়ের আগে জুলাই–সেপ্টেম্বর নিট বকেয়া',detail:en?'Before special benefit':'বিশেষ সুবিধা বিয়োগের আগে',value:amt(a.priorThreeNetArrear||0)},
-    {label:en?'Special benefit deducted':'বিশেষ সুবিধা অটো বিয়োগ',detail:en?'July–September':'জুলাই–সেপ্টেম্বর',value:`− ${amt(a.specialBenefitThreeMonths||0)}`},
+    {label:en?'July–September net arrear before adjustment':'সমন্বয়ের আগে জুলাই–সেপ্টেম্বর নিট বকেয়া',detail:en?'Before special-benefit adjustment':'বিশেষ সুবিধা সমন্বয়ের আগে',value:amt(a.priorThreeNetArrear||0)},
+    {label:en?'Special benefit actually adjusted':'বাস্তবে পাওয়া বিশেষ সুবিধা সমন্বয়',detail:receivedBasis,value:`− ${amt(receivedAmount)}`},
     {label:en?'Final previous arrear':'চূড়ান্ত পূর্বের বকেয়া',detail:en?'Payable with October bill':'অক্টোবর বিলের সাথে',value:amt(a.priorNetAfterSpecial||0),emphasis:true},
     {label:en?'October current estimated net':'অক্টোবর চলতি আনুমানিক নিট',detail:en?'Current month':'চলতি মাস',value:amt(a.octoberCurrentNet||0)},
     {label:en?'Estimated total receivable in October':'অক্টোবরে আনুমানিক মোট প্রাপ্য',detail:en?'Current + previous arrear':'চলতি + পূর্বের বকেয়া',value:amt(a.octoberBillNet||0),emphasis:true}
@@ -657,23 +664,24 @@ function salaryOctoberArrearReportHtml(base,lang='bn'){
 
   const page1Body=summary+
     section(en?'Salary & special-benefit basis':'বেতন ও বিশেষ সুবিধার ভিত্তি',pdfTable(coreRows,{three:true,head1:en?'Item':'বিষয়',head2:en?'Basis':'ভিত্তি/হার',head3:en?'Amount / value':'অংক/মান'}),{table:true})+
-    `<div style="margin-top:10px;padding:10px 12px;border-left:4px solid #1a7a50;background:#f1fbf6;border-radius:8px;font-size:10.2px;color:#38594a;line-height:1.5"><b>${en?'Method:':'পদ্ধতি:'}</b> ${en?'October current salary is counted once. July–September arrears are calculated against the old-scale July payroll and the special benefit already received for those three months is deducted automatically.':'অক্টোবরের চলতি বেতন একবারই ধরা হয়েছে। জুলাই–সেপ্টেম্বরের বকেয়া ১ জুলাইয়ের পুরোনো স্কেলের প্রাপ্য বেতনের বিপরীতে হিসাব করে ওই ৩ মাসের বিশেষ সুবিধা স্বয়ংক্রিয়ভাবে বাদ দেওয়া হয়েছে।'}</div>`;
+    `<div style="margin-top:10px;padding:10px 12px;border-left:4px solid #1a7a50;background:#f1fbf6;border-radius:8px;font-size:10.2px;color:#38594a;line-height:1.5"><b>${en?'Method:':'পদ্ধতি:'}</b> ${en?'October current salary is counted once. July–September arrears are calculated against the old-scale July payroll, and only the special benefit actually received is adjusted.':'অক্টোবরের চলতি বেতন একবারই ধরা হয়েছে। জুলাই–সেপ্টেম্বরের বকেয়া ১ জুলাইয়ের পুরোনো স্কেলের প্রাপ্য বেতনের বিপরীতে হিসাব করা হয়েছে এবং কেবল বাস্তবে পাওয়া বিশেষ সুবিধাই সমন্বয় করা হয়েছে।'}</div>`;
 
   const page2Summary=pdfSummaryCards([
     {label:en?'Prior 3-month net arrear':'আগের ৩ মাসের নিট বকেয়া',value:amt(a.priorThreeNetArrear||0)},
-    {label:en?'Special benefit adjustment':'বিশেষ সুবিধা সমন্বয়',value:`− ${amt(a.specialBenefitThreeMonths||0)}`},
+    {label:en?'Special benefit adjustment':'বিশেষ সুবিধা সমন্বয়',value:`− ${amt(receivedAmount)}`},
     {label:en?'Final previous arrear':'চূড়ান্ত পূর্বের বকেয়া',value:amt(a.priorNetAfterSpecial||0),accent:true}
   ],3);
+
   const page2Body=page2Summary+
     section(en?'Arrear settlement':'বকেয়া নিষ্পত্তি',pdfTable(settlementRows,{three:true,head1:en?'Settlement item':'সমন্বয়ের বিষয়',head2:en?'Period / basis':'সময়/ভিত্তি',head3:en?'Amount':'অংক'}),{table:true})+
     `<div style="margin-top:11px;border:2px solid #b9994d;border-radius:11px;padding:12px 14px;background:linear-gradient(120deg,#fffaf0,#f1faf5);display:flex;justify-content:space-between;align-items:center;gap:14px;min-width:0">
       <div><div style="font-size:9.7px;color:#6d795f;font-weight:700">${en?'OCTOBER 2026 FINAL ESTIMATE':'অক্টোবর ২০২৬ চূড়ান্ত আনুমানিক হিসাব'}</div><div style="font-size:14px;font-weight:700;color:#244b3a;margin-top:2px">${en?'Estimated total receivable':'আনুমানিক মোট প্রাপ্য'}</div></div>
       <div style="font-size:24px;font-weight:900;color:#76591e;font-family:'Hind Siliguri','Noto Sans Bengali','Inter',sans-serif;font-variant-numeric:tabular-nums">${pdfSafe(amt(a.octoberBillNet||0))}</div>
     </div>
-    <div style="margin-top:8px;padding:9px 11px;background:#fff8e8;border-radius:8px;font-size:9.8px;color:#6b5728;line-height:1.48">${en?'Net figures are estimates based on the deduction inputs. Tax, loan or payroll-specific deductions may change the final office bill.':'নিট অংকগুলো দেওয়া কর্তনের তথ্য অনুযায়ী আনুমানিক। আয়কর, ঋণ বা অফিসভিত্তিক অন্য কর্তনের কারণে চূড়ান্ত বিল ভিন্ন হতে পারে।'}</div>`;
+    <div style="margin-top:8px;padding:9px 11px;background:#fff8e8;border-radius:8px;font-size:9.8px;color:#6b5728;line-height:1.48">${en?'Net figures are estimates based on the deduction inputs. Tax, loan, DU housing recovery or other payroll-specific deductions may change the final office bill.':'নিট অংকগুলো দেওয়া কর্তনের তথ্য অনুযায়ী আনুমানিক। আয়কর, ঋণ, ঢাবি বাসা-সংক্রান্ত কর্তন বা অফিসভিত্তিক অন্য কর্তনের কারণে চূড়ান্ত বিল ভিন্ন হতে পারে।'}</div>`;
 
-  return reportShell(en?'October 2026 Salary & Arrear Statement':'অক্টোবর ২০২৬ বেতন ও বকেয়া বিবরণী',en?'Salary basis and special-benefit adjustment':'বেতনভিত্তি ও বিশেষ সুবিধা সমন্বয়',page1Body,lang,{pageNo:1,totalPages:2,fixedPage:true,breakAfter:true})+
-    reportShell(en?'October 2026 Arrear Settlement':'অক্টোবর ২০২৬ বকেয়া নিষ্পত্তি',en?'Final July–September arrear with October bill':'অক্টোবর বিলের সাথে জুলাই–সেপ্টেম্বরের চূড়ান্ত বকেয়া',page2Body,lang,{pageNo:2,totalPages:2,fixedPage:true});
+  return reportShell(en?'October 2026 DU Salary & Arrear Statement':'অক্টোবর ২০২৬ DU বেতন ও বকেয়া বিবরণী',en?'SRO 348/2026 Public Bodies · salary and actual special-benefit adjustment':'এস.আর.ও. ৩৪৮-আইন/২০২৬ · বেতন ও বাস্তবে পাওয়া বিশেষ সুবিধা সমন্বয়',page1Body,lang,{pageNo:1,totalPages:2,fixedPage:true,breakAfter:true})+
+    reportShell(en?'October 2026 DU Arrear Settlement':'অক্টোবর ২০২৬ DU বকেয়া নিষ্পত্তি',en?'Final July–September arrear with October bill':'অক্টোবর বিলের সাথে জুলাই–সেপ্টেম্বরের চূড়ান্ত বকেয়া',page2Body,lang,{pageNo:2,totalPages:2,fixedPage:true});
 }
 function salaryProjectionReportResult(base,p,projections,year){
   const a=p?.allowances||{};
