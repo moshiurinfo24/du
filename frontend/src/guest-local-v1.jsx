@@ -6,7 +6,7 @@ import './guest-local-v1.css';
 const KEY='hisab_guest_workspace_v1';
 const emptyData={
   profile:{name:'',category:'',employee_category:'',grade:'',date_of_birth:'',mobile:'',gender:'',marital_status:'',first_joining_date:'',current_post:'',current_post_joining_date:'',third_class_start_date:'',fourth_class_start_date:'',previous_promotions:'0',retirement_age:'',office_name:'',department_name:'',current_basic_salary:'',salary_effective_date:'',employment_type:'',employee_reference:''},
-  education:[],events:[],salary_history:[],leave:[],updated_at:''
+  education:[],events:[],salary_history:[],leave:[],leave_entitlements:{},updated_at:''
 };
 function readData(){
   try{
@@ -49,6 +49,20 @@ const MAX_BACKUP_BYTES=12*1024*1024;
 
 function plainObject(v){return !!v&&typeof v==='object'&&!Array.isArray(v)}
 function safeRows(v,max=2500){return Array.isArray(v)?v.filter(plainObject).slice(0,max).map(x=>({...x})):[]}
+function normalizeLocalLeaveEntitlements(raw={}){
+  const allowed=['casual','earned','medical','maternity','paternity','study','special','other'],out={};
+  for(const [year,value] of Object.entries(plainObject(raw)?raw:{})){
+    if(!/^\d{4}$/.test(year)||!plainObject(value))continue;
+    const entitlements={};
+    for(const type of allowed){
+      const v=value.entitlements?.[type];
+      if(v===''||v===null||v===undefined)continue;
+      const n=Number(v);if(Number.isFinite(n)&&n>=0&&n<=366)entitlements[type]=Math.round(n*100)/100;
+    }
+    out[year]={entitlements,source_note:String(value.source_note||'').slice(0,500)};
+  }
+  return out;
+}
 function normalizeWorkspace(raw={}){
   const source=plainObject(raw)?raw:{};
   const profileSource=plainObject(source.profile)?source.profile:{};
@@ -64,6 +78,7 @@ function normalizeWorkspace(raw={}){
     events:safeRows(source.events),
     salary_history:safeRows(source.salary_history),
     leave:safeRows(source.leave),
+    leave_entitlements:normalizeLocalLeaveEntitlements(source.leave_entitlements),
     updated_at:typeof source.updated_at==='string'?source.updated_at:''
   };
 }
@@ -137,6 +152,7 @@ function mergeWorkspace(current,incoming){
     events:mergeRows(current?.events,incoming?.events,2500,'event').sort((a,b)=>String(b.event_date||'').localeCompare(String(a.event_date||''))),
     salary_history:mergeRows(current?.salary_history,incoming?.salary_history,2500,'salary').sort((a,b)=>String(b.effective_date||'').localeCompare(String(a.effective_date||''))),
     leave:mergeRows(current?.leave,incoming?.leave,2500,'leave').sort((a,b)=>String(b.start_date||'').localeCompare(String(a.start_date||''))),
+    leave_entitlements:{...normalizeLocalLeaveEntitlements(current?.leave_entitlements),...normalizeLocalLeaveEntitlements(incoming?.leave_entitlements)},
     updated_at:new Date().toISOString()
   };
 }
@@ -350,6 +366,7 @@ function Privacy({en,data,onLogin,onRestore}){
     events:backup.workspace.events.length,
     salary:backup.workspace.salary_history.length,
     leave:backup.workspace.leave.length,
+    entitlementYears:Object.keys(backup.workspace.leave_entitlements||{}).length,
     history:backup.calculation_history.length,
     pdf:backup.pdf_center.length
   }:null;
@@ -369,6 +386,7 @@ function Privacy({en,data,onLogin,onRestore}){
         <span><small>{en?'Timeline':'টাইমলাইন'}</small><b>{counts.events}</b></span>
         <span><small>{en?'Salary records':'বেতন রেকর্ড'}</small><b>{counts.salary}</b></span>
         <span><small>{en?'Leave records':'ছুটি রেকর্ড'}</small><b>{counts.leave}</b></span>
+        <span><small>{en?'Leave balance years':'ছুটি ব্যালেন্স বছর'}</small><b>{counts.entitlementYears}</b></span>
         <span className={!backup.hasHistory?'muted':''}><small>{en?'Calculations':'হিসাবের ইতিহাস'}</small><b>{backup.hasHistory?counts.history:'—'}</b></span>
         <span className={!backup.hasPdf?'muted':''}><small>PDF Center</small><b>{backup.hasPdf?counts.pdf:'—'}</b></span>
       </div>
