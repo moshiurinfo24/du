@@ -1097,7 +1097,7 @@ function salaryOctoberArrearReportHtml(base,lang='bn'){
   '<div style="margin-top:11px;border:2px solid #3F51B5;border-radius:11px;padding:12px 14px;background:linear-gradient(120deg,#eef2ff,#f3fbfa);display:flex;justify-content:space-between;align-items:center;gap:14px">'+
     '<div><div style="font-size:9px;color:#63708a;font-weight:800">FINAL OCTOBER SETTLEMENT</div><div style="font-size:13px;font-weight:800;color:#293A8C;margin-top:2px">'+
     label('অক্টোবর Net + জুলাই–সেপ্টেম্বরের চূড়ান্ত বকেয়া','October net + final July–September arrears')+
-    '</div></div><div style="font-size:23px;font-weight:900;color:#14756f;font-family: Hind Siliguri, Inter, sans-serif;font-variant-numeric:tabular-nums">'+pdfSafe(amt(a.octoberBillNet||0))+'</div></div>'+
+    '</div></div><div style="font-size:23px;font-weight:900;color:#14756f;font-family:&quot;Hind Siliguri&quot;,&quot;Inter&quot;,sans-serif;font-variant-numeric:tabular-nums">'+pdfSafe(amt(a.octoberBillNet||0))+'</div></div>'+
   '<div style="margin-top:8px;padding:9px 11px;border-radius:8px;background:#fff8e8;color:#6b5728;font-size:8.9px;line-height:1.45">'+
     label('Special Benefit জুলাই–সেপ্টেম্বরের নিজ নিজ মাসের reconciliation-এ একবার করে সমন্বয় হয়েছে; অক্টোবরের Final Settlement-এ এটি আবার কর্তন করা হয়নি। প্রকৃত আয়কর, ঋণ, বাসা-সংক্রান্ত recovery বা payroll-specific কর্তনের কারণে অফিস বিল ভিন্ন হতে পারে।','Special Benefit has already been adjusted once within each July–September monthly reconciliation and is not deducted again in the October Final Settlement. Actual tax, loan, housing recovery or payroll-specific deductions may change the office bill.')+
     '</div>';
@@ -2922,7 +2922,7 @@ function SalaryResult({r,lang='bn',compact=false,initialCompactTab='now',onReset
   }));
   const combinedReport={html:salaryCombinedReportHtml(r,lang),filename:`pay-scale-2026-2028-three-page-${stamp}.pdf`};
   const arrear=r.arrear2026||{};
-  const arrearReport={html:salaryOctoberArrearReportHtml(r,lang),filename:`october-2026-arrear-${stamp}.pdf`};
+  const arrearReport={html:salaryOctoberArrearReportHtml(r,lang),filename:`july-october-2026-monthly-arrear-${stamp}.pdf`};
   const activeYearReport=yearReports.find(x=>x.year===activeYear)||yearReports[0];
   const activeShareTitle=en?`Pay Scale ${activeYear} Salary Report`:`পে-স্কেল ${numLang(activeYear,lang,0)} বেতন রিপোর্ট`;
   const activeShareSummary=en?`${activeYear} salary calculation, allowances, deductions and net payable.`:`${numLang(activeYear,lang,0)} সালের বেতন, ভাতা, কর্তন ও নিট প্রাপ্যের হিসাব।`;
