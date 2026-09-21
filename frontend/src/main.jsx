@@ -46,6 +46,7 @@ import './public-premium-v2-1.css';
 import './du-payroll-v2-2.css';
 import './du-experience-v2-3.css';
 import './pwa-mobile-v1.css';
+import './hisab-brand-v1.css';
 import {initPwaRuntime,subscribePwa,getPwaState,promptPwaInstall,formatPwaTime,manualPwaUpdateCheck,consumePwaUpdateNotice} from './pwa-client.js';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import {
