@@ -1368,6 +1368,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
   useEffect(()=>subscribePwa(setAppStatus),[]);
   const labels={
     salary:en?'Pay Scale':'পে-স্কেল',
+    arrear:en?'Arrear':'বকেয়া',
     promotion:en?'Promotion':'পদোন্নতি',
     house:en?'House Points':'বাসা পয়েন্ট',
     service:en?'Service Length':'চাকরিকাল',
@@ -1387,7 +1388,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     'local-reports':en?'My Reports':'রিপোর্ট',
     'local-privacy':en?'Data & Backup':'ডাটা ও ব্যাকআপ'
   };
-  const icons={salary:WalletCards,promotion:TrendingUp,house:Home,service:Clock3,age:UserRound,gap:CalendarDays,retire:FileClock,basic:BadgeDollarSign,points:Award,calendar:CalendarDays,reference:BookOpen,'local-dashboard':UserRound};
+  const icons={salary:WalletCards,arrear:ReceiptText,promotion:TrendingUp,house:Home,service:Clock3,age:UserRound,gap:CalendarDays,retire:FileClock,basic:BadgeDollarSign,points:Award,calendar:CalendarDays,reference:BookOpen,'local-dashboard':UserRound};
   const open=(tool)=>{
     const next=[tool,...recent.filter(x=>x!==tool)].slice(0,3);
     setRecent(next);
@@ -1396,16 +1397,22 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
   };
   const goHome=()=>{setActivePublicTool(null);setMobileCalcOpen(false);window.scrollTo({top:0,behavior:'smooth'})};
   const updated=formatPwaTime(appStatus.lastAutoUpdateAt||appStatus.build?.built_at||'',lang);
+  const localProfile=guestLocalProfile();
   const tools=[
-    ['salary',WalletCards,en?'Pay Scale':'পে-স্কেল','indigo'],
+    ['salary',WalletCards,en?'Pay Scale 2026':'পে-স্কেল ২০২৬','indigo'],
+    ['arrear',ReceiptText,en?'Arrear':'বকেয়া / এরিয়ার','aqua'],
     ['promotion',TrendingUp,en?'Promotion':'পদোন্নতি','violet'],
-    ['house',Home,en?'House Points':'বাসা পয়েন্ট','gold'],
+    ['points',Award,en?'Points':'পয়েন্ট হিসাব','teal'],
+    ['house',Home,en?'House Points':'বাসা বরাদ্দ পয়েন্ট','gold'],
     ['service',Clock3,en?'Service Length':'চাকরিকাল','aqua'],
+    ['retire',FileClock,en?'Retirement':'অবসর ও বয়স','amber'],
+    ['calendar',CalendarDays,en?'Office Calendar':'অফিস ক্যালেন্ডার','sky']
+  ];
+  const moreTools=[
     ['age',UserRound,en?'Age':'বয়স','sky'],
-    ['gap',CalendarDays,en?'Date Gap':'তারিখ ব্যবধান','blue'],
-    ['retire',FileClock,en?'Retirement':'অবসর','amber'],
+    ['gap',CalendarDays,en?'Date Difference':'তারিখের ব্যবধান','blue'],
     ['basic',BadgeDollarSign,en?'Basic Projection':'মূল বেতন প্রক্ষেপণ','indigo'],
-    ['points',Award,en?'Points Center':'পয়েন্ট','teal']
+    ['reference',BookOpen,en?'Notices & Policies':'নোটিশ ও নীতিমালা','teal']
   ];
   const localServices=[
     ['local-dashboard',LayoutDashboard,en?'My Dashboard':'আমার ড্যাশবোর্ড'],
@@ -1430,7 +1437,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
         <PwaControls lang={lang}/>
       </header>
       <main className="pwa-tool-content">
-        {activePublicTool==='salary'&&<SalaryCalculator lang={lang} publicMode={true}/>}
+        {['salary','arrear'].includes(activePublicTool)&&<SalaryCalculator lang={lang} publicMode={true} initialArrear={activePublicTool==='arrear'}/>}
         {activePublicTool==='promotion'&&<section className="public-tool-only-shell"><PromotionCenter lang={lang} publicMode={true}/></section>}
         {activePublicTool==='house'&&<section className="public-tool-only-shell"><HouseAllocationPoints lang={lang} publicMode={true}/></section>}
         {['service','age','gap','retire','basic'].includes(activePublicTool)&&<section className="public-tool-only-shell"><CalculatorCenter lang={lang} publicMode={true} initialTool={activePublicTool} singleTool={true}/></section>}
@@ -1449,7 +1456,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
       {mobileCalcOpen&&<div className="pwa-service-sheet-backdrop" onClick={()=>setMobileCalcOpen(false)}>
         <section className="pwa-service-sheet" onClick={e=>e.stopPropagation()}>
           <div className="pwa-service-sheet-head"><div><small>{en?'ALL SERVICES':'সব সেবা'}</small><h3>{en?'Choose what you need':'যেটা দরকার সেটি বেছে নিন'}</h3></div><button onClick={()=>setMobileCalcOpen(false)}><X/></button></div>
-          <div className="pwa-sheet-grid">{tools.map(([key,I,title,tone])=><button key={key} onClick={()=>{setMobileCalcOpen(false);open(key)}}><span className={tone}><I/></span><b>{title}</b></button>)}</div>
+          <div className="pwa-sheet-grid">{[...tools,...moreTools].map(([key,I,title,tone])=><button key={key} onClick={()=>{setMobileCalcOpen(false);open(key)}}><span className={tone}><I/></span><b>{title}</b></button>)}</div>
           <div className="pwa-sheet-group-title">{en?'PERSONAL · NO LOGIN REQUIRED':'ব্যক্তিগত · লগইন লাগবে না'}</div>
           <div className="pwa-sheet-grid personal">{localServices.map(([key,I,title])=><button key={key} onClick={()=>{setMobileCalcOpen(false);open(key)}}><span className="local"><I/></span><b>{title}</b></button>)}</div>
           <button className="pwa-sheet-dashboard" onClick={()=>{setMobileCalcOpen(false);open('local-dashboard')}}><LayoutDashboard/><div><b>{en?'My Local Dashboard':'আমার Local ড্যাশবোর্ড'}</b><small>{en?'Profile, salary history, leave, reports and more without login':'চাকরি তথ্য, বেতন ইতিহাস, ছুটি, রিপোর্টসহ সবকিছু লগইন ছাড়াই'}</small></div><ChevronRight/></button>
@@ -1473,6 +1480,13 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
           <span><Users/><div><small>{en?'App installs':'অ্যাপ ইনস্টল'}</small><b>{pwaStats.total_installs==null?'—':numLang(pwaStats.total_installs,lang,0)}</b></div></span>
         </div>
       </section>
+
+      {(localProfile.grade||localProfile.category||localProfile.first_joining_date||localProfile.current_post)&&<section className="pwa-profile-strip">
+        <span><small>{en?'Grade':'গ্রেড'}</small><b>{localProfile.grade?(en?`Grade ${localProfile.grade}`:`গ্রেড ${numLang(localProfile.grade,'bn',0)}`):'—'}</b></span>
+        <span><small>{en?'Category':'শ্রেণি'}</small><b>{localProfile.category?duCategoryInfo(localProfile.category,lang).label:'—'}</b></span>
+        <span><small>{en?'Joined':'যোগদান'}</small><b>{localProfile.first_joining_date?fmtDateLang(localProfile.first_joining_date,lang):'—'}</b></span>
+        <button onClick={()=>open('local-profile')}>{en?'Edit':'সম্পাদনা'}<ChevronRight/></button>
+      </section>}
 
       <section className="pwa-home-section">
         <div className="pwa-section-head"><div><small>{en?'QUICK ACTIONS':'দ্রুত সেবা'}</small><h2>{en?'Your calculators':'আপনার প্রয়োজনীয় হিসাব'}</h2></div><button onClick={()=>setMobileCalcOpen(true)}>{en?'See all':'সব দেখুন'}<ChevronRight/></button></div>
@@ -1515,7 +1529,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     {mobileCalcOpen&&<div className="pwa-service-sheet-backdrop" onClick={()=>setMobileCalcOpen(false)}>
       <section className="pwa-service-sheet" onClick={e=>e.stopPropagation()}>
         <div className="pwa-service-sheet-head"><div><small>{en?'ALL SERVICES':'সব সেবা'}</small><h3>{en?'Choose what you need':'যেটা দরকার সেটি বেছে নিন'}</h3></div><button onClick={()=>setMobileCalcOpen(false)}><X/></button></div>
-        <div className="pwa-sheet-grid">{tools.map(([key,I,title,tone])=><button key={key} onClick={()=>{setMobileCalcOpen(false);open(key)}}><span className={tone}><I/></span><b>{title}</b></button>)}</div>
+        <div className="pwa-sheet-grid">{[...tools,...moreTools].map(([key,I,title,tone])=><button key={key} onClick={()=>{setMobileCalcOpen(false);open(key)}}><span className={tone}><I/></span><b>{title}</b></button>)}</div>
         <div className="pwa-sheet-group-title">{en?'PERSONAL · NO LOGIN REQUIRED':'ব্যক্তিগত · লগইন লাগবে না'}</div>
         <div className="pwa-sheet-grid personal">{localServices.map(([key,I,title])=><button key={key} onClick={()=>{setMobileCalcOpen(false);open(key)}}><span className="local"><I/></span><b>{title}</b></button>)}</div>
         <button className="pwa-sheet-dashboard" onClick={()=>{setMobileCalcOpen(false);open('local-dashboard')}}><LayoutDashboard/><div><b>{en?'My Local Dashboard':'আমার Local ড্যাশবোর্ড'}</b><small>{en?'Profile, salary history, leave, reports and more without login':'চাকরি তথ্য, বেতন ইতিহাস, ছুটি, রিপোর্টসহ সবকিছু লগইন ছাড়াই'}</small></div><ChevronRight/></button>
@@ -1677,8 +1691,13 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
     </div>
   </div>;
 
-  const standalonePwa=typeof window!=='undefined'&&(window.matchMedia?.('(display-mode: standalone)').matches||window.navigator.standalone===true);
-  if(standalonePwa){
+  const mobileAppUi=typeof window!=='undefined'&&(
+    window.matchMedia?.('(display-mode: standalone)').matches||
+    window.navigator.standalone===true||
+    window.matchMedia?.('(max-width: 900px)').matches||
+    /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent||'')
+  );
+  if(mobileAppUi){
     return <PwaStandaloneShell
       lang={lang} setLang={setLang}
       activePublicTool={activePublicTool}
@@ -1693,7 +1712,6 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
   }
 
   return <div className="approved-home" id="home">
-    <PwaMobileInstallGate lang={lang}/>
     <header className="approved-header">
       <button className="approved-brand brand-button" onClick={()=>go('home')}>
         <span><Calculator/></span><div><b>{en?'Hisab Sahayika':'হিসাব সহায়িকা'}</b><small>{en?'Independent · unofficial calculation assistant':'স্বাধীন · অনানুষ্ঠানিক হিসাব সহায়ক প্ল্যাটফর্ম'}</small></div>
@@ -2445,9 +2463,14 @@ function duCategoryInfo(category,lang='bn'){
   };
   return map[category]||map.class3;
 }
-function SalaryCalculator({lang='bn',publicMode=false}){
+function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
   const en=lang==='en',today=todayLocalIso();
-  const compactPwa=typeof window!=='undefined'&&(window.matchMedia?.('(display-mode: standalone)').matches||window.navigator.standalone===true);
+  const compactPwa=typeof window!=='undefined'&&(
+    window.matchMedia?.('(display-mode: standalone)').matches||
+    window.navigator.standalone===true||
+    window.matchMedia?.('(max-width: 900px)').matches||
+    /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent||'')
+  );
   const guestProfile=compactPwa?guestLocalProfile():{};
   const [f,setF]=useState({
     grade:String(guestProfile.grade||'13'),currentStage:'0',date:today,housing:'none',duQuarterRent:'0',duQuarterOther:'0',
@@ -2634,7 +2657,7 @@ function SalaryCalculator({lang='bn',publicMode=false}){
         </section>
 
         <div className="pwa-salary-sticky-calc"><button onClick={calc}><Calculator/><span>{en?'Show calculation':'হিসাব দেখুন'}</span><ArrowRight/></button></div>
-      </>:<div id="salary-result"><SalaryResult r={r} lang={lang} compact={true} onReset={()=>{setR(null);window.scrollTo({top:0,behavior:'smooth'})}}/></div>}
+      </>:<div id="salary-result"><SalaryResult r={r} lang={lang} compact={true} initialCompactTab={initialArrear?'arrear':'now'} onReset={()=>{setR(null);window.scrollTo({top:0,behavior:'smooth'})}}/></div>}
     </div>;
   }
 
@@ -2718,13 +2741,13 @@ function SalaryCalculator({lang='bn',publicMode=false}){
     {r&&<div id="salary-result" className="salary-result-anchor"><SalaryResult r={r} lang={lang}/></div>}
   </div>
 }
-function SalaryResult({r,lang='bn',compact=false,onReset}){
+function SalaryResult({r,lang='bn',compact=false,initialCompactTab='now',onReset}){
   const en=lang==='en';
   const [activeYear,setActiveYear]=useState(2026);
   const [resultView,setResultView]=useState('salary');
-  const [compactTab,setCompactTab]=useState('now');
+  const [compactTab,setCompactTab]=useState(initialCompactTab);
   const [pdfBusy,setPdfBusy]=useState('');
-  useEffect(()=>{setActiveYear(2026);setResultView('salary');setCompactTab('now')},[r]);
+  useEffect(()=>{setActiveYear(2026);setResultView('salary');setCompactTab(initialCompactTab)},[r,initialCompactTab]);
   useEffect(()=>{if(activeYear!==2026)setResultView('salary')},[activeYear]);
 
   const amt=v=>`${en?'Tk':'৳'} ${moneyLang(v,lang)}`;
