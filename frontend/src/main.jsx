@@ -4499,7 +4499,7 @@ function App(){
       <button className={page==='salary'?'active':''} onClick={()=>setPage('salary')}><WalletCards/><span>{lang==='en'?'Salary':'বেতন'}</span></button>
       <button className={['promotion','promotion-timeline'].includes(page)?'active':''} onClick={()=>setPage('promotion')}><TrendingUp/><span>{lang==='en'?'Career':'ক্যারিয়ার'}</span></button>
       <button className={mobileMenu?'active':''} onClick={()=>setMobileMenu(v=>!v)}><Boxes/><span>{lang==='en'?'Services':'সেবা'}</span></button>
-      <button className={page==='career'?'active':''} onClick={()=>setPage('career')}><UserRound/><span>{lang==='en'?'Profile':'প্রোফাইল'}</span></button>
+      <button className={page==='career'?'active':''} onClick={()=>setPage('career')}><UserRound/><span>{lang==='en'?'My':'আমার'}</span></button>
     </nav>
     <a className="floating-whatsapp logged-in-whatsapp" href={`https://wa.me/8801759084692?text=${encodeURIComponent(lang==='en'?'Hello, I need help with Hisab Sahayika.':'আসসালামু আলাইকুম, হিসাব সহায়িকা অ্যাপ বিষয়ে সহায়তা প্রয়োজন।')}`} target="_blank" rel="noreferrer" aria-label={lang==='en'?'Message on WhatsApp':'হোয়াটসঅ্যাপে মেসেজ করুন'}><MessageCircle/><span>{lang==='en'?'WhatsApp':'হোয়াটসঅ্যাপ'}</span></a>
   </div>
