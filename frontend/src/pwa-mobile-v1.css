@@ -1,9 +1,9 @@
 /* DU PWA Mobile V1 — magenta mobile app shell inspired by modern Bangladeshi wallet UX */
 :root{
-  --du-app-primary:#d41468;
-  --du-app-primary-dark:#a90d50;
+  --du-app-primary:#c2185b;
+  --du-app-primary-dark:#8e1748;
   --du-app-primary-soft:#fff0f6;
-  --du-app-primary-pale:#fff7fb;
+  --du-app-primary-pale:#fff5f8;
   --du-app-ink:#27313a;
   --du-app-muted:#75808a;
   --du-app-border:#f0d7e3;
@@ -15,7 +15,7 @@
   display:inline-flex;align-items:center;gap:7px;padding:0 10px;font:700 10px/1.1 "Hind Siliguri","Inter",sans-serif;cursor:pointer
 }
 .pwa-status-button svg,.pwa-install-button svg{width:14px;height:14px}
-.pwa-install-button{border-color:#d41468;background:linear-gradient(135deg,#e52678,#c6115e);color:#fff;box-shadow:0 6px 14px rgba(212,20,104,.18)}
+.pwa-install-button{border-color:#c2185b;background:linear-gradient(135deg,#e83e7d,#c2185b);color:#fff;box-shadow:0 6px 14px rgba(212,20,104,.18)}
 .pwa-status-button small{display:block;color:#85737c;font:600 8px/1.1 "Inter","Hind Siliguri",sans-serif}
 .pwa-status-button>span{display:flex;flex-direction:column;align-items:flex-start}
 .pwa-status-button.updating svg{animation:duPwaSpin 1s linear infinite}
@@ -28,7 +28,7 @@
 }
 .pwa-status-popover:before{content:"";position:absolute;right:28px;top:-7px;width:13px;height:13px;background:#fff;border-left:1px solid #edd9e3;border-top:1px solid #edd9e3;transform:rotate(45deg)}
 .pwa-status-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-.pwa-status-head>span{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:linear-gradient(145deg,#f02b83,#b80e58);color:#fff;box-shadow:0 7px 15px rgba(212,20,104,.22)}
+.pwa-status-head>span{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:linear-gradient(145deg,#f02b83,#8e1748);color:#fff;box-shadow:0 7px 15px rgba(212,20,104,.22)}
 .pwa-status-head svg{width:18px;height:18px}
 .pwa-status-head b{display:block;font-size:13px;color:#54203a}
 .pwa-status-head small{display:block;margin-top:1px;font-size:9px;color:#8b7881}
@@ -38,8 +38,8 @@
 .pwa-status-grid b{display:block;margin-top:2px;font-size:10.5px;color:#44343b}
 .pwa-status-actions{display:flex;gap:7px;margin-top:11px}
 .pwa-status-actions button{flex:1;min-height:38px;border:0;border-radius:10px;font-weight:800;font-size:10px;cursor:pointer}
-.pwa-status-actions .check{background:#f8e8f0;color:#a90d50}
-.pwa-status-actions .install{background:linear-gradient(135deg,#e52678,#bd105a);color:#fff}
+.pwa-status-actions .check{background:#f8e8f0;color:#8e1748}
+.pwa-status-actions .install{background:linear-gradient(135deg,#e83e7d,#bd105a);color:#fff}
 .pwa-ios-help{margin-top:9px;padding:9px 10px;border-radius:10px;background:#fff5df;color:#705b2c;font-size:9.5px;line-height:1.5}
 .pwa-update-toast{
   position:fixed;z-index:9999;left:50%;bottom:90px;transform:translateX(-50%);
@@ -63,7 +63,7 @@
 .pwa-install-nudge div{min-width:0;flex:1}
 .pwa-install-nudge b{display:block;color:#57223b;font-size:12px}
 .pwa-install-nudge small{display:block;margin-top:2px;color:#8a717d;font-size:9px;line-height:1.35}
-.pwa-install-nudge button{border:0;border-radius:10px;background:#d41468;color:#fff;padding:9px 12px;font-size:10px;font-weight:800;cursor:pointer}
+.pwa-install-nudge button{border:0;border-radius:10px;background:#c2185b;color:#fff;padding:9px 12px;font-size:10px;font-weight:800;cursor:pointer}
 .pwa-install-nudge .dismiss{background:transparent;color:#96747f;padding:7px}
 
 @media(max-width:900px){
@@ -72,12 +72,12 @@
   button,input,select,textarea{font-family:"Hind Siliguri","Inter",sans-serif}
 
   .app{background:var(--du-app-primary-pale)!important}
-  .app main{background:linear-gradient(180deg,#fff7fb 0,#fff 210px,#f8f9fb 100%)!important;padding-bottom:86px!important}
+  .app main{background:linear-gradient(180deg,#fff5f8 0,#fff 210px,#f8f9fb 100%)!important;padding-bottom:86px!important}
   .app-topbar{
     position:sticky!important;top:0!important;z-index:300!important;
     margin:0!important;padding:calc(10px + env(safe-area-inset-top)) 14px 10px!important;
     border:0!important;border-radius:0 0 22px 22px!important;
-    background:linear-gradient(135deg,#e42578 0%,#c81261 62%,#a70c4e 100%)!important;
+    background:linear-gradient(135deg,#e83e7d 0%,#c2185b 62%,#8e1748 100%)!important;
     color:#fff!important;box-shadow:0 8px 22px rgba(167,12,78,.18)!important
   }
   .app-topbar h2,.app-topbar p{color:#fff!important}
@@ -100,13 +100,13 @@
     gap:3px!important;padding:4px!important;border-radius:12px!important;font-size:9px!important;font-weight:700!important
   }
   .mobile-bottom-nav button svg{width:20px!important;height:20px!important}
-  .mobile-bottom-nav button.active{color:#d41468!important;background:#fff0f6!important}
+  .mobile-bottom-nav button.active{color:#c2185b!important;background:#fff0f6!important}
   .mobile-bottom-nav button.active svg{filter:drop-shadow(0 4px 6px rgba(212,20,104,.2))}
 
   .side.mobile-open{
     border-radius:0 24px 24px 0!important;background:#fff!important;box-shadow:18px 0 42px rgba(76,24,47,.18)!important
   }
-  .side .brand{background:linear-gradient(135deg,#e42578,#b40d55)!important;color:#fff!important}
+  .side .brand{background:linear-gradient(135deg,#e83e7d,#8e1748)!important;color:#fff!important}
   .side .brand b,.side .brand small{color:#fff!important}
   .smart-side-nav button.active{background:#fff0f6!important;color:#bd105a!important;border-color:#f1c9dc!important}
   .smart-side-nav .side-group>small{color:#c25383!important}
@@ -115,11 +115,11 @@
     border-color:#efe2e8;
   }
   .app .primary,.app button.primary{
-    background:linear-gradient(135deg,#e52578,#be105b)!important;border-color:#bd105a!important;color:#fff!important;
+    background:linear-gradient(135deg,#e83e7d,#be105b)!important;border-color:#bd105a!important;color:#fff!important;
     box-shadow:0 8px 18px rgba(212,20,104,.18)!important
   }
   .app input:focus,.app select:focus,.app textarea:focus{
-    border-color:#d41468!important;box-shadow:0 0 0 3px rgba(212,20,104,.10)!important
+    border-color:#c2185b!important;box-shadow:0 0 0 3px rgba(212,20,104,.10)!important
   }
 
   .approved-home{background:var(--du-app-primary-pale)!important;padding-bottom:84px!important}
@@ -129,7 +129,7 @@
   .approved-home .du-home-hero{
     background:
       radial-gradient(circle at 88% 10%,rgba(255,255,255,.18),transparent 26%),
-      linear-gradient(145deg,#e5277a 0%,#c41160 62%,#9e0a49 100%)!important
+      linear-gradient(145deg,#e83e7d 0%,#c2185b 62%,#8e1748 100%)!important
   }
   .approved-home .approved-kicker{background:rgba(255,255,255,.14)!important}
   .approved-home .approved-hero-buttons .primary{
@@ -145,10 +145,10 @@
   .approved-home .salary-form-section-title>span,
   .approved-home .du-category-rule-strip>svg,
   .approved-home .salary-auto-summary svg{
-    background:linear-gradient(145deg,#e52678,#b60e56)!important
+    background:linear-gradient(145deg,#e83e7d,#8e1748)!important
   }
   .approved-home .salary-submit-bar .primary{
-    background:linear-gradient(135deg,#e52578,#b70e56)!important
+    background:linear-gradient(135deg,#e83e7d,#8e1748)!important
   }
 
   .public-mobile-dock{
@@ -160,7 +160,7 @@
     backdrop-filter:blur(18px)!important
   }
   .public-mobile-dock button{color:#89747d!important;font-size:8.5px!important}
-  .public-mobile-dock button.active{color:#d41468!important;background:#fff0f6!important}
+  .public-mobile-dock button.active{color:#c2185b!important;background:#fff0f6!important}
   .public-mobile-dock svg{width:20px!important;height:20px!important}
 
   .floating-whatsapp{bottom:86px!important}
@@ -176,7 +176,7 @@
 }
 
 @media(display-mode:standalone){
-  body{padding-top:env(safe-area-inset-top);background:#fff7fb}
+  body{padding-top:env(safe-area-inset-top);background:#fff5f8}
   .approved-home .approved-header{top:env(safe-area-inset-top)!important}
   .pwa-install-button,.pwa-install-nudge{display:none!important}
 }
@@ -197,7 +197,7 @@
   background:
     radial-gradient(circle at 90% 8%,rgba(255,255,255,.22),transparent 24%),
     radial-gradient(circle at 8% 95%,rgba(255,219,234,.44),transparent 30%),
-    linear-gradient(150deg,#e7277b 0%,#c5105f 48%,#950844 100%);
+    linear-gradient(150deg,#e7277b 0%,#c2185b 48%,#8e1748 100%);
 }
 .pwa-gate-card{
   width:min(100%,430px);margin:auto;
@@ -235,15 +235,15 @@
 .pwa-gate-quick span{
   min-height:48px;display:flex;align-items:center;gap:8px;
   padding:9px 10px;border:1px solid #f0dce5;border-radius:12px;
-  background:linear-gradient(145deg,#fff,#fff7fb);color:#5d3b4b;
+  background:linear-gradient(145deg,#fff,#fff5f8);color:#5d3b4b;
   font-size:10.5px;font-weight:800
 }
-.pwa-gate-quick svg{width:17px;height:17px;color:#d41468}
+.pwa-gate-quick svg{width:17px;height:17px;color:#c2185b}
 .pwa-gate-primary{
   width:100%;min-height:52px;margin-top:3px;
   border:0;border-radius:14px;
   display:flex;align-items:center;justify-content:center;gap:8px;
-  background:linear-gradient(135deg,#e62779,#b80d56);color:#fff;
+  background:linear-gradient(135deg,#e83e7d,#8e1748);color:#fff;
   box-shadow:0 11px 24px rgba(196,15,91,.23);
   font-size:13px;font-weight:900;cursor:pointer
 }
@@ -265,7 +265,7 @@
 }
 .pwa-gate-message,.pwa-gate-ios{
   margin:10px 0;padding:11px 12px;border:1px solid #efd9e3;border-radius:12px;
-  background:#fff7fb;color:#785263;font-size:10px;line-height:1.5
+  background:#fff5f8;color:#785263;font-size:10px;line-height:1.5
 }
 .pwa-gate-message.success{border-color:#cce8d9;background:#effaf4;color:#31684f}
 .pwa-gate-ios{display:flex;align-items:flex-start;gap:9px;background:#fff8e7;border-color:#eddfb8;color:#725c2c}
@@ -313,7 +313,7 @@
 .pwa-gate-update b{display:block;margin-top:1px;color:#216044;font-size:11px}
 .pwa-gate-update em{display:block;margin-top:2px;color:#7b8982;font-size:8.7px;font-style:normal}
 .pwa-gate-actions.single{margin-top:6px}
-.pwa-gate-actions.single .home-open-info{margin-top:0;background:linear-gradient(135deg,#e62779,#b80d56)}
+.pwa-gate-actions.single .home-open-info{margin-top:0;background:linear-gradient(135deg,#e83e7d,#8e1748)}
 .pwa-gate-actions.single .home-open-info{pointer-events:none}
 
 @media(max-width:900px){
@@ -325,3 +325,20 @@
   .pwa-gate-card>p{font-size:11.5px}
   .pwa-gate-quick,.pwa-gate-services{grid-template-columns:1fr 1fr}
 }
+
+.pwa-install-count{
+  display:inline-flex;align-items:center;gap:5px;margin:8px 0 0;
+  padding:5px 8px;border:1px solid #efd9e3;border-radius:999px;
+  background:#fff7fa;color:#7b5365;font-size:9px;font-weight:800
+}
+.pwa-install-count svg{width:13px;height:13px;color:#c2185b}
+.pwa-gate-card.success .pwa-install-count{margin:9px auto 0}
+.pwa-gate-disclaimer{
+  display:flex;align-items:flex-start;gap:9px;margin:12px 0;padding:11px 12px;
+  border:1px solid #ead8b0;border-radius:12px;background:#fff9e9;color:#6b572d;text-align:left
+}
+.pwa-gate-disclaimer>svg{width:18px;height:18px;flex:0 0 auto;margin-top:1px;color:#a87920}
+.pwa-gate-disclaimer b{display:block;font-size:10.5px;color:#6a5021}
+.pwa-gate-disclaimer span{display:block;margin-top:2px;font-size:9px;line-height:1.5;color:#7b6a44}
+.pwa-gate-disclaimer.compact{margin-top:10px;padding:9px 10px}
+.pwa-gate-disclaimer.compact>svg{width:16px;height:16px}
