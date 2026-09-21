@@ -704,8 +704,9 @@ function salaryReportHtml(r,lang='bn',pdfMeta={}){
   const en=lang==='en',f=r.input||{};
   const amt=v=>`${en?'Tk':'৳'} ${moneyLang(v,lang)}`;
   const rate=r.phase?.rate??r.rate??0;
-  const zoneLabel=en?({dhaka:'Dhaka North/South City Corporation',major:'Listed City Corporation',savar:'Savar / Keraniganj listed area',other:'Other area'}[f.zone]||'Other area'):({dhaka:'ঢাকা উত্তর/দক্ষিণ সিটি কর্পোরেশন',major:'তালিকাভুক্ত সিটি কর্পোরেশন',savar:'সাভার / কেরানীগঞ্জ তালিকাভুক্ত এলাকা',other:'অন্যান্য এলাকা'}[f.zone]||'অন্যান্য এলাকা');
-  const categoryLabel=r.category==='officer'?(en?'Teacher / Officer':'শিক্ষক / কর্মকর্তা'):r.category==='class4'?(en?'Class IV employee':'৪র্থ শ্রেণির কর্মচারী'):(en?'Class III employee':'৩য় শ্রেণির কর্মচারী');
+  const zoneLabel=en?'University of Dhaka, Dhaka':'ঢাকা বিশ্ববিদ্যালয়, ঢাকা';
+  const categoryLabel=duCategoryInfo(r.category||f.category,lang).label;
+  const housingLabel=(r.housingMode||f.housing)==='du_quarter'?(en?'DU allotted quarter/unit':'ঢাবি বরাদ্দকৃত বাসা/ইউনিট'):(en?'No DU quarter — Dhaka house-rent allowance':'ঢাবি বাসা নেই — ঢাকা সিটি বাড়িভাড়া ভাতা');
   const earningRows=[
     [en?'Payable basic':'প্রাপ্য মূল বেতন',r.payableBasic??r.payable],
     [en?'House rent':'বাড়িভাড়া',r.house],
@@ -716,11 +717,8 @@ function salaryReportHtml(r,lang='bn',pdfMeta={}){
     [en?'Mobile allowance':'মোবাইল ভাতা',r.mobile],
     [en?'Laundry allowance':'ধোলাই ভাতা',r.laundry],
     [en?'Special-needs child allowance':'বিশেষ চাহিদাসম্পন্ন সন্তান ভাতা',r.disabledChild],
-    [en?'Special area allowance':'বিশেষ এলাকা ভাতা',r.area],
-    [en?'Training allowance':'প্রশিক্ষণ ভাতা',r.training],
     [en?'Charge allowance':'কার্যভার ভাতা',r.charge],
-    [en?'Entertainment allowance':'আপ্যায়ন ভাতা',r.entertainment],
-    [en?'Other verified special allowance':'অন্যান্য যাচাইকৃত বিশেষ ভাতা',r.otherSpecial]
+    [en?'Other separately approved allowance':'আলাদা অনুমোদনপ্রাপ্ত অন্যান্য ভাতা',r.otherSpecial]
   ].filter(([,v],i)=>i===0||Number(v)>0).map(([label,v],i)=>({label,value:amt(v),emphasis:i===0}));
   const deductionRows=[
     [en?`Provident Fund (${numLang(r.gpfRate||0,'en',0)}%)`:`ভবিষ্য তহবিল (PF) (${numLang(r.gpfRate||0,'bn',0)}%)`,r.pf],
@@ -729,6 +727,8 @@ function salaryReportHtml(r,lang='bn',pdfMeta={}){
     [en?'Group insurance':'গ্রুপ বীমা',r.group],
     [en?'Revenue stamp':'রাজস্ব স্ট্যাম্প',r.stamp],
     [en?'Association':'সমিতি',r.association],
+    [en?'DU quarter/unit rent':'ঢাবি বাসা/ইউনিট ভাড়া',r.quarterRent],
+    [en?'Other housing recovery':'বাসা-সংক্রান্ত অন্যান্য কর্তন',r.quarterOther],
     [en?'Income tax':'আয়কর',r.tax],
     [en?'Loan / advance':'ঋণ / অগ্রিম',r.loan],
     [en?'Other':'অন্যান্য',r.other]
@@ -741,8 +741,9 @@ function salaryReportHtml(r,lang='bn',pdfMeta={}){
     {label:en?'2026 fixed basic':'২০২৬ নির্ধারিত মূল বেতন',value:amt(r.fixed),emphasis:true},
     {label:en?'First eligible increment included':'প্রাপ্য প্রথম ইনক্রিমেন্টসহ মূল বেতন',value:amt(r.fixedWithFirstIncrement??r.fixed)},
     {label:en?'Implementation phase':'বাস্তবায়ন ধাপ',value:r.phase?.label||`${numLang(rate*100,lang,0)}%`},
-    {label:en?'Employee category':'কর্মচারী শ্রেণি',value:categoryLabel},
+    {label:en?'DU category':'ঢাকা বিশ্ববিদ্যালয়ের শ্রেণি',value:categoryLabel},
     {label:en?'Work location':'কর্মস্থল',value:zoneLabel},
+    {label:en?'Housing status':'বাসার অবস্থা',value:housingLabel},
     {label:en?'PF rate':'PF হার',value:`${numLang(r.gpfRate||0,lang,0)}%`}
   ];
   const reportYear=r.reportYear||null;
@@ -750,10 +751,10 @@ function salaryReportHtml(r,lang='bn',pdfMeta={}){
     ?(en?('National Pay Scale '+reportYear+' Salary Statement'):('জাতীয় বেতনস্কেল '+numLang(reportYear,lang,0)+' বেতন বিবরণী'))
     :(en?'National Pay Scale 2026–2028 Salary Calculation':'জাতীয় বেতনস্কেল ২০২৬–২০২৮ বেতন হিসাব');
   const subtitle=reportYear
-    ?(en?('Premium A4 statement · '+reportYear+' · 17 September 2026 gazette based'):('প্রিমিয়াম A4 বিবরণী · '+numLang(reportYear,lang,0)+' · ১৭ সেপ্টেম্বর ২০২৬-এর গেজেটভিত্তিক'))
-    :(en?'Premium A4 combined statement · 2026–2028':'প্রিমিয়াম A4 সমন্বিত বিবরণী · ২০২৬–২০২৮');
+    ?(en?('DU payroll statement · '+reportYear+' · SRO 348/2026 Public Bodies'):('DU পে-রোল বিবরণী · '+numLang(reportYear,lang,0)+' · এস.আর.ও. ৩৪৮-আইন/২০২৬'))
+    :(en?'DU payroll combined statement · SRO 348/2026 · 2026–2028':'DU পে-রোল সমন্বিত বিবরণী · এস.আর.ও. ৩৪৮-আইন/২০২৬ · ২০২৬–২০২৮');
   const ruleNote=r.allowance2026
-    ?(en?'New allowance rates are applied from 1 January 2028.':'১ জানুয়ারি ২০২৮ থেকে নতুন ভাতার হার প্রয়োগ হয়েছে।')
+    ?(en?'New allowance rates apply from 1 January 2028; annual increment applies again from 1 July 2028.':'১ জানুয়ারি ২০২৮ থেকে নতুন ভাতার হার এবং ১ জুলাই ২০২৮ থেকে পরবর্তী বার্ষিক ইনক্রিমেন্ট প্রযোজ্য।')
     :(en?'Until 31 December 2027 the pre-existing allowance amounts/rates remain in force; new allowance rates start from 1 January 2028.':'৩১ ডিসেম্বর ২০২৭ পর্যন্ত পূর্ববর্তী ভাতার অংক/হার বহাল থাকবে; নতুন ভাতার হার ১ জানুয়ারি ২০২৮ থেকে কার্যকর।');
 
   const summary=pdfSummaryCards([
