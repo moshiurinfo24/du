@@ -1,0 +1,186 @@
+/* Desktop App Shell V3 — unified responsive app experience */
+.pwa-desktop-sidebar{display:none}
+
+@media(min-width:901px){
+  .pwa-app-shell{
+    --desktop-sidebar:268px;
+    min-height:100vh;
+    padding-left:var(--desktop-sidebar);
+    padding-bottom:0!important;
+    background:#F7F9FC!important;
+  }
+
+  .pwa-desktop-sidebar{
+    position:fixed;z-index:850;left:0;top:0;bottom:0;
+    width:var(--desktop-sidebar);display:flex;flex-direction:column;
+    padding:16px 12px 12px;
+    background:
+      radial-gradient(circle at 15% 0,rgba(80,98,202,.34),transparent 30%),
+      linear-gradient(180deg,#293A8C 0%,#26367F 58%,#202E6F 100%);
+    color:#fff;border-right:1px solid rgba(255,255,255,.08);
+    box-shadow:10px 0 34px rgba(41,58,140,.10);
+  }
+  .pwa-desktop-brand{
+    width:100%;display:grid;grid-template-columns:44px minmax(0,1fr);align-items:center;gap:10px;
+    padding:7px 8px 14px;border:0;border-bottom:1px solid rgba(255,255,255,.12);
+    background:transparent;color:#fff;text-align:left;cursor:pointer
+  }
+  .pwa-desktop-brand>span{
+    width:44px;height:44px;display:grid;place-items:center;border-radius:14px;
+    background:linear-gradient(145deg,#fff,#EEF2FF);color:#3F51B5;
+    font-size:16px;font-weight:900;box-shadow:0 8px 18px rgba(8,18,69,.24)
+  }
+  .pwa-desktop-brand b{display:block;font-size:14px;font-weight:900}
+  .pwa-desktop-brand small{display:block;margin-top:2px;color:rgba(255,255,255,.68);font-size:8.5px;line-height:1.35}
+
+  .pwa-desktop-nav{
+    flex:1;min-height:0;overflow:auto;padding:11px 3px 8px;
+    scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent
+  }
+  .pwa-desktop-nav-group{margin:0 0 12px}
+  .pwa-desktop-nav-group>small{
+    display:block;padding:0 9px 5px;color:rgba(255,255,255,.48);
+    font:800 7.5px/1 Inter,sans-serif;letter-spacing:.1em
+  }
+  .pwa-desktop-nav-group button{
+    width:100%;min-height:38px;margin:2px 0;padding:7px 9px;border:1px solid transparent;border-radius:10px;
+    background:transparent;color:rgba(255,255,255,.78);display:flex;align-items:center;gap:9px;
+    font-family:inherit;font-size:9.5px;font-weight:750;text-align:left;cursor:pointer;transition:.16s ease
+  }
+  .pwa-desktop-nav-group button svg{width:16px;height:16px;flex:0 0 auto;color:rgba(255,255,255,.62)}
+  .pwa-desktop-nav-group button:hover{background:rgba(255,255,255,.075);color:#fff;transform:translateX(1px)}
+  .pwa-desktop-nav-group button.active{
+    background:linear-gradient(90deg,rgba(255,255,255,.18),rgba(24,167,160,.17));
+    border-color:rgba(255,255,255,.12);color:#fff;
+    box-shadow:inset 3px 0 0 #55D2CB,0 8px 18px rgba(13,25,79,.10)
+  }
+  .pwa-desktop-nav-group button.active svg{color:#8EE5E0}
+  .pwa-desktop-nav-group.personal{padding-top:9px;border-top:1px solid rgba(255,255,255,.09)}
+
+  .pwa-desktop-sidebar-footer{padding:10px 3px 0;border-top:1px solid rgba(255,255,255,.10)}
+  .pwa-desktop-sync{
+    width:100%;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center;
+    padding:10px;border:1px solid rgba(142,229,224,.24);border-radius:12px;
+    background:rgba(24,167,160,.12);color:#fff;text-align:left;cursor:pointer
+  }
+  .pwa-desktop-sync>svg:first-child{width:28px;height:28px;padding:6px;border-radius:9px;background:rgba(255,255,255,.12);color:#8EE5E0}
+  .pwa-desktop-sync>svg:last-child{width:14px;height:14px;color:rgba(255,255,255,.55)}
+  .pwa-desktop-sync b{display:block;font-size:9.5px}
+  .pwa-desktop-sync small{display:block;margin-top:2px;color:rgba(255,255,255,.58);font-size:7.5px;line-height:1.3}
+  .pwa-desktop-disclaimer{display:flex;align-items:center;gap:6px;margin-top:8px;padding:0 4px;color:rgba(255,255,255,.48);font-size:7.5px}
+  .pwa-desktop-disclaimer svg{width:12px;height:12px}
+
+  .pwa-app-topbar{
+    min-height:68px;padding:10px 24px;border-radius:0;
+    background:rgba(255,255,255,.94);color:#35425A;
+    border-bottom:1px solid #E4E8F1;box-shadow:0 7px 24px rgba(41,58,140,.055);
+    backdrop-filter:blur(16px)
+  }
+  .pwa-app-topbar.tool{justify-content:flex-start}
+  .pwa-app-topbar.tool small{color:#7A8799;opacity:1}
+  .pwa-app-topbar.tool b{color:#293A8C;font-size:15px}
+  .pwa-app-topbar .pwa-round-btn{
+    border-color:#DCE3F0;background:#F7F9FC;color:#3F51B5
+  }
+  .pwa-app-topbar .pwa-app-brand>span{
+    background:linear-gradient(145deg,#EEF2FF,#E5F8F6);color:#3F51B5;
+    box-shadow:none
+  }
+  .pwa-app-topbar .pwa-app-brand b{color:#293A8C}
+  .pwa-app-topbar .pwa-app-brand small{color:#7A8799}
+  .pwa-app-topbar .pwa-status-button{
+    border-color:#DCE3F0!important;background:#F7F9FC!important;color:#3F51B5!important
+  }
+  .pwa-tool-shell .pwa-app-topbar .pwa-status-button{
+    border-color:#DCE3F0!important;background:#F7F9FC!important;color:#3F51B5!important
+  }
+
+  .pwa-app-home{
+    max-width:1500px;margin:0 auto;padding:22px 24px 32px;
+    display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:17px
+  }
+  .pwa-welcome-card{grid-column:1/-1;min-height:215px;padding:28px 30px;border-radius:22px}
+  .pwa-welcome-copy h1{max-width:720px;font-size:32px;line-height:1.2}
+  .pwa-welcome-copy p{max-width:680px;font-size:12px}
+  .pwa-welcome-meta{max-width:570px;grid-template-columns:1.5fr .8fr;margin-top:21px}
+  .pwa-welcome-meta>span{padding:10px 12px}
+  .pwa-welcome-meta small{font-size:8px}
+  .pwa-welcome-meta b{font-size:10px}
+
+  .pwa-profile-strip{grid-column:1/-1;margin:0;grid-template-columns:repeat(3,minmax(0,1fr)) 100px;padding:11px}
+  .pwa-profile-strip>span{min-height:54px;padding:9px 12px}
+  .pwa-profile-strip small{font-size:9px}
+  .pwa-profile-strip b{font-size:11.5px}
+  .pwa-profile-strip button{font-size:9.5px}
+
+  .pwa-app-home>.pwa-home-section:not(.recent):not(.pwa-info-strip){
+    grid-column:1/9;margin-top:0;padding:18px;border:1px solid #E5E9F2;border-radius:18px;background:#fff;
+    box-shadow:0 9px 26px rgba(41,58,140,.045)
+  }
+  .pwa-app-home>.pwa-personal-card{
+    grid-column:9/-1;margin-top:0;min-height:100%;
+    align-self:stretch;padding:20px;border-color:#DCE3F0
+  }
+  .pwa-personal-card small,.pwa-section-head small{color:#3F51B5}
+  .pwa-personal-card>svg{color:#18A7A0}
+  .pwa-personal-card h3{font-size:17px}
+  .pwa-personal-card p{font-size:10.5px}
+
+  .pwa-quick-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:11px}
+  .pwa-quick-grid button{
+    min-height:104px;padding:13px 8px;border:1px solid #EDF0F5;border-radius:15px;
+    box-shadow:none;transition:.16s ease
+  }
+  .pwa-quick-grid button:hover{transform:translateY(-2px);border-color:#D7DDF0;box-shadow:0 10px 22px rgba(41,58,140,.07)}
+  .pwa-quick-grid button>span{width:47px;height:47px}
+  .pwa-quick-grid button b{max-width:120px;font-size:10px}
+  .pwa-section-head h2{font-size:17px}
+  .pwa-section-head>button{color:#3F51B5;font-size:9.5px}
+
+  .pwa-app-home>.pwa-home-section.recent{
+    grid-column:1/7;margin-top:0;padding:17px;border:1px solid #E5E9F2;border-radius:17px;background:#fff
+  }
+  .pwa-app-home>.pwa-info-strip{
+    grid-column:7/-1;margin-top:0;padding:17px;border:1px solid #E5E9F2;border-radius:17px;background:#fff
+  }
+  .pwa-recent-row{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .pwa-recent-row button{min-height:58px;border-color:#E7EBF3}
+  .pwa-recent-row button>span,.pwa-info-cards>article>svg{background:#EEF2FF;color:#3F51B5}
+  .pwa-info-cards{grid-template-columns:1fr 1fr}
+  .pwa-info-cards article{min-height:60px;border-color:#E7EBF3}
+
+  .pwa-home-footer-note{grid-column:1/-1;margin:0;padding:10px 12px}
+  .pwa-app-bottom{display:none!important}
+
+  .pwa-tool-content{
+    max-width:1540px;margin:0 auto;padding:20px 24px 34px
+  }
+  .pwa-tool-content .approved-section,
+  .pwa-tool-content .public-tool-only-shell{border-radius:18px!important}
+  .pwa-tool-content .public-pay-facts{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+
+  .pwa-service-sheet-backdrop{
+    align-items:center;justify-content:center;padding:28px;background:rgba(25,34,72,.38)
+  }
+  .pwa-service-sheet{
+    width:min(920px,calc(100vw - 80px));max-height:82vh;padding:22px;border-radius:22px;
+    box-shadow:0 26px 70px rgba(25,34,72,.24)
+  }
+  .pwa-service-sheet-head small{color:#3F51B5}
+  .pwa-service-sheet-head h3{color:#35425A}
+  .pwa-sheet-grid{grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+  .pwa-sheet-grid button{min-height:92px;border-color:#E5E9F2}
+  .pwa-sheet-grid button>span{background:#EEF2FF;color:#3F51B5}
+  .pwa-sheet-dashboard{background:linear-gradient(145deg,#fff,#F7F9FC);border-color:#DCE3F0}
+  .pwa-sheet-sync{border-color:#D8EAE8!important;background:#F0FBFA!important;color:#14756F!important}
+}
+
+@media(min-width:901px) and (max-width:1180px){
+  .pwa-app-shell{--desktop-sidebar:228px}
+  .pwa-desktop-sidebar{padding-inline:9px}
+  .pwa-desktop-nav-group button{font-size:8.8px}
+  .pwa-app-home{padding:18px}
+  .pwa-app-home>.pwa-home-section:not(.recent):not(.pwa-info-strip){grid-column:1/-1}
+  .pwa-app-home>.pwa-personal-card{grid-column:1/-1}
+  .pwa-app-home>.pwa-home-section.recent,.pwa-app-home>.pwa-info-strip{grid-column:1/-1}
+}
