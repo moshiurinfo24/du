@@ -2623,20 +2623,30 @@ function duCategoryInfo(category,lang='bn'){
   };
   return map[normalizeDuCategory(category)]||map.class3;
 }
-function duPayrollDeductionRules({category,date,basic}={}){
+function duPayrollDeductionRules({category,date,basic,grade}={}){
   const c=normalizeDuCategory(category)||'class3';
   const d=String(date||'').slice(0,10);
   const b=Math.max(0,Number(basic||0));
+  const g=Number(grade||0);
   const beneRate=({teacher:.05,officer:.05,class3:.04,class4:.0275}[c]??.04);
   const pfRate=.10;
   const health=149.34;
-  const group=(c==='class3'&&d>='2026-07-01')?174:192.50;
+
+  // Group insurance is grade-sensitive. Only Grade 13/Class III July 2026+
+  // is verified from the supplied DU payslips; do not generalize ৳174 to all Class III grades.
+  const verifiedGroupByGradeDate={
+    'class3:13': d>='2026-07-01'?174:192.50
+  };
+  const groupKey=`${c}:${g}`;
+  const group=verifiedGroupByGradeDate[groupKey]??192.50;
+  const groupRuleVerified=Object.prototype.hasOwnProperty.call(verifiedGroupByGradeDate,groupKey);
+
   return {
-    category:c,date:d,basic:b,
+    category:c,date:d,basic:b,grade:g,
     pfRate,beneRate,
     pf:Math.round(b*pfRate*100)/100,
     bene:Math.round(b*beneRate*100)/100,
-    health,group,stamp:10,association:10
+    health,group,groupRuleVerified,stamp:10,association:10
   };
 }
 function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
@@ -2694,7 +2704,7 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
       });
       const duAuto=f.deductionMode!=='custom';
       const deductionDate=String(opts.deductionDate||date).slice(0,10);
-      const autoRules=duPayrollDeductionRules({category:f.category,date:deductionDate,basic:snap.payableBasic});
+      const autoRules=duPayrollDeductionRules({category:f.category,date:deductionDate,basic:snap.payableBasic,grade});
       const gpfRate=duAuto?autoRules.pfRate*100:Math.max(0,Math.min(25,Number(f.gpfRate||0)));
       const pf=duAuto?autoRules.pf:Math.round(snap.payableBasic*(gpfRate/100)*100)/100;
       const info=duCategoryInfo(f.category,lang);
