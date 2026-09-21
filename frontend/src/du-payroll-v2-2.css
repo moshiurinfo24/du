@@ -1,0 +1,149 @@
+/* DU Payroll V2.2 — DU-only role, housing and payroll presentation */
+.approved-home .public-pay-facts{
+  grid-template-columns:repeat(5,minmax(0,1fr))!important;
+}
+.approved-home .public-pay-facts article:nth-child(5){
+  background:linear-gradient(145deg,#fff,#edf8f3)!important;
+  border-color:#d2e6dc!important;
+}
+.approved-home .salary-fixed-field{
+  min-height:78px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:12px 14px;
+  border:1px solid #cfe0e5;
+  border-radius:12px;
+  background:
+    radial-gradient(circle at 100% 0,rgba(190,153,66,.10),transparent 34%),
+    linear-gradient(145deg,#eef6fb,#f3faf6);
+  box-shadow:0 5px 14px rgba(17,49,66,.05),inset 0 1px 0 #fff;
+}
+.approved-home .salary-fixed-field small{
+  color:#607681;
+  font-size:10px;
+  font-weight:700;
+}
+.approved-home .salary-fixed-field b{
+  margin-top:4px;
+  color:#143f59;
+  font-size:14px;
+}
+.approved-home .salary-fixed-field span{
+  margin-top:3px;
+  color:#5d746c;
+  font-size:10px;
+}
+.approved-home .du-category-rule-strip{
+  margin-top:14px;
+  display:flex;
+  align-items:center;
+  gap:11px;
+  padding:12px 14px;
+  border:1px solid #cfe1d8;
+  border-radius:13px;
+  background:
+    radial-gradient(circle at 100% 0,rgba(196,160,74,.11),transparent 32%),
+    linear-gradient(145deg,#edf8f3,#fffaf0);
+  box-shadow:0 6px 15px rgba(17,64,55,.05);
+}
+.approved-home .du-category-rule-strip>svg{
+  width:28px;height:28px;
+  padding:6px;
+  border-radius:9px;
+  color:#fff;
+  background:linear-gradient(145deg,#0d4c68,#17714f);
+  box-shadow:0 5px 11px rgba(15,76,74,.16);
+}
+.approved-home .du-category-rule-strip b{
+  display:block;color:#174b39;font-size:13px
+}
+.approved-home .du-category-rule-strip span{
+  display:block;margin-top:2px;color:#60756d;font-size:10px
+}
+.approved-home .du-quarter-note{
+  margin:12px 14px 14px!important;
+  border:1px solid #e4d8b5!important;
+  border-left:4px solid #b58a34!important;
+  background:linear-gradient(145deg,#fff9e9,#f2f9f5)!important;
+  color:#63562e!important;
+}
+.approved-home .arrear-adjustment-options{
+  border-color:#dfd4b6!important;
+  background:linear-gradient(145deg,#fffaf0,#f7faf9)!important;
+}
+.approved-home .arrear-adjustment-options>summary{
+  color:#684f1f!important;
+  background:linear-gradient(90deg,#fff7e5,#eef8f3)!important;
+}
+.salary-du-profile-strip{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+  margin:0 0 12px;
+}
+.salary-du-profile-strip>span{
+  min-width:0;
+  padding:11px 12px;
+  border:1px solid #d7e3e7;
+  border-radius:12px;
+  background:linear-gradient(145deg,#fff,#f3f8f9);
+  box-shadow:0 5px 12px rgba(18,48,65,.04);
+}
+.salary-du-profile-strip>span:nth-child(1){background:linear-gradient(145deg,#fff,#eef6fb)}
+.salary-du-profile-strip>span:nth-child(2){background:linear-gradient(145deg,#fff,#eef8f3)}
+.salary-du-profile-strip>span:nth-child(3){background:linear-gradient(145deg,#fff,#fff8ea)}
+.salary-du-profile-strip small{
+  display:block;color:#6d7e88;font-size:9px;font-weight:700
+}
+.salary-du-profile-strip b{
+  display:block;margin-top:4px;color:#1c4054;font-size:12px;line-height:1.35
+}
+.approved-home .salary-stage-list-v2 article.current{
+  position:relative;
+}
+.approved-home .salary-stage-list-v2 article.current:before{
+  content:"LATEST";
+  position:absolute;
+  right:9px;
+  top:8px;
+  padding:2px 6px;
+  border-radius:999px;
+  background:#17684d;
+  color:#fff;
+  font-family:"Inter",sans-serif;
+  font-size:7px;
+  font-weight:800;
+  letter-spacing:.05em;
+}
+.approved-home .salary-stage-list-v2 article{
+  background:linear-gradient(145deg,#fff,#f5f9fa)!important;
+}
+.approved-home .salary-stage-list-v2 article:nth-child(even){
+  background:linear-gradient(145deg,#fff,#eef8f3)!important;
+}
+.approved-home .salary-stage-list-v2 article.current{
+  background:
+    radial-gradient(circle at 100% 0,rgba(194,155,67,.14),transparent 34%),
+    linear-gradient(145deg,#e9f8f1,#fff9eb)!important;
+  border-color:#abcdbd!important;
+}
+@media(max-width:980px){
+  .approved-home .public-pay-facts{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+}
+@media(max-width:680px){
+  .approved-home .public-pay-facts{
+    grid-template-columns:1fr!important;
+  }
+  .salary-du-profile-strip{
+    grid-template-columns:1fr;
+  }
+  .approved-home .salary-fixed-field{
+    min-height:68px;
+  }
+  .approved-home .du-category-rule-strip{
+    align-items:flex-start;
+  }
+}
