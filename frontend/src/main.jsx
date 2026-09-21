@@ -2600,6 +2600,21 @@ function PromotionResult({r,lang='bn'}){
   </div>
 }
 
+function normalizeDuCategory(value){
+  const v=String(value||'').trim().toLowerCase().replace(/[\s-]+/g,'_');
+  if(!v)return '';
+  if(v==='teacher'||v.includes('teacher'))return 'teacher';
+  if(v==='officer'||v.includes('officer'))return 'officer';
+  if(['class3','third','third_general','third_technical','3rd','3rd_class','class_iii'].includes(v)||v.includes('third')||v.includes('3rd')||v.includes('class_iii'))return 'class3';
+  if(['class4','fourth','fourth_general','fourth_technical','4th','4th_class','class_iv'].includes(v)||v.includes('fourth')||v.includes('4th')||v.includes('class_iv'))return 'class4';
+  return '';
+}
+function salaryProfilePrefill(profile={}){
+  const category=normalizeDuCategory(profile.category||profile.employee_category||profile.employment_type);
+  const rawGrade=String(profile.grade??profile.current_grade??'').trim();
+  const grade=/^(?:[1-9]|1\d|20)$/.test(rawGrade)?rawGrade:'';
+  return {category,grade};
+}
 function duCategoryInfo(category,lang='bn'){
   const en=lang==='en';
   const map={
@@ -2608,7 +2623,7 @@ function duCategoryInfo(category,lang='bn'){
     class3:{label:en?'Class III employee':'৩য় শ্রেণির কর্মচারী',beneRate:.04},
     class4:{label:en?'Class IV employee':'৪র্থ শ্রেণির কর্মচারী',beneRate:.0275}
   };
-  return map[category]||map.class3;
+  return map[normalizeDuCategory(category)]||map.class3;
 }
 function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
   const en=lang==='en',today=todayLocalIso();
@@ -2617,15 +2632,33 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
     /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent||'')
   );
   const guestProfile=publicMode?guestLocalProfile():{};
+  const initialProfilePrefill=salaryProfilePrefill(guestProfile);
   const [f,setF]=useState({
-    grade:String(guestProfile.grade||'13'),currentStage:'0',date:today,housing:'none',duQuarterRent:'0',duQuarterOther:'0',
+    grade:initialProfilePrefill.grade||'13',currentStage:'0',date:today,housing:'none',duQuarterRent:'0',duQuarterOther:'0',
     children:'0',educationClaimedElsewhere:'no',tiffin:'yes',zone:'dhaka',
     ageBand:'under50',incrementEligible2026:'yes',mobile:'yes',laundry:'no',
     disabledChildren:'0',disabledBenefitElsewhere:'no',chargeAllowance:'no',otherSpecialAllowance:'0',
-    deductionMode:'du_auto',category:guestProfile.category||'class3',gpfRate:'10',benevolent:'0',
+    deductionMode:'du_auto',category:initialProfilePrefill.category||'class3',gpfRate:'10',benevolent:'0',
     health:'149.34',group:'192.50',stamp:'10',association:'10',tax:'0',loan:'0',other:'0'
   });
   const [r,setR]=useState(null);
+  const [profileAuto,setProfileAuto]=useState(Boolean(initialProfilePrefill.category||initialProfilePrefill.grade));
+  useEffect(()=>{
+    if(publicMode)return;
+    let alive=true;
+    api('/api/my-career').then(x=>{
+      if(!alive)return;
+      const pref=salaryProfilePrefill(x?.profile||{});
+      if(!pref.category&&!pref.grade)return;
+      setF(v=>({
+        ...v,
+        ...(pref.category?{category:pref.category}:{}),
+        ...(pref.grade?{grade:pref.grade,currentStage:'0'}:{})
+      }));
+      setProfileAuto(true);
+    }).catch(()=>{});
+    return()=>{alive=false};
+  },[publicMode]);
   const stages=PAY2015[f.grade]||[];
   const currentIndex=Math.min(Math.max(0,Number(f.currentStage||0)),Math.max(0,stages.length-1));
   const categoryInfo=duCategoryInfo(f.category,lang);
@@ -2771,9 +2804,10 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
 
           <div className="pwa-salary-fields">
             <label><span>{en?'Category':'শ্রেণি'}</span><select value={f.category} onChange={e=>setF({...f,category:e.target.value})}>{categoryOpts.map(([v,l])=><option value={v} key={v}>{l}</option>)}</select></label>
-            <label><span>{en?'Grade':'গ্রেড'}</span><select value={f.grade} onChange={e=>setF({...f,grade:e.target.value})}>{Array.from({length:20},(_,i)=>i+1).map(g=><option key={g} value={g}>{en?`Grade ${g}`:`গ্রেড ${numLang(g,'bn',0)}`}</option>)}</select></label>
+            <label><span>{en?'Grade':'গ্রেড'}</span><select value={f.grade} onChange={e=>setF({...f,grade:e.target.value,currentStage:'0'})}>{Array.from({length:20},(_,i)=>i+1).map(g=><option key={g} value={g}>{en?`Grade ${g}`:`গ্রেড ${numLang(g,'bn',0)}`}</option>)}</select></label>
             <label><span>{en?'Basic on 30 Jun':'৩০ জুনের মূল বেতন'}</span><select value={f.currentStage} onChange={e=>setF({...f,currentStage:e.target.value})}>{stages.map((v,i)=><option value={i} key={i}>{en?`Stage ${i+1} · Tk ${moneyLang(v,'en')}`:`ধাপ ${numLang(i+1,'bn',0)} · ৳${moneyLang(v,'bn')}`}</option>)}</select></label>
           </div>
+          {profileAuto&&<div className="pwa-salary-auto-row"><span><UserRound/>{en?'Category & grade from saved profile':'শ্রেণি ও গ্রেড প্রোফাইল থেকে অটো'}</span><span><CheckCircle2/>{en?'You can still correct them here':'প্রয়োজনে এখানেই পরিবর্তন করা যাবে'}</span></div>}
 
           <div className="pwa-salary-auto-row">
             <span><MapPin/>{en?'Dhaka rate':'ঢাকা হার'}</span>
@@ -2849,9 +2883,10 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
       <div className="salary-form-section-title easy-section-title"><span>1</span><div><h3>{en?'Enter these 3 details first':'প্রথমে এই ৩টি তথ্য দিন'}</h3><p>{en?'For most users, these are enough to get a salary result.':'বেশিরভাগ ব্যবহারকারীর মূল হিসাবের জন্য এই ৩টি তথ্যই যথেষ্ট।'}</p></div></div>
       <div className="form-grid essential-three-grid">
         <label>{en?'Your DU category':'আপনার DU শ্রেণি'}<select value={f.category} onChange={e=>setF({...f,category:e.target.value})}>{categoryOpts.map(([v,l])=><option value={v} key={v}>{l}</option>)}</select></label>
-        <label>{en?'Current grade':'বর্তমান গ্রেড'}<select value={f.grade} onChange={e=>setF({...f,grade:e.target.value})}>{Array.from({length:20},(_,i)=>i+1).map(g=><option key={g} value={g}>{en?`Grade ${g}`:`গ্রেড ${numLang(g,'bn',0)}`}</option>)}</select></label>
+        <label>{en?'Current grade':'বর্তমান গ্রেড'}<select value={f.grade} onChange={e=>setF({...f,grade:e.target.value,currentStage:'0'})}>{Array.from({length:20},(_,i)=>i+1).map(g=><option key={g} value={g}>{en?`Grade ${g}`:`গ্রেড ${numLang(g,'bn',0)}`}</option>)}</select></label>
         <label>{en?'Basic on 30 June 2026':'৩০ জুন ২০২৬-এর মূল বেতন'}<select value={f.currentStage} onChange={e=>setF({...f,currentStage:e.target.value})}>{stages.map((v,i)=><option value={i} key={i}>{en?`Stage ${i+1} — Tk ${moneyLang(v,'en')}`:`ধাপ ${numLang(i+1,'bn',0)} — ৳${moneyLang(v,'bn')}`}</option>)}</select></label>
       </div>
+      {profileAuto&&<div className="salary-auto-summary"><span><UserRound/><div><small>{en?'Profile autofill':'প্রোফাইল অটোফিল'}</small><b>{en?'Category and grade loaded from your saved profile':'সংরক্ষিত প্রোফাইল থেকে শ্রেণি ও গ্রেড নেওয়া হয়েছে'}</b></div></span></div>}
 
       <div className="salary-auto-summary">
         <span><MapPin/><div><small>{en?'Work location':'কর্মস্থল'}</small><b>{en?'University of Dhaka, Dhaka':'ঢাকা বিশ্ববিদ্যালয়, ঢাকা'}</b></div></span>
