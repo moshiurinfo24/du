@@ -5,7 +5,7 @@ import './guest-local-v1.css';
 
 const KEY='hisab_guest_workspace_v1';
 const emptyData={
-  profile:{name:'',category:'',employee_category:'',grade:'',date_of_birth:'',mobile:'',gender:'',marital_status:'',first_joining_date:'',current_post:'',current_post_joining_date:'',third_class_start_date:'',fourth_class_start_date:'',previous_promotions:'0',retirement_age:'59',office_name:'',department_name:'',current_basic_salary:'',salary_effective_date:'',employment_type:'',employee_reference:''},
+  profile:{name:'',category:'',employee_category:'',grade:'',date_of_birth:'',mobile:'',gender:'',marital_status:'',first_joining_date:'',current_post:'',current_post_joining_date:'',third_class_start_date:'',fourth_class_start_date:'',previous_promotions:'0',retirement_age:'',office_name:'',department_name:'',current_basic_salary:'',salary_effective_date:'',employment_type:'',employee_reference:''},
   education:[],events:[],salary_history:[],leave:[],updated_at:''
 };
 function readData(){
@@ -138,7 +138,7 @@ function Profile({en,data,commit}){
       <label>{en?'Previous promotions':'আগের পদোন্নতির সংখ্যা'}<input type="number" min="0" value={f.previous_promotions||0} onChange={e=>setF({...f,previous_promotions:e.target.value})}/></label>
       <label>{en?'Office / unit':'অফিস / ইউনিট'}<input value={f.office_name||''} onChange={e=>setF({...f,office_name:e.target.value})}/></label>
       <label>{en?'Department / branch':'বিভাগ / শাখা'}<input value={f.department_name||''} onChange={e=>setF({...f,department_name:e.target.value})}/></label>
-      <label>{en?'Retirement age':'অবসরের বয়স'}<input type="number" min="40" max="75" value={f.retirement_age||59} onChange={e=>setF({...f,retirement_age:e.target.value})}/></label>
+      <label>{en?'Retirement age':'অবসরের বয়স'}<input type="number" min="40" max="75" value={f.retirement_age||''} onChange={e=>setF({...f,retirement_age:e.target.value})}/></label>
     </div><button className="guest-primary"><Save/>{en?'Save on this device':'এই ডিভাইসে সংরক্ষণ'}</button>
   </form>;
 }

@@ -121,27 +121,28 @@ async function syncGuestWorkspaceToAccount(user){
   };
 
   const p=w.profile||{},latestLocalSalary=(w.salary_history||[])[0]||{};
+  const localBasic=Number(p.current_basic_salary||latestLocalSalary.basic||latestLocalSalary.basic_2015||0)||0;
   const profilePayload={
-    first_joining_date:p.first_joining_date||'',
-    current_post:p.current_post||'',
-    current_grade:p.grade?Number(p.grade):null,
-    current_post_joining_date:p.current_post_joining_date||'',
-    employment_type:p.employment_type||'',
-    office_name:p.office_name||'',
-    department_name:p.department_name||'',
-    employee_reference:p.employee_reference||'',
-    retirement_age:p.retirement_age?Number(p.retirement_age):null,
-    date_of_birth:p.date_of_birth||'',
-    mobile:p.mobile||'',
-    gender:p.gender||'',
-    marital_status:p.marital_status||'',
-    employee_category:p.employee_category||p.category||'',
-    third_class_start_date:p.third_class_start_date||'',
-    fourth_class_start_date:p.fourth_class_start_date||'',
-    previous_promotions:Math.max(0,Number(p.previous_promotions)||0),
-    current_basic_salary:Number(p.current_basic_salary||latestLocalSalary.basic||latestLocalSalary.basic_2015||0)||null,
-    salary_effective_date:p.salary_effective_date||latestLocalSalary.effective_date||'',
-    notes:'Imported from Hisab Sahayika local PWA'
+    first_joining_date:p.first_joining_date||undefined,
+    current_post:p.current_post||undefined,
+    current_grade:p.grade?Number(p.grade):undefined,
+    current_post_joining_date:p.current_post_joining_date||undefined,
+    employment_type:p.employment_type||undefined,
+    office_name:p.office_name||undefined,
+    department_name:p.department_name||undefined,
+    employee_reference:p.employee_reference||undefined,
+    retirement_age:p.retirement_age?Number(p.retirement_age):undefined,
+    date_of_birth:p.date_of_birth||undefined,
+    mobile:p.mobile||undefined,
+    gender:p.gender||undefined,
+    marital_status:p.marital_status||undefined,
+    employee_category:p.employee_category||p.category||undefined,
+    third_class_start_date:p.third_class_start_date||undefined,
+    fourth_class_start_date:p.fourth_class_start_date||undefined,
+    previous_promotions:String(p.previous_promotions??'').trim()!==''?Math.max(0,Number(p.previous_promotions)||0):undefined,
+    current_basic_salary:localBasic>0?localBasic:undefined,
+    salary_effective_date:p.salary_effective_date||latestLocalSalary.effective_date||undefined,
+    notes:p.notes||undefined
   };
   const profileHasData=[
     profilePayload.first_joining_date,profilePayload.current_post,profilePayload.current_grade,
@@ -1615,8 +1616,8 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
   });
   useEffect(()=>subscribePwa(setAppStatus),[]);
   const labels={
-    salary:en?'Pay Scale':'পে-স্কেল',
-    arrear:en?'Arrear':'বকেয়া',
+    salary:en?'Pay Scale & Salary':'পে-স্কেল ও বেতন',
+    arrear:en?'Arrear / Outstanding':'বকেয়া / এরিয়ার',
     promotion:en?'Promotion':'পদোন্নতি',
     house:en?'House Points':'বাসা পয়েন্ট',
     service:en?'Service Length':'চাকরিকাল',
@@ -1637,18 +1638,19 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     'local-reports':en?'My Reports':'রিপোর্ট',
     'local-privacy':en?'Data & Backup':'ডাটা ও ব্যাকআপ'
   };
-  const icons={salary:WalletCards,arrear:ReceiptText,promotion:TrendingUp,house:Home,service:Clock3,age:UserRound,gap:CalendarDays,retire:FileClock,basic:BadgeDollarSign,points:Award,calendar:CalendarDays,reference:BookOpen,'pdf-center':FileText,'local-dashboard':UserRound};
+  const icons={salary:WalletCards,arrear:ReceiptText,promotion:TrendingUp,house:Home,service:Clock3,age:UserRound,gap:CalendarDays,retire:FileClock,basic:BadgeDollarSign,points:Award,calendar:CalendarDays,reference:BookOpen,'pdf-center':FileText,'local-dashboard':LayoutDashboard,'local-profile':Briefcase,'local-education':GraduationCap,'local-timeline':Route,'local-salary':WalletCards,'local-leave':CalendarDays,'local-reports':FileText,'local-privacy':ShieldCheck};
   const open=(tool)=>{
     const next=[tool,...recent.filter(x=>x!==tool)].slice(0,3);
     setRecent(next);
     localStorage.setItem('hisab_recent_tools',JSON.stringify(next));
     openPublicTool(tool);
+    window.requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'smooth'}));
   };
   const goHome=()=>{setActivePublicTool(null);setMobileCalcOpen(false);window.scrollTo({top:0,behavior:'smooth'})};
   const updated=formatPwaTime(appStatus.lastAutoUpdateAt||appStatus.build?.built_at||'',lang);
   const localProfile=guestLocalProfile();
   const tools=[
-    ['salary',WalletCards,en?'Pay Scale 2026':'পে-স্কেল ২০২৬','indigo'],
+    ['salary',WalletCards,en?'Pay Scale 2026–2028':'পে-স্কেল ২০২৬–২০২৮','indigo'],
     ['arrear',ReceiptText,en?'Arrear':'বকেয়া / এরিয়ার','aqua'],
     ['promotion',TrendingUp,en?'Promotion':'পদোন্নতি','violet'],
     ['points',Award,en?'Points':'পয়েন্ট হিসাব','teal'],
@@ -1675,6 +1677,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     ['local-privacy',ShieldCheck,en?'Data & Backup':'ডাটা ও ব্যাকআপ']
   ];
   const localMode=tool=>tool.startsWith('local-')?tool.slice(6):'dashboard';
+  const bottomServicesActive=!!activePublicTool&&!['salary','promotion'].includes(activePublicTool)&&!String(activePublicTool).startsWith('local-');
 
   const desktopSidebar=<aside className="pwa-desktop-sidebar" aria-label={en?'App navigation':'অ্যাপ নেভিগেশন'}>
     <button className="pwa-desktop-brand" onClick={goHome}>
@@ -1746,7 +1749,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
         <button onClick={goHome}><Home/><span>{en?'Home':'হোম'}</span></button>
         <button className={activePublicTool==='salary'?'active':''} onClick={()=>open('salary')}><WalletCards/><span>{en?'Salary':'বেতন'}</span></button>
         <button className={activePublicTool==='promotion'?'active':''} onClick={()=>open('promotion')}><TrendingUp/><span>{en?'Career':'ক্যারিয়ার'}</span></button>
-        <button onClick={()=>setMobileCalcOpen(true)}><Boxes/><span>{en?'Services':'সেবা'}</span></button>
+        <button className={bottomServicesActive?'active':''} onClick={()=>setMobileCalcOpen(true)}><Boxes/><span>{en?'Services':'সেবা'}</span></button>
         <button className={activePublicTool?.startsWith('local-')?'active':''} onClick={()=>open('local-dashboard')}><UserRound/><span>{en?'My':'আমার'}</span></button>
       </nav>
       {mobileCalcOpen&&<div className="pwa-service-sheet-backdrop" onClick={()=>setMobileCalcOpen(false)}>
@@ -4316,8 +4319,8 @@ function HouseAllocationPoints({lang='bn',publicMode=false}){
     calcDate:todayLocalIso(),
     basicSalary:'',
     previousPromotions:'0',
-    marital:'married',
-    gender:'male'
+    marital:'',
+    gender:''
   });
 
   const groups=[
@@ -4394,6 +4397,7 @@ function HouseAllocationPoints({lang='bn',publicMode=false}){
   const designationPoint=1+priorPromotionCount;
   const maritalPoint=form.marital==='married'?3:0;
   const genderPoint=form.gender==='female'?3:0;
+  const personalInputsReady=basic>0&&['married','unmarried'].includes(form.marital)&&['male','female'].includes(form.gender);
 
   // House-allocation total uses whole numeric points plus the month/day remainder
   // from service. This matches the observed screen: 7-03-29 + 155 + 2 + 3 + 0 = 167-03-29.
@@ -4403,7 +4407,7 @@ function HouseAllocationPoints({lang='bn',publicMode=false}){
     m:totalService.m,
     d:totalService.d
   }:null;
-  const houseResult=totalPoint?{categoryLabel:en?current.en:current.bn,input:{...form},basic,basicPoint,designationPoint,maritalPoint,genderPoint,thirdService,fourthService,totalService,totalPoint}:null;
+  const houseResult=totalPoint&&personalInputsReady?{categoryLabel:en?current.en:current.bn,input:{...form},basic,basicPoint,designationPoint,maritalPoint,genderPoint,thirdService,fourthService,totalService,totalPoint}:null;
   const houseReport=houseResult?houseAllocationReportHtml(houseResult,lang):'';
   const houseFilename=en?`house-allocation-points-${Date.now()}.pdf`:`basha-boraddo-points-${Date.now()}.pdf`;
 
@@ -4443,11 +4447,12 @@ function HouseAllocationPoints({lang='bn',publicMode=false}){
         <DMY label={en?'Point calculation date':'পয়েন্ট হিসাবের তারিখ'} value={form.calcDate} onChange={v=>setForm(x=>({...x,calcDate:v}))}/>
         <label>{en?'Current basic salary':'বর্তমান মূল বেতন'}<input type="number" min="0" step="100" value={form.basicSalary} onChange={e=>setForm(x=>({...x,basicSalary:e.target.value}))} placeholder={en?'e.g. 15500':'যেমন ১৫৫০০'}/></label>
         <label>{en?'Previous promotions received':'আগে পাওয়া পদোন্নতির সংখ্যা'}<input type="number" min="0" step="1" value={form.previousPromotions} onChange={e=>setForm(x=>({...x,previousPromotions:e.target.value}))}/></label>
-        <label>{en?'Marital status':'বৈবাহিক অবস্থা'}<select value={form.marital} onChange={e=>setForm(x=>({...x,marital:e.target.value}))}><option value="married">{en?'Married':'বিবাহিত'}</option><option value="unmarried">{en?'Unmarried':'অবিবাহিত'}</option></select></label>
-        <label>{en?'Gender':'লিঙ্গ'}<select value={form.gender} onChange={e=>setForm(x=>({...x,gender:e.target.value}))}><option value="male">{en?'Male':'পুরুষ'}</option><option value="female">{en?'Female':'নারী'}</option></select></label>
+        <label>{en?'Marital status':'বৈবাহিক অবস্থা'}<select value={form.marital} onChange={e=>setForm(x=>({...x,marital:e.target.value}))}><option value="">{en?'Select':'নির্বাচন করুন'}</option><option value="married">{en?'Married':'বিবাহিত'}</option><option value="unmarried">{en?'Unmarried':'অবিবাহিত'}</option></select></label>
+        <label>{en?'Gender':'লিঙ্গ'}<select value={form.gender} onChange={e=>setForm(x=>({...x,gender:e.target.value}))}><option value="">{en?'Select':'নির্বাচন করুন'}</option><option value="male">{en?'Male':'পুরুষ'}</option><option value="female">{en?'Female':'নারী'}</option></select></label>
       </div>
 
       {!validDates&&<div className="house-date-help"><AlertTriangle/>{en?'Enter valid service dates in order: first joining ≤ 3rd Class entry ≤ calculation date. If the employee joined directly in 3rd Class, use the same date for the first two fields.':'তারিখ সঠিক ক্রমে দিন: প্রথম যোগদান ≤ ৩য় শ্রেণিতে প্রবেশ ≤ হিসাবের তারিখ। সরাসরি ৩য় শ্রেণিতে যোগ দিলে প্রথম দুই ঘরে একই তারিখ দিন।'}</div>}
+      {validDates&&!personalInputsReady&&<div className="house-date-help"><AlertTriangle/>{en?'Enter the current basic salary, marital status and gender before creating the final point report.':'চূড়ান্ত পয়েন্ট রিপোর্ট তৈরির আগে বর্তমান মূল বেতন, বৈবাহিক অবস্থা ও লিঙ্গ নির্বাচন করুন।'}</div>}
 
       <div className="house-official-style">
         <div className="house-detail-head"><span>{en?'POINT DETAILS':'পয়েন্টের বিস্তারিত'}</span><b>{en?'Automatic Calculation':'স্বয়ংক্রিয় হিসাব'}</b></div>
@@ -4478,7 +4483,7 @@ function CalculatorCenter({lang='bn',onPage,publicMode=false,initialTool='servic
   const [service,setService]=useState({start:'',end:todayLocalIso()});
   const [age,setAge]=useState({dob:'',asOf:todayLocalIso()});
   const [gap,setGap]=useState({from:'',to:''});
-  const [retire,setRetire]=useState({dob:'',age:'60'});
+  const [retire,setRetire]=useState({dob:'',age:''});
   const [basicProj,setBasicProj]=useState({grade:'13',stage:'0',date:'2027-07-01'});
   const [result,setResult]=useState(null);
 
