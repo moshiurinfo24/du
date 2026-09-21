@@ -1,0 +1,10 @@
+/* Salary vs Arrear service split V29 */
+.salary-service-arrear .salary-wizard-selection-summary{grid-template-columns:repeat(4,minmax(0,1fr))}
+.salary-arrear-only-head{max-width:970px;margin:0 auto 12px;padding:15px 16px;border:1px solid #cfe3df;border-radius:16px;background:linear-gradient(135deg,#f3fbf8,#f7fbff);display:flex;align-items:flex-start;gap:11px}
+.salary-arrear-only-head>svg{width:38px;height:38px;padding:9px;border-radius:12px;background:#e3f5ef;color:#13745d;flex:0 0 auto}
+.salary-arrear-only-head small{display:block;color:#13745d;font-size:8px;font-weight:900;letter-spacing:.08em}
+.salary-arrear-only-head h3{margin:4px 0 2px;color:#29485c;font-size:16px}.salary-arrear-only-head p{margin:0;color:#758596;font-size:9.5px}
+.pwa-arrear-service-banner{display:flex;align-items:center;gap:9px;margin:0 0 9px;padding:10px 11px;border:1px solid #cfe3df;border-radius:13px;background:#f2faf7;color:#3c5e55}
+.pwa-arrear-service-banner>svg{width:32px;height:32px;padding:7px;border-radius:10px;background:#e1f4ed;color:#16765f}.pwa-arrear-service-banner small{display:block;font-size:7px;font-weight:900;color:#16765f}.pwa-arrear-service-banner b{display:block;margin-top:2px;font-size:9.5px}
+.salary-report-primary-actions.one{grid-template-columns:1fr!important}.arrear-only-report-center{max-width:970px;margin-left:auto!important;margin-right:auto!important}
+@media(max-width:760px){.salary-wizard-selection-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.salary-arrear-only-head{padding:11px;margin-bottom:9px}.salary-arrear-only-head h3{font-size:12px}.salary-arrear-only-head p{font-size:8.5px}}

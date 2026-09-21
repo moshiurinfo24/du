@@ -52,6 +52,7 @@ import './pwa-salary-compact-v1.css';
 import './hisab-indigo-aqua-v2.css';
 import './desktop-app-shell-v3.css';
 import './salary-wizard-v27.css';
+import './salary-service-split-v29.css';
 import {initPwaRuntime,subscribePwa,getPwaState,promptPwaInstall,formatPwaTime,manualPwaUpdateCheck,consumePwaUpdateNotice} from './pwa-client.js';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import GuestLocalCenter from './guest-local-v1.jsx';
@@ -1707,7 +1708,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
         <PwaControls lang={lang}/>
       </header>
       <main className="pwa-tool-content">
-        {['salary','arrear'].includes(activePublicTool)&&<SalaryCalculator lang={lang} publicMode={true} initialArrear={activePublicTool==='arrear'}/>}
+        {['salary','arrear'].includes(activePublicTool)&&<SalaryCalculator key={activePublicTool} lang={lang} publicMode={true} initialArrear={activePublicTool==='arrear'}/>}
         {activePublicTool==='promotion'&&<section className="public-tool-only-shell"><PromotionCenter lang={lang} publicMode={true}/></section>}
         {activePublicTool==='house'&&<section className="public-tool-only-shell"><HouseAllocationPoints lang={lang} publicMode={true}/></section>}
         {['service','age','gap','retire','basic'].includes(activePublicTool)&&<section className="public-tool-only-shell"><CalculatorCenter lang={lang} publicMode={true} initialTool={activePublicTool} singleTool={true}/></section>}
@@ -2772,13 +2773,18 @@ function duPayrollDeductionRules({category,date,basic,grade}={}){
     health,group,groupRuleVerified,stamp:10,association:10
   };
 }
-function SalaryFlowProgress({step=1,lang='bn'}){
-  const en=lang==='en';
-  const items=[
+function SalaryFlowProgress({step=1,lang='bn',mode='salary'}){
+  const en=lang==='en',arrear=mode==='arrear';
+  const items=arrear?[
+    [en?'Arrear basis':'বকেয়ার ভিত্তি',en?'Payroll base':'পে-রোল ভিত্তি'],
+    [en?'Adjustments':'সমন্বয়',en?'Only if needed':'প্রয়োজনে'],
+    [en?'Arrear result':'বকেয়া ফলাফল',en?'Jul–Oct 2026':'জুলাই–অক্টোবর ২০২৬'],
+    [en?'Arrear report':'বকেয়া রিপোর্ট',en?'PDF & share':'PDF ও শেয়ার']
+  ]:[
     [en?'Information':'তথ্য',en?'3 basics':'৩টি মূল তথ্য'],
     [en?'Adjustments':'সমন্বয়',en?'Only if needed':'প্রয়োজনে'],
-    [en?'Result':'ফলাফল',en?'Salary & arrear':'বেতন ও বকেয়া'],
-    [en?'Report':'রিপোর্ট',en?'PDF & share':'PDF ও শেয়ার']
+    [en?'Salary result':'বেতন ফলাফল',en?'2026–2028':'২০২৬–২০২৮'],
+    [en?'Salary report':'বেতন রিপোর্ট',en?'PDF & share':'PDF ও শেয়ার']
   ];
   return <div className="salary-flow-progress" aria-label={en?'Calculation progress':'হিসাবের অগ্রগতি'}>
     {items.map(([title,sub],i)=>{
@@ -2791,7 +2797,7 @@ function SalaryFlowProgress({step=1,lang='bn'}){
 }
 
 function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
-  const en=lang==='en',today=todayLocalIso();
+  const en=lang==='en',today=todayLocalIso(),arrearMode=initialArrear===true;
   const compactPwa=typeof window!=='undefined'&&(
     window.matchMedia?.('(max-width: 900px)').matches||
     /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent||'')
@@ -2975,14 +2981,15 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
   if(compactPwa){
     return <div className={`pwa-salary-compact salary-input-step-${formStep}`}>
       {!r?<>
-        <SalaryFlowProgress step={formStep} lang={lang}/>
+        <SalaryFlowProgress step={formStep} lang={lang} mode={arrearMode?'arrear':'salary'}/>
         <section className="pwa-salary-form-card">
-          <div className="pwa-salary-mini-head"><span>{numLang(formStep,lang,0)}</span><div><b>{formStep===1?(en?'Start with 3 details':'৩টি তথ্য দিয়ে শুরু করুন'):(en?'Review only what needs changing':'শুধু প্রয়োজনীয় সমন্বয় দেখুন')}</b><small>{formStep===1?(en?'Everything else stays automatic or optional':'বাকি সব অটো অথবা ঐচ্ছিক'):(en?'Your basic information is saved while you adjust options':'মূল তথ্য সংরক্ষিত আছে—শুধু দরকার হলে পরিবর্তন করুন')}</small></div></div>
+          <div className="pwa-salary-mini-head"><span>{numLang(formStep,lang,0)}</span><div><b>{arrearMode?(formStep===1?(en?'Enter arrear calculation basis':'বকেয়া হিসাবের ভিত্তি দিন'):(en?'Review arrear adjustments':'বকেয়া সমন্বয়ের তথ্য দেখুন')):(formStep===1?(en?'Start with 3 details':'৩টি তথ্য দিয়ে শুরু করুন'):(en?'Review only what needs changing':'শুধু প্রয়োজনীয় সমন্বয় দেখুন'))}</b><small>{arrearMode?(formStep===1?(en?'For July–October 2026 reconciliation':'জুলাই–অক্টোবর ২০২৬ সমন্বয়ের জন্য'):(en?'Only fields that can change arrears are shown':'শুধু বকেয়ায় প্রভাব ফেলা তথ্য দেখানো হচ্ছে')):(formStep===1?(en?'Everything else stays automatic or optional':'বাকি সব অটো অথবা ঐচ্ছিক'):(en?'Your basic information is saved while you adjust options':'মূল তথ্য সংরক্ষিত আছে—শুধু দরকার হলে পরিবর্তন করুন'))}</small></div></div>
 
           <div className="pwa-salary-fields wizard-essential">
             <label><span>{en?'Category':'শ্রেণি'}</span><select value={f.category} onChange={e=>setF({...f,category:e.target.value})}>{categoryOpts.map(([v,l])=><option value={v} key={v}>{l}</option>)}</select></label>
             <label><span>{en?'Grade':'গ্রেড'}</span><select value={f.grade} onChange={e=>setF({...f,grade:e.target.value,currentStage:'0'})}>{Array.from({length:20},(_,i)=>i+1).map(g=><option key={g} value={g}>{en?`Grade ${g}`:`গ্রেড ${numLang(g,'bn',0)}`}</option>)}</select></label>
-            <label><span>{en?'Basic on 30 Jun':'৩০ জুনের মূল বেতন'}</span><select value={f.currentStage} onChange={e=>setF({...f,currentStage:e.target.value})}>{stages.map((v,i)=><option value={i} key={i}>{en?`Stage ${i+1} · Tk ${moneyLang(v,'en')}`:`ধাপ ${numLang(i+1,'bn',0)} · ৳${moneyLang(v,'bn')}`}</option>)}</select></label>
+            <label><span>{arrearMode?(en?'Old-scale basic on 30 Jun 2026':'৩০ জুন ২০২৬ পুরোনো স্কেলের মূল বেতন'):(en?'Basic on 30 Jun':'৩০ জুনের মূল বেতন')}</span><select value={f.currentStage} onChange={e=>setF({...f,currentStage:e.target.value})}>{stages.map((v,i)=><option value={i} key={i}>{en?`Stage ${i+1} · Tk ${moneyLang(v,'en')}`:`ধাপ ${numLang(i+1,'bn',0)} · ৳${moneyLang(v,'bn')}`}</option>)}</select></label>
+            {arrearMode&&<label><span>{en?'1 July 2026 increment':'১ জুলাই ২০২৬ ইনক্রিমেন্ট'}</span><select value={f.incrementEligible2026} onChange={e=>setF({...f,incrementEligible2026:e.target.value})}><option value="yes">{en?'Eligible / already received':'প্রাপ্য / ইতোমধ্যে পাওয়া'}</option><option value="no">{en?'Not eligible':'প্রাপ্য নয়'}</option></select></label>}
           </div>
           {profileAuto&&<div className="pwa-salary-auto-row wizard-essential"><span><UserRound/>{en?'Category & grade from saved profile':'শ্রেণি ও গ্রেড প্রোফাইল থেকে অটো'}</span><span><CheckCircle2/>{en?'You can still correct them here':'প্রয়োজনে এখানেই পরিবর্তন করা যাবে'}</span></div>}
 
@@ -2996,15 +3003,16 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
             <span><small>{en?'Category':'শ্রেণি'}</small><b>{categoryInfo.label}</b></span>
             <span><small>{en?'Grade':'গ্রেড'}</small><b>{numLang(Number(f.grade),lang,0)}</b></span>
             <span><small>{en?'Basic':'মূল বেতন'}</small><b>{en?'Tk ':'৳ '}{moneyLang(stages[currentIndex]||0,lang)}</b></span>
+            {arrearMode&&<span><small>{en?'1 July increment':'১ জুলাই ইনক্রিমেন্ট'}</small><b>{f.incrementEligible2026==='yes'?(en?'Eligible':'প্রাপ্য'):(en?'Not eligible':'প্রাপ্য নয়')}</b></span>}
           </div>
-          <div className="pwa-salary-options-title wizard-adjustments"><span>{en?'Change only if needed':'শুধু প্রয়োজন হলে পরিবর্তন করুন'}</span></div>
+          <div className="pwa-salary-options-title wizard-adjustments"><span>{arrearMode?(en?'Only arrear-impacting adjustments':'শুধু বকেয়ায় প্রভাব ফেলা সমন্বয়'):(en?'Change only if needed':'শুধু প্রয়োজন হলে পরিবর্তন করুন')}</span></div>
 
-          <details className="pwa-salary-option wizard-adjustments">
+          {!arrearMode&&<details className="pwa-salary-option wizard-adjustments">
             <summary><UserCheck/><span>{en?'July increment exception':'জুলাই ইনক্রিমেন্ট প্রাপ্য নয়?'}</span><ChevronDown/></summary>
             <div className="pwa-option-body">
               <label><span>{en?'1 July 2026 increment':'১ জুলাই ২০২৬ ইনক্রিমেন্ট'}</span><select value={f.incrementEligible2026} onChange={e=>setF({...f,incrementEligible2026:e.target.value})}><option value="yes">{en?'Eligible':'প্রাপ্য'}</option><option value="no">{en?'Not eligible':'প্রাপ্য নয়'}</option></select></label>
             </div>
-          </details>
+          </details>}
 
           <details className="pwa-salary-option wizard-adjustments">
             <summary><Home/><span>{en?'Housing & family':'বাসা ও পরিবার'}</span><ChevronDown/></summary>
@@ -3041,7 +3049,7 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
                 ?<div className="pwa-auto-deduction-note"><CheckCircle2/><span>{en?'PF, benevolent fund, insurance, stamp and association are calculated automatically.':'PF, কল্যাণ তহবিল, বীমা, স্ট্যাম্প ও সমিতি অটো হিসাব হবে।'}</span></div>
                 :<>
                   <label><span>{en?'PF rate':'PF হার'}</span><select value={f.gpfRate} onChange={e=>setF({...f,gpfRate:e.target.value})}><option value="0">0%</option>{Array.from({length:21},(_,i)=>i+5).map(x=><option key={x} value={x}>{x}%</option>)}</select></label>
-                  {(en?[['benevolent','Benevolent'],['health','Health insurance'],['group','Group insurance'],['stamp','Stamp'],['association','Association'],['tax','Tax'],['loan','Loan'],['other','Other']]:[['benevolent','কল্যাণ'],['health','স্বাস্থ্য বীমা'],['group','গ্রুপ বীমা'],['stamp','স্ট্যাম্প'],['association','সমিতি'],['tax','আয়কর'],['loan','ঋণ'],['other','অন্যান্য']]).map(([k,l])=><label key={k}><span>{l}</span><input type="number" inputMode="decimal" min="0" value={f[k]} onChange={e=>setF({...f,[k]:e.target.value})}/></label>)}
+                  {(arrearMode?(en?[['benevolent','Benevolent'],['health','Health insurance'],['group','Group insurance'],['stamp','Stamp'],['association','Association'],['tax','Tax']]:[['benevolent','কল্যাণ'],['health','স্বাস্থ্য বীমা'],['group','গ্রুপ বীমা'],['stamp','স্ট্যাম্প'],['association','সমিতি'],['tax','আয়কর']]):(en?[['benevolent','Benevolent'],['health','Health insurance'],['group','Group insurance'],['stamp','Stamp'],['association','Association'],['tax','Tax'],['loan','Loan'],['other','Other']]:[['benevolent','কল্যাণ'],['health','স্বাস্থ্য বীমা'],['group','গ্রুপ বীমা'],['stamp','স্ট্যাম্প'],['association','সমিতি'],['tax','আয়কর'],['loan','ঋণ'],['other','অন্যান্য']])).map(([k,l])=><label key={k}><span>{l}</span><input type="number" inputMode="decimal" min="0" value={f[k]} onChange={e=>setF({...f,[k]:e.target.value})}/></label>)}
                 </>}
             </div>
           </details>
@@ -3050,25 +3058,26 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
         <div className={`pwa-salary-sticky-calc ${formStep===2?'dual':''}`}>
           {formStep===1?<button onClick={()=>{setFormStep(2);window.scrollTo({top:0,behavior:'smooth'})}}><span>{en?'Next':'পরবর্তী ধাপ'}</span><ArrowRight/></button>:<>
             <button className="secondary" onClick={()=>{setFormStep(1);window.scrollTo({top:0,behavior:'smooth'})}}><ArrowLeft/><span>{en?'Back':'পেছনে'}</span></button>
-            <button onClick={calc}><Calculator/><span>{en?'Show calculation':'আমার হিসাব দেখুন'}</span><ArrowRight/></button>
+            <button onClick={calc}><Calculator/><span>{arrearMode?(en?'Show arrear calculation':'বকেয়া হিসাব দেখুন'):(en?'Show calculation':'আমার হিসাব দেখুন')}</span><ArrowRight/></button>
           </>}
         </div>
-      </>:<div id="salary-result"><SalaryResult r={r} lang={lang} compact={true} initialCompactTab={initialArrear?'arrear':'now'} onEdit={()=>{setR(null);setFormStep(1);window.scrollTo({top:0,behavior:'smooth'})}} onReset={()=>{setR(null);setFormStep(1);window.scrollTo({top:0,behavior:'smooth'})}}/></div>}
+      </>:<div id="salary-result"><SalaryResult r={r} lang={lang} compact={true} serviceMode={arrearMode?'arrear':'salary'} initialCompactTab={initialArrear?'arrear':'now'} onEdit={()=>{setR(null);setFormStep(1);window.scrollTo({top:0,behavior:'smooth'})}} onReset={()=>{setR(null);setFormStep(1);window.scrollTo({top:0,behavior:'smooth'})}}/></div>}
     </div>;
   }
 
   return <div className={`${publicMode?'public-salary-calculator ':''}salary-input-step-${formStep}`}>
     {!r?<>
-    <div className="page-head pay-calc-head simple-pay-head"><div><span className="pay-head-eyebrow">{en?'UNIVERSITY OF DHAKA':'ঢাকা বিশ্ববিদ্যালয়'}</span><h2>{en?'Salary & Arrear Calculator':'বেতন ও বকেয়া হিসাব'}</h2><p>{en?'Start with just three pieces of information. Date, Dhaka location, regular increment flow and arrear adjustment are automatic.':'শুরুতে শুধু ৩টি তথ্য দিন। তারিখ, ঢাকা লোকেশন, নিয়মিত ইনক্রিমেন্ট ধাপ ও বকেয়া সমন্বয় সিস্টেম নিজে করবে।'}</p></div></div>
+    <div className="page-head pay-calc-head simple-pay-head"><div><span className="pay-head-eyebrow">{en?'UNIVERSITY OF DHAKA':'ঢাকা বিশ্ববিদ্যালয়'}</span><h2>{arrearMode?(en?'Arrear / Outstanding Calculator':'বকেয়া / এরিয়ার হিসাব'):(en?'Pay Scale & Salary Calculator':'পে-স্কেল ও বেতন হিসাব')}</h2><p>{arrearMode?(en?'Reconcile July–September 2026 arrears with the October payroll using the old-paid versus new-entitlement method.':'জুলাই–সেপ্টেম্বর ২০২৬-এর বকেয়া পুরোনো পাওয়া পে-রোল ও নতুন প্রাপ্যের পার্থক্য ধরে অক্টোবর বিলে সমন্বয় করুন।'):(en?'Calculate salary and 2026–2028 pay-scale stages from your current grade and basic.':'বর্তমান গ্রেড ও মূল বেতন থেকে ২০২৬–২০২৮ পে-স্কেল ও বেতন ধাপ হিসাব করুন।')}</p></div></div>
 
-    <SalaryFlowProgress step={formStep} lang={lang}/>
+    <SalaryFlowProgress step={formStep} lang={lang} mode={arrearMode?'arrear':'salary'}/>
 
     <section className="calc-card salary-essential-card">
-      <div className="salary-form-section-title easy-section-title"><span>{numLang(formStep,lang,0)}</span><div><h3>{formStep===1?(en?'Enter these 3 details first':'প্রথমে এই ৩টি তথ্য দিন'):(en?'Check adjustments only if they apply':'শুধু প্রযোজ্য সমন্বয়গুলো দেখুন')}</h3><p>{formStep===1?(en?'For most users, these are enough to begin.':'বেশিরভাগ ব্যবহারকারীর জন্য এই ৩টি তথ্যই শুরু করার জন্য যথেষ্ট।'):(en?'Your first-step information stays saved. Open only the sections you need.':'প্রথম ধাপের তথ্য সংরক্ষিত আছে। শুধু প্রয়োজনীয় সেকশন খুলুন।')}</p></div></div>
+      <div className="salary-form-section-title easy-section-title"><span>{numLang(formStep,lang,0)}</span><div><h3>{arrearMode?(formStep===1?(en?'Enter the arrear basis':'বকেয়া হিসাবের ভিত্তি দিন'):(en?'Check arrear adjustments':'বকেয়া সমন্বয়ের তথ্য দেখুন')):(formStep===1?(en?'Enter these 3 details first':'প্রথমে এই ৩টি তথ্য দিন'):(en?'Check adjustments only if they apply':'শুধু প্রযোজ্য সমন্বয়গুলো দেখুন'))}</h3><p>{arrearMode?(formStep===1?(en?'These values identify the old payroll baseline used for arrear reconciliation.':'এই তথ্যগুলো দিয়ে পুরোনো পে-রোলের ভিত্তি নির্ধারণ হবে।'):(en?'Only items that can change arrears are shown here.':'এখানে শুধু বকেয়ায় প্রভাব ফেলা তথ্য দেখানো হচ্ছে।')):(formStep===1?(en?'For most users, these are enough to begin.':'বেশিরভাগ ব্যবহারকারীর জন্য এই ৩টি তথ্যই শুরু করার জন্য যথেষ্ট।'):(en?'Your first-step information stays saved. Open only the sections you need.':'প্রথম ধাপের তথ্য সংরক্ষিত আছে। শুধু প্রয়োজনীয় সেকশন খুলুন।'))}</p></div></div>
       <div className="form-grid essential-three-grid wizard-essential">
         <label>{en?'Your DU category':'আপনার DU শ্রেণি'}<select value={f.category} onChange={e=>setF({...f,category:e.target.value})}>{categoryOpts.map(([v,l])=><option value={v} key={v}>{l}</option>)}</select></label>
         <label>{en?'Current grade':'বর্তমান গ্রেড'}<select value={f.grade} onChange={e=>setF({...f,grade:e.target.value,currentStage:'0'})}>{Array.from({length:20},(_,i)=>i+1).map(g=><option key={g} value={g}>{en?`Grade ${g}`:`গ্রেড ${numLang(g,'bn',0)}`}</option>)}</select></label>
-        <label>{en?'Basic on 30 June 2026':'৩০ জুন ২০২৬-এর মূল বেতন'}<select value={f.currentStage} onChange={e=>setF({...f,currentStage:e.target.value})}>{stages.map((v,i)=><option value={i} key={i}>{en?`Stage ${i+1} — Tk ${moneyLang(v,'en')}`:`ধাপ ${numLang(i+1,'bn',0)} — ৳${moneyLang(v,'bn')}`}</option>)}</select></label>
+        <label>{arrearMode?(en?'Old-scale basic on 30 June 2026':'৩০ জুন ২০২৬ পুরোনো স্কেলের মূল বেতন'):(en?'Basic on 30 June 2026':'৩০ জুন ২০২৬-এর মূল বেতন')}<select value={f.currentStage} onChange={e=>setF({...f,currentStage:e.target.value})}>{stages.map((v,i)=><option value={i} key={i}>{en?`Stage ${i+1} — Tk ${moneyLang(v,'en')}`:`ধাপ ${numLang(i+1,'bn',0)} — ৳${moneyLang(v,'bn')}`}</option>)}</select></label>
+        {arrearMode&&<label>{en?'1 July 2026 annual increment':'১ জুলাই ২০২৬ বার্ষিক ইনক্রিমেন্ট'}<select value={f.incrementEligible2026} onChange={e=>setF({...f,incrementEligible2026:e.target.value})}><option value="yes">{en?'Eligible / already received':'প্রাপ্য / ইতোমধ্যে পাওয়া'}</option><option value="no">{en?'Not eligible':'প্রাপ্য নয়'}</option></select></label>}
       </div>
       {profileAuto&&<div className="salary-auto-summary wizard-essential"><span><UserRound/><div><small>{en?'Profile autofill':'প্রোফাইল অটোফিল'}</small><b>{en?'Category and grade loaded from your saved profile':'সংরক্ষিত প্রোফাইল থেকে শ্রেণি ও গ্রেড নেওয়া হয়েছে'}</b></div></span></div>}
 
@@ -3081,14 +3090,15 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
         <span><small>{en?'Category':'শ্রেণি'}</small><b>{categoryInfo.label}</b></span>
         <span><small>{en?'Grade':'গ্রেড'}</small><b>{numLang(Number(f.grade),lang,0)}</b></span>
         <span><small>{en?'30 June basic':'৩০ জুনের মূল বেতন'}</small><b>{en?'Tk ':'৳ '}{moneyLang(stages[currentIndex]||0,lang)}</b></span>
+        {arrearMode&&<span><small>{en?'1 July increment':'১ জুলাই ইনক্রিমেন্ট'}</small><b>{f.incrementEligible2026==='yes'?(en?'Eligible':'প্রাপ্য'):(en?'Not eligible':'প্রাপ্য নয়')}</b></span>}
       </div>
 
-      <details className="salary-detail-block increment-exception-block wizard-adjustments">
+      {!arrearMode&&<details className="salary-detail-block increment-exception-block wizard-adjustments">
         <summary><span><UserCheck/>{en?'Newly appointed or not eligible for 1 July 2026 increment?':'নতুন যোগদানকারী বা ১ জুলাই ২০২৬ ইনক্রিমেন্ট প্রাপ্য নয়?'}</span><small>{en?'Open only if this applies to you':'শুধু প্রযোজ্য হলে খুলুন'}</small></summary>
         <div className="form-grid compact one-field-grid">
           <label>{en?'1 July 2026 annual increment':'১ জুলাই ২০২৬ বার্ষিক ইনক্রিমেন্ট'}<select value={f.incrementEligible2026} onChange={e=>setF({...f,incrementEligible2026:e.target.value})}><option value="yes">{en?'Eligible / regular employee':'প্রাপ্য / নিয়মিত কর্মী'}</option><option value="no">{en?'Not eligible — new appointee without 6 months qualifying service':'প্রাপ্য নয় — নতুন যোগদানকারী, ৬ মাস পূর্ণ হয়নি'}</option></select></label>
         </div>
-      </details>
+      </details>}
 
       <details className="salary-detail-block allowance-basic-options wizard-adjustments">
         <summary><span><Home/>{en?'Housing & family information':'বাসা ও পারিবারিক তথ্য'}</span><small>{en?'Open if housing, age or child information needs changing':'বাসা, বয়স বা সন্তানের তথ্য বদলাতে হলে খুলুন'}</small></summary>
@@ -3129,7 +3139,7 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
             <label>{en?'PF subscription rate':'PF সাবস্ক্রিপশন হার'}<select value={f.gpfRate} onChange={e=>setF({...f,gpfRate:e.target.value})}><option value="0">{en?'Not applicable':'প্রযোজ্য নয়'}</option>{Array.from({length:21},(_,i)=>i+5).map(x=><option value={x} key={x}>{numLang(x,lang,0)}%</option>)}</select></label>
             {(en?[['benevolent','Benevolent fund'],['health','Health insurance'],['group','Group insurance'],['stamp','Revenue stamp'],['association','Association']]:[['benevolent','কল্যাণ তহবিল'],['health','স্বাস্থ্য বীমা'],['group','গ্রুপ বীমা'],['stamp','রাজস্ব স্ট্যাম্প'],['association','সমিতি']]).map(([k,l])=><label key={k}>{l}<input type="number" min="0" step="0.01" value={f[k]} onChange={e=>setF({...f,[k]:e.target.value})}/></label>)}
           </>}
-          {(en?[['tax','Income tax'],['loan','Loan/advance installment'],['other','Other deduction']]:[['tax','আয়কর'],['loan','ঋণ/অগ্রিম কিস্তি'],['other','অন্যান্য কর্তন']]).map(([k,l])=><label key={k}>{l}<input type="number" min="0" step="0.01" value={f[k]} onChange={e=>setF({...f,[k]:e.target.value})}/></label>)}
+          {(arrearMode?(en?[['tax','Income tax']]:[['tax','আয়কর']]):(en?[['tax','Income tax'],['loan','Loan/advance installment'],['other','Other deduction']]:[['tax','আয়কর'],['loan','ঋণ/অগ্রিম কিস্তি'],['other','অন্যান্য কর্তন']])).map(([k,l])=><label key={k}>{l}<input type="number" min="0" step="0.01" value={f[k]} onChange={e=>setF({...f,[k]:e.target.value})}/></label>)}
         </div>
       </details>
 
@@ -3140,25 +3150,25 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
         </>:<>
           <button className="wizard-back" onClick={()=>{setFormStep(1);window.scrollTo({top:0,behavior:'smooth'})}}><ArrowLeft size={16}/>{en?'Back':'পেছনে'}</button>
           <p>{en?'Ready? Salary, arrears and 2026–2028 stages will be calculated together.':'তথ্য ঠিক থাকলে হিসাব করুন। বেতন, বকেয়া ও ২০২৬–২০২৮ ধাপ একসাথে তৈরি হবে।'}</p>
-          <button className="primary" onClick={calc}>{en?'Show my calculation':'আমার হিসাব দেখুন'}<ArrowRight size={16}/></button>
+          <button className="primary" onClick={calc}>{arrearMode?(en?'Show arrear calculation':'বকেয়া হিসাব দেখুন'):(en?'Show my calculation':'আমার হিসাব দেখুন')}<ArrowRight size={16}/></button>
         </>}
       </div>
     </section>
-    </>:<div id="salary-result" className="salary-result-anchor"><SalaryResult r={r} lang={lang} onEdit={()=>{setR(null);setFormStep(1);window.scrollTo({top:0,behavior:'smooth'})}} onReset={()=>{setR(null);setFormStep(1);window.scrollTo({top:0,behavior:'smooth'})}}/></div>}
+    </>:<div id="salary-result" className="salary-result-anchor"><SalaryResult r={r} lang={lang} serviceMode={arrearMode?'arrear':'salary'} onEdit={()=>{setR(null);setFormStep(1);window.scrollTo({top:0,behavior:'smooth'})}} onReset={()=>{setR(null);setFormStep(1);window.scrollTo({top:0,behavior:'smooth'})}}/></div>}
   </div>
 }
-function SalaryResult({r,lang='bn',compact=false,initialCompactTab='now',onEdit,onReset}){
-  const en=lang==='en';
+function SalaryResult({r,lang='bn',compact=false,serviceMode='salary',initialCompactTab='now',onEdit,onReset}){
+  const en=lang==='en',arrearOnly=serviceMode==='arrear';
   const autoRuleWarning=r?.autoRuleIncomplete?(en?'Group-insurance rate is not verified for this category/grade; it was not auto-assumed.':'এই শ্রেণি/গ্রেডের গ্রুপ বীমার হার যাচাইকৃত নয়; অনুমান করে অটো ধরা হয়নি।'):'';
   const [activeYear,setActiveYear]=useState(2026);
-  const [resultView,setResultView]=useState('salary');
+  const [resultView,setResultView]=useState(arrearOnly?'arrear':'salary');
   const [compactTab,setCompactTab]=useState(initialCompactTab);
   const [pdfBusy,setPdfBusy]=useState('');
   const [pdfPreview,setPdfPreview]=useState(null);
   const [screen,setScreen]=useState('result');
   const [lastResultView,setLastResultView]=useState('salary');
-  useEffect(()=>{setActiveYear(2026);setResultView('salary');setCompactTab(initialCompactTab);setPdfPreview(null);setScreen('result');setLastResultView('salary')},[r,initialCompactTab]);
-  useEffect(()=>{if(activeYear!==2026)setResultView('salary')},[activeYear]);
+  useEffect(()=>{setActiveYear(2026);setResultView(arrearOnly?'arrear':'salary');setCompactTab(initialCompactTab);setPdfPreview(null);setScreen('result');setLastResultView(arrearOnly?'arrear':'salary')},[r,initialCompactTab,arrearOnly]);
+  useEffect(()=>{if(!arrearOnly&&activeYear!==2026)setResultView('salary')},[activeYear,arrearOnly]);
 
   const amt=v=>`${en?'Tk':'৳'} ${moneyLang(v,lang)}`;
   const stamp=Date.now();
@@ -3216,7 +3226,7 @@ function SalaryResult({r,lang='bn',compact=false,initialCompactTab='now',onEdit,
   }
   function openReportCenter(){
     setLastResultView(resultView);
-    setResultView('salary');
+    if(!arrearOnly)setResultView('salary');
     setScreen('report');
     window.requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'smooth'}));
   }
@@ -3248,12 +3258,13 @@ function SalaryResult({r,lang='bn',compact=false,initialCompactTab='now',onEdit,
     ]).filter(([,v])=>Number(v)>0);
 
     return <div className="pwa-salary-result">
-      <SalaryFlowProgress step={compactTab==='reports'?4:3} lang={lang}/>
-      <div className="pwa-result-tabs">
+      <SalaryFlowProgress step={compactTab==='reports'?4:3} lang={lang} mode={arrearOnly?'arrear':'salary'}/>
+      {!arrearOnly&&<div className="pwa-result-tabs">
         <button className={compactTab==='now'?'active':''} onClick={()=>setCompactTab('now')}>{en?'Now':'এখন'}</button>
         <button className={compactTab==='timeline'?'active':''} onClick={()=>setCompactTab('timeline')}>{en?'2026–2028':'২০২৬–২০২৮'}</button>
         <button className={compactTab==='details'?'active':''} onClick={()=>setCompactTab('details')}>{en?'Details':'বিস্তারিত'}</button>
-      </div>
+      </div>}
+      {arrearOnly&&compactTab!=='reports'&&<div className="pwa-arrear-service-banner"><ReceiptText/><div><small>{en?'ARREAR / OUTSTANDING':'বকেয়া / এরিয়ার'}</small><b>{en?'July–October 2026 reconciliation':'জুলাই–অক্টোবর ২০২৬ সমন্বয়'}</b></div></div>}
 
       {compactTab==='now'&&<>
         {autoRuleWarning&&<div className="error">{autoRuleWarning}</div>}
@@ -3328,19 +3339,23 @@ function SalaryResult({r,lang='bn',compact=false,initialCompactTab='now',onEdit,
       </section>}
 
       {compactTab==='reports'&&<section className="pwa-compact-report-center">
-        <button className="pwa-inline-back" onClick={()=>setCompactTab('now')}><ArrowLeft/>{en?'Back to result':'ফলাফলে ফিরুন'}</button>
-        <div className="pwa-compact-section-head"><small>{en?'REPORT CENTER':'রিপোর্ট সেন্টার'}</small><h3>{en?'Preview, download or share':'প্রিভিউ, ডাউনলোড বা শেয়ার'}</h3></div>
-        <div className="pwa-report-choice-grid">
-          <button onClick={()=>previewPdf(activeYearReport,String(activeYear),activeShareTitle,activeShareSummary)}><FileText/><span><b>{numLang(activeYear,lang,0)} PDF</b><small>{en?'Selected year':'নির্বাচিত বছর'}</small></span><ChevronRight/></button>
-          <button onClick={()=>previewPdf(combinedReport,'all')}><FileText/><span><b>{en?'2026–2028 PDF':'২০২৬–২০২৮ PDF'}</b><small>{en?'Complete report':'সম্পূর্ণ রিপোর্ট'}</small></span><ChevronRight/></button>
-          <button onClick={()=>previewPdf(arrearReport,'arrear')}><ReceiptText/><span><b>{en?'Arrear PDF':'বকেয়া PDF'}</b><small>{en?'July–October 2026':'জুলাই–অক্টোবর ২০২৬'}</small></span><ChevronRight/></button>
-        </div>
-        <ReportShareActions html={activeYearReport.html} filename={activeYearReport.filename} title={activeShareTitle} summary={activeShareSummary} lang={lang} compact={true}/>
+        <button className="pwa-inline-back" onClick={()=>setCompactTab(arrearOnly?'arrear':'now')}><ArrowLeft/>{en?'Back to result':'ফলাফলে ফিরুন'}</button>
+        <div className="pwa-compact-section-head"><small>{arrearOnly?(en?'ARREAR REPORT':'বকেয়া রিপোর্ট'):(en?'SALARY REPORT CENTER':'বেতন রিপোর্ট সেন্টার')}</small><h3>{en?'Preview, download or share':'প্রিভিউ, ডাউনলোড বা শেয়ার'}</h3></div>
+        {arrearOnly?<>
+          <div className="pwa-report-choice-grid"><button onClick={()=>previewPdf(arrearReport,'arrear')}><ReceiptText/><span><b>{en?'Arrear PDF':'বকেয়া PDF'}</b><small>{en?'July–October 2026 · 4 pages':'জুলাই–অক্টোবর ২০২৬ · ৪ পৃষ্ঠা'}</small></span><ChevronRight/></button></div>
+          <ReportShareActions html={arrearReport.html} filename={arrearReport.filename} title={en?'July–October 2026 Monthly Salary & Arrear Statement':'জুলাই–অক্টোবর ২০২৬ মাসভিত্তিক বেতন ও বকেয়া বিবরণী'} summary={en?'Four A4 pages with July–September reconciliation and October settlement.':'জুলাই–সেপ্টেম্বর সমন্বয় ও অক্টোবর নিষ্পত্তিসহ ৪-পৃষ্ঠার A4 রিপোর্ট।'} lang={lang} compact={true}/>
+        </>:<>
+          <div className="pwa-report-choice-grid">
+            <button onClick={()=>previewPdf(activeYearReport,String(activeYear),activeShareTitle,activeShareSummary)}><FileText/><span><b>{numLang(activeYear,lang,0)} PDF</b><small>{en?'Selected year':'নির্বাচিত বছর'}</small></span><ChevronRight/></button>
+            <button onClick={()=>previewPdf(combinedReport,'all')}><FileText/><span><b>{en?'2026–2028 PDF':'২০২৬–২০২৮ PDF'}</b><small>{en?'Complete report':'সম্পূর্ণ রিপোর্ট'}</small></span><ChevronRight/></button>
+          </div>
+          <ReportShareActions html={activeYearReport.html} filename={activeYearReport.filename} title={activeShareTitle} summary={activeShareSummary} lang={lang} compact={true}/>
+        </>}
       </section>}
 
       <div className="pwa-result-sticky-actions">
         <button className={compactTab==='reports'?'active':''} onClick={()=>setCompactTab('reports')}><FileText/><span>{en?'Reports':'রিপোর্ট'}</span></button>
-        <button className={compactTab==='details'?'active':''} onClick={()=>setCompactTab(compactTab==='details'?'now':'details')}><SlidersHorizontal/><span>{en?'Details':'বিস্তারিত'}</span></button>
+        {arrearOnly?<button className={compactTab==='arrear'?'active':''} onClick={()=>setCompactTab('arrear')}><ReceiptText/><span>{en?'Arrear':'বকেয়া'}</span></button>:<button className={compactTab==='details'?'active':''} onClick={()=>setCompactTab(compactTab==='details'?'now':'details')}><SlidersHorizontal/><span>{en?'Details':'বিস্তারিত'}</span></button>}
         <button onClick={()=>onReset?.()}><RefreshCw/><span>{en?'New':'নতুন হিসাব'}</span></button>
       </div>
       {pdfPreview&&<PdfPreviewModal html={pdfPreview.html} filename={pdfPreview.filename} onClose={()=>setPdfPreview(null)} lang={lang} shareTitle={pdfPreview.title} shareSummary={pdfPreview.summary||''}/>}
@@ -3348,7 +3363,7 @@ function SalaryResult({r,lang='bn',compact=false,initialCompactTab='now',onEdit,
   }
 
   return <div className={`result-stack year-tab-result salary-v2-result salary-screen-${screen}`}>
-    <SalaryFlowProgress step={screen==='report'?4:3} lang={lang}/>
+    <SalaryFlowProgress step={screen==='report'?4:3} lang={lang} mode={arrearOnly?'arrear':'salary'}/>
     {screen==='result'&&<section className="salary-result-editbar">
       <div><small>{en?'CURRENT INPUT':'বর্তমান তথ্য'}</small><b>{duCategoryInfo(r.category,lang).label} · {en?'Grade ':'গ্রেড '}{numLang(r.grade||0,lang,0)} · {amt(r.currentBasic||0)}</b></div>
       <button onClick={()=>onEdit?.()}><Edit3/>{en?'Edit information':'তথ্য পরিবর্তন'}</button>
@@ -3357,18 +3372,14 @@ function SalaryResult({r,lang='bn',compact=false,initialCompactTab='now',onEdit,
       <button onClick={backToResult}><ArrowLeft/>{en?'Back to result':'ফলাফলে ফিরুন'}</button>
       <div><small>{en?'STEP 4':'ধাপ ৪'}</small><b>{en?'Report & PDF Center':'রিপোর্ট ও PDF সেন্টার'}</b></div>
     </section>}
-    <section className="salary-result-toolbar">
+    {!arrearOnly?<section className="salary-result-toolbar">
       <div className="result-year-tabs" aria-label={en?'Salary year':'বেতনের বছর'}>
         {[2026,2027,2028].map(year=><button key={year} className={activeYear===year?'active':''} onClick={()=>setActiveYear(year)}>
           <span>{numLang(year,lang,0)}</span>
           <small>{year===2026?(en?'Phase 1':'১ম ধাপ'):year===2027?(en?'Phase 2 + full':'২য় ধাপ + পূর্ণ'):(en?'New allowances + Jul increment':'নতুন ভাতা + জুলাই ইনক্রিমেন্ট')}</small>
         </button>)}
       </div>
-      <div className="salary-result-switch" role="tablist">
-        <button className={resultView==='salary'?'active':''} onClick={()=>setResultView('salary')}>{en?'Salary':'বেতন হিসাব'}</button>
-        {activeYear===2026&&<button className={resultView==='arrear'?'active':''} onClick={()=>setResultView('arrear')}>{en?'Arrear':'বকেয়া / এরিয়ার'}</button>}
-      </div>
-    </section>
+    </section>:<section className="salary-arrear-only-head"><ReceiptText/><div><small>{en?'ARREAR / OUTSTANDING':'বকেয়া / এরিয়ার'}</small><h3>{en?'July–October 2026 payroll reconciliation':'জুলাই–অক্টোবর ২০২৬ পে-রোল সমন্বয়'}</h3><p>{en?'This screen only shows arrear-related calculations.':'এই স্ক্রিনে শুধু বকেয়া-সংক্রান্ত হিসাব দেখানো হচ্ছে।'}</p></div></section>}
 
     {resultView==='salary'&&<>
       <section className="salary-overview-v2">
@@ -3450,11 +3461,6 @@ function SalaryResult({r,lang='bn',compact=false,initialCompactTab='now',onEdit,
             </div>
           </div>
         </details>
-        {activeYear===2026&&<div className="salary-report-extra-arrear">
-          <div><ReceiptText/><span><small>{en?'ARREAR REPORT':'বকেয়া রিপোর্ট'}</small><b>{en?'July–October 2026 monthly reconciliation':'জুলাই–অক্টোবর ২০২৬ মাসভিত্তিক সমন্বয়'}</b></span></div>
-          <button disabled={!!pdfBusy} onClick={()=>previewPdf(arrearReport,'arrear')}><FileText/>{en?'Preview arrear PDF':'বকেয়া PDF প্রিভিউ'}<ChevronRight/></button>
-          <ReportShareActions html={arrearReport.html} filename={arrearReport.filename} title={en?'July–October 2026 Monthly Salary & Arrear Statement':'জুলাই–অক্টোবর ২০২৬ মাসভিত্তিক বেতন ও বকেয়া বিবরণী'} summary={en?'Four A4 pages with July–September reconciliation and October settlement.':'জুলাই–সেপ্টেম্বর সমন্বয় ও অক্টোবর নিষ্পত্তিসহ ৪-পৃষ্ঠার A4 রিপোর্ট।'} lang={lang} compact={true}/>
-        </div>}
       </section>
 
       <div className="notice official-pay-note"><b>{en?'Year status:':'বছরের অবস্থা:'}</b> {activeYear===2028?(en?'New allowance rates apply from 1 January 2028; the next annual increment is applied from 1 July 2028.':'১ জানুয়ারি ২০২৮ থেকে নতুন ভাতার হার এবং ১ জুলাই ২০২৮ থেকে পরবর্তী বার্ষিক ইনক্রিমেন্ট প্রয়োগ হবে।'):(en?'Pre-2028 allowance rules remain in force for this year.':'এই বছরে ২০২৮-এর আগের ভাতার নিয়ম/হার কার্যকর থাকবে।')}</div>
@@ -3527,9 +3533,15 @@ function SalaryResult({r,lang='bn',compact=false,initialCompactTab='now',onEdit,
       </div>
       <div className="notice arrear-note"><b>{en?'Important:':'গুরুত্বপূর্ণ:'}</b> {en?'The PDF shows earnings and deductions separately for each month. Final payroll may still differ if the actual office bill contains tax, loan, housing recovery or other payroll-specific entries not entered here.':'PDF-এ প্রতি মাসের বেতন/ভাতা ও কর্তন আলাদাভাবে দেখানো হবে। প্রকৃত অফিস বিলে এখানে না দেওয়া আয়কর, ঋণ, বাসা recovery বা অন্য payroll entry থাকলে চূড়ান্ত অংক ভিন্ন হতে পারে।'}</div>
     </section>}
+    {arrearOnly&&screen==='report'&&<section className="salary-report-center-v2 arrear-only-report-center">
+      <div className="salary-report-head-v2"><div><span>{en?'ARREAR REPORT':'বকেয়া রিপোর্ট'}</span><h3>{en?'July–October 2026 A4 report':'জুলাই–অক্টোবর ২০২৬ A4 রিপোর্ট'}</h3><p>{en?'Four pages: July, August, September reconciliation and October final settlement.':'৪ পৃষ্ঠা: জুলাই, আগস্ট, সেপ্টেম্বরের সমন্বয় এবং অক্টোবরের চূড়ান্ত নিষ্পত্তি।'}</p></div></div>
+      <div className="salary-report-primary-actions one"><button className="primary-report" disabled={!!pdfBusy} onClick={()=>previewPdf(arrearReport,'arrear')}><ReceiptText/><span><b>{en?'Arrear PDF':'বকেয়া PDF'}</b><small>{en?'4-page reconciliation report':'৪-পৃষ্ঠার সমন্বয় রিপোর্ট'}</small></span><ChevronRight size={17}/></button></div>
+      <div className="salary-report-share-v2"><ReportShareActions html={arrearReport.html} filename={arrearReport.filename} title={en?'July–October 2026 Monthly Salary & Arrear Statement':'জুলাই–অক্টোবর ২০২৬ মাসভিত্তিক বেতন ও বকেয়া বিবরণী'} summary={en?'Four A4 pages with July–September reconciliation and October settlement.':'জুলাই–সেপ্টেম্বর সমন্বয় ও অক্টোবর নিষ্পত্তিসহ ৪-পৃষ্ঠার A4 রিপোর্ট।'} lang={lang} compact={true}/></div>
+    </section>}
+
     {screen==='result'&&<section className="salary-result-next-report">
-      <div><FileText/><span><small>{en?'NEXT STEP':'পরবর্তী ধাপ'}</small><b>{en?'Open Report & PDF Center':'রিপোর্ট ও PDF সেন্টার খুলুন'}</b></span></div>
-      <button onClick={openReportCenter}>{en?'Reports & PDF':'রিপোর্ট ও PDF'}<ArrowRight/></button>
+      <div><FileText/><span><small>{en?'NEXT STEP':'পরবর্তী ধাপ'}</small><b>{arrearOnly?(en?'Open Arrear Report & PDF':'বকেয়া রিপোর্ট ও PDF খুলুন'):(en?'Open Salary Report & PDF':'বেতন রিপোর্ট ও PDF খুলুন')}</b></span></div>
+      <button onClick={openReportCenter}>{arrearOnly?(en?'Arrear Report':'বকেয়া রিপোর্ট'):(en?'Reports & PDF':'রিপোর্ট ও PDF')}<ArrowRight/></button>
     </section>}
     {pdfPreview&&<PdfPreviewModal html={pdfPreview.html} filename={pdfPreview.filename} onClose={()=>setPdfPreview(null)} lang={lang} shareTitle={pdfPreview.title} shareSummary={pdfPreview.summary||''}/>}
   </div>
