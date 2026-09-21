@@ -201,7 +201,7 @@ function PwaMobileInstallGate({lang='bn'}){
     <div className="pwa-gate-card success">
       <div className="pwa-gate-icon success"><CheckCircle2/></div>
       <span className="pwa-gate-badge">{en?'INSTALLATION COMPLETE':'ইনস্টল সম্পন্ন'}</span>
-      <div className="pwa-install-count"><Users/><span>{installStats.total_installs==null?(en?'Loading install count…':'ইনস্টল সংখ্যা লোড হচ্ছে…'):(en?`${numLang(installStats.total_installs,'en',0)} total installs`:`মোট ${numLang(installStats.total_installs,'bn',0)} বার ইনস্টল হয়েছে`)}</span></div>
+      <div className="pwa-install-count"><Users/><span>{installStats.total_installs==null?(en?'Loading install count…':'ইনস্টল সংখ্যা লোড হচ্ছে…'):(en?`Total installs: ${numLang(installStats.total_installs,'en',0)}`:`মোট ইনস্টল: ${numLang(installStats.total_installs,'bn',0)}`)}</span></div>
       <h1>{en?'Hisab Sahayika is installed':'হিসাব সহায়িকা ইনস্টল হয়েছে'}</h1>
       <p>{en?'Open Hisab Sahayika from your phone Home Screen and use the calculation services from the app.':'এখন আপনার মোবাইলের Home Screen থেকে হিসাব সহায়িকা খুলে প্রয়োজনীয় হিসাব ও সেবাগুলো ব্যবহার করুন।'}</p>
       <div className="pwa-home-hint">
@@ -228,7 +228,7 @@ function PwaMobileInstallGate({lang='bn'}){
         <div><b>Hisab Sahayika</b><small>{en?'Independent calculation assistant':'স্বাধীন হিসাব সহায়ক অ্যাপ'}</small></div>
       </div>
       <span className="pwa-gate-badge">{en?'INDEPENDENT CALCULATION APP':'স্বাধীন হিসাব সহায়ক অ্যাপ'}</span>
-      <div className="pwa-install-count"><Users/><span>{installStats.total_installs==null?(en?'Loading install count…':'ইনস্টল সংখ্যা লোড হচ্ছে…'):(en?`${numLang(installStats.total_installs,'en',0)} total installs`:`মোট ${numLang(installStats.total_installs,'bn',0)} বার ইনস্টল হয়েছে`)}</span></div>
+      <div className="pwa-install-count"><Users/><span>{installStats.total_installs==null?(en?'Loading install count…':'ইনস্টল সংখ্যা লোড হচ্ছে…'):(en?`Total installs: ${numLang(installStats.total_installs,'en',0)}`:`মোট ইনস্টল: ${numLang(installStats.total_installs,'bn',0)}`)}</span></div>
       <h1>{en?'Install Hisab Sahayika':'হিসাব সহায়িকা ইনস্টল করুন'}</h1>
       <p>{en?'A convenient independent app for viewing salary, arrears, promotion, points, housing and other supported calculations.':'বেতন, বকেয়া, পদোন্নতি, পয়েন্ট, বাসা, চাকরিকাল ও অন্যান্য সমর্থিত হিসাব জানা ও দেখার জন্য একটি স্বাধীন সহায়ক অ্যাপ।'}</p>
 
@@ -1417,7 +1417,7 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
           <button className="secondary" onClick={()=>openPublicTool('promotion')}>{en?'Check promotion':'পদোন্নতি হিসাব'}<TrendingUp/></button>
         </div>
         <div className="approved-trust">
-          <span><CheckCircle2/>{en?'DU-focused calculations':'DU-নির্ভর হিসাব'}</span>
+          <span><CheckCircle2/>{en?'Targeted calculations':'লক্ষ্যভিত্তিক হিসাব'}</span>
           <span><CheckCircle2/>{en?'Simple guided steps':'সহজ ধাপে ব্যবহার'}</span>
           <span><CheckCircle2/>{en?'A4 PDF reports':'A4 PDF রিপোর্ট'}</span>
         </div>
