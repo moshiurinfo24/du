@@ -25,12 +25,15 @@ export const PAY2026={
 
 export const PAY_SCALE_2026_META={
   title:'জাতীয় বেতনস্কেল, ২০২৬',
-  order:'চাকরি (বেতন ও ভাতাদি) আদেশ, ২০২৬',
-  sro:'এস. আর. ও. নং ৩৪৭-আইন/২০২৬',
+  order:'চাকরি [স্ব-শাসিত (Public Bodies) এবং রাষ্ট্রায়ত্ত প্রতিষ্ঠানসমূহ] (বেতন ও ভাতাদি) আদেশ, ২০২৬',
+  sro:'এস. আর. ও. নং ৩৪৮-আইন/২০২৬',
   gazetteDate:'2026-09-17',
   effectiveDate:'2026-07-01',
   fullBasicEffectiveDate:'2027-07-01',
-  newAllowancesEffectiveDate:'2028-01-01'
+  newAllowancesEffectiveDate:'2028-01-01',
+  annualIncrementDate:'07-01',
+  audience:'ঢাকা বিশ্ববিদ্যালয়ের শিক্ষক, কর্মকর্তা ও কর্মচারী',
+  fixedLocation:'ঢাকা বিশ্ববিদ্যালয়, ঢাকা'
 };
 
 export const HOUSE_RENT_2015=[
@@ -184,7 +187,7 @@ export function houseRentRate2026(grade,zone='other'){
   return z==='dhaka'?40:z==='major'?30:25;
 }
 export function houseRent2026(grade,basic,zone='other',housing='no'){
-  if(housing==='yes')return 0;
+  if(housing==='yes'||housing==='du_quarter')return 0;
   return Math.round(Number(basic||0)*houseRentRate2026(grade,zone)/100);
 }
 export function medicalAllowance2026(ageBand='under50'){return ageBand==='over50'?4000:3000}
@@ -251,11 +254,11 @@ export function salary2026Snapshot({
   const banglaNewYear=allowance2026?Math.round(payableBasic*.15):null;
   return {grade:g,date:d,currentBasic:oldBasic,fixed,fixedWithFirstIncrement,phase,difference,implementedDifference,dueIncrementCount,
     fullWithIncrements,payableBasic,allowance2026,allowances,totalAllowances,gross,banglaNewYear,
-    houseRate:allowance2026&&housing!=='yes'?houseRentRate2026(g,zone):0};
+    houseRate:allowance2026&&housing!=='yes'&&housing!=='du_quarter'?houseRentRate2026(g,zone):0};
 }
 
 export function houseRent2015(basic,housing,zone='dhaka'){
-  if(housing==='yes')return 0;
+  if(housing==='yes'||housing==='du_quarter')return 0;
   const b=Number(basic||0);
   const band=HOUSE_RENT_2015.find(r=>(r.min==null||b>=r.min)&&(r.max==null||b<=r.max));
   if(!band)return 0;
