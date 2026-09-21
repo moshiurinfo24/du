@@ -383,7 +383,7 @@ function PwaControls({lang='bn'}){
   const [updatedNotice,setUpdatedNotice]=useState(()=>getPwaState().justUpdatedAt||'');
   useEffect(()=>subscribePwa(next=>{setPwa(next);if(next.justUpdatedAt)setUpdatedNotice(next.justUpdatedAt)}),[]);
   useEffect(()=>{
-    if((pwa.canInstall||pwa.iosInstallHint||pwa.previouslyInstalled)&&!pwa.installed&&sessionStorage.getItem('du_pwa_install_nudge_dismissed')!=='1'){
+    if((pwa.canInstall||pwa.iosInstallHint)&&!pwa.installed&&sessionStorage.getItem('du_pwa_install_nudge_dismissed')!=='1'){
       const t=setTimeout(()=>setNudge(true),1200);
       return()=>clearTimeout(t);
     }
@@ -1409,7 +1409,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     ['points',Award,en?'Points':'পয়েন্ট হিসাব','teal'],
     ['house',Home,en?'House Points':'বাসা বরাদ্দ পয়েন্ট','gold'],
     ['service',Clock3,en?'Service Length':'চাকরিকাল','aqua'],
-    ['retire',FileClock,en?'Retirement':'অবসর ও বয়স','amber'],
+    ['retire',FileClock,en?'Retirement Date':'অবসর তারিখ','amber'],
     ['calendar',CalendarDays,en?'Office Calendar':'অফিস ক্যালেন্ডার','sky']
   ];
   const moreTools=[
@@ -1426,9 +1426,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     ['local-salary',WalletCards,en?'Salary History':'বেতন ইতিহাস'],
     ['local-leave',CalendarDays,en?'Leave Records':'ছুটি'],
     ['local-reports',FileText,en?'My Reports':'রিপোর্ট'],
-    ['local-privacy',ShieldCheck,en?'Data & Backup':'ডাটা ও ব্যাকআপ'],
-    ['calendar',CalendarDays,en?'Office Calendar':'ক্যালেন্ডার'],
-    ['reference',BookOpen,en?'Notices & Policies':'নোটিশ ও নীতিমালা']
+    ['local-privacy',ShieldCheck,en?'Data & Backup':'ডাটা ও ব্যাকআপ']
   ];
   const localMode=tool=>tool.startsWith('local-')?tool.slice(6):'dashboard';
 
