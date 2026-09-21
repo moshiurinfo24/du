@@ -150,6 +150,35 @@ function safeSharedReportHtml(v){
   return html;
 }
 
+let pwaInstallationsReady=false;
+async function ensurePwaInstallations(env){
+  if(pwaInstallationsReady)return;
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS pwa_installations(
+    install_hash TEXT PRIMARY KEY,
+    platform TEXT NOT NULL DEFAULT 'unknown',
+    install_source TEXT NOT NULL DEFAULT 'browser',
+    installed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_seen_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`).run();
+  await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_pwa_installations_installed_at ON pwa_installations(installed_at)`).run();
+  pwaInstallationsReady=true;
+}
+async function pwaInstallStats(env){
+  await ensurePwaInstallations(env);
+  const x=await env.DB.prepare(`
+    SELECT
+      COUNT(*) total_installs,
+      COUNT(CASE WHEN date(datetime(installed_at,'+6 hours'))=date('now','+6 hours') THEN 1 END) today_installs,
+      COUNT(CASE WHEN strftime('%Y-%m',datetime(installed_at,'+6 hours'))=strftime('%Y-%m',datetime('now','+6 hours')) THEN 1 END) month_installs
+    FROM pwa_installations
+  `).first();
+  return {
+    total_installs:+(x?.total_installs||0),
+    today_installs:+(x?.today_installs||0),
+    month_installs:+(x?.month_installs||0)
+  };
+}
+
 async function publicTrafficStats(env){
   await ensurePublicEvents(env);
   const [x,b]=await Promise.all([
@@ -207,6 +236,27 @@ export default{async fetch(req,env){
     if(u.pathname==='/api/public/stats'&&req.method==='GET'){
       const stats=await publicTrafficStats(env);
       return json({ok:true,...stats,timezone:'Asia/Dhaka',note:'Unique visitors are an anonymous browser/device estimate.'},200,C);
+    }
+
+    if(u.pathname==='/api/public/pwa-install'&&req.method==='POST'){
+      await ensurePwaInstallations(env);
+      const b=await req.json().catch(()=>({}));
+      const installId=String(b.install_id||'').trim().slice(0,180);
+      if(installId.length<8)return json({error:'Invalid install id'},400,C);
+      const platform=String(b.platform||'unknown').toLowerCase().replace(/[^a-z0-9_-]/g,'').slice(0,32)||'unknown';
+      const source=String(b.source||'browser').toLowerCase().replace(/[^a-z0-9_-]/g,'').slice(0,40)||'browser';
+      const installHash=await sha('pwa-install:'+installId);
+      await env.DB.prepare(`INSERT OR IGNORE INTO pwa_installations(install_hash,platform,install_source) VALUES(?,?,?)`)
+        .bind(installHash,platform,source).run();
+      await env.DB.prepare(`UPDATE pwa_installations SET last_seen_at=CURRENT_TIMESTAMP WHERE install_hash=?`)
+        .bind(installHash).run();
+      const stats=await pwaInstallStats(env);
+      return json({ok:true,...stats,timezone:'Asia/Dhaka'},201,C);
+    }
+
+    if(u.pathname==='/api/public/pwa-install-stats'&&req.method==='GET'){
+      const stats=await pwaInstallStats(env);
+      return json({ok:true,...stats,timezone:'Asia/Dhaka',note:'Install count is based on unique anonymous installation IDs.'},200,C);
     }
 
     if(u.pathname==='/api/public/report-share'&&req.method==='POST'){
