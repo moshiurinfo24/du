@@ -2124,26 +2124,24 @@ function SalaryResult({r,lang='bn'}){
   const allowances=en?[
     ['House rent',ca.house??0],['Medical allowance',ca.medical??0],['Education allowance',ca.education??0],['Tiffin allowance',ca.tiffin??0],
     ['Conveyance allowance',ca.conveyance??0],['Mobile allowance',ca.mobile??0],['Laundry allowance',ca.laundry??0],
-    ['Special-needs child allowance',ca.disabledChild??0],['Special area allowance',ca.area??0],['Training allowance',ca.training??0],
-    ['Charge allowance',ca.charge??0],['Entertainment allowance',ca.entertainment??0],['Other verified special allowance',ca.otherSpecial??0]
+    ['Special-needs child allowance',ca.disabledChild??0],['Charge allowance',ca.charge??0],['Other separately approved allowance',ca.otherSpecial??0]
   ]:[
     ['বাড়িভাড়া',ca.house??0],['চিকিৎসা ভাতা',ca.medical??0],['শিক্ষা সহায়ক ভাতা',ca.education??0],['টিফিন ভাতা',ca.tiffin??0],
     ['যাতায়াত ভাতা',ca.conveyance??0],['মোবাইল ভাতা',ca.mobile??0],['ধোলাই ভাতা',ca.laundry??0],
-    ['বিশেষ চাহিদাসম্পন্ন সন্তান ভাতা',ca.disabledChild??0],['বিশেষ এলাকা ভাতা',ca.area??0],['প্রশিক্ষণ ভাতা',ca.training??0],
-    ['কার্যভার ভাতা',ca.charge??0],['আপ্যায়ন ভাতা',ca.entertainment??0],['অন্যান্য যাচাইকৃত বিশেষ ভাতা',ca.otherSpecial??0]
+    ['বিশেষ চাহিদাসম্পন্ন সন্তান ভাতা',ca.disabledChild??0],['কার্যভার ভাতা',ca.charge??0],['আলাদা অনুমোদনপ্রাপ্ত অন্যান্য ভাতা',ca.otherSpecial??0]
   ];
   const deds=en?[
     [`Provident Fund ${numLang(gpfRate,'en',0)}%`,current.pf??0],
     [`Benevolent Fund ${auto?numLang(beneRate*100,'en',2)+'%':''}`,current.bene??0],
     [`Health insurance${auto?' (auto)':''}`,current.health??0],
     [`Group insurance${auto?' (auto)':''}`,current.group??0],
-    ['Revenue stamp',current.stamp??0],['Association',current.association??0],['Income tax',current.tax??0],['Loan/advance',current.loan??0],['Other',current.other??0]
+    ['Revenue stamp',current.stamp??0],['Association',current.association??0],['DU quarter/unit rent',current.quarterRent??0],['Other housing recovery',current.quarterOther??0],['Income tax',current.tax??0],['Loan/advance',current.loan??0],['Other',current.other??0]
   ]:[
     [`ভবিষ্য তহবিল (PF) ${numLang(gpfRate,'bn',0)}%`,current.pf??0],
     [`কল্যাণ তহবিল ${auto?numLang(beneRate*100,'bn',2)+'%':''}`,current.bene??0],
     [`স্বাস্থ্য বীমা${auto?' (অটো)':''}`,current.health??0],
     [`গ্রুপ বীমা${auto?' (অটো)':''}`,current.group??0],
-    ['রাজস্ব স্ট্যাম্প',current.stamp??0],['সমিতি',current.association??0],['আয়কর',current.tax??0],['ঋণ/অগ্রিম',current.loan??0],['অন্যান্য',current.other??0]
+    ['রাজস্ব স্ট্যাম্প',current.stamp??0],['সমিতি',current.association??0],['ঢাবি বাসা/ইউনিট ভাড়া',current.quarterRent??0],['বাসা-সংক্রান্ত অন্যান্য কর্তন',current.quarterOther??0],['আয়কর',current.tax??0],['ঋণ/অগ্রিম',current.loan??0],['অন্যান্য',current.other??0]
   ];
 
   const yearReports=[2026,2027,2028].map(year=>({
@@ -2183,6 +2181,11 @@ function SalaryResult({r,lang='bn'}){
           <div className="salary-phase-badge">{current.phase?.label||r.phase?.label||'—'}</div>
         </div>
 
+        <div className="salary-du-profile-strip">
+          <span><small>{en?'DU category':'DU শ্রেণি'}</small><b>{duCategoryInfo(current.category||r.category,lang).label}</b></span>
+          <span><small>{en?'Location':'কর্মস্থল'}</small><b>{en?'University of Dhaka, Dhaka':'ঢাকা বিশ্ববিদ্যালয়, ঢাকা'}</b></span>
+          <span><small>{en?'Housing':'বাসা'}</small><b>{(current.housingMode||r.housingMode)==='du_quarter'?(en?'DU quarter/unit':'ঢাবি বাসা/ইউনিট'):(en?'No DU quarter':'ঢাবি বাসা নেই')}</b></span>
+        </div>
         <div className="salary-kpi-v2">
           <article><small>{en?'Payable basic':'প্রাপ্য মূল বেতন'}</small><b>{amt(current.payableBasic??r.payableBasic)}</b></article>
           <article><small>{en?'Monthly allowances':'মাসিক মোট ভাতা'}</small><b>{amt(current.totalAllowances??0)}</b></article>
@@ -2253,12 +2256,12 @@ function SalaryResult({r,lang='bn'}){
         </details>
       </section>
 
-      <div className="notice official-pay-note"><b>{en?'Year status:':'বছরের অবস্থা:'}</b> {activeYear===2028?(en?'New allowance rates are applied from 1 January 2028.':'১ জানুয়ারি ২০২৮ থেকে নতুন ভাতার হার প্রয়োগ হয়েছে।'):(en?'Pre-2028 allowance rules remain in force for this year.':'এই বছরে ২০২৮-এর আগের ভাতার নিয়ম/হার কার্যকর থাকবে।')}</div>
+      <div className="notice official-pay-note"><b>{en?'Year status:':'বছরের অবস্থা:'}</b> {activeYear===2028?(en?'New allowance rates apply from 1 January 2028; the next annual increment is applied from 1 July 2028.':'১ জানুয়ারি ২০২৮ থেকে নতুন ভাতার হার এবং ১ জুলাই ২০২৮ থেকে পরবর্তী বার্ষিক ইনক্রিমেন্ট প্রয়োগ হবে।'):(en?'Pre-2028 allowance rules remain in force for this year.':'এই বছরে ২০২৮-এর আগের ভাতার নিয়ম/হার কার্যকর থাকবে।')}</div>
     </>}
 
     {activeYear===2026&&resultView==='arrear'&&<section className="arrear-v2">
       <div className="arrear-v2-head">
-        <div><span>{en?'OCTOBER 2026 ARREAR':'অক্টোবর ২০২৬ বকেয়া'}</span><h3>{en?'October bill + July–September arrears':'অক্টোবর বিল + জুলাই–সেপ্টেম্বরের বকেয়া'}</h3><p>{en?'October is counted once. The previous three months are settled separately, then the special benefit already received is deducted automatically.':'অক্টোবরের চলতি বেতন একবারই ধরা হয়েছে। আগের ৩ মাসের বকেয়া আলাদা হিসাব করে ইতোমধ্যে পাওয়া বিশেষ সুবিধা স্বয়ংক্রিয়ভাবে বাদ দেওয়া হয়েছে।'}</p></div>
+        <div><span>{en?'OCTOBER 2026 ARREAR':'অক্টোবর ২০২৬ বকেয়া'}</span><h3>{en?'October bill + July–September arrears':'অক্টোবর বিল + জুলাই–সেপ্টেম্বরের বকেয়া'}</h3><p>{en?'October is counted once. July–September arrears are settled separately and only the special benefit actually received is adjusted.':'অক্টোবরের চলতি বেতন একবারই ধরা হয়েছে। জুলাই–সেপ্টেম্বরের বকেয়া আলাদা হিসাব করে কেবল বাস্তবে পাওয়া বিশেষ সুবিধা সমন্বয় করা হয়েছে।'}</p></div>
         <div className="arrear-v2-total"><small>{en?'Estimated October total':'অক্টোবরে আনুমানিক মোট'}</small><b>{amt(arrear.octoberBillNet||0)}</b></div>
       </div>
 
@@ -2267,7 +2270,7 @@ function SalaryResult({r,lang='bn'}){
         <i>+</i>
         <div><small>{en?'July–September net arrear':'জুলাই–সেপ্টেম্বর নিট বকেয়া'}</small><b>{amt(arrear.priorThreeNetArrear||0)}</b></div>
         <i>−</i>
-        <div><small>{en?'Special benefit already received':'ইতোমধ্যে পাওয়া বিশেষ সুবিধা'}</small><b>{amt(arrear.specialBenefitThreeMonths||0)}</b></div>
+        <div><small>{en?'Special benefit already received':'ইতোমধ্যে পাওয়া বিশেষ সুবিধা'}</small><b>{amt(arrear.specialBenefitReceivedAmount||0)}</b></div>
         <i>=</i>
         <div className="final"><small>{en?'Final estimated receivable':'চূড়ান্ত আনুমানিক প্রাপ্য'}</small><b>{amt(arrear.octoberBillNet||0)}</b></div>
       </div>
@@ -2286,7 +2289,7 @@ function SalaryResult({r,lang='bn'}){
             <div><small>{en?'1 July old-scale basic':'১ জুলাই পুরোনো স্কেলের মূল বেতন'}</small><b>{amt(arrear.oldJulyBasic||0)}</b></div>
             <div><small>{en?'Special-benefit rate':'বিশেষ সুবিধার হার'}</small><b>{numLang((arrear.specialBenefitRate||0)*100,lang,0)}%</b></div>
             <div><small>{en?'Monthly special benefit':'মাসিক বিশেষ সুবিধা'}</small><b>{amt(arrear.specialBenefitMonthly||0)}</b></div>
-            <div><small>{en?'3-month special benefit':'৩ মাসের বিশেষ সুবিধা'}</small><b>{amt(arrear.specialBenefitThreeMonths||0)}</b></div>
+            <div><small>{en?'Special benefit actually received':'বাস্তবে পাওয়া বিশেষ সুবিধা'}</small><b>{amt(arrear.specialBenefitReceivedAmount||0)}</b></div>
             <div><small>{en?'3-month basic arrear':'৩ মাসের মূল বেতন বকেয়া'}</small><b>{amt(arrear.priorThreeBasicArrear||0)}</b></div>
             <div><small>{en?'3-month net before adjustment':'সমন্বয়ের আগে ৩ মাসের নিট'}</small><b>{amt(arrear.priorThreeNetArrear||0)}</b></div>
             <div><small>{en?'Previous arrear after adjustment':'সমন্বয়ের পর পূর্বের বকেয়া'}</small><b>{amt(arrear.priorNetAfterSpecial||0)}</b></div>
