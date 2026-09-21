@@ -56,6 +56,7 @@ import './salary-service-split-v29.css';
 import './calculation-history-v32.css';
 import './increment-center-v34.css';
 import './pf-deduction-center-v35.css';
+import './leave-balance-v36.css';
 import {initPwaRuntime,subscribePwa,getPwaState,promptPwaInstall,formatPwaTime,manualPwaUpdateCheck,consumePwaUpdateNotice} from './pwa-client.js';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import GuestLocalCenter from './guest-local-v1.jsx';
@@ -96,13 +97,13 @@ async function syncGuestWorkspaceToAccount(user){
   if(!w||typeof w!=='object')return {synced:false,reason:'no-local-data'};
   const hasData=!!(
     Object.values(w.profile||{}).some(v=>String(v||'').trim())||
-    (w.education||[]).length||(w.events||[]).length||(w.salary_history||[]).length||(w.leave||[]).length
+    (w.education||[]).length||(w.events||[]).length||(w.salary_history||[]).length||(w.leave||[]).length||Object.keys(w.leave_entitlements||{}).length
   );
   if(!hasData)return {synced:false,reason:'empty'};
 
   const accountKey=String(user?.id||user?.email||user?.employee_reference||'account');
   const mapKey='hisab_guest_sync_map_'+accountKey;
-  let map={profileKey:'',education:[],events:[],salary:[],leave:[]};
+  let map={profileKey:'',education:[],events:[],salary:[],leave:[],leaveEntitlements:{}};
   try{map={...map,...JSON.parse(localStorage.getItem(mapKey)||'{}')}}catch{}
   const sets={
     education:new Set(map.education||[]),
@@ -119,7 +120,7 @@ async function syncGuestWorkspaceToAccount(user){
   const persistMap=()=>{
     localStorage.setItem(mapKey,JSON.stringify({
       profileKey:map.profileKey||'',
-      education:[...sets.education],events:[...sets.events],salary:[...sets.salary],leave:[...sets.leave]
+      education:[...sets.education],events:[...sets.events],salary:[...sets.salary],leave:[...sets.leave],leaveEntitlements:map.leaveEntitlements||{}
     }));
   };
 
@@ -191,8 +192,17 @@ async function syncGuestWorkspaceToAccount(user){
     if(!x.start_date||!x.end_date||!id||sets.leave.has(id))continue;
     if(await push('/api/my-leave-records',{method:'POST',body:JSON.stringify({
       leave_type:x.type||'other',start_date:x.start_date||'',end_date:x.end_date||'',
-      day_mode:'full',total_days:Number(x.total_days||0),notes:x.note||'Imported from local PWA'
+      day_mode:x.day_mode==='half'?'half':'full',total_days:Number(x.total_days||0),notes:x.note||'Imported from local PWA'
     })})){sets.leave.add(id);persistMap()}
+  }
+  for(const [year,config] of Object.entries(w.leave_entitlements||{})){
+    if(!/^\d{4}$/.test(String(year))||!config||typeof config!=='object')continue;
+    const payload={year:Number(year),entitlements:config.entitlements||{},source_note:config.source_note||''};
+    const key=JSON.stringify(payload);
+    if(map.leaveEntitlements?.[year]===key)continue;
+    if(await push('/api/my-leave-entitlements',{method:'PUT',body:JSON.stringify(payload)})){
+      map.leaveEntitlements={...(map.leaveEntitlements||{}),[year]:key};persistMap();
+    }
   }
 
   if(failed===0){
@@ -1740,7 +1750,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     'local-education':en?'Education':'শিক্ষা',
     'local-timeline':en?'Career Timeline':'টাইমলাইন',
     'local-salary':en?'Salary History':'বেতন ইতিহাস',
-    'local-leave':en?'Leave Records':'ছুটি',
+    'local-leave':en?'Leave Balance':'ছুটি ও ব্যালেন্স',
     'local-reports':en?'My Reports':'রিপোর্ট',
     'local-privacy':en?'Data & Backup':'ডাটা ও ব্যাকআপ'
   };
@@ -1780,7 +1790,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     ['local-education',GraduationCap,en?'Education':'শিক্ষা'],
     ['local-timeline',Route,en?'Career Timeline':'টাইমলাইন'],
     ['local-salary',WalletCards,en?'Salary History':'বেতন ইতিহাস'],
-    ['local-leave',CalendarDays,en?'Leave Records':'ছুটি'],
+    ['local-leave',CalendarDays,en?'Leave Balance':'ছুটি ও ব্যালেন্স'],
     ['local-reports',FileText,en?'My Reports':'রিপোর্ট'],
     ['local-privacy',ShieldCheck,en?'Data & Backup':'ডাটা ও ব্যাকআপ']
   ];
@@ -1824,7 +1834,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
         <button className={activePublicTool==='local-education'?'active':''} onClick={()=>open('local-education')}><GraduationCap/><span>{en?'Education':'শিক্ষা'}</span></button>
         <button className={activePublicTool==='local-timeline'?'active':''} onClick={()=>open('local-timeline')}><Route/><span>{en?'Career Timeline':'ক্যারিয়ার টাইমলাইন'}</span></button>
         <button className={activePublicTool==='local-salary'?'active':''} onClick={()=>open('local-salary')}><WalletCards/><span>{en?'Salary History':'বেতন ইতিহাস'}</span></button>
-        <button className={activePublicTool==='local-leave'?'active':''} onClick={()=>open('local-leave')}><CalendarDays/><span>{en?'Leave Records':'ছুটি'}</span></button>
+        <button className={activePublicTool==='local-leave'?'active':''} onClick={()=>open('local-leave')}><CalendarDays/><span>{en?'Leave Balance':'ছুটি ও ব্যালেন্স'}</span></button>
         <button className={activePublicTool==='local-reports'?'active':''} onClick={()=>open('local-reports')}><FileText/><span>{en?'My Reports':'রিপোর্ট'}</span></button>
         <button className={activePublicTool==='local-privacy'?'active':''} onClick={()=>open('local-privacy')}><ShieldCheck/><span>{en?'Data & Backup':'ডাটা ও ব্যাকআপ'}</span></button>
       </div>
