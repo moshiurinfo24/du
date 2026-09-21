@@ -3058,6 +3058,7 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
   }
 
   return <div className={`${publicMode?'public-salary-calculator ':''}salary-input-step-${formStep}`}>
+    {!r?<>
     <div className="page-head pay-calc-head simple-pay-head"><div><span className="pay-head-eyebrow">{en?'UNIVERSITY OF DHAKA':'ঢাকা বিশ্ববিদ্যালয়'}</span><h2>{en?'Salary & Arrear Calculator':'বেতন ও বকেয়া হিসাব'}</h2><p>{en?'Start with just three pieces of information. Date, Dhaka location, regular increment flow and arrear adjustment are automatic.':'শুরুতে শুধু ৩টি তথ্য দিন। তারিখ, ঢাকা লোকেশন, নিয়মিত ইনক্রিমেন্ট ধাপ ও বকেয়া সমন্বয় সিস্টেম নিজে করবে।'}</p></div></div>
 
     <SalaryFlowProgress step={formStep} lang={lang}/>
@@ -3143,7 +3144,7 @@ function SalaryCalculator({lang='bn',publicMode=false,initialArrear=false}){
         </>}
       </div>
     </section>
-    {r&&<div id="salary-result" className="salary-result-anchor"><SalaryResult r={r} lang={lang} onEdit={()=>{setR(null);setFormStep(1);window.scrollTo({top:0,behavior:'smooth'})}} onReset={()=>{setR(null);setFormStep(1);window.scrollTo({top:0,behavior:'smooth'})}}/></div>}
+    </>:<div id="salary-result" className="salary-result-anchor"><SalaryResult r={r} lang={lang} onEdit={()=>{setR(null);setFormStep(1);window.scrollTo({top:0,behavior:'smooth'})}} onReset={()=>{setR(null);setFormStep(1);window.scrollTo({top:0,behavior:'smooth'})}}/></div>}
   </div>
 }
 function SalaryResult({r,lang='bn',compact=false,initialCompactTab='now',onEdit,onReset}){
