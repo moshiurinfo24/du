@@ -713,3 +713,82 @@
   .pwa-desktop-sync small{color:#C5DBDE!important}
   .pwa-desktop-disclaimer{color:#BCC7E2!important}
 }
+
+
+/* Desktop sidebar V9 — premium graphite dashboard */
+@media(min-width:901px){
+  .pwa-desktop-sidebar{
+    background:
+      radial-gradient(circle at 10% 0,rgba(24,167,160,.10),transparent 30%),
+      linear-gradient(180deg,#273449 0%,#223047 55%,#1D2A40 100%)!important;
+    color:#D7DFEB!important;
+    border-right:1px solid rgba(255,255,255,.07)!important;
+    box-shadow:12px 0 32px rgba(20,29,46,.13)!important
+  }
+
+  .pwa-desktop-brand{
+    border-bottom:1px solid rgba(255,255,255,.09)!important
+  }
+  .pwa-desktop-brand>span{
+    background:linear-gradient(145deg,#F8FAFC,#E8F7F5)!important;
+    color:#2F5E6A!important;
+    border:1px solid rgba(255,255,255,.16)!important;
+    box-shadow:0 7px 18px rgba(10,18,31,.15)!important
+  }
+  .pwa-desktop-brand b{color:#F4F7FB!important}
+  .pwa-desktop-brand small{color:#9FAEC2!important}
+
+  .pwa-desktop-nav-group>small{
+    color:#7F90A8!important;
+    letter-spacing:.11em
+  }
+  .pwa-desktop-nav-group button{
+    color:#C7D0DD!important;
+    background:transparent!important;
+    border-color:transparent!important
+  }
+  .pwa-desktop-nav-group button svg{
+    color:#8FA0B7!important
+  }
+
+  .pwa-desktop-nav-group button:hover{
+    color:#F3F7FA!important;
+    background:rgba(255,255,255,.055)!important;
+    border-color:rgba(255,255,255,.055)!important
+  }
+  .pwa-desktop-nav-group button:hover svg{
+    color:#6FD3CD!important
+  }
+
+  .pwa-desktop-nav-group button.active{
+    color:#183C3B!important;
+    background:linear-gradient(90deg,#E7F6F4 0%,#DFF1F0 100%)!important;
+    border-color:#C7E6E3!important;
+    box-shadow:inset 3px 0 0 #18A7A0,0 8px 20px rgba(9,20,31,.16)!important
+  }
+  .pwa-desktop-nav-group button.active svg{
+    color:#14837E!important
+  }
+
+  .pwa-desktop-nav-group.personal{
+    border-top:1px solid rgba(255,255,255,.075)!important
+  }
+  .pwa-desktop-sidebar-footer{
+    border-top:1px solid rgba(255,255,255,.08)!important
+  }
+
+  .pwa-desktop-sync{
+    background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(24,167,160,.10))!important;
+    border-color:rgba(111,211,205,.17)!important;
+    color:#DDF3F1!important;
+    box-shadow:none!important
+  }
+  .pwa-desktop-sync>svg:first-child{
+    background:rgba(24,167,160,.14)!important;
+    color:#72D8D2!important
+  }
+  .pwa-desktop-sync>svg:last-child{color:#8BA5B4!important}
+  .pwa-desktop-sync b{color:#E8F5F3!important}
+  .pwa-desktop-sync small{color:#90A9B5!important}
+  .pwa-desktop-disclaimer{color:#7F90A8!important}
+}
