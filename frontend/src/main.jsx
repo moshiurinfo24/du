@@ -1573,7 +1573,18 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
     service:en?'Service Length Calculator':'চাকরিকাল ক্যালকুলেটর',
     age:en?'Age Calculator':'বয়স ক্যালকুলেটর',
     gap:en?'Date Difference Calculator':'তারিখের ব্যবধান',
-    retire:en?'Retirement Date Calculator':'অবসর তারিখ ক্যালকুলেটর'
+    retire:en?'Retirement Date Calculator':'অবসর তারিখ ক্যালকুলেটর',
+    points:en?'Points Center':'পয়েন্ট সেন্টার',
+    calendar:en?'Office Calendar':'অফিস ক্যালেন্ডার',
+    reference:en?'Notices & Policies':'নোটিশ ও নীতিমালা',
+    'local-dashboard':en?'My Local Dashboard':'আমার Local ড্যাশবোর্ড',
+    'local-profile':en?'Career Profile':'চাকরি তথ্য',
+    'local-education':en?'Education Records':'শিক্ষা রেকর্ড',
+    'local-timeline':en?'Career Timeline':'ক্যারিয়ার টাইমলাইন',
+    'local-salary':en?'Salary History':'বেতন ইতিহাস',
+    'local-leave':en?'Leave Records':'ছুটির রেকর্ড',
+    'local-reports':en?'Personal Reports':'ব্যক্তিগত রিপোর্ট',
+    'local-privacy':en?'Data & Backup':'ডাটা ও ব্যাকআপ'
   };
 
   const quick=[
@@ -1584,7 +1595,7 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
     [UserRound,en?'Age Calculator':'বয়স হিসাব','slate','age'],
     [CalendarDays,en?'Date Difference':'তারিখের ব্যবধান','orange','gap'],
     [FileClock,en?'Retirement Date':'অবসর তারিখ','indigo','retire'],
-    [LayoutDashboard,en?'Personal Dashboard':'ব্যক্তিগত ড্যাশবোর্ড','navy','login']
+    [LayoutDashboard,en?'Personal Dashboard':'ব্যক্তিগত ড্যাশবোর্ড','navy','local-dashboard']
   ];
 
   const benefits=[
@@ -1710,8 +1721,8 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
       <div className="approved-actions">
         <PwaControls lang={lang}/>
         <LangToggle lang={lang} setLang={setLang}/>
-        <button className="sign-in" onClick={onLogin}>{en?'Sign in':'লগইন'}</button>
-        <button className="new-account" onClick={onSignup}>{en?'New Account':'নতুন অ্যাকাউন্ট'}</button>
+        <button className="sign-in" onClick={onLogin}>{en?'Backup & Sync':'ব্যাকআপ ও সিঙ্ক'}</button>
+        <button className="new-account" onClick={onSignup}>{en?'Enable Cloud Sync':'Cloud Sync চালু করুন'}</button>
         <button className={`menu ${publicMenu?'active':''}`} aria-expanded={publicMenu} onClick={()=>setPublicMenu(v=>!v)}>
           {publicMenu?(en?'Close Menu':'মেনু বন্ধ'):(en?'Menu':'মেনু')}
         </button>
@@ -1764,7 +1775,7 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
 
     <section className="approved-section approved-quick" id="services">
       <div className="approved-section-title"><span>{en?'POPULAR SERVICES':'গুরুত্বপূর্ণ সেবা'}</span><h2>{en?'Important services, organized for one-click access':'গুরুত্বপূর্ণ সব সেবা, এক ক্লিকে ব্যবহারের জন্য সাজানো'}</h2><p>{en?'Career, salary, leave, promotion, points and useful information — all within easy reach.':'ক্যারিয়ার, বেতন, ছুটি, পদোন্নতি ও প্রয়োজনীয় তথ্য—সব সহজেই হাতের মুঠোয়।'}</p></div>
-      <div className="approved-quick-grid">{quick.map(([I,t,c,action])=><button key={t} className={c} onClick={action==='login'?onLogin:()=>openPublicTool(action)}><span><I/></span><b>{t}</b><ChevronRight/></button>)}</div>
+      <div className="approved-quick-grid">{quick.map(([I,t,c,action])=><button key={t} className={c} onClick={()=>openPublicTool(action)}><span><I/></span><b>{t}</b><ChevronRight/></button>)}</div>
     </section>
 
     <section className="approved-section approved-benefits" id="benefits">
@@ -1812,7 +1823,11 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
       {activePublicTool==='salary'&&<PublicPayScaleHub lang={lang}/>}
       {activePublicTool==='promotion'&&<section className="public-tool-only-shell"><PromotionCenter lang={lang} publicMode={true}/></section>}
       {activePublicTool==='house'&&<section className="public-tool-only-shell"><HouseAllocationPoints lang={lang} publicMode={true}/></section>}
-      {['service','age','gap','retire'].includes(activePublicTool)&&<section className="public-tool-only-shell"><CalculatorCenter lang={lang} publicMode={true} initialTool={activePublicTool} singleTool={true}/></section>}
+      {['service','age','gap','retire','basic'].includes(activePublicTool)&&<section className="public-tool-only-shell"><CalculatorCenter lang={lang} publicMode={true} initialTool={activePublicTool} singleTool={true}/></section>}
+      {activePublicTool==='points'&&<section className="public-tool-only-shell"><PointsCalculator lang={lang} publicMode={true}/></section>}
+      {activePublicTool==='calendar'&&<section className="public-tool-only-shell"><FiscalOfficeCalendar lang={lang}/></section>}
+      {activePublicTool==='reference'&&<PwaReferenceCenter lang={lang} notices={notices} policies={policies}/>}
+      {activePublicTool?.startsWith('local-')&&<GuestLocalCenter mode={activePublicTool.slice(6)} lang={lang} onOpen={openPublicTool} onLogin={onLogin}/>}
     </main>}
 
     <footer className="approved-footer">
@@ -1851,7 +1866,7 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
       <button className={activePublicTool==='salary'?'active':''} onClick={()=>openPublicTool('salary')}><WalletCards/><span>{en?'Salary':'বেতন'}</span></button>
       <button className={activePublicTool==='promotion'?'active':''} onClick={()=>openPublicTool('promotion')}><TrendingUp/><span>{en?'Career':'ক্যারিয়ার'}</span></button>
       <button className={mobileCalcOpen||(['house','service','age','gap','retire'].includes(activePublicTool))?'active':''} onClick={()=>setMobileCalcOpen(v=>!v)}><Boxes/><span>{en?'Services':'সেবা'}</span></button>
-      <button onClick={onLogin}><UserRound/><span>{en?'Login':'লগইন'}</span></button>
+      <button className={activePublicTool?.startsWith('local-')?'active':''} onClick={()=>openPublicTool('local-dashboard')}><UserRound/><span>{en?'My':'আমার'}</span></button>
     </nav>
 
     <a className="floating-whatsapp" href={`https://wa.me/8801759084692?text=${whatsappText}`} target="_blank" rel="noreferrer" aria-label={en?'Message on WhatsApp':'হোয়াটসঅ্যাপে মেসেজ করুন'}><MessageCircle/><span>{en?'WhatsApp':'হোয়াটসঅ্যাপ'}</span></a>
