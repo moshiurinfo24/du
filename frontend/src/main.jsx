@@ -1766,7 +1766,7 @@ function PwaReferenceCenter({lang='bn',notices=[],policies=[]}){
   </div>;
 }
 
-function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,setActivePublicTool,onLogin,onSignup,pwaStats,mobileCalcOpen,setMobileCalcOpen,notices=[],policies=[]}){
+function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,setActivePublicTool,onLogin,onSignup,pwaStats,visitorStats={},mobileCalcOpen,setMobileCalcOpen,notices=[],policies=[]}){
   const en=lang==='en';
   const [appStatus,setAppStatus]=useState(()=>getPwaState());
   const [recent,setRecent]=useState(()=>{
@@ -1944,6 +1944,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
         <div className="pwa-welcome-meta">
           <span><RefreshCw/><div><small>{en?'Latest update':'সর্বশেষ আপডেট'}</small><b>{updated}</b></div></span>
           <span><Users/><div><small>{en?'App installs':'অ্যাপ ইনস্টল'}</small><b>{pwaStats.total_installs==null?'—':numLang(pwaStats.total_installs,lang,0)}</b></div></span>
+          <span className="pwa-live-online"><i className="pwa-live-dot"></i><div><small>{en?'Online now':'এখন অনলাইনে'}</small><b>{visitorStats.online_now==null?'—':numLang(visitorStats.online_now,lang,0)} {en?'using now':'জন ব্যবহার করছেন'}</b><em>{visitorStats.online_now==null?'':(en?'Browser ':'Browser ')+numLang(visitorStats.browser_online||0,lang,0)+' · PWA '+numLang(visitorStats.pwa_online||0,lang,0)}</em></div></span>
         </div>
       </section>
 
@@ -2166,6 +2167,7 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
       setActivePublicTool={setActivePublicTool}
       onLogin={onLogin} onSignup={onSignup}
       pwaStats={pwaStats}
+      visitorStats={visitorStats}
       mobileCalcOpen={mobileCalcOpen}
       setMobileCalcOpen={setMobileCalcOpen}
       notices={notices} policies={policies}
