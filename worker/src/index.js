@@ -211,6 +211,43 @@ async function publicTrafficStats(env){
   };
 }
 
+let publicModeVisitorsReady=false;
+async function ensurePublicModeVisitors(env){
+  if(publicModeVisitorsReady)return;
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS public_mode_visitors(
+    visitor_hash TEXT NOT NULL,
+    mode TEXT NOT NULL,
+    device TEXT NOT NULL DEFAULT 'desktop',
+    platform TEXT NOT NULL DEFAULT 'other',
+    first_seen_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_seen_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY(visitor_hash,mode)
+  )`).run();
+  await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_public_mode_visitors_last_seen ON public_mode_visitors(last_seen_at)`).run();
+  publicModeVisitorsReady=true;
+}
+async function publicModeUsageStats(env){
+  await ensurePublicModeVisitors(env);
+  const x=await env.DB.prepare(`
+    SELECT
+      COUNT(CASE WHEN mode='browser' THEN 1 END) browser_total_users,
+      COUNT(CASE WHEN mode='browser' AND date(datetime(last_seen_at,'+6 hours'))=date('now','+6 hours') THEN 1 END) browser_today_users,
+      COUNT(CASE WHEN mode='browser' AND strftime('%Y-%m',datetime(last_seen_at,'+6 hours'))=strftime('%Y-%m',datetime('now','+6 hours')) THEN 1 END) browser_month_users,
+      COUNT(CASE WHEN mode='pwa' THEN 1 END) pwa_total_users,
+      COUNT(CASE WHEN mode='pwa' AND date(datetime(last_seen_at,'+6 hours'))=date('now','+6 hours') THEN 1 END) pwa_today_users,
+      COUNT(CASE WHEN mode='pwa' AND strftime('%Y-%m',datetime(last_seen_at,'+6 hours'))=strftime('%Y-%m',datetime('now','+6 hours')) THEN 1 END) pwa_month_users
+    FROM public_mode_visitors
+  `).first();
+  return {
+    browser_total_users:+(x?.browser_total_users||0),
+    browser_today_users:+(x?.browser_today_users||0),
+    browser_month_users:+(x?.browser_month_users||0),
+    pwa_total_users:+(x?.pwa_total_users||0),
+    pwa_today_users:+(x?.pwa_today_users||0),
+    pwa_month_users:+(x?.pwa_month_users||0)
+  };
+}
+
 let liveVisitorsReady=false;
 async function ensureLiveVisitors(env){
   if(liveVisitorsReady)return;
@@ -290,15 +327,23 @@ export default{async fetch(req,env){
       const event=['page_view','calculator_view','download','share'].includes(String(b.event||''))?String(b.event):'page_view';
       const section=String(b.section||'home').replace(/[^a-zA-Z0-9_-]/g,'').slice(0,48)||'home';
       const path=String(b.path||'/').slice(0,160);
+      const mode=['browser','pwa'].includes(String(b.mode||''))?String(b.mode):'browser';
+      const device=['mobile','desktop'].includes(String(b.device||''))?String(b.device):'desktop';
+      const platform=['ios','android','other'].includes(String(b.platform||''))?String(b.platform):'other';
       const visitorHash=await sha('public-visitor:'+visitor);
-      await env.DB.prepare(`INSERT INTO public_events(visitor_hash,event,section,path) VALUES(?,?,?,?)`)
-        .bind(visitorHash,event,section,path).run();
+      await Promise.all([
+        env.DB.prepare(`INSERT INTO public_events(visitor_hash,event,section,path) VALUES(?,?,?,?)`).bind(visitorHash,event,section,path).run(),
+        ensurePublicModeVisitors(env).then(()=>env.DB.prepare(`INSERT INTO public_mode_visitors(visitor_hash,mode,device,platform,first_seen_at,last_seen_at)
+          VALUES(?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
+          ON CONFLICT(visitor_hash,mode) DO UPDATE SET device=excluded.device,platform=excluded.platform,last_seen_at=CURRENT_TIMESTAMP`)
+          .bind(visitorHash,mode,device,platform).run())
+      ]);
       return json({ok:true},201,C);
     }
 
     if(u.pathname==='/api/public/stats'&&req.method==='GET'){
-      const stats=await publicTrafficStats(env);
-      return json({ok:true,...stats,timezone:'Asia/Dhaka',note:'Unique visitors are an anonymous browser/device estimate.'},200,C);
+      const [stats,modeStats]=await Promise.all([publicTrafficStats(env),publicModeUsageStats(env)]);
+      return json({ok:true,...stats,...modeStats,timezone:'Asia/Dhaka',mode_tracking_since:'2026-09-22',note:'Unique visitors are an anonymous browser/device estimate. Browser/PWA split is tracked from 2026-09-22.'},200,C);
     }
 
     if(u.pathname==='/api/public/pwa-install'&&req.method==='POST'){

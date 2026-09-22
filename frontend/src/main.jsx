@@ -294,7 +294,7 @@ function trackPublic(event='page_view',section='home'){
   return fetch(API+'/api/public/track',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({visitor_id:visitorId(),event,section:safeSection,path:location.pathname})
+    body:JSON.stringify({visitor_id:visitorId(),event,section:safeSection,path:location.pathname,mode:livePresenceMode(),device:livePresenceDevice(),platform:pwaPlatform()})
   }).catch(()=>{});
 }
 initLivePresence();
@@ -1766,6 +1766,37 @@ function PwaReferenceCenter({lang='bn',notices=[],policies=[]}){
   </div>;
 }
 
+function FooterUsageStats({visitorStats={},pwaStats={},lang='bn',dark=false}){
+  const en=lang==='en';
+  const n=v=>v==null?'—':numLang(v,lang,0);
+  const items=[
+    {key:'live',icon:Radio,label:en?'Live':'লাইভ',value:n(visitorStats.online_now),tone:'live'},
+    {key:'install',icon:Smartphone,label:en?'App':'অ্যাপ',value:n(pwaStats.total_installs),tone:'app'},
+    {key:'browser',icon:MonitorCheck,label:en?'Browser':'ব্রাউজার',value:n(visitorStats.browser_total_users),tone:'browser'},
+    {key:'visitor',icon:Users,label:en?'Visitors':'ভিজিটর',value:n(visitorStats.total_unique),tone:'visitor'},
+    {key:'views',icon:Eye,label:en?'Views':'ভিউ',value:n(visitorStats.total_views),tone:'views'}
+  ];
+  return <details className={'compact-usage-stats'+(dark?' dark':'')}>
+    <summary aria-label={en?'Visitor statistics':'ভিজিটর পরিসংখ্যান'}>
+      {items.map(x=>{const I=x.icon;return <span key={x.key} className={x.tone}><I/><small>{x.label}</small><b>{x.value}</b></span>})}
+      <ChevronUp className="stats-chevron"/>
+    </summary>
+    <div className="compact-stats-popover">
+      <div className="compact-stats-head"><div><span className="live-pulse-dot"></span><b>{en?'Usage overview':'ব্যবহার পরিসংখ্যান'}</b></div><small>{en?'Today · Month · Total':'আজ · মাস · মোট'}</small></div>
+      <div className="compact-stats-table">
+        <div className="head"><span>{en?'Metric':'হিসাব'}</span><span>{en?'Today':'আজ'}</span><span>{en?'This month':'এই মাস'}</span><span>{en?'Total':'মোট'}</span></div>
+        <div><span><Users/>{en?'Unique visitors':'ইউনিক ভিজিটর'}</span><b>{n(visitorStats.today_unique)}</b><b>{n(visitorStats.month_unique)}</b><b>{n(visitorStats.total_unique)}</b></div>
+        <div><span><Eye/>{en?'Page views':'পেজ ভিউ'}</span><b>{n(visitorStats.today_views)}</b><b>{n(visitorStats.month_views)}</b><b>{n(visitorStats.total_views)}</b></div>
+        <div><span><Smartphone/>{en?'App installs':'অ্যাপ ইনস্টল'}</span><b>{n(pwaStats.today_installs)}</b><b>{n(pwaStats.month_installs)}</b><b>{n(pwaStats.total_installs)}</b></div>
+        <div><span><MonitorCheck/>{en?'Browser users':'ব্রাউজার ব্যবহারকারী'}</span><b>{n(visitorStats.browser_today_users)}</b><b>{n(visitorStats.browser_month_users)}</b><b>{n(visitorStats.browser_total_users)}</b></div>
+        <div><span><Smartphone/>{en?'PWA users':'PWA ব্যবহারকারী'}</span><b>{n(visitorStats.pwa_today_users)}</b><b>{n(visitorStats.pwa_month_users)}</b><b>{n(visitorStats.pwa_total_users)}</b></div>
+      </div>
+      <div className="compact-live-row"><span><i></i>{en?'Online now':'এখন অনলাইনে'} <b>{n(visitorStats.online_now)}</b></span><span>{en?'Browser':'Browser'} <b>{n(visitorStats.browser_online)}</b></span><span>PWA <b>{n(visitorStats.pwa_online)}</b></span><span>{en?'Active 5m':'৫ মিনিটে সক্রিয়'} <b>{n(visitorStats.active_5m)}</b></span></div>
+      <p>{en?'Browser/PWA historical split is counted from this release onward; older traffic had no mode field.':'Browser/PWA-এর আলাদা ঐতিহাসিক হিসাব এই রিলিজ থেকে গণনা হচ্ছে; আগের ট্রাফিকে mode তথ্য ছিল না।'}</p>
+    </div>
+  </details>;
+}
+
 function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,setActivePublicTool,onLogin,onSignup,pwaStats,visitorStats={},mobileCalcOpen,setMobileCalcOpen,notices=[],policies=[]}){
   const en=lang==='en';
   const [appStatus,setAppStatus]=useState(()=>getPwaState());
@@ -1941,10 +1972,8 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     <main className="pwa-app-home">
       <section className="pwa-welcome-card">
         <div className="pwa-welcome-copy"><small>{en?'WELCOME':'স্বাগতম'}</small><h1>{en?'What would you like to calculate today?':'আজ কোন হিসাবটি করতে চান?'}</h1><p>{en?'Choose a service below and get the result in a few simple steps.':'নিচের একটি সেবা নির্বাচন করুন এবং কয়েকটি সহজ ধাপে হিসাব দেখুন।'}</p></div>
-        <div className="pwa-welcome-meta">
+        <div className="pwa-welcome-meta compact">
           <span><RefreshCw/><div><small>{en?'Latest update':'সর্বশেষ আপডেট'}</small><b>{updated}</b></div></span>
-          <span><Users/><div><small>{en?'App installs':'অ্যাপ ইনস্টল'}</small><b>{pwaStats.total_installs==null?'—':numLang(pwaStats.total_installs,lang,0)}</b></div></span>
-          <span className="pwa-live-online"><i className="pwa-live-dot"></i><div><small>{en?'Online now':'এখন অনলাইনে'}</small><b>{visitorStats.online_now==null?'—':numLang(visitorStats.online_now,lang,0)} {en?'using now':'জন ব্যবহার করছেন'}</b><em>{visitorStats.online_now==null?'':(en?'Browser ':'Browser ')+numLang(visitorStats.browser_online||0,lang,0)+' · PWA '+numLang(visitorStats.pwa_online||0,lang,0)}</em></div></span>
         </div>
       </section>
 
@@ -1982,7 +2011,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
         </div>
       </section>}
 
-      <section className="pwa-home-footer-note"><ShieldAlert/><span>{en?'Independent and unofficial calculation assistant. No official affiliation with the University of Dhaka.':'স্বাধীন ও অনানুষ্ঠানিক হিসাব সহায়ক অ্যাপ। ঢাকা বিশ্ববিদ্যালয়ের সঙ্গে কোনো অফিসিয়াল সম্পর্ক নেই।'}</span></section>
+      <section className="pwa-home-footer-note pwa-home-footer-with-stats"><div className="pwa-footer-disclaimer"><ShieldAlert/><span>{en?'Independent and unofficial calculation assistant. No official affiliation with the University of Dhaka.':'স্বাধীন ও অনানুষ্ঠানিক হিসাব সহায়ক অ্যাপ। ঢাকা বিশ্ববিদ্যালয়ের সঙ্গে কোনো অফিসিয়াল সম্পর্ক নেই।'}</span></div><FooterUsageStats visitorStats={visitorStats} pwaStats={pwaStats} lang={lang}/></section>
     </main>
 
     <nav className="pwa-app-bottom">
@@ -2321,12 +2350,7 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
         <button onClick={()=>go('benefits')}>{en?'Privacy':'গোপনীয়তা'}</button>
         <a href={`https://wa.me/8801759084692?text=${whatsappText}`} target="_blank" rel="noreferrer">{en?'WhatsApp':'হোয়াটসঅ্যাপ'}</a>
       </div>
-      <div className="footer-visitor-counter" title={en?'Anonymous browser/device estimate':'অ্যানোনিমাস ব্রাউজার/ডিভাইসভিত্তিক আনুমানিক হিসাব'}>
-        <Eye/>
-        <div className="footer-visitor-main"><small>{en?'Total Visitors':'মোট ভিজিটর'}</small><b>{visitorStats.total_unique==null?'—':numLang(visitorStats.total_unique,lang,0)}</b></div>
-        <div className="footer-live-now"><i></i><span>{en?'Online now':'এখন অনলাইনে'}</span><b>{visitorStats.online_now==null?'—':numLang(visitorStats.online_now,lang,0)}</b></div>
-        <div className="footer-visitor-more"><span>{en?'Today':'আজ'} <b>{visitorStats.today_unique==null?'—':numLang(visitorStats.today_unique,lang,0)}</b></span><i>·</i><span>{en?'This month':'এই মাস'} <b>{visitorStats.month_unique==null?'—':numLang(visitorStats.month_unique,lang,0)}</b></span></div>
-      </div>
+      <FooterUsageStats visitorStats={visitorStats} pwaStats={pwaStats} lang={lang} dark={true}/>
       <small>{en?'Developer Support via WhatsApp':'ডেভেলপার সহায়তা — শুধু হোয়াটসঅ্যাপ'}<br/><b>মোঃ মশিউর রহমান · 01759084692</b></small>
     </footer>
 
