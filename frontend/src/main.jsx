@@ -1779,7 +1779,7 @@ function FooterUsageStats({visitorStats={},pwaStats={},lang='bn',dark=false}){
   return <details className={'compact-usage-stats'+(dark?' dark':'')}>
     <summary aria-label={en?'Visitor statistics':'ভিজিটর পরিসংখ্যান'}>
       {items.map(x=>{const I=x.icon;return <span key={x.key} className={x.tone}><I/><small>{x.label}</small><b>{x.value}</b></span>})}
-      <ChevronUp className="stats-chevron"/>
+      <ChevronDown className="stats-chevron"/>
     </summary>
     <div className="compact-stats-popover">
       <div className="compact-stats-head"><div><span className="live-pulse-dot"></span><b>{en?'Usage overview':'ব্যবহার পরিসংখ্যান'}</b></div><small>{en?'Today · Month · Total':'আজ · মাস · মোট'}</small></div>
