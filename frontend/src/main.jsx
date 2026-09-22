@@ -63,6 +63,7 @@ import './login-entry-v46.css';
 import './home-discovery-v47.css';
 import './office-visual-v48.css';
 import './brand-logo-v50.css';
+import './du-audience-install-v54.css';
 import {initPwaRuntime,subscribePwa,getPwaState,promptPwaInstall,formatPwaTime,manualPwaUpdateCheck,consumePwaUpdateNotice} from './pwa-client.js';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import GuestLocalCenter from './guest-local-v1.jsx';
@@ -308,7 +309,7 @@ const roleLabel={super_admin:'System Administrator',admin:'Admin',department_adm
 const I18N={
   bn:{
     appName:'স্মার্ট অফিস হিসাব',
-    appSub:'স্বাধীন ও অনানুষ্ঠানিক হিসাব সহায়ক প্ল্যাটফর্ম',
+    appSub:'ঢাকা বিশ্ববিদ্যালয়ের কর্মকর্তা ও কর্মচারীদের জন্য স্মার্ট হিসাব সহায়ক অ্যাপ',
     login:'লগইন',
     logout:'লগআউট',
     home:'হোম',
@@ -324,7 +325,7 @@ const I18N={
   },
   en:{
     appName:'Smart Office Hisab',
-    appSub:'Independent & unofficial calculation assistant',
+    appSub:'Smart calculation assistant for University of Dhaka officers and employees',
     login:'Login',
     logout:'Logout',
     home:'Home',
@@ -431,12 +432,12 @@ function PwaMobileInstallGate({lang='bn'}){
       <img className="pwa-brand-full-logo" src="/branding/smart-office-hisab-logo-v50.webp" alt={en?'Smart Office Hisab logo':'স্মার্ট অফিস হিসাব লোগো'} />
       <div className="pwa-gate-top">
         <span className="pwa-gate-logo"><img src="/branding/smart-office-hisab-logo-v50.webp" alt="" aria-hidden="true"/></span>
-        <div><b>Smart Office Hisab</b><small>{en?'Independent calculation assistant':'স্বাধীন হিসাব সহায়ক অ্যাপ'}</small></div>
+        <div><b>Smart Office Hisab</b><small>{en?'For University of Dhaka officers and employees':'ঢাকা বিশ্ববিদ্যালয়ের কর্মকর্তা ও কর্মচারীদের জন্য'}</small></div>
       </div>
-      <span className="pwa-gate-badge">{en?'INDEPENDENT CALCULATION APP':'স্বাধীন হিসাব সহায়ক অ্যাপ'}</span>
+      <span className="pwa-gate-badge">{en?'FOR DU OFFICERS & EMPLOYEES':'ঢাকা বিশ্ববিদ্যালয়ের কর্মকর্তা-কর্মচারীদের জন্য'}</span>
       <div className="pwa-install-count"><Users/><span>{installStats.total_installs==null?(en?'Loading install count…':'ইনস্টল সংখ্যা লোড হচ্ছে…'):(en?`Total installs: ${numLang(installStats.total_installs,'en',0)}`:`মোট ইনস্টল: ${numLang(installStats.total_installs,'bn',0)}`)}</span></div>
       <h1>{en?'Install Smart Office Hisab':'স্মার্ট অফিস হিসাব ইনস্টল করুন'}</h1>
-      <p>{en?'A convenient independent app for viewing salary, arrears, promotion, points, housing and other supported calculations.':'বেতন, বকেয়া, পদোন্নতি, পয়েন্ট, বাসা, চাকরিকাল ও অন্যান্য সমর্থিত হিসাব জানা ও দেখার জন্য একটি স্বাধীন সহায়ক অ্যাপ।'}</p>
+      <p>{en?'A smart calculation assistant built for University of Dhaka officers and employees — salary, arrears, promotion, points, housing, service length and supported reports in one place.':'ঢাকা বিশ্ববিদ্যালয়ের কর্মকর্তা ও কর্মচারীদের জন্য তৈরি স্মার্ট হিসাব সহায়ক অ্যাপ—বেতন, বকেয়া, পদোন্নতি, পয়েন্ট, বাসা, চাকরিকাল ও প্রয়োজনীয় রিপোর্ট এক জায়গায়।'}</p>
 
       <div className="pwa-gate-quick">
         <span><WalletCards/>{en?'Salary & arrears':'বেতন ও বকেয়া'}</span>
@@ -497,21 +498,21 @@ function PwaControls({lang='bn'}){
     setTimeout(()=>setCheckNote(''),1800);
   };
   return <div className="pwa-controls">
-    {(pwa.canInstall||pwa.iosInstallHint||pwa.previouslyInstalled)&&!pwa.installed&&<button className="pwa-install-button" onClick={doInstall} title={en?'Install app':'অ্যাপ ইনস্টল করুন'}><Save/><span>{en?'Install':'ইনস্টল'}</span></button>}
+    {!pwa.installed&&<button className="pwa-install-button" onClick={doInstall} title={en?'Install app':'অ্যাপ ইনস্টল করুন'}><Save/><span>{en?'Install':'ইনস্টল'}</span></button>}
     <button className={`pwa-status-button ${pwa.updating?'updating':''}`} onClick={()=>setOpen(v=>!v)} title={en?'App update status':'অ্যাপ আপডেট অবস্থা'}><RefreshCw/><span><b>{pwa.offline?(en?'Offline':'অফলাইন'):(pwa.updating?(en?'Updating':'আপডেট হচ্ছে'):(en?'App':'অ্যাপ'))}</b><small>{timeText}</small></span></button>
     {open&&<div className="pwa-status-popover">
-      <div className="pwa-status-head"><span>{pwa.updating?<RefreshCw/>:<CheckCircle2/>}</span><div><b>{en?'Smart Office Hisab':'স্মার্ট অফিস হিসাব'}</b><small>{en?'Independent · unofficial calculation app':'স্বাধীন · অনানুষ্ঠানিক হিসাব সহায়ক অ্যাপ'}</small></div></div>
+      <div className="pwa-status-head"><span>{pwa.updating?<RefreshCw/>:<CheckCircle2/>}</span><div><b>{en?'Smart Office Hisab':'স্মার্ট অফিস হিসাব'}</b><small>{en?'For University of Dhaka officers and employees':'ঢাকা বিশ্ববিদ্যালয়ের কর্মকর্তা ও কর্মচারীদের জন্য'}</small></div></div>
       <div className="pwa-status-grid">
         <div><small>{en?'Automatic updates':'অটো আপডেট'}</small><b>{en?'Enabled — checked automatically':'চালু — স্বয়ংক্রিয়ভাবে চেক হবে'}</b></div>
         <div><small>{en?'Last update':'সর্বশেষ আপডেট'}</small><b>{timeText}</b></div>
         <div><small>{en?'Connection':'সংযোগ'}</small><b>{pwa.offline?(en?'Offline — cached app available':'অফলাইন — ক্যাশ করা অ্যাপ চলবে'):(en?'Online':'অনলাইন')}</b></div>
       </div>
       {pwa.iosInstallHint&&<div className="pwa-ios-help">{en?'On iPhone/iPad: tap Share, then “Add to Home Screen”. iOS does not allow silent installation.':'iPhone/iPad-এ Share চাপুন, তারপর “Add to Home Screen” নির্বাচন করুন। iOS নীরবে অটো ইনস্টল অনুমতি দেয় না।'}</div>}
-      {!pwa.canInstall&&!pwa.iosInstallHint&&!pwa.installed&&pwa.previouslyInstalled&&<div className="pwa-ios-help">{en?'The app was installed before but is not currently open as an installed app. If the one-tap prompt is unavailable, open your browser menu and choose “Install app” or “Add to Home screen”, then reload this page if needed.':'অ্যাপটি আগে ইনস্টল ছিল, কিন্তু এখন ইনস্টল করা অ্যাপ হিসেবে খোলা নেই। এক-ট্যাপ Install না এলে browser-এর মেনু খুলে “Install app” বা “Add to Home screen” দিন; প্রয়োজন হলে পেজটি একবার reload করুন।'}</div>}
+      {!pwa.canInstall&&!pwa.iosInstallHint&&!pwa.installed&&<div className="pwa-ios-help">{en?'If the one-tap prompt is not ready, open your browser menu and choose “Install app” or “Add to Home screen”. Chrome/Edge may also show an install icon in the address bar.':'এক-ট্যাপ ইনস্টল না এলে browser-এর মেনু থেকে “Install app” বা “Add to Home screen” নির্বাচন করুন। Chrome/Edge-এ address bar-এ Install আইকনও দেখা যেতে পারে।'}</div>}
       {checkNote&&<div className="pwa-ios-help">{checkNote}</div>}
       <div className="pwa-status-actions">
         <button className="check" onClick={check}>{en?'Check update':'আপডেট চেক'}</button>
-        {(pwa.canInstall||pwa.iosInstallHint||pwa.previouslyInstalled)&&!pwa.installed&&<button className="install" onClick={doInstall}>{en?'Install app':'অ্যাপ ইনস্টল'}</button>}
+        {!pwa.installed&&<button className="install" onClick={doInstall}>{en?'Install app':'অ্যাপ ইনস্টল'}</button>}
       </div>
     </div>}
     {pwa.updating&&<div className="pwa-update-toast"><RefreshCw/><span>{en?'New version found. Updating automatically…':'নতুন ভার্সন পাওয়া গেছে। অটো আপডেট হচ্ছে…'}</span></div>}
@@ -1838,6 +1839,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     try{return JSON.parse(localStorage.getItem('hisab_recent_tools')||'[]').slice(0,3)}catch{return[]}
   });
   const [toolSearch,setToolSearch]=useState('');
+  const [installHelp,setInstallHelp]=useState('');
   const [favoriteTools,setFavoriteTools]=useState(()=>{
     try{return JSON.parse(localStorage.getItem('hisab_favorite_tools_v1')||'[]').slice(0,8)}catch{return[]}
   });
@@ -1877,6 +1879,13 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
   };
   const goHome=()=>{setActivePublicTool(null);setMobileCalcOpen(false);window.scrollTo({top:0,behavior:'smooth'})};
   const updated=formatPwaTime(appStatus.lastAutoUpdateAt||appStatus.build?.built_at||'',lang);
+  const installFromHome=async()=>{
+    if(appStatus.iosInstallHint){setInstallHelp('ios');return}
+    if(!appStatus.canInstall){setInstallHelp('manual');return}
+    setInstallHelp('working');
+    const result=await promptPwaInstall();
+    setInstallHelp(result?.outcome==='accepted'?'accepted':(result?.outcome==='dismissed'?'dismissed':'manual'));
+  };
   const localProfile=guestLocalProfile();
   const tools=[
     ['salary',WalletCards,en?'Pay Scale 2026–2028':'পে-স্কেল ২০২৬–২০২৮','indigo'],
@@ -1929,7 +1938,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
 
   const desktopSidebar=<aside className="pwa-desktop-sidebar" aria-label={en?'App navigation':'অ্যাপ নেভিগেশন'}>
     <button className="pwa-desktop-brand" onClick={goHome}>
-      <span><img src="/branding/smart-office-hisab-logo-v50.webp" alt="" aria-hidden="true"/></span><div><b>{en?'Smart Office Hisab':'স্মার্ট অফিস হিসাব'}</b><small>{en?'Independent calculation app':'স্বাধীন হিসাব সহায়ক অ্যাপ'}</small></div>
+      <span><img src="/branding/smart-office-hisab-logo-v50.webp" alt="" aria-hidden="true"/></span><div><b>{en?'Smart Office Hisab':'স্মার্ট অফিস হিসাব'}</b><small>{en?'For University of Dhaka officers and employees':'ঢাকা বিশ্ববিদ্যালয়ের কর্মকর্তা ও কর্মচারীদের জন্য'}</small></div>
     </button>
     <nav className="pwa-desktop-nav">
       <div className="pwa-desktop-nav-group">
@@ -2020,7 +2029,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
   return <div className="pwa-app-shell approved-home">
     {desktopSidebar}
     <header className="pwa-app-topbar">
-      <div className="pwa-app-brand"><span><img src="/branding/smart-office-hisab-logo-v50.webp" alt="" aria-hidden="true"/></span><div><b>{en?'Smart Office Hisab':'স্মার্ট অফিস হিসাব'}</b><small>{en?'Independent calculation assistant':'স্বাধীন হিসাব সহায়ক অ্যাপ'}</small></div></div>
+      <div className="pwa-app-brand"><span><img src="/branding/smart-office-hisab-logo-v50.webp" alt="" aria-hidden="true"/></span><div><b>{en?'Smart Office Hisab':'স্মার্ট অফিস হিসাব'}</b><small>{en?'For University of Dhaka officers and employees':'ঢাকা বিশ্ববিদ্যালয়ের কর্মকর্তা ও কর্মচারীদের জন্য'}</small></div></div>
       <div className="pwa-app-head-actions"><button className="pwa-round-btn" onClick={()=>setLang(lang==='bn'?'en':'bn')}>{en?'বাং':'EN'}</button><PwaControls lang={lang}/><button className="pwa-login-entry" onClick={onLogin}><UserRound/><span>{en?'Login':'লগইন'}</span></button></div>
     </header>
 
@@ -2034,6 +2043,29 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
           <span><RefreshCw/><div><small>{en?'Latest update':'সর্বশেষ আপডেট'}</small><b>{updated}</b></div></span>
         </div>
       </section>
+
+      {!appStatus.installed&&<section className="pwa-easy-install-card">
+        <div className="pwa-easy-install-icon"><Smartphone/></div>
+        <div className="pwa-easy-install-copy">
+          <small>{en?'SMART OFFICE HISAB APP':'স্মার্ট অফিস হিসাব অ্যাপ'}</small>
+          <h3>{en?'Install once, open directly from your Home Screen':'একবার ইনস্টল করুন, Home Screen থেকেই সরাসরি খুলুন'}</h3>
+          <p>{en?'No Play Store is required. Install from this browser and future updates will be applied automatically.':'Play Store লাগবে না। এই browser থেকেই ইনস্টল করুন—পরবর্তী আপডেটগুলো স্বয়ংক্রিয়ভাবে পাওয়া যাবে।'}</p>
+          <div className="pwa-easy-install-points">
+            <span><CheckCircle2/>{en?'One-tap where supported':'সমর্থিত browser-এ এক ট্যাপ'}</span>
+            <span><RefreshCw/>{en?'Automatic updates':'অটো আপডেট'}</span>
+            <span><Home/>{en?'Home Screen access':'Home Screen থেকে চালু'}</span>
+          </div>
+          {installHelp==='ios'&&<div className="pwa-easy-install-help"><Share2/>{en?'Safari → Share → Add to Home Screen':'Safari → Share → Add to Home Screen'}</div>}
+          {installHelp==='manual'&&<div className="pwa-easy-install-help"><Smartphone/>{en?'Browser menu → Install app / Add to Home screen':'Browser menu → Install app / Add to Home screen'}</div>}
+          {installHelp==='accepted'&&<div className="pwa-easy-install-help success"><CheckCircle2/>{en?'Installation started. Follow the browser prompt to finish.':'ইনস্টল শুরু হয়েছে। Browser prompt অনুসরণ করে সম্পন্ন করুন।'}</div>}
+          {installHelp==='dismissed'&&<div className="pwa-easy-install-help"><AlertTriangle/>{en?'Installation was cancelled. Tap the button whenever you are ready.':'ইনস্টল বাতিল হয়েছে। প্রস্তুত হলে আবার বাটনে চাপুন।'}</div>}
+        </div>
+        <button className="pwa-easy-install-button" onClick={installFromHome} disabled={installHelp==='working'}>
+          {installHelp==='working'?<RefreshCw className="spin"/>:<Save/>}
+          <span>{installHelp==='working'?(en?'Preparing…':'প্রস্তুত হচ্ছে…'):(appStatus.iosInstallHint?(en?'Install steps':'ইনস্টল করার নিয়ম'):(appStatus.canInstall?(en?'Install now':'এখনই ইনস্টল করুন'):(en?'How to install':'কিভাবে ইনস্টল করবেন')))}</span>
+          <ChevronRight/>
+        </button>
+      </section>}
 
       <section className="pwa-home-discovery">
         <div className="pwa-tool-search">

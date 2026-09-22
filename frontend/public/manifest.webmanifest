@@ -2,17 +2,23 @@
   "id": "/",
   "name": "স্মার্ট অফিস হিসাব",
   "short_name": "স্মার্ট অফিস হিসাব",
-  "description": "বেতন, বকেয়া, পদোন্নতি, পয়েন্ট, বাসা ও অন্যান্য সমর্থিত হিসাব জানা ও দেখার স্বাধীন ও অনানুষ্ঠানিক সহায়ক অ্যাপ",
+  "description": "ঢাকা বিশ্ববিদ্যালয়ের কর্মকর্তা ও কর্মচারীদের জন্য স্মার্ট হিসাব সহায়ক অ্যাপ—বেতন, বকেয়া, পদোন্নতি, পয়েন্ট, বাসা, চাকরিকাল ও প্রয়োজনীয় রিপোর্ট",
   "lang": "bn",
   "dir": "ltr",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
   "orientation": "portrait-primary",
   "background_color": "#F7F9FC",
   "theme_color": "#3F51B5",
-  "categories": ["productivity", "utilities"],
+  "categories": [
+    "productivity",
+    "utilities"
+  ],
   "icons": [
     {
       "src": "/icons/du-app-192.svg",
