@@ -58,6 +58,7 @@ import './increment-center-v34.css';
 import './pf-deduction-center-v35.css';
 import './leave-balance-v36.css';
 import './live-visitors-v37.css';
+import './premium-footer-v41.css';
 import {initPwaRuntime,subscribePwa,getPwaState,promptPwaInstall,formatPwaTime,manualPwaUpdateCheck,consumePwaUpdateNotice} from './pwa-client.js';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import GuestLocalCenter from './guest-local-v1.jsx';
@@ -1797,6 +1798,54 @@ function FooterUsageStats({visitorStats={},pwaStats={},lang='bn',dark=false}){
   </details>;
 }
 
+function PremiumAppFooter({lang='bn',visitorStats={},pwaStats={},onHome,onServices,onPolicies,onPrivacy,dark=false}){
+  const en=lang==='en';
+  const supportText=encodeURIComponent(en?'Hello, I need help with Hisab Sahayika.':'আসসালামু আলাইকুম, হিসাব সহায়িকা অ্যাপ বিষয়ে সহায়তা প্রয়োজন।');
+  return <footer className={'premium-app-footer'+(dark?' dark':'')}>
+    <div className="premium-footer-main">
+      <section className="premium-footer-brand">
+        <div className="premium-footer-logo">হি</div>
+        <div>
+          <b>{en?'Hisab Sahayika':'হিসাব সহায়িকা'}</b>
+          <span>{en?'Independent · unofficial calculation assistant':'স্বাধীন · অনানুষ্ঠানিক হিসাব সহায়ক প্ল্যাটফর্ম'}</span>
+          <small><ShieldAlert/>{en?'Not an official University of Dhaka service.':'ঢাকা বিশ্ববিদ্যালয়ের কোনো অফিসিয়াল সেবা নয়।'}</small>
+        </div>
+      </section>
+
+      <section className="premium-footer-links">
+        <small>{en?'QUICK LINKS':'দ্রুত লিংক'}</small>
+        <div>
+          <button onClick={onHome}>{en?'Home':'হোম'}</button>
+          <button onClick={onServices}>{en?'Services':'সেবাসমূহ'}</button>
+          <button onClick={onPolicies}>{en?'Policies':'নীতিমালা'}</button>
+          <button onClick={onPrivacy}>{en?'Privacy':'গোপনীয়তা'}</button>
+        </div>
+      </section>
+
+      <section className="premium-footer-support">
+        <small>{en?'SUPPORT':'সহায়তা'}</small>
+        <b>{en?'Need help?':'সহায়তা প্রয়োজন?'}</b>
+        <div>
+          <a href="tel:+8801759084692"><PhoneCall/>{en?'Call':'কল করুন'}</a>
+          <a href={'https://wa.me/8801759084692?text='+supportText} target="_blank" rel="noreferrer"><MessageCircle/>WhatsApp</a>
+        </div>
+      </section>
+
+      <section className="premium-footer-stats">
+        <small>{en?'LIVE USAGE':'লাইভ ব্যবহার'}</small>
+        <FooterUsageStats visitorStats={visitorStats} pwaStats={pwaStats} lang={lang} dark={dark}/>
+      </section>
+    </div>
+
+    <div className="premium-footer-bottom">
+      <span>© 2026 {en?'Hisab Sahayika':'হিসাব সহায়িকা'} · {en?'All Rights Reserved':'সর্বস্বত্ব সংরক্ষিত'}</span>
+      <span>{en?'Designed & Developed by':'ডিজাইন ও ডেভেলপমেন্ট'} <b>{en?'Md. Moshiur Rahman':'মোঃ মশিউর রহমান'}</b></span>
+      <a href="tel:+8801759084692"><Phone/>01759084692</a>
+      <a href={'https://wa.me/8801759084692?text='+supportText} target="_blank" rel="noreferrer"><MessageCircle/>{en?'WhatsApp Support':'WhatsApp সহায়তা'}</a>
+    </div>
+  </footer>;
+}
+
 function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,setActivePublicTool,onLogin,onSignup,pwaStats,visitorStats={},mobileCalcOpen,setMobileCalcOpen,notices=[],policies=[]}){
   const en=lang==='en';
   const [appStatus,setAppStatus]=useState(()=>getPwaState());
@@ -2011,7 +2060,15 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
         </div>
       </section>}
 
-      <section className="pwa-home-footer-note pwa-home-footer-with-stats"><div className="pwa-footer-disclaimer"><ShieldAlert/><span>{en?'Independent and unofficial calculation assistant. No official affiliation with the University of Dhaka.':'স্বাধীন ও অনানুষ্ঠানিক হিসাব সহায়ক অ্যাপ। ঢাকা বিশ্ববিদ্যালয়ের সঙ্গে কোনো অফিসিয়াল সম্পর্ক নেই।'}</span></div><FooterUsageStats visitorStats={visitorStats} pwaStats={pwaStats} lang={lang}/></section>
+      <PremiumAppFooter
+        lang={lang}
+        visitorStats={visitorStats}
+        pwaStats={pwaStats}
+        onHome={goHome}
+        onServices={()=>setMobileCalcOpen(true)}
+        onPolicies={()=>open('reference')}
+        onPrivacy={()=>open('local-privacy')}
+      />
     </main>
 
     <nav className="pwa-app-bottom">
@@ -2341,18 +2398,16 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
       {activePublicTool?.startsWith('local-')&&<GuestLocalCenter mode={activePublicTool.slice(6)} lang={lang} onOpen={openPublicTool} onLogin={onLogin}/>}
     </main>}
 
-    <footer className="approved-footer">
-      <button className="approved-brand brand-button footer-brand" onClick={()=>go('home')}><span><Calculator/></span><div><b>{en?'Hisab Sahayika':'হিসাব সহায়িকা'}</b><small>{en?'Independent · unofficial calculation assistant':'স্বাধীন · অনানুষ্ঠানিক হিসাব সহায়ক প্ল্যাটফর্ম'}</small></div></button>
-      <div className="approved-footer-links">
-        <button onClick={()=>go('home')}>{en?'Home':'হোম'}</button>
-        <button onClick={()=>go('services')}>{en?'Services':'সেবা সমূহ'}</button>
-        <button onClick={()=>go('policies')}>{en?'Policies':'নীতিমালা'}</button>
-        <button onClick={()=>go('benefits')}>{en?'Privacy':'গোপনীয়তা'}</button>
-        <a href={`https://wa.me/8801759084692?text=${whatsappText}`} target="_blank" rel="noreferrer">{en?'WhatsApp':'হোয়াটসঅ্যাপ'}</a>
-      </div>
-      <FooterUsageStats visitorStats={visitorStats} pwaStats={pwaStats} lang={lang} dark={true}/>
-      <small>{en?'Developer Support via WhatsApp':'ডেভেলপার সহায়তা — শুধু হোয়াটসঅ্যাপ'}<br/><b>মোঃ মশিউর রহমান · 01759084692</b></small>
-    </footer>
+    <PremiumAppFooter
+      lang={lang}
+      visitorStats={visitorStats}
+      pwaStats={pwaStats}
+      onHome={()=>go('home')}
+      onServices={()=>go('services')}
+      onPolicies={()=>go('policies')}
+      onPrivacy={()=>go('benefits')}
+      dark={true}
+    />
 
     {mobileCalcOpen&&<div className="mobile-calc-sheet-backdrop" onClick={()=>setMobileCalcOpen(false)}>
       <section className="mobile-calc-sheet" onClick={e=>e.stopPropagation()}>
