@@ -59,6 +59,7 @@ import './pf-deduction-center-v35.css';
 import './leave-balance-v36.css';
 import './live-visitors-v37.css';
 import './premium-footer-v41.css';
+import './login-entry-v46.css';
 import {initPwaRuntime,subscribePwa,getPwaState,promptPwaInstall,formatPwaTime,manualPwaUpdateCheck,consumePwaUpdateNotice} from './pwa-client.js';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import GuestLocalCenter from './guest-local-v1.jsx';
@@ -1597,7 +1598,7 @@ function AuthPortal({onLogin,onBack,lang,setLang,initialMode='login'}) {
   if(mode==='register')return <div className="smart-reg-shell">
     <div className="smart-reg-card">
       <div className="login-top"><button type="button" className="back-link" onClick={onBack}>{en?'← Back to Home':'← হোমে ফিরুন'}</button><LangToggle lang={lang} setLang={setLang}/></div>
-      <div className="smart-reg-title"><div className="auth-badge"><ShieldCheck size={15}/>{en?'OPTIONAL BACKUP & SYNC ACCOUNT':'ঐচ্ছিক BACKUP & SYNC অ্যাকাউন্ট'}</div><h1>{en?'Create a Backup & Sync account':'Backup & Sync অ্যাকাউন্ট তৈরি করুন'}</h1><p>{en?'The app works without login. Create an account only if you want cloud backup, recovery and access from multiple devices.':'অ্যাপের মূল সেবা লগইন ছাড়াই কাজ করে। Cloud backup, recovery ও একাধিক ডিভাইসে ব্যবহার করতে চাইলে শুধু তখনই অ্যাকাউন্ট তৈরি করুন।'}</p></div>
+      <div className="smart-reg-title"><div className="auth-badge"><ShieldCheck size={15}/>{en?'HISAB SAHAYIKA ACCOUNT · BACKUP & SYNC':'হিসাব সহায়িকা অ্যাকাউন্ট · BACKUP & SYNC'}</div><h1>{en?'Create your Hisab Sahayika account':'হিসাব সহায়িকা অ্যাকাউন্ট তৈরি করুন'}</h1><p>{en?'The app works without login. Create an account only if you want cloud backup, recovery and access from multiple devices.':'অ্যাপের মূল সেবা লগইন ছাড়াই কাজ করে। Cloud backup, recovery ও একাধিক ডিভাইসে ব্যবহার করতে চাইলে শুধু তখনই অ্যাকাউন্ট তৈরি করুন।'}</p></div>
       <div className="smart-reg-steps">{steps.map((x,i)=><div key={x} className={`${i===step?'active':''} ${i<step?'done':''}`}><span>{i<step?<CheckCircle2/>:numLang(i+1,lang,0)}</span><b>{x}</b></div>)}</div>
 
       <form onSubmit={submit} className="smart-reg-form">
@@ -1696,10 +1697,10 @@ function AuthPortal({onLogin,onBack,lang,setLang,initialMode='login'}) {
     </div>
   </div>;
 
-  const title=mode==='forgot'?(en?'Recover your account':'অ্যাকাউন্ট পুনরুদ্ধার করুন'):(en?'Login for Backup & Sync':'Backup & Sync-এর জন্য লগইন');
+  const title=mode==='forgot'?(en?'Recover your account':'অ্যাকাউন্ট পুনরুদ্ধার করুন'):(en?'Log in to your Hisab Sahayika account':'হিসাব সহায়িকা অ্যাকাউন্টে লগইন করুন');
   return <div className="login-shell phase8-auth"><form className="login-card phase8-card" onSubmit={submit}>
     <div className="login-top"><button type="button" className="back-link" onClick={onBack}>{en?'← Back to Home':'← হোমে ফিরুন'}</button><LangToggle lang={lang} setLang={setLang}/></div>
-    <div className="auth-badge"><ShieldCheck size={15}/>{en?'OPTIONAL BACKUP & SYNC':'ঐচ্ছিক BACKUP & SYNC'}</div>
+    <div className="auth-badge"><ShieldCheck size={15}/>{en?'ACCOUNT LOGIN · BACKUP & SYNC':'অ্যাকাউন্ট লগইন · BACKUP & SYNC'}</div>
     <h1>{title}</h1><p>{en?'Hisab Sahayika · Independent calculation assistant':'হিসাব সহায়িকা · স্বাধীন হিসাব সহায়ক প্ল্যাটফর্ম'}</p><div className="auth-guest-note"><CheckCircle2/><span>{en?'No login is required for calculators, local profile, salary history, leave records or reports. Login is only for Cloud Backup, Sync, Recovery and multi-device use.':'ক্যালকুলেটর, Local Profile, বেতন ইতিহাস, ছুটি বা রিপোর্ট ব্যবহারে লগইন লাগবে না। লগইন শুধু Cloud Backup, Sync, Recovery ও একাধিক ডিভাইসে ব্যবহারের জন্য।'}</span></div>
     <label>{en?'Email':'ইমেইল'}<input value={form.email} onChange={e=>change('email',e.target.value)} type="email" required/></label>
     {mode==='forgot'&&<label>{en?'Recovery code':'রিকভারি কোড'}<input value={form.recovery_code} onChange={e=>change('recovery_code',e.target.value)} placeholder="XXXX-XXXX-XXXX-XXXX" required/></label>}
@@ -1951,7 +1952,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
       <header className="pwa-app-topbar tool">
         <button className="pwa-round-btn" onClick={goHome} aria-label={en?'Back':'ফিরুন'}><ArrowLeft/></button>
         <div><small>{en?'HISAB SAHAYIKA':'হিসাব সহায়িকা'}</small><b>{title}</b></div>
-        <PwaControls lang={lang}/>
+        <div className="pwa-tool-head-actions"><PwaControls lang={lang}/><button className="pwa-login-entry compact" onClick={onLogin}><UserRound/><span>{en?'Login':'লগইন'}</span></button></div>
       </header>
       <main className="pwa-tool-content">
         {['salary','arrear'].includes(activePublicTool)&&<SalaryCalculator key={activePublicTool} lang={lang} publicMode={true} initialArrear={activePublicTool==='arrear'}/>}
@@ -1980,7 +1981,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
           <div className="pwa-sheet-group-title">{en?'PERSONAL · NO LOGIN REQUIRED':'ব্যক্তিগত · লগইন লাগবে না'}</div>
           <div className="pwa-sheet-grid personal">{localServices.map(([key,I,title])=><button key={key} onClick={()=>{setMobileCalcOpen(false);open(key)}}><span className="local"><I/></span><b>{title}</b></button>)}</div>
           <button className="pwa-sheet-dashboard" onClick={()=>{setMobileCalcOpen(false);open('local-dashboard')}}><LayoutDashboard/><div><b>{en?'My Local Dashboard':'আমার Local ড্যাশবোর্ড'}</b><small>{en?'Profile, salary history, leave, reports and more without login':'চাকরি তথ্য, বেতন ইতিহাস, ছুটি, রিপোর্টসহ সবকিছু লগইন ছাড়াই'}</small></div><ChevronRight/></button>
-          <button className="pwa-sheet-sync" onClick={onLogin}><Cloud/><span>{en?'Login only for Backup & Sync':'শুধু Backup & Sync-এর জন্য লগইন'}</span></button>
+          <button className="pwa-sheet-sync" onClick={onLogin}><UserRound/><span>{en?'Login to your account':'আপনার অ্যাকাউন্টে লগইন করুন'}</span></button>
         </section>
       </div>}
     </div>;
@@ -1990,7 +1991,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     {desktopSidebar}
     <header className="pwa-app-topbar">
       <div className="pwa-app-brand"><span>হি</span><div><b>{en?'Hisab Sahayika':'হিসাব সহায়িকা'}</b><small>{en?'Independent calculation assistant':'স্বাধীন হিসাব সহায়ক অ্যাপ'}</small></div></div>
-      <div className="pwa-app-head-actions"><button className="pwa-round-btn" onClick={()=>setLang(lang==='bn'?'en':'bn')}>{en?'বাং':'EN'}</button><PwaControls lang={lang}/><button className="pwa-round-btn" onClick={()=>open('local-dashboard')}><UserRound/></button></div>
+      <div className="pwa-app-head-actions"><button className="pwa-round-btn" onClick={()=>setLang(lang==='bn'?'en':'bn')}>{en?'বাং':'EN'}</button><PwaControls lang={lang}/><button className="pwa-login-entry" onClick={onLogin}><UserRound/><span>{en?'Login':'লগইন'}</span></button></div>
     </header>
 
     <main className="pwa-app-home">
@@ -2058,7 +2059,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
         <div className="pwa-sheet-group-title">{en?'PERSONAL · NO LOGIN REQUIRED':'ব্যক্তিগত · লগইন লাগবে না'}</div>
         <div className="pwa-sheet-grid personal">{localServices.map(([key,I,title])=><button key={key} onClick={()=>{setMobileCalcOpen(false);open(key)}}><span className="local"><I/></span><b>{title}</b></button>)}</div>
         <button className="pwa-sheet-dashboard" onClick={()=>{setMobileCalcOpen(false);open('local-dashboard')}}><LayoutDashboard/><div><b>{en?'My Local Dashboard':'আমার Local ড্যাশবোর্ড'}</b><small>{en?'Profile, salary history, leave, reports and more without login':'চাকরি তথ্য, বেতন ইতিহাস, ছুটি, রিপোর্টসহ সবকিছু লগইন ছাড়াই'}</small></div><ChevronRight/></button>
-        <button className="pwa-sheet-sync" onClick={onLogin}><Cloud/><span>{en?'Login only for Backup & Sync':'শুধু Backup & Sync-এর জন্য লগইন'}</span></button>
+        <button className="pwa-sheet-sync" onClick={onLogin}><UserRound/><span>{en?'Login to your account':'আপনার অ্যাকাউন্টে লগইন করুন'}</span></button>
       </section>
     </div>}
   </div>;

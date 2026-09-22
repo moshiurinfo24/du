@@ -1,0 +1,38 @@
+/* Visible account login entry · V46 */
+.pwa-login-entry{
+  min-height:36px;
+  height:36px;
+  padding:0 11px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  border:1px solid rgba(255,255,255,.24);
+  border-radius:11px;
+  background:rgba(255,255,255,.14);
+  color:#fff;
+  font-size:9px;
+  font-weight:900;
+  white-space:nowrap;
+  cursor:pointer;
+  transition:.16s ease
+}
+.pwa-login-entry svg{width:17px;height:17px;flex:0 0 auto}
+.pwa-login-entry:hover{background:rgba(255,255,255,.22);transform:translateY(-1px)}
+.pwa-tool-head-actions{display:flex;align-items:center;gap:6px;margin-left:auto}
+
+@media(min-width:1001px){
+  .pwa-app-topbar .pwa-login-entry{
+    border-color:#DCE3F0;
+    background:#F7F9FC;
+    color:#3F51B5
+  }
+  .pwa-app-topbar .pwa-login-entry:hover{
+    border-color:#CAD5EB;
+    background:#EEF2FF
+  }
+}
+@media(max-width:420px){
+  .pwa-login-entry{padding:0 8px;gap:4px;font-size:8.5px}
+  .pwa-login-entry svg{width:16px;height:16px}
+}
