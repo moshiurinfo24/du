@@ -2027,7 +2027,9 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     <main className="pwa-app-home">
       <section className="pwa-welcome-card">
         <div className="pwa-welcome-copy"><small>{en?'WELCOME':'স্বাগতম'}</small><h1>{en?'What would you like to calculate today?':'আজ কোন হিসাবটি করতে চান?'}</h1><p>{en?'Choose a service below and get the result in a few simple steps.':'নিচের একটি সেবা নির্বাচন করুন এবং কয়েকটি সহজ ধাপে হিসাব দেখুন।'}</p></div>
-        <div className="pwa-welcome-visual" aria-hidden="true"></div>
+        <div className="pwa-welcome-visual" aria-hidden="true">
+          <img src="/illustrations/hisab-office-hero-v48.webp?v=52" alt="" loading="eager" decoding="async"/>
+        </div>
         <div className="pwa-welcome-meta compact">
           <span><RefreshCw/><div><small>{en?'Latest update':'সর্বশেষ আপডেট'}</small><b>{updated}</b></div></span>
         </div>

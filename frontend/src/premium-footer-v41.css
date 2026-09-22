@@ -150,3 +150,94 @@
   .premium-credit-row .premium-credit-name{font-size:10.5px}
   .premium-credit-row.office>b{font-size:9px}
 }
+
+
+/* Footer alignment + mobile usage · V52 */
+@media(min-width:761px){
+  .premium-footer-credit{
+    align-items:flex-end;
+    text-align:right
+  }
+  .premium-footer-credit>small{
+    width:100%;
+    text-align:right
+  }
+  .premium-credit-block{
+    width:100%;
+    align-items:flex-end
+  }
+  .premium-credit-row{
+    width:100%;
+    justify-content:flex-end
+  }
+}
+@media(max-width:760px){
+  .premium-footer-stats-only>.compact-usage-stats>summary{
+    display:grid!important;
+    grid-template-columns:repeat(5,minmax(0,1fr)) 12px!important;
+    align-items:center!important;
+    gap:0!important;
+    overflow:visible!important;
+    padding:4px!important
+  }
+  .premium-footer-stats-only .compact-usage-stats>summary>span{
+    min-width:0!important;
+    width:auto!important;
+    padding:4px 1px!important;
+    border-right:1px solid rgba(255,255,255,.08)!important;
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    grid-template-rows:auto auto auto!important;
+    place-items:center!important;
+    row-gap:2px!important
+  }
+  .premium-footer-stats-only .compact-usage-stats>summary>span:last-of-type{
+    border-right:0!important
+  }
+  .premium-footer-stats-only .compact-usage-stats>summary>span svg{
+    width:11px!important;
+    height:11px!important;
+    grid-row:auto!important;
+    margin:0!important
+  }
+  .premium-footer-stats-only .compact-usage-stats>summary small{
+    max-width:100%;
+    font-size:6px!important;
+    line-height:1.05!important;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis
+  }
+  .premium-footer-stats-only .compact-usage-stats>summary b{
+    font-size:9px!important;
+    line-height:1.05!important
+  }
+  .premium-footer-stats-only .compact-usage-stats .stats-chevron{
+    width:10px!important;
+    height:10px!important;
+    margin:0!important
+  }
+  .premium-footer-stats-only .compact-stats-popover{
+    left:0!important;
+    right:auto!important;
+    width:min(520px,calc(100vw - 48px))!important;
+    box-sizing:border-box
+  }
+  .premium-footer-credit{
+    align-items:flex-end;
+    text-align:right
+  }
+  .premium-footer-credit>small,
+  .premium-credit-block{
+    width:100%;
+    text-align:right
+  }
+  .premium-credit-block{
+    align-items:flex-end
+  }
+  .premium-credit-row{
+    width:100%;
+    justify-content:flex-end;
+    white-space:normal
+  }
+}

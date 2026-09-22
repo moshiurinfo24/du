@@ -1,10 +1,11 @@
-const CACHE_NAME='hisab-pwa-runtime-v51';
+const CACHE_NAME='hisab-pwa-runtime-v52';
 const CORE=[
   '/',
   '/manifest.webmanifest',
   '/icons/du-app-192.svg',
   '/icons/du-app-512.svg',
   '/icons/du-app-maskable.svg',
+  '/illustrations/hisab-office-hero-v48.webp',
   '/illustrations/hisab-office-team-v48.webp',
   '/branding/smart-office-hisab-logo-v50.webp'
 ];
