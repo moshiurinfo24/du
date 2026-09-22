@@ -211,6 +211,44 @@ async function publicTrafficStats(env){
   };
 }
 
+let liveVisitorsReady=false;
+async function ensureLiveVisitors(env){
+  if(liveVisitorsReady)return;
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS public_live_visitors(
+    visitor_hash TEXT PRIMARY KEY,
+    section TEXT NOT NULL DEFAULT 'home',
+    path TEXT NOT NULL DEFAULT '/',
+    platform TEXT NOT NULL DEFAULT 'other',
+    device TEXT NOT NULL DEFAULT 'desktop',
+    mode TEXT NOT NULL DEFAULT 'browser',
+    first_seen_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_seen_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`).run();
+  await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_public_live_visitors_last_seen ON public_live_visitors(last_seen_at)`).run();
+  liveVisitorsReady=true;
+}
+async function liveVisitorStats(env){
+  await ensureLiveVisitors(env);
+  const x=await env.DB.prepare(`
+    SELECT
+      COUNT(CASE WHEN last_seen_at>=datetime('now','-90 seconds') THEN 1 END) online_now,
+      COUNT(CASE WHEN last_seen_at>=datetime('now','-5 minutes') THEN 1 END) active_5m,
+      COUNT(CASE WHEN last_seen_at>=datetime('now','-90 seconds') AND mode='browser' THEN 1 END) browser_online,
+      COUNT(CASE WHEN last_seen_at>=datetime('now','-90 seconds') AND mode='pwa' THEN 1 END) pwa_online,
+      COUNT(CASE WHEN last_seen_at>=datetime('now','-90 seconds') AND device='mobile' THEN 1 END) mobile_online,
+      COUNT(CASE WHEN last_seen_at>=datetime('now','-90 seconds') AND device='desktop' THEN 1 END) desktop_online
+    FROM public_live_visitors
+  `).first();
+  return {
+    online_now:+(x?.online_now||0),
+    active_5m:+(x?.active_5m||0),
+    browser_online:+(x?.browser_online||0),
+    pwa_online:+(x?.pwa_online||0),
+    mobile_online:+(x?.mobile_online||0),
+    desktop_online:+(x?.desktop_online||0)
+  };
+}
+
 export default{async fetch(req,env){
   const C=cors(req);
   if(!originAllowed(req))return json({error:'Origin not allowed'},403,C);
@@ -218,6 +256,31 @@ export default{async fetch(req,env){
   const u=new URL(req.url);
   try{
     if(u.pathname==='/api/health')return json({ok:true,service:'Employee Service ERP API',phase:'16.3.5-dual-recovery-super-admin'},200,C);
+
+    if(u.pathname==='/api/public/heartbeat'&&req.method==='POST'){
+      await ensureLiveVisitors(env);
+      const b=await req.json().catch(()=>({}));
+      const visitor=String(b.visitor_id||'').trim().slice(0,160);
+      if(visitor.length<8)return json({ok:true,ignored:true},200,C);
+      const visitorHash=await sha('public-visitor:'+visitor);
+      const section=String(b.section||'home').replace(/[^a-zA-Z0-9_-]/g,'').slice(0,48)||'home';
+      const path=String(b.path||'/').slice(0,160);
+      const platform=['ios','android','other'].includes(String(b.platform||''))?String(b.platform):'other';
+      const device=['mobile','desktop'].includes(String(b.device||''))?String(b.device):'desktop';
+      const mode=['browser','pwa'].includes(String(b.mode||''))?String(b.mode):'browser';
+      await env.DB.prepare(`INSERT INTO public_live_visitors(visitor_hash,section,path,platform,device,mode,first_seen_at,last_seen_at)
+        VALUES(?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
+        ON CONFLICT(visitor_hash) DO UPDATE SET
+          section=excluded.section,path=excluded.path,platform=excluded.platform,device=excluded.device,mode=excluded.mode,last_seen_at=CURRENT_TIMESTAMP`)
+        .bind(visitorHash,section,path,platform,device,mode).run();
+      if(Date.now()%20===0)env.DB.prepare(`DELETE FROM public_live_visitors WHERE last_seen_at<datetime('now','-7 days')`).run().catch(()=>{});
+      return json({ok:true},201,C);
+    }
+
+    if(u.pathname==='/api/public/live-stats'&&req.method==='GET'){
+      const live=await liveVisitorStats(env);
+      return json({ok:true,...live,window_seconds:90,timezone:'Asia/Dhaka'},200,C);
+    }
 
     if(u.pathname==='/api/public/track'&&req.method==='POST'){
       await ensurePublicEvents(env);
@@ -382,6 +445,20 @@ export default{async fetch(req,env){
     }
 
     const user=await me(req,env);
+    if(u.pathname==='/api/admin/live-visitors'&&req.method==='GET'){
+      if(!canManage(user))return json({error:'Forbidden'},403,C);
+      await ensureLiveVisitors(env);
+      const [summary,rows]=await Promise.all([
+        liveVisitorStats(env),
+        safeRows(env,`SELECT
+          substr(visitor_hash,1,8) anonymous_id,section,path,platform,device,mode,last_seen_at,
+          CAST((julianday('now')-julianday(last_seen_at))*86400 AS INTEGER) seconds_ago
+          FROM public_live_visitors
+          WHERE last_seen_at>=datetime('now','-90 seconds')
+          ORDER BY last_seen_at DESC LIMIT 20`)
+      ]);
+      return json({ok:true,...summary,visitors:rows,window_seconds:90,timezone:'Asia/Dhaka'},200,C);
+    }
     if(u.pathname==='/api/me'){if(!user)return json({error:'Unauthenticated'},401,C);return json({user},200,C)}
 
     if(u.pathname==='/api/my-security/logout-others'&&req.method==='POST'){

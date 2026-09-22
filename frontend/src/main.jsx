@@ -57,6 +57,7 @@ import './calculation-history-v32.css';
 import './increment-center-v34.css';
 import './pf-deduction-center-v35.css';
 import './leave-balance-v36.css';
+import './live-visitors-v37.css';
 import {initPwaRuntime,subscribePwa,getPwaState,promptPwaInstall,formatPwaTime,manualPwaUpdateCheck,consumePwaUpdateNotice} from './pwa-client.js';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import GuestLocalCenter from './guest-local-v1.jsx';
@@ -247,13 +248,56 @@ function visitorId(){
   }
   return id;
 }
+function livePresenceMode(){
+  const standalone=window.matchMedia?.('(display-mode: standalone)').matches||window.navigator.standalone===true;
+  return standalone?'pwa':'browser';
+}
+function livePresenceDevice(){
+  return /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent||'')?'mobile':'desktop';
+}
+function currentLiveSection(){
+  try{return sessionStorage.getItem('hisab_live_section')||'home'}catch{return 'home'}
+}
+function setLiveSection(section='home'){
+  const safe=String(section||'home').replace(/[^a-zA-Z0-9_-]/g,'').slice(0,48)||'home';
+  try{sessionStorage.setItem('hisab_live_section',safe)}catch{}
+  return safe;
+}
+function sendLiveHeartbeat(section=currentLiveSection()){
+  if(typeof document!=='undefined'&&document.visibilityState==='hidden')return Promise.resolve();
+  return fetch(API+'/api/public/heartbeat',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      visitor_id:visitorId(),
+      section:setLiveSection(section),
+      path:location.pathname,
+      platform:pwaPlatform(),
+      device:livePresenceDevice(),
+      mode:livePresenceMode()
+    })
+  }).catch(()=>{});
+}
+function initLivePresence(){
+  if(typeof window==='undefined')return;
+  const beat=()=>sendLiveHeartbeat(currentLiveSection());
+  beat();
+  const timer=setInterval(beat,25000);
+  const onVisible=()=>{if(document.visibilityState==='visible')beat()};
+  window.addEventListener('focus',beat);
+  document.addEventListener('visibilitychange',onVisible);
+  window.addEventListener('beforeunload',()=>clearInterval(timer),{once:true});
+}
 function trackPublic(event='page_view',section='home'){
+  const safeSection=setLiveSection(section);
+  sendLiveHeartbeat(safeSection);
   return fetch(API+'/api/public/track',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({visitor_id:visitorId(),event,section,path:location.pathname})
+    body:JSON.stringify({visitor_id:visitorId(),event,section:safeSection,path:location.pathname})
   }).catch(()=>{});
 }
+initLivePresence();
 
 const roleLabel={super_admin:'System Administrator',admin:'Admin',department_admin:'Department Admin',editor:'Editor',employee:'Employee'};
 const I18N={
@@ -1968,12 +2012,12 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
   const [activePublicTool,setActivePublicTool]=useState(null);
   const [notices,setNotices]=useState([]);
   const [policies,setPolicies]=useState([]);
-  const [visitorStats,setVisitorStats]=useState({today_unique:null,month_unique:null,total_unique:null,total_views:null});
+  const [visitorStats,setVisitorStats]=useState({today_unique:null,month_unique:null,total_unique:null,total_views:null,online_now:null,active_5m:null,browser_online:null,pwa_online:null});
   const [pwaStats,setPwaStats]=useState({total_installs:null});
 
   useEffect(()=>{
     let alive=true;
-    const loadStats=()=>api('/api/public/stats').then(x=>{if(alive)setVisitorStats(x)}).catch(()=>{});
+    const loadStats=()=>Promise.all([api('/api/public/stats'),api('/api/public/live-stats')]).then(([traffic,live])=>{if(alive)setVisitorStats({...traffic,...live})}).catch(()=>{});
     const loadPwaStats=()=>api('/api/public/pwa-install-stats').then(x=>{if(alive)setPwaStats(x)}).catch(()=>{});
     trackPublic('page_view','home').finally(()=>{loadStats();loadPwaStats()});
     Promise.allSettled([
@@ -1984,7 +2028,7 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
       if(n.status==='fulfilled')setNotices(n.value.items||n.value.notices||[]);
       if(p.status==='fulfilled')setPolicies(p.value.items||p.value.policies||[]);
     });
-    const timer=setInterval(()=>{loadStats();loadPwaStats()},60000);
+    const timer=setInterval(()=>{loadStats();loadPwaStats()},15000);
     return ()=>{alive=false;clearInterval(timer)};
   },[]);
 
@@ -2278,6 +2322,7 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
       <div className="footer-visitor-counter" title={en?'Anonymous browser/device estimate':'অ্যানোনিমাস ব্রাউজার/ডিভাইসভিত্তিক আনুমানিক হিসাব'}>
         <Eye/>
         <div className="footer-visitor-main"><small>{en?'Total Visitors':'মোট ভিজিটর'}</small><b>{visitorStats.total_unique==null?'—':numLang(visitorStats.total_unique,lang,0)}</b></div>
+        <div className="footer-live-now"><i></i><span>{en?'Online now':'এখন অনলাইনে'}</span><b>{visitorStats.online_now==null?'—':numLang(visitorStats.online_now,lang,0)}</b></div>
         <div className="footer-visitor-more"><span>{en?'Today':'আজ'} <b>{visitorStats.today_unique==null?'—':numLang(visitorStats.today_unique,lang,0)}</b></span><i>·</i><span>{en?'This month':'এই মাস'} <b>{visitorStats.month_unique==null?'—':numLang(visitorStats.month_unique,lang,0)}</b></span></div>
       </div>
       <small>{en?'Developer Support via WhatsApp':'ডেভেলপার সহায়তা — শুধু হোয়াটসঅ্যাপ'}<br/><b>মোঃ মশিউর রহমান · 01759084692</b></small>
@@ -2330,6 +2375,7 @@ function TrendLine({data=[]}){
 function AdminAnalyticsDashboard({user,onPage,lang='bn'}){
   const en=lang==='en';
   const [d,setD]=useState(null),[busy,setBusy]=useState(true),[err,setErr]=useState('');
+  const [live,setLive]=useState({online_now:0,active_5m:0,browser_online:0,pwa_online:0,mobile_online:0,desktop_online:0,visitors:[]});
   async function load(){
     setBusy(true);setErr('');
     try{
@@ -2366,6 +2412,13 @@ function AdminAnalyticsDashboard({user,onPage,lang='bn'}){
     }finally{setBusy(false)}
   }
   useEffect(()=>{load()},[]);
+  useEffect(()=>{
+    let alive=true;
+    const loadLive=()=>api('/api/admin/live-visitors').then(x=>{if(alive)setLive(x)}).catch(()=>{});
+    loadLive();
+    const timer=setInterval(loadLive,15000);
+    return()=>{alive=false;clearInterval(timer)};
+  },[]);
   if(busy)return <div className="loading">{en?'Loading dashboard...':'ড্যাশবোর্ড লোড হচ্ছে...'}</div>;
   if(!d&&err)return <div className="error">{err}</div>;
   const k=d?.kpis||{},health=d?.health||{},usage=d?.usage||[],activity=d?.activity_trend||[],recent=d?.recent_users||[],audit=d?.recent_audit||[],
@@ -2384,6 +2437,29 @@ function AdminAnalyticsDashboard({user,onPage,lang='bn'}){
       <article><div className="kpi-icon"><UserRound/></div><div><small>{en?'Employees':'কর্মচারী'}</small><b>{k.employees??0}</b><span>{en?'Self-service accounts':'স্ব-পরিচালিত অ্যাকাউন্ট'}</span></div></article>
       <article><div className="kpi-icon"><BookUser/></div><div><small>{en?'Career Profiles':'ক্যারিয়ার প্রোফাইল'}</small><b>{k.career_profiles??0}</b><span>{en?'Personal records created':'ব্যক্তিগত রেকর্ড তৈরি'}</span></div></article>
       <article><div className="kpi-icon"><LockKeyhole/></div><div><small>{en?'Active Sessions':'সক্রিয় সেশন'}</small><b>{health.active_sessions??0}</b><span>{en?'Secure sessions':'নিরাপদ সেশন'}</span></div></article>
+    </section>
+
+    <section className="live-visitor-center">
+      <div className="live-visitor-head">
+        <div><span className="live-pulse-dot"></span><div><small>{en?'LIVE VISITORS':'লাইভ ভিজিটর'}</small><h3>{en?'Visitors using the app right now':'এই মুহূর্তে অ্যাপ ব্যবহার করছেন'}</h3></div></div>
+        <span>{en?'Auto refresh · 15 sec':'অটো রিফ্রেশ · ১৫ সেকেন্ড'}</span>
+      </div>
+      <div className="live-visitor-kpis">
+        <article className="online"><Radio/><div><small>{en?'Online now':'এখন অনলাইনে'}</small><b>{live.online_now??0}</b><span>{en?'Active in last 90 sec':'গত ৯০ সেকেন্ডে সক্রিয়'}</span></div></article>
+        <article><Clock3/><div><small>{en?'Active · 5 min':'সক্রিয় · ৫ মিনিট'}</small><b>{live.active_5m??0}</b><span>{en?'Recent browsers/devices':'সাম্প্রতিক ব্রাউজার/ডিভাইস'}</span></div></article>
+        <article><MonitorCheck/><div><small>{en?'Browser / PWA':'Browser / PWA'}</small><b>{live.browser_online??0} / {live.pwa_online??0}</b><span>{en?'Current online split':'বর্তমান অনলাইন ভাগ'}</span></div></article>
+        <article><Smartphone/><div><small>{en?'Mobile / Desktop':'Mobile / Desktop'}</small><b>{live.mobile_online??0} / {live.desktop_online??0}</b><span>{en?'Current device split':'বর্তমান ডিভাইস ভাগ'}</span></div></article>
+      </div>
+      <div className="live-visitor-list">
+        <div className="live-visitor-list-head"><span>{en?'Anonymous visitor':'অ্যানোনিমাস ভিজিটর'}</span><span>{en?'Current section':'বর্তমান সেকশন'}</span><span>{en?'Mode':'মোড'}</span><span>{en?'Last seen':'সর্বশেষ সক্রিয়'}</span></div>
+        {(live.visitors||[]).length===0?<div className="live-empty">{en?'No active visitor in the last 90 seconds.':'গত ৯০ সেকেন্ডে কোনো সক্রিয় ভিজিটর নেই।'}</div>:(live.visitors||[]).map((x,i)=><div className="live-visitor-row" key={(x.anonymous_id||'v')+i}>
+          <span><i className="live-mini-dot"></i><b>{x.anonymous_id||'—'}</b><small>{x.device||'—'} · {x.platform||'—'}</small></span>
+          <span>{x.section||x.path||'home'}</span>
+          <span>{String(x.mode||'browser').toUpperCase()}</span>
+          <span>{x.seconds_ago==null?'—':(x.seconds_ago<5?(en?'now':'এখন'):numLang(x.seconds_ago,lang,0)+' '+(en?'sec ago':'সেকেন্ড আগে'))}</span>
+        </div>)}
+      </div>
+      <p className="live-privacy-note"><ShieldCheck/>{en?'Privacy-safe: anonymous browser ID only; no IP, name or email is stored for live presence.':'প্রাইভেসি-সুরক্ষিত: লাইভ উপস্থিতির জন্য শুধু অ্যানোনিমাস ব্রাউজার ID রাখা হয়; IP, নাম বা ইমেইল সংরক্ষণ করা হয় না।'}</p>
     </section>
 
     <section className="analytics-grid top">
