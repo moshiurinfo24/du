@@ -64,6 +64,7 @@ import './home-discovery-v47.css';
 import './office-visual-v48.css';
 import './brand-logo-v50.css';
 import './du-audience-install-v54.css';
+import './ui-stability-v58.css';
 import {initPwaRuntime,subscribePwa,getPwaState,promptPwaInstall,formatPwaTime,manualPwaUpdateCheck,consumePwaUpdateNotice} from './pwa-client.js';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import GuestLocalCenter from './guest-local-v1.jsx';
@@ -2182,15 +2183,22 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
   const [activePublicTool,setActivePublicTool]=useState(null);
   const [notices,setNotices]=useState([]);
   const [policies,setPolicies]=useState([]);
-  const [visitorStats,setVisitorStats]=useState({today_unique:null,month_unique:null,total_unique:null,total_views:null,online_now:null,active_5m:null,browser_online:null,pwa_online:null});
-  const [pwaStats,setPwaStats]=useState({total_installs:null});
+  const [visitorStats,setVisitorStats]=useState({
+    today_unique:0,month_unique:0,total_unique:0,
+    today_views:0,month_views:0,total_views:0,
+    online_now:0,active_5m:0,browser_online:0,pwa_online:0,
+    browser_total_users:0,browser_today_users:0,browser_month_users:0,
+    pwa_total_users:0,pwa_today_users:0,pwa_month_users:0
+  });
+  const [pwaStats,setPwaStats]=useState({total_installs:0,today_installs:0,month_installs:0});
 
   useEffect(()=>{
     let alive=true;
-    const loadTrafficStats=()=>api('/api/public/stats').then(x=>{if(alive)setVisitorStats(prev=>({...prev,...x}))}).catch(()=>{});
-    const loadLiveStats=()=>api('/api/public/live-stats').then(x=>{if(alive)setVisitorStats(prev=>({...prev,...x}))}).catch(()=>{});
+    const fresh=path=>path+(path.includes('?')?'&':'?')+'_='+Date.now();
+    const loadTrafficStats=()=>api(fresh('/api/public/stats'),{cache:'no-store'}).then(x=>{if(alive)setVisitorStats(prev=>({...prev,...x}))}).catch(()=>{});
+    const loadLiveStats=()=>api(fresh('/api/public/live-stats'),{cache:'no-store'}).then(x=>{if(alive)setVisitorStats(prev=>({...prev,...x}))}).catch(()=>{});
     const loadStats=()=>Promise.allSettled([loadTrafficStats(),loadLiveStats()]);
-    const loadPwaStats=()=>api('/api/public/pwa-install-stats').then(x=>{if(alive)setPwaStats(x)}).catch(()=>{});
+    const loadPwaStats=()=>api(fresh('/api/public/pwa-install-stats'),{cache:'no-store'}).then(x=>{if(alive)setPwaStats(prev=>({...prev,...x}))}).catch(()=>{});
     trackPublic('page_view','home').catch(()=>{});
     sendLiveHeartbeat('home').finally(()=>{loadStats();loadPwaStats()});
     Promise.allSettled([
@@ -2201,8 +2209,18 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
       if(n.status==='fulfilled')setNotices(n.value.items||n.value.notices||[]);
       if(p.status==='fulfilled')setPolicies(p.value.items||p.value.policies||[]);
     });
-    const timer=setInterval(()=>{sendLiveHeartbeat(currentLiveSection()).finally(loadLiveStats);loadTrafficStats();loadPwaStats()},15000);
-    return ()=>{alive=false;clearInterval(timer)};
+    const refreshLive=()=>sendLiveHeartbeat(currentLiveSection()).finally(loadLiveStats);
+    const onVisible=()=>{if(document.visibilityState==='visible'){refreshLive();loadTrafficStats();loadPwaStats()}};
+    const onFocus=()=>{refreshLive();loadTrafficStats();loadPwaStats()};
+    const timer=setInterval(()=>{refreshLive();loadTrafficStats();loadPwaStats()},10000);
+    document.addEventListener('visibilitychange',onVisible);
+    window.addEventListener('focus',onFocus);
+    return ()=>{
+      alive=false;
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange',onVisible);
+      window.removeEventListener('focus',onFocus);
+    };
   },[]);
 
   const go=(id)=>{
