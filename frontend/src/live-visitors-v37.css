@@ -36,9 +36,9 @@
 .compact-usage-stats>summary svg{width:11px;height:11px;grid-row:1/3;color:#60758a}
 .compact-usage-stats>summary small{font-size:6.5px;line-height:1;color:#8a96a1}
 .compact-usage-stats>summary b{font-size:9px;line-height:1.15;color:#344f61}
-.compact-usage-stats>summary .live svg,.compact-usage-stats>summary .live b{color:#13835d}
-.compact-usage-stats>summary .app svg{color:#5365b8}
-.compact-usage-stats>summary .browser svg{color:#26749a}
+.compact-usage-stats>summary .usage-live svg,.compact-usage-stats>summary .usage-live b{color:#13835d}
+.compact-usage-stats>summary .usage-app svg{color:#5365b8}
+.compact-usage-stats>summary .usage-browser svg{color:#26749a}
 .compact-usage-stats .stats-chevron{width:13px;height:13px;margin:0 4px;color:#7c8996;transition:.16s}
 .compact-usage-stats[open] .stats-chevron{transform:rotate(180deg)}
 

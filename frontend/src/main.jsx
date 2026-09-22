@@ -1777,11 +1777,11 @@ function FooterUsageStats({visitorStats={},pwaStats={},lang='bn',dark=false}){
   const en=lang==='en';
   const n=v=>v==null?'—':numLang(v,lang,0);
   const items=[
-    {key:'live',icon:Radio,label:en?'Live':'লাইভ',value:n(visitorStats.online_now),tone:'live'},
-    {key:'install',icon:Smartphone,label:en?'App':'অ্যাপ',value:n(pwaStats.total_installs),tone:'app'},
-    {key:'browser',icon:MonitorCheck,label:en?'Browser':'ব্রাউজার',value:n(visitorStats.browser_total_users),tone:'browser'},
-    {key:'visitor',icon:Users,label:en?'Visitors':'ভিজিটর',value:n(visitorStats.total_unique),tone:'visitor'},
-    {key:'views',icon:Eye,label:en?'Views':'ভিউ',value:n(visitorStats.total_views),tone:'views'}
+    {key:'live',icon:Radio,label:en?'Live':'লাইভ',value:n(visitorStats.online_now),tone:'usage-live'},
+    {key:'install',icon:Smartphone,label:en?'App':'অ্যাপ',value:n(pwaStats.total_installs),tone:'usage-app'},
+    {key:'browser',icon:MonitorCheck,label:en?'Browser':'ব্রাউজার',value:n(visitorStats.browser_total_users),tone:'usage-browser'},
+    {key:'visitor',icon:Users,label:en?'Visitors':'ভিজিটর',value:n(visitorStats.total_unique),tone:'usage-visitor'},
+    {key:'views',icon:Eye,label:en?'Views':'ভিউ',value:n(visitorStats.total_views),tone:'usage-views'}
   ];
   return <details className={'compact-usage-stats'+(dark?' dark':'')}>
     <summary aria-label={en?'Visitor statistics':'ভিজিটর পরিসংখ্যান'}>
