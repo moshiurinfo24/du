@@ -18,8 +18,11 @@ import './traffic-analytics-phase11-2.css';
 import './salary-history-phase12.css';
 import './promotion-timeline-phase13.css';
 import './leave-phase14.css';
-import {KnowledgeCenter,PersonalCareerReports,PrivacyControlCenter,FinalReleaseStatus} from './final-core-phase16-19.jsx';
-import PremiumPersonalDashboard from './premium-dashboard-v16-1.jsx';
+const KnowledgeCenter=React.lazy(()=>import('./final-core-phase16-19.jsx').then(m=>({default:m.KnowledgeCenter})));
+const PersonalCareerReports=React.lazy(()=>import('./final-core-phase16-19.jsx').then(m=>({default:m.PersonalCareerReports})));
+const PrivacyControlCenter=React.lazy(()=>import('./final-core-phase16-19.jsx').then(m=>({default:m.PrivacyControlCenter})));
+const FinalReleaseStatus=React.lazy(()=>import('./final-core-phase16-19.jsx').then(m=>({default:m.FinalReleaseStatus})));
+const PremiumPersonalDashboard=React.lazy(()=>import('./premium-dashboard-v16-1.jsx'));
 import './mobile-app-v16-2.css';
 import './public-home-v16-3.css';
 import './mobile-menu-hotfix-v16-3-1.css';
@@ -66,8 +69,11 @@ import './brand-logo-v50.css';
 import './du-audience-install-v54.css';
 import './ui-stability-v58.css';
 import {initPwaRuntime,subscribePwa,getPwaState,promptPwaInstall,formatPwaTime,manualPwaUpdateCheck,consumePwaUpdateNotice} from './pwa-client.js';
-import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
-import GuestLocalCenter from './guest-local-v1.jsx';
+const FiscalOfficeCalendar=React.lazy(()=>import('./calendar-phase15.jsx').then(m=>({default:m.default})));
+const LoggedInOfficeCalendar=React.lazy(()=>import('./calendar-phase15.jsx').then(m=>({default:m.LoggedInOfficeCalendar})));
+const CalendarDashboardWidget=React.lazy(()=>import('./calendar-phase15.jsx').then(m=>({default:m.CalendarDashboardWidget})));
+const AdminOfficeCalendarManager=React.lazy(()=>import('./calendar-phase15.jsx').then(m=>({default:m.AdminOfficeCalendarManager})));
+const GuestLocalCenter=React.lazy(()=>import('./guest-local-v1.jsx'));
 import {
   PAY2015,PAY2026,PAY_SCALE_2026_META,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
   annualPromotionCycle,futureRoadmap,serviceExperiencePoints,fixed2026,implementationRate,houseRent2015,salary2026Snapshot,incremented2015Basic,incremented2026Basic,specialBenefit2025
@@ -75,12 +81,46 @@ import {
 
 initPwaRuntime();
 
-const API=import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE||'';
+const API=String(import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE||'').replace(/\/$/,'');
 async function api(path,opts={}){
-  const r=await fetch(API+path,{credentials:'include',headers:{'Content-Type':'application/json',...(opts.headers||{})},...opts});
-  const d=await r.json().catch(()=>({}));
-  if(!r.ok) throw new Error(d.error||d.detail||'Request failed');
-  return d;
+  const {timeoutMs,...requestOpts}=opts||{};
+  const method=String(requestOpts.method||'GET').toUpperCase();
+  const headers={...(requestOpts.headers||{})};
+  const body=requestOpts.body;
+  if(body!=null&&!(typeof FormData!=='undefined'&&body instanceof FormData)&&!Object.keys(headers).some(k=>k.toLowerCase()==='content-type')){
+    headers['Content-Type']='application/json';
+  }
+  const controller=new AbortController();
+  const externalSignal=requestOpts.signal;
+  const abort=()=>controller.abort();
+  if(externalSignal){
+    if(externalSignal.aborted)controller.abort();
+    else externalSignal.addEventListener('abort',abort,{once:true});
+  }
+  const timer=setTimeout(()=>controller.abort(),Number(timeoutMs||((method==='GET'||method==='HEAD')?6000:10000)));
+  try{
+    const r=await fetch(API+path,{credentials:'include',...requestOpts,headers,signal:controller.signal});
+    const raw=await r.text();
+    let d={};
+    if(raw){
+      try{d=JSON.parse(raw)}
+      catch{
+        if(r.ok)throw new Error('API endpoint unavailable');
+      }
+    }
+    if(!r.ok){
+      const err=new Error(d.error||d.detail||('Request failed ('+r.status+')'));
+      err.status=r.status;
+      throw err;
+    }
+    return d;
+  }catch(e){
+    if(e?.name==='AbortError')throw new Error('Request timed out');
+    throw e;
+  }finally{
+    clearTimeout(timer);
+    if(externalSignal)externalSignal.removeEventListener?.('abort',abort);
+  }
 }
 
 function guestLocalWorkspace(){
@@ -270,26 +310,35 @@ function setLiveSection(section='home'){
   try{sessionStorage.setItem('hisab_live_section',safe)}catch{}
   return safe;
 }
+function publicTelemetryPost(path,payload){
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),3500);
+  return fetch(API+path,{
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=UTF-8'},
+    body:JSON.stringify(payload),
+    keepalive:true,
+    signal:controller.signal
+  }).catch(()=>{}).finally(()=>clearTimeout(timer));
+}
 function sendLiveHeartbeat(section=currentLiveSection()){
   if(typeof document!=='undefined'&&document.visibilityState==='hidden')return Promise.resolve();
-  return fetch(API+'/api/public/heartbeat',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      visitor_id:visitorId(),
-      section:setLiveSection(section),
-      path:location.pathname,
-      platform:pwaPlatform(),
-      device:livePresenceDevice(),
-      mode:livePresenceMode()
-    })
-  }).catch(()=>{});
+  return publicTelemetryPost('/api/public/heartbeat',{
+    visitor_id:visitorId(),
+    section:setLiveSection(section),
+    path:location.pathname,
+    platform:pwaPlatform(),
+    device:livePresenceDevice(),
+    mode:livePresenceMode()
+  });
 }
 function initLivePresence(){
   if(typeof window==='undefined')return;
   const beat=()=>sendLiveHeartbeat(currentLiveSection());
-  beat();
-  const timer=setInterval(beat,25000);
+  const scheduleFirst=()=>beat();
+  if('requestIdleCallback' in window)window.requestIdleCallback(scheduleFirst,{timeout:1500});
+  else setTimeout(scheduleFirst,500);
+  const timer=setInterval(beat,45000);
   const onVisible=()=>{if(document.visibilityState==='visible')beat()};
   window.addEventListener('focus',beat);
   document.addEventListener('visibilitychange',onVisible);
@@ -298,11 +347,10 @@ function initLivePresence(){
 function trackPublic(event='page_view',section='home'){
   const safeSection=setLiveSection(section);
   sendLiveHeartbeat(safeSection);
-  return fetch(API+'/api/public/track',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({visitor_id:visitorId(),event,section:safeSection,path:location.pathname,mode:livePresenceMode(),device:livePresenceDevice(),platform:pwaPlatform()})
-  }).catch(()=>{});
+  return publicTelemetryPost('/api/public/track',{
+    visitor_id:visitorId(),event,section:safeSection,path:location.pathname,
+    mode:livePresenceMode(),device:livePresenceDevice(),platform:pwaPlatform()
+  });
 }
 initLivePresence();
 
@@ -2203,25 +2251,109 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
   const [activePublicTool,setActivePublicTool]=useState(null);
   const [notices,setNotices]=useState([]);
   const [policies,setPolicies]=useState([]);
-  const [visitorStats,setVisitorStats]=useState({today_unique:null,month_unique:null,total_unique:null,total_views:null,online_now:null,active_5m:null,browser_online:null,pwa_online:null});
-  const [pwaStats,setPwaStats]=useState({total_installs:null});
+  const referenceLoadingRef=useRef(false);
+  const referenceLoadedRef=useRef(false);
+  const [visitorStats,setVisitorStats]=useState(()=>{
+    try{
+      const x=JSON.parse(localStorage.getItem('hisab_public_stats_v1')||'null');
+      return x&&typeof x==='object'?x:{today_unique:null,month_unique:null,total_unique:null,total_views:null,online_now:null,active_5m:null,browser_online:null,pwa_online:null};
+    }catch{return {today_unique:null,month_unique:null,total_unique:null,total_views:null,online_now:null,active_5m:null,browser_online:null,pwa_online:null}}
+  });
+  const [pwaStats,setPwaStats]=useState(()=>{
+    try{
+      const x=JSON.parse(localStorage.getItem('hisab_pwa_stats_v1')||'null');
+      return x&&typeof x==='object'?x:{total_installs:null};
+    }catch{return {total_installs:null}}
+  });
 
   useEffect(()=>{
     let alive=true;
-    const loadStats=()=>Promise.all([api('/api/public/stats'),api('/api/public/live-stats')]).then(([traffic,live])=>{if(alive)setVisitorStats({...traffic,...live})}).catch(()=>{});
-    const loadPwaStats=()=>api('/api/public/pwa-install-stats').then(x=>{if(alive)setPwaStats(x)}).catch(()=>{});
-    trackPublic('page_view','home').finally(()=>{loadStats();loadPwaStats()});
+    let summaryMode=false;
+
+    const saveVisitor=next=>{
+      if(!alive||!next||typeof next!=='object')return;
+      setVisitorStats(prev=>{
+        const merged={...prev,...next};
+        try{localStorage.setItem('hisab_public_stats_v1',JSON.stringify(merged))}catch{}
+        return merged;
+      });
+    };
+    const savePwa=next=>{
+      if(!alive||!next||typeof next!=='object')return;
+      setPwaStats(prev=>{
+        const merged={...prev,...next};
+        try{localStorage.setItem('hisab_pwa_stats_v1',JSON.stringify(merged))}catch{}
+        return merged;
+      });
+    };
+    const loadTraffic=()=>api('/api/public/stats',{timeoutMs:5000}).then(saveVisitor);
+    const loadLive=()=>api('/api/public/live-stats',{timeoutMs:5000}).then(saveVisitor);
+    const loadPwa=()=>api('/api/public/pwa-install-stats',{timeoutMs:5000}).then(savePwa);
+
+    const loadSummary=async()=>{
+      try{
+        const x=await api('/api/public/usage-summary',{timeoutMs:5000});
+        if(!alive)return true;
+        saveVisitor(x);savePwa(x);
+        summaryMode=true;
+        try{sessionStorage.setItem('hisab_usage_summary_supported','1')}catch{}
+        return true;
+      }catch(e){
+        if(e?.status===404){
+          try{sessionStorage.setItem('hisab_usage_summary_supported','0')}catch{}
+        }
+        return false;
+      }
+    };
+    const loadAll=async()=>{
+      let mayUseSummary=true;
+      try{mayUseSummary=sessionStorage.getItem('hisab_usage_summary_supported')!=='0'}catch{}
+      if(mayUseSummary&&await loadSummary())return;
+      await Promise.allSettled([loadTraffic(),loadLive(),loadPwa()]);
+    };
+
+    // Never block statistics behind analytics tracking.
+    loadAll();
+    trackPublic('page_view','home');
+
+    const liveTimer=setInterval(()=>{
+      if(document.visibilityState!=='visible')return;
+      if(summaryMode)loadSummary();
+      else loadLive().catch(()=>{});
+    },30000);
+    const slowTimer=setInterval(()=>{
+      if(document.visibilityState!=='visible'||summaryMode)return;
+      loadTraffic().catch(()=>{});
+      loadPwa().catch(()=>{});
+    },120000);
+    const onVisible=()=>{
+      if(document.visibilityState!=='visible')return;
+      if(summaryMode)loadSummary();
+      else Promise.allSettled([loadTraffic(),loadLive(),loadPwa()]);
+    };
+    document.addEventListener('visibilitychange',onVisible);
+    window.addEventListener('focus',onVisible);
+    return ()=>{
+      alive=false;
+      clearInterval(liveTimer);
+      clearInterval(slowTimer);
+      document.removeEventListener('visibilitychange',onVisible);
+      window.removeEventListener('focus',onVisible);
+    };
+  },[]);
+
+  const loadReferenceData=()=>{
+    if(referenceLoadedRef.current||referenceLoadingRef.current)return;
+    referenceLoadingRef.current=true;
     Promise.allSettled([
-      api('/api/public/notices?limit=100'),
-      api('/api/public/policies?limit=100')
+      api('/api/public/notices?limit=100',{timeoutMs:6000}),
+      api('/api/public/policies?limit=100',{timeoutMs:6000})
     ]).then(([n,p])=>{
-      if(!alive)return;
       if(n.status==='fulfilled')setNotices(n.value.items||n.value.notices||[]);
       if(p.status==='fulfilled')setPolicies(p.value.items||p.value.policies||[]);
-    });
-    const timer=setInterval(()=>{loadStats();loadPwaStats()},15000);
-    return ()=>{alive=false;clearInterval(timer)};
-  },[]);
+      if(n.status==='fulfilled'||p.status==='fulfilled')referenceLoadedRef.current=true;
+    }).finally(()=>{referenceLoadingRef.current=false});
+  };
 
   const go=(id)=>{
     setPublicMenu(false);
@@ -2232,6 +2364,7 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
   const openPublicTool=(tool)=>{
     setPublicMenu(false);
     setMobileCalcOpen(false);
+    if(tool==='reference')loadReferenceData();
     setActivePublicTool(tool);
     const sectionMap={salary:'pay_scale_calculator',promotion:'promotion_calculator',house:'house_allocation_calculator',service:'service_calculator',age:'age_calculator',gap:'date_gap_calculator',retire:'retirement_calculator'};
     trackPublic('calculator_view',sectionMap[tool]||'calculator');
@@ -5806,20 +5939,44 @@ function App(){
   const queryAuth=params.get('auth')||'';
   const queryToken=params.get('token')||'';
   const sharedReportToken=params.get('shared_report')||'';
-  const[user,setUser]=useState(null),[loading,setLoading]=useState(true),[page,setPage]=useState('dashboard'),
+  const rememberedSession=(()=>{try{return localStorage.getItem('hisab_had_session')==='1'}catch{return false}})();
+  const[user,setUser]=useState(null),[loading,setLoading]=useState(()=>rememberedSession&&!queryAuth&&!sharedReportToken),[page,setPage]=useState('dashboard'),
     [showLogin,setShowLogin]=useState(()=>!!queryAuth),[authMode,setAuthMode]=useState(()=>queryAuth||'login'),[authToken,setAuthToken]=useState(()=>queryToken),
     [lang,setLang]=useState('bn'),[mobileMenu,setMobileMenu]=useState(false);
-  useEffect(()=>{if(sharedReportToken){setLoading(false);return}api('/api/me').then(x=>setUser(x.user)).catch(()=>{}).finally(()=>setLoading(false))},[sharedReportToken]);
+  useEffect(()=>{
+    if(sharedReportToken){setLoading(false);return}
+    let alive=true;
+    const check=()=>api('/api/me',{timeoutMs:3500}).then(x=>{
+      if(!alive)return;
+      if(x?.user){
+        setUser(x.user);
+        try{localStorage.setItem('hisab_had_session','1')}catch{}
+      }else{
+        try{localStorage.removeItem('hisab_had_session')}catch{}
+      }
+    }).catch(()=>{
+      if(rememberedSession){try{localStorage.removeItem('hisab_had_session')}catch{}}
+    }).finally(()=>{if(alive)setLoading(false)});
+    if(rememberedSession)check();
+    else if('requestIdleCallback' in window){
+      const id=window.requestIdleCallback(check,{timeout:1800});
+      return()=>{alive=false;window.cancelIdleCallback?.(id)};
+    }else{
+      const id=setTimeout(check,700);
+      return()=>{alive=false;clearTimeout(id)};
+    }
+    return()=>{alive=false};
+  },[sharedReportToken]);
   useEffect(()=>{setMobileMenu(false)},[page]);
   useEffect(()=>{
     document.body.classList.toggle('mobile-drawer-open',mobileMenu);
     return()=>document.body.classList.remove('mobile-drawer-open');
   },[mobileMenu]);
-  async function logout(){try{await api('/api/logout',{method:'POST'})}catch{}setLang('bn');setUser(null);setShowLogin(false);setPage('dashboard')}
+  async function logout(){try{await api('/api/logout',{method:'POST'})}catch{}try{localStorage.removeItem('hisab_had_session')}catch{}setLang('bn');setUser(null);setShowLogin(false);setPage('dashboard')}
   useEffect(()=>{if(user&&page)api('/api/usage',{method:'POST',body:JSON.stringify({module:page})}).catch(()=>{})},[user?.id,page]);
   if(sharedReportToken)return <SharedReportViewer token={sharedReportToken} lang={lang} setLang={setLang}/>;
   if(loading)return <div className="loading">Loading...</div>;
-  if(!user)return showLogin?<AuthPortal onLogin={u=>{setLang('bn');setUser(u);window.history.replaceState({},'',window.location.pathname)}} onBack={()=>{setShowLogin(false);setAuthMode('login');setAuthToken('');window.history.replaceState({},'',window.location.pathname)}} lang={lang} setLang={setLang} initialMode={authMode} initialToken={authToken}/>:<PublicHome onLogin={()=>{setAuthMode('login');setShowLogin(true)}} onSignup={()=>{setAuthMode('register');setShowLogin(true)}} lang={lang} setLang={setLang}/>;
+  if(!user)return showLogin?<AuthPortal onLogin={u=>{try{localStorage.setItem('hisab_had_session','1')}catch{}setLang('bn');setUser(u);window.history.replaceState({},'',window.location.pathname)}} onBack={()=>{setShowLogin(false);setAuthMode('login');setAuthToken('');window.history.replaceState({},'',window.location.pathname)}} lang={lang} setLang={setLang} initialMode={authMode} initialToken={authToken}/>:<PublicHome onLogin={()=>{setAuthMode('login');setShowLogin(true)}} onSignup={()=>{setAuthMode('register');setShowLogin(true)}} lang={lang} setLang={setLang}/>;
   const admin=['super_admin','admin','department_admin'].includes(user.role);
   return <div className={`app ${mobileMenu?'mobile-menu-open':''}`}><button className={`mobile-drawer-backdrop ${mobileMenu?'show':''}`} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'} onClick={()=>setMobileMenu(false)}></button><aside className={`side ${mobileMenu?'mobile-open':''}`}>
     <div className="brand"><div><b>{lang==='en'?'Smart Office Hisab':'স্মার্ট অফিস হিসাব'}</b><small>{lang==='en'?'Independent · unofficial':'স্বাধীন · অনানুষ্ঠানিক'}</small></div><button className="mobile-drawer-close" onClick={()=>setMobileMenu(false)} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'}><X size={19}/></button></div>
@@ -5883,4 +6040,8 @@ function App(){
     <a className="floating-whatsapp logged-in-whatsapp" href={`https://wa.me/8801759084692?text=${encodeURIComponent(lang==='en'?'Hello, I need help with Smart Office Hisab.':'আসসালামু আলাইকুম, স্মার্ট অফিস হিসাব অ্যাপ বিষয়ে সহায়তা প্রয়োজন।')}`} target="_blank" rel="noreferrer" aria-label={lang==='en'?'Message on WhatsApp':'হোয়াটসঅ্যাপে মেসেজ করুন'}><MessageCircle/><span>{lang==='en'?'WhatsApp':'হোয়াটসঅ্যাপ'}</span></a>
   </div>
 }
-createRoot(document.getElementById('root')).render(<App/>);
+createRoot(document.getElementById('root')).render(
+  <React.Suspense fallback={<div className="loading">Loading...</div>}>
+    <App/>
+  </React.Suspense>
+);

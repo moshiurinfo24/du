@@ -319,6 +319,19 @@ export default{async fetch(req,env){
       return json({ok:true,...live,window_seconds:90,timezone:'Asia/Dhaka'},200,C);
     }
 
+    if(u.pathname==='/api/public/usage-summary'&&req.method==='GET'){
+      const [stats,modeStats,live,pwa]=await Promise.all([
+        publicTrafficStats(env),
+        publicModeUsageStats(env),
+        liveVisitorStats(env),
+        pwaInstallStats(env)
+      ]);
+      return json({
+        ok:true,...stats,...modeStats,...live,...pwa,
+        window_seconds:90,timezone:'Asia/Dhaka',mode_tracking_since:'2026-09-22'
+      },200,C);
+    }
+
     if(u.pathname==='/api/public/track'&&req.method==='POST'){
       await ensurePublicEvents(env);
       const b=await req.json().catch(()=>({}));
