@@ -309,7 +309,7 @@ const roleLabel={super_admin:'System Administrator',admin:'Admin',department_adm
 const I18N={
   bn:{
     appName:'স্মার্ট অফিস হিসাব',
-    appSub:'ঢাকা বিশ্ববিদ্যালয়ের কর্মকর্তা ও কর্মচারীদের জন্য স্মার্ট হিসাব সহায়ক অ্যাপ',
+    appSub:'ঢাকা বিশ্ববিদ্যালয়ের কর্মকর্তা ও কর্মচারীদের জন্য স্বাধীন হিসাব সহায়ক অ্যাপ',
     login:'লগইন',
     logout:'লগআউট',
     home:'হোম',
@@ -325,7 +325,7 @@ const I18N={
   },
   en:{
     appName:'Smart Office Hisab',
-    appSub:'Smart calculation assistant for University of Dhaka officers and employees',
+    appSub:'Independent calculation assistant for University of Dhaka officers and employees',
     login:'Login',
     logout:'Logout',
     home:'Home',
@@ -434,7 +434,7 @@ function PwaMobileInstallGate({lang='bn'}){
         <span className="pwa-gate-logo"><img src="/branding/smart-office-hisab-logo-v50.webp" alt="" aria-hidden="true"/></span>
         <div><b>Smart Office Hisab</b><small>{en?'For University of Dhaka officers and employees':'ঢাকা বিশ্ববিদ্যালয়ের কর্মকর্তা ও কর্মচারীদের জন্য'}</small></div>
       </div>
-      <span className="pwa-gate-badge">{en?'FOR DU OFFICERS & EMPLOYEES':'ঢাকা বিশ্ববিদ্যালয়ের কর্মকর্তা-কর্মচারীদের জন্য'}</span>
+      <span className="pwa-gate-badge">{en?'INDEPENDENT · FOR DU OFFICERS & EMPLOYEES':'স্বাধীন · ঢাকা বিশ্ববিদ্যালয়ের কর্মকর্তা-কর্মচারীদের জন্য'}</span>
       <div className="pwa-install-count"><Users/><span>{installStats.total_installs==null?(en?'Loading install count…':'ইনস্টল সংখ্যা লোড হচ্ছে…'):(en?`Total installs: ${numLang(installStats.total_installs,'en',0)}`:`মোট ইনস্টল: ${numLang(installStats.total_installs,'bn',0)}`)}</span></div>
       <h1>{en?'Install Smart Office Hisab':'স্মার্ট অফিস হিসাব ইনস্টল করুন'}</h1>
       <p>{en?'A smart calculation assistant built for University of Dhaka officers and employees — salary, arrears, promotion, points, housing, service length and supported reports in one place.':'ঢাকা বিশ্ববিদ্যালয়ের কর্মকর্তা ও কর্মচারীদের জন্য তৈরি স্মার্ট হিসাব সহায়ক অ্যাপ—বেতন, বকেয়া, পদোন্নতি, পয়েন্ট, বাসা, চাকরিকাল ও প্রয়োজনীয় রিপোর্ট এক জায়গায়।'}</p>
@@ -1777,8 +1777,9 @@ function PwaReferenceCenter({lang='bn',notices=[],policies=[]}){
 function FooterUsageStats({visitorStats={},pwaStats={},lang='bn',dark=false}){
   const en=lang==='en';
   const n=v=>v==null?'—':numLang(v,lang,0);
+  const liveN=v=>numLang(Number(v??0),lang,0);
   const items=[
-    {key:'live',icon:Radio,label:en?'Live':'লাইভ',value:n(visitorStats.online_now),tone:'usage-live'},
+    {key:'live',icon:Radio,label:en?'Live':'লাইভ',value:liveN(visitorStats.online_now),tone:'usage-live'},
     {key:'install',icon:Smartphone,label:en?'App':'অ্যাপ',value:n(pwaStats.total_installs),tone:'usage-app'},
     {key:'browser',icon:MonitorCheck,label:en?'Browser':'ব্রাউজার',value:n(visitorStats.browser_total_users),tone:'usage-browser'},
     {key:'visitor',icon:Users,label:en?'Visitors':'ভিজিটর',value:n(visitorStats.total_unique),tone:'usage-visitor'},
@@ -1799,7 +1800,7 @@ function FooterUsageStats({visitorStats={},pwaStats={},lang='bn',dark=false}){
         <div><span><MonitorCheck/>{en?'Browser users':'ব্রাউজার ব্যবহারকারী'}</span><b>{n(visitorStats.browser_today_users)}</b><b>{n(visitorStats.browser_month_users)}</b><b>{n(visitorStats.browser_total_users)}</b></div>
         <div><span><Smartphone/>{en?'PWA users':'PWA ব্যবহারকারী'}</span><b>{n(visitorStats.pwa_today_users)}</b><b>{n(visitorStats.pwa_month_users)}</b><b>{n(visitorStats.pwa_total_users)}</b></div>
       </div>
-      <div className="compact-live-row"><span><i></i>{en?'Online now':'এখন অনলাইনে'} <b>{n(visitorStats.online_now)}</b></span><span>{en?'Browser':'Browser'} <b>{n(visitorStats.browser_online)}</b></span><span>PWA <b>{n(visitorStats.pwa_online)}</b></span><span>{en?'Active 5m':'৫ মিনিটে সক্রিয়'} <b>{n(visitorStats.active_5m)}</b></span></div>
+      <div className="compact-live-row"><span><i></i>{en?'Online now':'এখন অনলাইনে'} <b>{liveN(visitorStats.online_now)}</b></span><span>{en?'Browser':'Browser'} <b>{n(visitorStats.browser_online)}</b></span><span>PWA <b>{n(visitorStats.pwa_online)}</b></span><span>{en?'Active 5m':'৫ মিনিটে সক্রিয়'} <b>{n(visitorStats.active_5m)}</b></span></div>
       <p>{en?'Browser/PWA historical split is counted from this release onward; older traffic had no mode field.':'Browser/PWA-এর আলাদা ঐতিহাসিক হিসাব এই রিলিজ থেকে গণনা হচ্ছে; আগের ট্রাফিকে mode তথ্য ছিল না।'}</p>
     </div>
   </details>;
@@ -1938,7 +1939,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
 
   const desktopSidebar=<aside className="pwa-desktop-sidebar" aria-label={en?'App navigation':'অ্যাপ নেভিগেশন'}>
     <button className="pwa-desktop-brand" onClick={goHome}>
-      <span><img src="/branding/smart-office-hisab-logo-v50.webp" alt="" aria-hidden="true"/></span><div><b>{en?'Smart Office Hisab':'স্মার্ট অফিস হিসাব'}</b><small>{en?'For University of Dhaka officers and employees':'ঢাকা বিশ্ববিদ্যালয়ের কর্মকর্তা ও কর্মচারীদের জন্য'}</small></div>
+      <span><img src="/branding/smart-office-hisab-logo-v50.webp" alt="" aria-hidden="true"/></span><div><b>{en?'Smart Office Hisab':'স্মার্ট অফিস হিসাব'}</b><small className="pwa-brand-audience">{en?'Independent calculation assistant for University of Dhaka officers and employees':'ঢাকা বিশ্ববিদ্যালয়ের কর্মকর্তা ও কর্মচারীদের জন্য স্বাধীন হিসাব সহায়ক অ্যাপ'}</small><em className="pwa-brand-unofficial">{en?'Not an official University of Dhaka app':'এটি ঢাকা বিশ্ববিদ্যালয়ের অফিসিয়াল অ্যাপ নয়'}</em></div>
     </button>
     <nav className="pwa-desktop-nav">
       <div className="pwa-desktop-nav-group">
@@ -2029,7 +2030,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
   return <div className="pwa-app-shell approved-home">
     {desktopSidebar}
     <header className="pwa-app-topbar">
-      <div className="pwa-app-brand"><span><img src="/branding/smart-office-hisab-logo-v50.webp" alt="" aria-hidden="true"/></span><div><b>{en?'Smart Office Hisab':'স্মার্ট অফিস হিসাব'}</b><small>{en?'For University of Dhaka officers and employees':'ঢাকা বিশ্ববিদ্যালয়ের কর্মকর্তা ও কর্মচারীদের জন্য'}</small></div></div>
+      <div className="pwa-app-brand"><span><img src="/branding/smart-office-hisab-logo-v50.webp" alt="" aria-hidden="true"/></span><div><b>{en?'Smart Office Hisab':'স্মার্ট অফিস হিসাব'}</b><small className="pwa-brand-audience">{en?'Independent calculation assistant for University of Dhaka officers and employees':'ঢাকা বিশ্ববিদ্যালয়ের কর্মকর্তা ও কর্মচারীদের জন্য স্বাধীন হিসাব সহায়ক অ্যাপ'}</small><em className="pwa-brand-unofficial">{en?'Not an official University of Dhaka app':'এটি ঢাকা বিশ্ববিদ্যালয়ের অফিসিয়াল অ্যাপ নয়'}</em></div></div>
       <div className="pwa-app-head-actions"><button className="pwa-round-btn" onClick={()=>setLang(lang==='bn'?'en':'bn')}>{en?'বাং':'EN'}</button><PwaControls lang={lang}/><button className="pwa-login-entry" onClick={onLogin}><UserRound/><span>{en?'Login':'লগইন'}</span></button></div>
     </header>
 
@@ -2186,9 +2187,12 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
 
   useEffect(()=>{
     let alive=true;
-    const loadStats=()=>Promise.all([api('/api/public/stats'),api('/api/public/live-stats')]).then(([traffic,live])=>{if(alive)setVisitorStats({...traffic,...live})}).catch(()=>{});
+    const loadTrafficStats=()=>api('/api/public/stats').then(x=>{if(alive)setVisitorStats(prev=>({...prev,...x}))}).catch(()=>{});
+    const loadLiveStats=()=>api('/api/public/live-stats').then(x=>{if(alive)setVisitorStats(prev=>({...prev,...x}))}).catch(()=>{});
+    const loadStats=()=>Promise.allSettled([loadTrafficStats(),loadLiveStats()]);
     const loadPwaStats=()=>api('/api/public/pwa-install-stats').then(x=>{if(alive)setPwaStats(x)}).catch(()=>{});
-    trackPublic('page_view','home').finally(()=>{loadStats();loadPwaStats()});
+    trackPublic('page_view','home').catch(()=>{});
+    sendLiveHeartbeat('home').finally(()=>{loadStats();loadPwaStats()});
     Promise.allSettled([
       api('/api/public/notices?limit=100'),
       api('/api/public/policies?limit=100')
@@ -2197,7 +2201,7 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
       if(n.status==='fulfilled')setNotices(n.value.items||n.value.notices||[]);
       if(p.status==='fulfilled')setPolicies(p.value.items||p.value.policies||[]);
     });
-    const timer=setInterval(()=>{loadStats();loadPwaStats()},15000);
+    const timer=setInterval(()=>{sendLiveHeartbeat(currentLiveSection()).finally(loadLiveStats);loadTrafficStats();loadPwaStats()},15000);
     return ()=>{alive=false;clearInterval(timer)};
   },[]);
 

@@ -190,3 +190,61 @@
     align-self:auto
   }
 }
+
+
+/* Audience identity + mobile footer anchor + live visibility · V57 */
+.pwa-brand-unofficial{
+  display:block;
+  margin-top:2px;
+  color:#9d6d1f;
+  font-style:normal;
+  font-size:7px;
+  line-height:1.2;
+  font-weight:800
+}
+.pwa-app-topbar .pwa-brand-unofficial,
+.pwa-desktop-brand .pwa-brand-unofficial{color:#9d6d1f}
+.premium-footer-stats-only .usage-live b{
+  color:#fff!important;
+  font-weight:900!important;
+  opacity:1!important
+}
+@media(max-width:900px){
+  .pwa-app-shell.approved-home{
+    display:flex!important;
+    flex-direction:column!important;
+    min-height:100dvh!important;
+    box-sizing:border-box!important;
+    padding-bottom:calc(72px + env(safe-area-inset-bottom))!important
+  }
+  .pwa-app-shell.approved-home>.pwa-app-topbar{flex:0 0 auto}
+  .pwa-app-shell.approved-home>.pwa-app-home{
+    flex:1 0 auto!important;
+    width:100%!important;
+    min-height:calc(100dvh - 70px - 72px - env(safe-area-inset-bottom))!important;
+    box-sizing:border-box!important;
+    display:flex!important;
+    flex-direction:column!important;
+    padding-bottom:6px!important
+  }
+  .pwa-app-shell.approved-home>.pwa-app-home>.premium-app-footer.compact{
+    margin-top:auto!important;
+    margin-bottom:0!important;
+    flex:0 0 auto!important
+  }
+  .pwa-app-brand .pwa-brand-audience{
+    max-width:175px!important;
+    -webkit-line-clamp:2!important
+  }
+  .pwa-app-brand .pwa-brand-unofficial{
+    max-width:175px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    font-size:5.8px
+  }
+}
+@media(max-width:430px){
+  .pwa-app-brand .pwa-brand-audience{max-width:145px!important;font-size:5.8px!important}
+  .pwa-app-brand .pwa-brand-unofficial{max-width:145px;font-size:5.4px}
+}
