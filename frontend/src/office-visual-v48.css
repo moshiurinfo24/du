@@ -1,0 +1,30 @@
+/* Office Visual Experience · V48 */
+.pwa-welcome-visual{position:relative;z-index:1;height:132px;margin:14px 0 0;overflow:hidden;border:1px solid rgba(255,255,255,.2);border-radius:17px;background:rgba(255,255,255,.1);box-shadow:0 10px 25px rgba(19,30,92,.16)}
+.pwa-welcome-visual:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 48%,rgba(22,35,98,.38));pointer-events:none}
+.pwa-welcome-visual img{width:100%;height:100%;display:block;object-fit:cover;object-position:center 38%}
+.pwa-welcome-visual>span{position:absolute;z-index:2;left:10px;bottom:9px;display:inline-flex;align-items:center;gap:6px;min-height:28px;padding:5px 9px;border:1px solid rgba(255,255,255,.22);border-radius:999px;background:rgba(30,44,110,.64);color:#fff;backdrop-filter:blur(8px)}
+.pwa-welcome-visual>span svg{width:13px;height:13px}.pwa-welcome-visual>span b{font-size:8px;line-height:1.2}
+.pwa-office-assist-card{margin-top:18px;overflow:hidden;border:1px solid #dfe5f2;border-radius:20px;background:linear-gradient(145deg,#fff,#f5f8ff);box-shadow:0 9px 26px rgba(41,58,140,.055)}
+.pwa-office-assist-visual{position:relative;height:158px;overflow:hidden;background:#edf4fb}
+.pwa-office-assist-visual:after{content:"";position:absolute;inset:auto 0 0;height:45%;background:linear-gradient(180deg,transparent,#fff)}
+.pwa-office-assist-visual img{width:100%;height:100%;display:block;object-fit:cover;object-position:center 42%}
+.pwa-office-assist-copy{padding:15px}
+.pwa-office-assist-copy>small{display:block;color:#3F51B5;font:900 7.5px/1 Inter,sans-serif;letter-spacing:.09em}
+.pwa-office-assist-copy h3{margin:6px 0 5px;color:#35425a;font-size:15px;line-height:1.28}
+.pwa-office-assist-copy p{margin:0;color:#667690;font-size:9.5px;line-height:1.55}
+.pwa-office-assist-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:13px}
+.pwa-office-assist-actions button{min-width:0;min-height:40px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:6px;padding:7px 9px;border:1px solid #dce3f0;border-radius:11px;background:#fff;color:#526075;font:800 8.5px/1.25 inherit;cursor:pointer}
+.pwa-office-assist-actions button.primary{border-color:transparent;background:linear-gradient(135deg,#5062CA,#3F51B5 68%,#278FAE);color:#fff;box-shadow:0 8px 18px rgba(63,81,181,.18)}
+.pwa-office-assist-actions button svg{width:14px;height:14px}.pwa-office-assist-actions button span{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pwa-office-assist-actions button>svg:last-child{width:12px;height:12px;opacity:.75}
+@media(min-width:901px){
+  .pwa-welcome-card{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(360px,.85fr);grid-template-rows:auto auto;column-gap:28px;align-items:center}
+  .pwa-welcome-copy{grid-column:1;grid-row:1}.pwa-welcome-copy h1{max-width:620px}.pwa-welcome-copy p{max-width:620px}
+  .pwa-welcome-visual{grid-column:2;grid-row:1/3;height:170px;margin:0}
+  .pwa-welcome-meta{grid-column:1;grid-row:2;width:min(100%,570px);margin-top:18px}
+  .pwa-office-assist-card{grid-column:1/-1;margin-top:0;min-height:230px;display:grid;grid-template-columns:minmax(330px,.85fr) minmax(0,1.15fr);align-items:stretch}
+  .pwa-office-assist-visual{height:100%;min-height:230px}.pwa-office-assist-visual:after{inset:0 0 0 auto;width:28%;height:100%;background:linear-gradient(90deg,transparent,#fff)}
+  .pwa-office-assist-copy{display:flex;flex-direction:column;justify-content:center;padding:28px 32px}.pwa-office-assist-copy h3{font-size:20px}.pwa-office-assist-copy p{max-width:680px;font-size:10.5px}
+  .pwa-office-assist-actions{width:min(520px,100%);margin-top:16px}.pwa-office-assist-actions button{min-height:46px;font-size:9.5px}.pwa-office-assist-actions button:hover{transform:translateY(-1px);box-shadow:0 9px 20px rgba(41,58,140,.09)}
+}
+@media(max-width:520px){.pwa-welcome-visual{height:118px}.pwa-office-assist-visual{height:142px}.pwa-office-assist-actions{grid-template-columns:1fr}}
+@media(max-width:380px){.pwa-welcome-visual{height:108px}.pwa-office-assist-copy{padding:13px}}

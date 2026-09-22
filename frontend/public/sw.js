@@ -1,10 +1,12 @@
-const CACHE_NAME='hisab-pwa-runtime-v47';
+const CACHE_NAME='hisab-pwa-runtime-v48';
 const CORE=[
   '/',
   '/manifest.webmanifest',
   '/icons/du-app-192.svg',
   '/icons/du-app-512.svg',
-  '/icons/du-app-maskable.svg'
+  '/icons/du-app-maskable.svg',
+  '/illustrations/hisab-office-hero-v48.webp',
+  '/illustrations/hisab-office-team-v48.webp'
 ];
 
 self.addEventListener('install',event=>{

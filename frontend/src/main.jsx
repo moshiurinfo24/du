@@ -61,6 +61,7 @@ import './live-visitors-v37.css';
 import './premium-footer-v41.css';
 import './login-entry-v46.css';
 import './home-discovery-v47.css';
+import './office-visual-v48.css';
 import {initPwaRuntime,subscribePwa,getPwaState,promptPwaInstall,formatPwaTime,manualPwaUpdateCheck,consumePwaUpdateNotice} from './pwa-client.js';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import GuestLocalCenter from './guest-local-v1.jsx';
@@ -2019,6 +2020,10 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     <main className="pwa-app-home">
       <section className="pwa-welcome-card">
         <div className="pwa-welcome-copy"><small>{en?'WELCOME':'স্বাগতম'}</small><h1>{en?'What would you like to calculate today?':'আজ কোন হিসাবটি করতে চান?'}</h1><p>{en?'Choose a service below and get the result in a few simple steps.':'নিচের একটি সেবা নির্বাচন করুন এবং কয়েকটি সহজ ধাপে হিসাব দেখুন।'}</p></div>
+        <div className="pwa-welcome-visual" aria-hidden="true">
+          <img src="/illustrations/hisab-office-hero-v48.webp" alt="" loading="eager" decoding="async"/>
+          <span><Calculator/><b>{en?'Smart office calculations':'স্মার্ট অফিস হিসাব'}</b></span>
+        </div>
         <div className="pwa-welcome-meta compact">
           <span><RefreshCw/><div><small>{en?'Latest update':'সর্বশেষ আপডেট'}</small><b>{updated}</b></div></span>
         </div>
@@ -2072,6 +2077,21 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
         <div className="pwa-personal-icon"><LayoutDashboard/></div>
         <div><small>{en?'YOUR SPACE · LOCAL':'আপনার ব্যক্তিগত অংশ · LOCAL'}</small><h3>{en?'My Dashboard':'আমার ড্যাশবোর্ড'}</h3><p>{en?'Profile, education, career timeline, salary history, leave and reports — no login required.':'চাকরি তথ্য, শিক্ষা, টাইমলাইন, বেতন ইতিহাস, ছুটি ও রিপোর্ট—সব লগইন ছাড়াই।'}</p></div>
         <ChevronRight/>
+      </section>
+
+      <section className="pwa-office-assist-card">
+        <div className="pwa-office-assist-visual">
+          <img src="/illustrations/hisab-office-team-v48.webp" alt={en?'Office colleagues working together on calculations':'অফিসের সহকর্মীরা একসঙ্গে হিসাব করছেন'} loading="lazy" decoding="async"/>
+        </div>
+        <div className="pwa-office-assist-copy">
+          <small>{en?'OFFICE CALCULATION ASSISTANT':'অফিস হিসাব সহায়িকা'}</small>
+          <h3>{en?'Calculate together, keep the result organised':'একসঙ্গে হিসাব করুন, ফলাফল রাখুন গোছানো'}</h3>
+          <p>{en?'Salary, arrear, deductions and reports can be prepared from one place with clear step-by-step tools.':'বেতন, এরিয়ার, কর্তন ও রিপোর্ট—এক জায়গা থেকে ধাপে ধাপে পরিষ্কারভাবে হিসাব ও প্রস্তুত করুন।'}</p>
+          <div className="pwa-office-assist-actions">
+            <button className="primary" onClick={()=>open('salary')}><Calculator/><span>{en?'Start calculation':'হিসাব শুরু করুন'}</span><ChevronRight/></button>
+            <button onClick={()=>open('pdf-center')}><FileText/><span>{en?'Open PDF Center':'PDF সেন্টার'}</span><ChevronRight/></button>
+          </div>
+        </div>
       </section>
 
       {recent.length>0&&<section className="pwa-home-section recent">
