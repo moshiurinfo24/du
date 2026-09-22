@@ -5,7 +5,7 @@ import {
   LayoutDashboard,TrendingUp,WalletCards,Users,ShieldCheck,LogOut,Plus,Search,
   UserRound,Building2,IdCard,Activity,ChevronRight,ChevronDown,ArrowLeft,X,Save,Trash2,RefreshCw,
   Settings,Database,LockKeyhole,Home,BookOpen,Calculator,HelpCircle,Phone,
-  Bell,ArrowRight,CalendarDays,CheckCircle2,AlertTriangle,Landmark,FileText,Camera,Briefcase,MapPin,Mail,PhoneCall,MessageCircle,Edit3,UserCircle2,History,ArrowRightLeft,GraduationCap,BadgeDollarSign,Clock3,FileClock,ServerCog,Gauge,UserCog,ScrollText,SlidersHorizontal,ShieldAlert,Link2,Eye,Power,BookUser,NotebookTabs,Milestone,Award,BarChart3,PieChart,LineChart,MonitorCheck,Sparkles,UserCheck,UserX,Boxes,Command,DatabaseZap,ShieldEllipsis,Radio,TrendingDown,ReceiptText,ChartNoAxesCombined,Route,Flag,Target,Share2,Copy,Send,Smartphone,Cloud
+  Bell,ArrowRight,CalendarDays,CheckCircle2,AlertTriangle,Landmark,FileText,Camera,Briefcase,MapPin,Mail,PhoneCall,MessageCircle,Edit3,UserCircle2,History,ArrowRightLeft,GraduationCap,BadgeDollarSign,Clock3,FileClock,ServerCog,Gauge,UserCog,ScrollText,SlidersHorizontal,ShieldAlert,Link2,Eye,Power,BookUser,NotebookTabs,Milestone,Award,BarChart3,PieChart,LineChart,MonitorCheck,Sparkles,UserCheck,UserX,Boxes,Command,DatabaseZap,ShieldEllipsis,Radio,TrendingDown,ReceiptText,ChartNoAxesCombined,Route,Flag,Target,Share2,Copy,Send,Smartphone,Cloud,Star
 } from 'lucide-react';
 import './styles.css';
 import './auth-phase8.css';
@@ -60,6 +60,7 @@ import './leave-balance-v36.css';
 import './live-visitors-v37.css';
 import './premium-footer-v41.css';
 import './login-entry-v46.css';
+import './home-discovery-v47.css';
 import {initPwaRuntime,subscribePwa,getPwaState,promptPwaInstall,formatPwaTime,manualPwaUpdateCheck,consumePwaUpdateNotice} from './pwa-client.js';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import GuestLocalCenter from './guest-local-v1.jsx';
@@ -1828,6 +1829,10 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
   const [recent,setRecent]=useState(()=>{
     try{return JSON.parse(localStorage.getItem('hisab_recent_tools')||'[]').slice(0,3)}catch{return[]}
   });
+  const [toolSearch,setToolSearch]=useState('');
+  const [favoriteTools,setFavoriteTools]=useState(()=>{
+    try{return JSON.parse(localStorage.getItem('hisab_favorite_tools_v1')||'[]').slice(0,8)}catch{return[]}
+  });
   useEffect(()=>subscribePwa(setAppStatus),[]);
   const labels={
     salary:en?'Pay Scale & Salary':'পে-স্কেল ও বেতন',
@@ -1894,6 +1899,23 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     ['local-reports',FileText,en?'My Reports':'রিপোর্ট'],
     ['local-privacy',ShieldCheck,en?'Data & Backup':'ডাটা ও ব্যাকআপ']
   ];
+  const searchableTools=[
+    ...tools,
+    ...moreTools,
+    ...localServices.map(([key,I,title])=>[key,I,title,'local'])
+  ];
+  const normalizedSearch=toolSearch.trim().toLowerCase();
+  const filteredTools=normalizedSearch
+    ?searchableTools.filter(([key,,title])=>String(title+' '+key+' '+(labels[key]||'')).toLowerCase().includes(normalizedSearch)).slice(0,8)
+    :[];
+  const favoriteRows=favoriteTools.map(key=>searchableTools.find(x=>x[0]===key)).filter(Boolean).slice(0,8);
+  const toggleFavorite=(key)=>{
+    setFavoriteTools(prev=>{
+      const next=prev.includes(key)?prev.filter(x=>x!==key):[key,...prev].slice(0,8);
+      localStorage.setItem('hisab_favorite_tools_v1',JSON.stringify(next));
+      return next;
+    });
+  };
   const localMode=tool=>tool.startsWith('local-')?tool.slice(6):'dashboard';
   const bottomServicesActive=!!activePublicTool&&!['salary','promotion'].includes(activePublicTool)&&!String(activePublicTool).startsWith('local-');
 
@@ -2000,6 +2022,35 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
         <div className="pwa-welcome-meta compact">
           <span><RefreshCw/><div><small>{en?'Latest update':'সর্বশেষ আপডেট'}</small><b>{updated}</b></div></span>
         </div>
+      </section>
+
+      <section className="pwa-home-discovery">
+        <div className="pwa-tool-search">
+          <Search/>
+          <input
+            value={toolSearch}
+            onChange={e=>setToolSearch(e.target.value)}
+            placeholder={en?'Search calculators, reports or services':'হিসাব, রিপোর্ট বা সেবা খুঁজুন'}
+            aria-label={en?'Search services':'সেবা খুঁজুন'}
+          />
+          {toolSearch&&<button onClick={()=>setToolSearch('')} aria-label={en?'Clear search':'সার্চ মুছুন'}><X/></button>}
+        </div>
+
+        {normalizedSearch&&<div className="pwa-search-results">
+          <div className="pwa-discovery-head"><span>{en?'SEARCH RESULTS':'সার্চ ফলাফল'}</span><b>{numLang(filteredTools.length,lang,0)}</b></div>
+          {filteredTools.length?<div className="pwa-discovery-grid">{filteredTools.map(([key,I,title,tone])=><article key={key}>
+            <button className="pwa-discovery-open" onClick={()=>{setToolSearch('');open(key)}}><span className={tone||'local'}><I/></span><b>{title}</b><ChevronRight/></button>
+            <button className={'pwa-favorite-toggle'+(favoriteTools.includes(key)?' active':'')} onClick={()=>toggleFavorite(key)} aria-label={favoriteTools.includes(key)?(en?'Remove favorite':'ফেভারিট থেকে সরান'):(en?'Add favorite':'ফেভারিট করুন')}><Star/></button>
+          </article>)}</div>:<div className="pwa-search-empty">{en?'No matching service found.':'মিলছে এমন কোনো সেবা পাওয়া যায়নি।'}</div>}
+        </div>}
+
+        {!normalizedSearch&&favoriteRows.length>0&&<div className="pwa-favorites-strip">
+          <div className="pwa-discovery-head"><span>{en?'FAVOURITES':'পছন্দের সেবা'}</span><small>{en?'Saved on this device':'এই ডিভাইসে সংরক্ষিত'}</small></div>
+          <div className="pwa-discovery-grid">{favoriteRows.map(([key,I,title,tone])=><article key={key}>
+            <button className="pwa-discovery-open" onClick={()=>open(key)}><span className={tone||'local'}><I/></span><b>{title}</b><ChevronRight/></button>
+            <button className="pwa-favorite-toggle active" onClick={()=>toggleFavorite(key)} aria-label={en?'Remove favorite':'ফেভারিট থেকে সরান'}><Star/></button>
+          </article>)}</div>
+        </div>}
       </section>
 
       {(localProfile.grade||localProfile.category||localProfile.first_joining_date||localProfile.current_post)&&<section className="pwa-profile-strip">
