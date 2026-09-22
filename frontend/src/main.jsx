@@ -306,7 +306,7 @@ initLivePresence();
 const roleLabel={super_admin:'System Administrator',admin:'Admin',department_admin:'Department Admin',editor:'Editor',employee:'Employee'};
 const I18N={
   bn:{
-    appName:'হিসাব সহায়িকা',
+    appName:'স্মার্ট অফিস হিসাব',
     appSub:'স্বাধীন ও অনানুষ্ঠানিক হিসাব সহায়ক প্ল্যাটফর্ম',
     login:'লগইন',
     logout:'লগআউট',
@@ -322,7 +322,7 @@ const I18N={
     welcome:'স্বাগতম'
   },
   en:{
-    appName:'Hisab Sahayika',
+    appName:'Smart Office Hisab',
     appSub:'Independent & unofficial calculation assistant',
     login:'Login',
     logout:'Logout',
@@ -405,11 +405,11 @@ function PwaMobileInstallGate({lang='bn'}){
       <div className="pwa-gate-icon success"><CheckCircle2/></div>
       <span className="pwa-gate-badge">{en?'INSTALLATION COMPLETE':'ইনস্টল সম্পন্ন'}</span>
       <div className="pwa-install-count"><Users/><span>{installStats.total_installs==null?(en?'Loading install count…':'ইনস্টল সংখ্যা লোড হচ্ছে…'):(en?`Total installs: ${numLang(installStats.total_installs,'en',0)}`:`মোট ইনস্টল: ${numLang(installStats.total_installs,'bn',0)}`)}</span></div>
-      <h1>{en?'Hisab Sahayika is installed':'হিসাব সহায়িকা ইনস্টল হয়েছে'}</h1>
-      <p>{en?'Open Hisab Sahayika from your phone Home Screen and use the calculation services from the app.':'এখন আপনার মোবাইলের Home Screen থেকে হিসাব সহায়িকা খুলে প্রয়োজনীয় হিসাব ও সেবাগুলো ব্যবহার করুন।'}</p>
+      <h1>{en?'Smart Office Hisab is installed':'স্মার্ট অফিস হিসাব ইনস্টল হয়েছে'}</h1>
+      <p>{en?'Open Smart Office Hisab from your phone Home Screen and use the calculation services from the app.':'এখন আপনার মোবাইলের Home Screen থেকে স্মার্ট অফিস হিসাব খুলে প্রয়োজনীয় হিসাব ও সেবাগুলো ব্যবহার করুন।'}</p>
       <div className="pwa-home-hint">
-        <span className="pwa-home-app-icon">হি</span>
-        <div><b>{en?'Look for this app on your Home Screen':'Home Screen-এ এই অ্যাপটি খুঁজুন'}</b><small>{en?'Hisab Sahayika · Indigo + Aqua icon':'হিসাব সহায়িকা · ইন্ডিগো + অ্যাকুয়া আইকন'}</small></div>
+        <span className="pwa-home-app-icon">স্মা</span>
+        <div><b>{en?'Look for this app on your Home Screen':'Home Screen-এ এই অ্যাপটি খুঁজুন'}</b><small>{en?'Smart Office Hisab · Indigo + Aqua icon':'স্মার্ট অফিস হিসাব · ইন্ডিগো + অ্যাকুয়া আইকন'}</small></div>
       </div>
       <div className="pwa-gate-service-title">{en?'Services available in the app':'অ্যাপে যা যা পাবেন'}</div>
       <div className="pwa-gate-services">{services.map(([I,t])=><span key={t}><I/><b>{t}</b></span>)}</div>
@@ -417,9 +417,9 @@ function PwaMobileInstallGate({lang='bn'}){
       <div className="pwa-gate-update">
         <RefreshCw/><div><small>{en?'Automatic updates':'অটো আপডেট'}</small><b>{en?'Enabled':'চালু'}</b><em>{en?'Latest app update':'সর্বশেষ অ্যাপ আপডেট'}: {lastTime}</em>{localStorage.getItem('du_pwa_installed_at')&&<em>{en?'Installed':'ইনস্টল হয়েছে'}: {installedAt}</em>}</div>
       </div>
-      <div className="pwa-browser-locked-note"><Smartphone/><div><b>{en?'Continue in the installed app':'এখন ইনস্টল করা অ্যাপে প্রবেশ করুন'}</b><span>{en?'This browser page will not continue to the calculators. Open “Hisab Sahayika” from your Home Screen.':'এই ব্রাউজার পেজ থেকে আর সামনে যাওয়া যাবে না। Home Screen থেকে “হিসাব সহায়িকা” অ্যাপটি খুলুন।'}</span></div></div>
+      <div className="pwa-browser-locked-note"><Smartphone/><div><b>{en?'Continue in the installed app':'এখন ইনস্টল করা অ্যাপে প্রবেশ করুন'}</b><span>{en?'This browser page will not continue to the calculators. Open “Smart Office Hisab” from your Home Screen.':'এই ব্রাউজার পেজ থেকে আর সামনে যাওয়া যাবে না। Home Screen থেকে “স্মার্ট অফিস হিসাব” অ্যাপটি খুলুন।'}</span></div></div>
       <div className="pwa-gate-actions single">
-        <button className="pwa-gate-primary home-open-info" onClick={()=>{}}><Home/><span>{en?'Home Screen → Hisab Sahayika → Open':'Home Screen → হিসাব সহায়িকা → খুলুন'}</span></button>
+        <button className="pwa-gate-primary home-open-info" onClick={()=>{}}><Home/><span>{en?'Home Screen → Smart Office Hisab → Open':'Home Screen → স্মার্ট অফিস হিসাব → খুলুন'}</span></button>
       </div>
     </div>
   </div>;
@@ -427,12 +427,12 @@ function PwaMobileInstallGate({lang='bn'}){
   return <div className="pwa-install-gate">
     <div className="pwa-gate-card">
       <div className="pwa-gate-top">
-        <span className="pwa-gate-logo">হি</span>
-        <div><b>Hisab Sahayika</b><small>{en?'Independent calculation assistant':'স্বাধীন হিসাব সহায়ক অ্যাপ'}</small></div>
+        <span className="pwa-gate-logo">স্মা</span>
+        <div><b>Smart Office Hisab</b><small>{en?'Independent calculation assistant':'স্বাধীন হিসাব সহায়ক অ্যাপ'}</small></div>
       </div>
       <span className="pwa-gate-badge">{en?'INDEPENDENT CALCULATION APP':'স্বাধীন হিসাব সহায়ক অ্যাপ'}</span>
       <div className="pwa-install-count"><Users/><span>{installStats.total_installs==null?(en?'Loading install count…':'ইনস্টল সংখ্যা লোড হচ্ছে…'):(en?`Total installs: ${numLang(installStats.total_installs,'en',0)}`:`মোট ইনস্টল: ${numLang(installStats.total_installs,'bn',0)}`)}</span></div>
-      <h1>{en?'Install Hisab Sahayika':'হিসাব সহায়িকা ইনস্টল করুন'}</h1>
+      <h1>{en?'Install Smart Office Hisab':'স্মার্ট অফিস হিসাব ইনস্টল করুন'}</h1>
       <p>{en?'A convenient independent app for viewing salary, arrears, promotion, points, housing and other supported calculations.':'বেতন, বকেয়া, পদোন্নতি, পয়েন্ট, বাসা, চাকরিকাল ও অন্যান্য সমর্থিত হিসাব জানা ও দেখার জন্য একটি স্বাধীন সহায়ক অ্যাপ।'}</p>
 
       <div className="pwa-gate-quick">
@@ -497,7 +497,7 @@ function PwaControls({lang='bn'}){
     {(pwa.canInstall||pwa.iosInstallHint||pwa.previouslyInstalled)&&!pwa.installed&&<button className="pwa-install-button" onClick={doInstall} title={en?'Install app':'অ্যাপ ইনস্টল করুন'}><Save/><span>{en?'Install':'ইনস্টল'}</span></button>}
     <button className={`pwa-status-button ${pwa.updating?'updating':''}`} onClick={()=>setOpen(v=>!v)} title={en?'App update status':'অ্যাপ আপডেট অবস্থা'}><RefreshCw/><span><b>{pwa.offline?(en?'Offline':'অফলাইন'):(pwa.updating?(en?'Updating':'আপডেট হচ্ছে'):(en?'App':'অ্যাপ'))}</b><small>{timeText}</small></span></button>
     {open&&<div className="pwa-status-popover">
-      <div className="pwa-status-head"><span>{pwa.updating?<RefreshCw/>:<CheckCircle2/>}</span><div><b>{en?'Hisab Sahayika':'হিসাব সহায়িকা'}</b><small>{en?'Independent · unofficial calculation app':'স্বাধীন · অনানুষ্ঠানিক হিসাব সহায়ক অ্যাপ'}</small></div></div>
+      <div className="pwa-status-head"><span>{pwa.updating?<RefreshCw/>:<CheckCircle2/>}</span><div><b>{en?'Smart Office Hisab':'স্মার্ট অফিস হিসাব'}</b><small>{en?'Independent · unofficial calculation app':'স্বাধীন · অনানুষ্ঠানিক হিসাব সহায়ক অ্যাপ'}</small></div></div>
       <div className="pwa-status-grid">
         <div><small>{en?'Automatic updates':'অটো আপডেট'}</small><b>{en?'Enabled — checked automatically':'চালু — স্বয়ংক্রিয়ভাবে চেক হবে'}</b></div>
         <div><small>{en?'Last update':'সর্বশেষ আপডেট'}</small><b>{timeText}</b></div>
@@ -514,8 +514,8 @@ function PwaControls({lang='bn'}){
     {pwa.updating&&<div className="pwa-update-toast"><RefreshCw/><span>{en?'New version found. Updating automatically…':'নতুন ভার্সন পাওয়া গেছে। অটো আপডেট হচ্ছে…'}</span></div>}
     {updatedNotice&&!pwa.updating&&<div className="pwa-update-toast pwa-update-complete"><CheckCircle2/><span><b>{en?'Automatic update complete':'অটো আপডেট সম্পন্ন'}</b><small>{formatPwaTime(updatedNotice,lang)}</small></span><button onClick={()=>{setUpdatedNotice('');consumePwaUpdateNotice()}} aria-label={en?'Close':'বন্ধ'}><X size={15}/></button></div>}
     {nudge&&<div className="pwa-install-nudge">
-      <span className="app-mark">হি</span>
-      <div><b>{en?'Install Hisab Sahayika':'হিসাব সহায়িকা ইনস্টল করুন'}</b><small>{pwa.iosInstallHint?(en?'Add it to your Home Screen for app-like use.':'Home Screen-এ যোগ করলে অ্যাপের মতো ব্যবহার করতে পারবেন।'):(!pwa.canInstall&&pwa.previouslyInstalled?(en?'Reinstall from your browser menu if the one-tap prompt is not available.':'এক-ট্যাপ Install না এলে browser menu থেকে আবার ইনস্টল করুন।'):(en?'One tap to install. Future updates will be automatic.':'এক ট্যাপে ইনস্টল করুন। পরের আপডেটগুলো অটো হবে।'))}</small></div>
+      <span className="app-mark">স্মা</span>
+      <div><b>{en?'Install Smart Office Hisab':'স্মার্ট অফিস হিসাব ইনস্টল করুন'}</b><small>{pwa.iosInstallHint?(en?'Add it to your Home Screen for app-like use.':'Home Screen-এ যোগ করলে অ্যাপের মতো ব্যবহার করতে পারবেন।'):(!pwa.canInstall&&pwa.previouslyInstalled?(en?'Reinstall from your browser menu if the one-tap prompt is not available.':'এক-ট্যাপ Install না এলে browser menu থেকে আবার ইনস্টল করুন।'):(en?'One tap to install. Future updates will be automatic.':'এক ট্যাপে ইনস্টল করুন। পরের আপডেটগুলো অটো হবে।'))}</small></div>
       <button onClick={doInstall}>{en?'Install':'ইনস্টল'}</button>
       <button className="dismiss" onClick={dismiss} aria-label={en?'Dismiss':'বন্ধ'}><X size={15}/></button>
     </div>}
@@ -645,7 +645,7 @@ function reportShell(title,subtitle,body,lang='bn',meta={}){
         <div style="display:flex;align-items:center;gap:12px;min-width:0;position:relative;z-index:1">
           <div style="width:41px;height:41px;border-radius:11px;background:linear-gradient(145deg,#fff,#edf5f2);color:#0c4a67;display:grid;place-items:center;font-family:'Inter',Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.5px;flex:0 0 auto;box-shadow:0 5px 16px rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.7)">EDS</div>
           <div style="min-width:0">
-            <div style="font-size:10.2px;font-weight:700;opacity:.92;letter-spacing:.1px">${en?'Hisab Sahayika':'হিসাব সহায়িকা'}</div>
+            <div style="font-size:10.2px;font-weight:700;opacity:.92;letter-spacing:.1px">${en?'Smart Office Hisab':'স্মার্ট অফিস হিসাব'}</div>
             <div style="font-size:20.8px;font-weight:700;margin-top:2px;line-height:1.22;letter-spacing:-.1px">${pdfSafe(title)}</div>
             <div style="font-size:10.4px;opacity:.9;margin-top:4px;line-height:1.38">${pdfSafe(subtitle)}</div>
           </div>
@@ -820,8 +820,8 @@ async function nativeShareReport({html,filename,title,summary='',url='',lang='bn
 function ReportShareActions({html,filename,title,summary='',lang='bn',existingUrl='',compact=false}){
   const en=lang==='en';
   const [busy,setBusy]=useState(''),[shareUrl,setShareUrl]=useState(existingUrl||''),[copied,setCopied]=useState(false);
-  const shareTitle=title||(en?'Hisab Sahayika Report':'হিসাব সহায়িকা রিপোর্ট');
-  const shareSummary=summary||(en?'View this calculation report from Hisab Sahayika.':'হিসাব সহায়িকার এই হিসাবের রিপোর্টটি দেখুন।');
+  const shareTitle=title||(en?'Smart Office Hisab Report':'স্মার্ট অফিস হিসাব রিপোর্ট');
+  const shareSummary=summary||(en?'View this calculation report from Smart Office Hisab.':'স্মার্ট অফিস হিসাবর এই হিসাবের রিপোর্টটি দেখুন।');
 
   async function ensureUrl(){
     if(existingUrl)return existingUrl;
@@ -1140,7 +1140,7 @@ function SharedReportViewer({token,lang='bn',setLang}){
   const currentUrl=window.location.href;
   return <div className="shared-report-page">
     <header className="shared-report-header">
-      <a className="shared-report-brand" href="/"><Calculator/><div><b>{en?'Hisab Sahayika':'হিসাব সহায়িকা'}</b><small>{en?'Independent shared calculation report':'স্বাধীন হিসাব সহায়ক শেয়ার রিপোর্ট'}</small></div></a>
+      <a className="shared-report-brand" href="/"><Calculator/><div><b>{en?'Smart Office Hisab':'স্মার্ট অফিস হিসাব'}</b><small>{en?'Independent shared calculation report':'স্বাধীন হিসাব সহায়ক শেয়ার রিপোর্ট'}</small></div></a>
       <div className="shared-report-header-actions"><LangToggle lang={lang} setLang={setLang}/><a href="/">{en?'Home':'হোম'}</a></div>
     </header>
     <main className="shared-report-main">
@@ -1600,7 +1600,7 @@ function AuthPortal({onLogin,onBack,lang,setLang,initialMode='login'}) {
   if(mode==='register')return <div className="smart-reg-shell">
     <div className="smart-reg-card">
       <div className="login-top"><button type="button" className="back-link" onClick={onBack}>{en?'← Back to Home':'← হোমে ফিরুন'}</button><LangToggle lang={lang} setLang={setLang}/></div>
-      <div className="smart-reg-title"><div className="auth-badge"><ShieldCheck size={15}/>{en?'HISAB SAHAYIKA ACCOUNT · BACKUP & SYNC':'হিসাব সহায়িকা অ্যাকাউন্ট · BACKUP & SYNC'}</div><h1>{en?'Create your Hisab Sahayika account':'হিসাব সহায়িকা অ্যাকাউন্ট তৈরি করুন'}</h1><p>{en?'The app works without login. Create an account only if you want cloud backup, recovery and access from multiple devices.':'অ্যাপের মূল সেবা লগইন ছাড়াই কাজ করে। Cloud backup, recovery ও একাধিক ডিভাইসে ব্যবহার করতে চাইলে শুধু তখনই অ্যাকাউন্ট তৈরি করুন।'}</p></div>
+      <div className="smart-reg-title"><div className="auth-badge"><ShieldCheck size={15}/>{en?'SMART OFFICE HISAB ACCOUNT · BACKUP & SYNC':'স্মার্ট অফিস হিসাব অ্যাকাউন্ট · BACKUP & SYNC'}</div><h1>{en?'Create your Smart Office Hisab account':'স্মার্ট অফিস হিসাব অ্যাকাউন্ট তৈরি করুন'}</h1><p>{en?'The app works without login. Create an account only if you want cloud backup, recovery and access from multiple devices.':'অ্যাপের মূল সেবা লগইন ছাড়াই কাজ করে। Cloud backup, recovery ও একাধিক ডিভাইসে ব্যবহার করতে চাইলে শুধু তখনই অ্যাকাউন্ট তৈরি করুন।'}</p></div>
       <div className="smart-reg-steps">{steps.map((x,i)=><div key={x} className={`${i===step?'active':''} ${i<step?'done':''}`}><span>{i<step?<CheckCircle2/>:numLang(i+1,lang,0)}</span><b>{x}</b></div>)}</div>
 
       <form onSubmit={submit} className="smart-reg-form">
@@ -1699,11 +1699,11 @@ function AuthPortal({onLogin,onBack,lang,setLang,initialMode='login'}) {
     </div>
   </div>;
 
-  const title=mode==='forgot'?(en?'Recover your account':'অ্যাকাউন্ট পুনরুদ্ধার করুন'):(en?'Log in to your Hisab Sahayika account':'হিসাব সহায়িকা অ্যাকাউন্টে লগইন করুন');
+  const title=mode==='forgot'?(en?'Recover your account':'অ্যাকাউন্ট পুনরুদ্ধার করুন'):(en?'Log in to your Smart Office Hisab account':'স্মার্ট অফিস হিসাব অ্যাকাউন্টে লগইন করুন');
   return <div className="login-shell phase8-auth"><form className="login-card phase8-card" onSubmit={submit}>
     <div className="login-top"><button type="button" className="back-link" onClick={onBack}>{en?'← Back to Home':'← হোমে ফিরুন'}</button><LangToggle lang={lang} setLang={setLang}/></div>
     <div className="auth-badge"><ShieldCheck size={15}/>{en?'ACCOUNT LOGIN · BACKUP & SYNC':'অ্যাকাউন্ট লগইন · BACKUP & SYNC'}</div>
-    <h1>{title}</h1><p>{en?'Hisab Sahayika · Independent calculation assistant':'হিসাব সহায়িকা · স্বাধীন হিসাব সহায়ক প্ল্যাটফর্ম'}</p><div className="auth-guest-note"><CheckCircle2/><span>{en?'No login is required for calculators, local profile, salary history, leave records or reports. Login is only for Cloud Backup, Sync, Recovery and multi-device use.':'ক্যালকুলেটর, Local Profile, বেতন ইতিহাস, ছুটি বা রিপোর্ট ব্যবহারে লগইন লাগবে না। লগইন শুধু Cloud Backup, Sync, Recovery ও একাধিক ডিভাইসে ব্যবহারের জন্য।'}</span></div>
+    <h1>{title}</h1><p>{en?'Smart Office Hisab · Independent calculation assistant':'স্মার্ট অফিস হিসাব · স্বাধীন হিসাব সহায়ক প্ল্যাটফর্ম'}</p><div className="auth-guest-note"><CheckCircle2/><span>{en?'No login is required for calculators, local profile, salary history, leave records or reports. Login is only for Cloud Backup, Sync, Recovery and multi-device use.':'ক্যালকুলেটর, Local Profile, বেতন ইতিহাস, ছুটি বা রিপোর্ট ব্যবহারে লগইন লাগবে না। লগইন শুধু Cloud Backup, Sync, Recovery ও একাধিক ডিভাইসে ব্যবহারের জন্য।'}</span></div>
     <label>{en?'Email':'ইমেইল'}<input value={form.email} onChange={e=>change('email',e.target.value)} type="email" required/></label>
     {mode==='forgot'&&<label>{en?'Recovery code':'রিকভারি কোড'}<input value={form.recovery_code} onChange={e=>change('recovery_code',e.target.value)} placeholder="XXXX-XXXX-XXXX-XXXX" required/></label>}
     <label>{mode==='forgot'?(en?'New password':'নতুন পাসওয়ার্ড'):(en?'Password':'পাসওয়ার্ড')}<input value={form.password} onChange={e=>change('password',e.target.value)} type="password" minLength="10" required/></label>
@@ -1803,7 +1803,7 @@ function FooterUsageStats({visitorStats={},pwaStats={},lang='bn',dark=false}){
 
 function PremiumAppFooter({lang='bn',visitorStats={},pwaStats={},dark=false}){
   const en=lang==='en';
-  const supportText=encodeURIComponent(en?'Assalamu Alaikum, I am contacting you regarding the Hisab Sahayika app.':'আসসালামু আলাইকুম, হিসাব সহায়িকা অ্যাপ বিষয়ে যোগাযোগ করছি।');
+  const supportText=encodeURIComponent(en?'Assalamu Alaikum, I am contacting you regarding the Smart Office Hisab app.':'আসসালামু আলাইকুম, স্মার্ট অফিস হিসাব অ্যাপ বিষয়ে যোগাযোগ করছি।');
   return <footer className={'premium-app-footer compact'+(dark?' dark':'')}>
     <section className="premium-footer-stats-only">
       <small>{en?'LIVE USAGE':'লাইভ ব্যবহার'}</small>
@@ -1818,7 +1818,7 @@ function PremiumAppFooter({lang='bn',visitorStats={},pwaStats={},dark=false}){
         <a href="tel:+8801759084692"><Phone/>01759084692</a>
         <i>·</i>
         <a href={'https://wa.me/8801759084692?text='+supportText} target="_blank" rel="noreferrer"><MessageCircle/>WhatsApp</a>
-        <span>© 2026 {en?'Hisab Sahayika':'হিসাব সহায়িকা'}</span>
+        <span>© 2026 {en?'Smart Office Hisab':'স্মার্ট অফিস হিসাব'}</span>
       </div>
     </section>
   </footer>;
@@ -1922,7 +1922,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
 
   const desktopSidebar=<aside className="pwa-desktop-sidebar" aria-label={en?'App navigation':'অ্যাপ নেভিগেশন'}>
     <button className="pwa-desktop-brand" onClick={goHome}>
-      <span>হি</span><div><b>{en?'Hisab Sahayika':'হিসাব সহায়িকা'}</b><small>{en?'Independent calculation app':'স্বাধীন হিসাব সহায়ক অ্যাপ'}</small></div>
+      <span>স্মা</span><div><b>{en?'Smart Office Hisab':'স্মার্ট অফিস হিসাব'}</b><small>{en?'Independent calculation app':'স্বাধীন হিসাব সহায়ক অ্যাপ'}</small></div>
     </button>
     <nav className="pwa-desktop-nav">
       <div className="pwa-desktop-nav-group">
@@ -1974,7 +1974,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
       {desktopSidebar}
       <header className="pwa-app-topbar tool">
         <button className="pwa-round-btn" onClick={goHome} aria-label={en?'Back':'ফিরুন'}><ArrowLeft/></button>
-        <div><small>{en?'HISAB SAHAYIKA':'হিসাব সহায়িকা'}</small><b>{title}</b></div>
+        <div><small>{en?'SMART OFFICE HISAB':'স্মার্ট অফিস হিসাব'}</small><b>{title}</b></div>
         <div className="pwa-tool-head-actions"><PwaControls lang={lang}/><button className="pwa-login-entry compact" onClick={onLogin}><UserRound/><span>{en?'Login':'লগইন'}</span></button></div>
       </header>
       <main className="pwa-tool-content">
@@ -2013,7 +2013,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
   return <div className="pwa-app-shell approved-home">
     {desktopSidebar}
     <header className="pwa-app-topbar">
-      <div className="pwa-app-brand"><span>হি</span><div><b>{en?'Hisab Sahayika':'হিসাব সহায়িকা'}</b><small>{en?'Independent calculation assistant':'স্বাধীন হিসাব সহায়ক অ্যাপ'}</small></div></div>
+      <div className="pwa-app-brand"><span>স্মা</span><div><b>{en?'Smart Office Hisab':'স্মার্ট অফিস হিসাব'}</b><small>{en?'Independent calculation assistant':'স্বাধীন হিসাব সহায়ক অ্যাপ'}</small></div></div>
       <div className="pwa-app-head-actions"><button className="pwa-round-btn" onClick={()=>setLang(lang==='bn'?'en':'bn')}>{en?'বাং':'EN'}</button><PwaControls lang={lang}/><button className="pwa-login-entry" onClick={onLogin}><UserRound/><span>{en?'Login':'লগইন'}</span></button></div>
     </header>
 
@@ -2084,7 +2084,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
           <img src="/illustrations/hisab-office-team-v48.webp" alt={en?'Office colleagues working together on calculations':'অফিসের সহকর্মীরা একসঙ্গে হিসাব করছেন'} loading="lazy" decoding="async"/>
         </div>
         <div className="pwa-office-assist-copy">
-          <small>{en?'OFFICE CALCULATION ASSISTANT':'অফিস হিসাব সহায়িকা'}</small>
+          <small>{en?'OFFICE CALCULATION ASSISTANT':'অফিস স্মার্ট অফিস হিসাব'}</small>
           <h3>{en?'Calculate together, keep the result organised':'একসঙ্গে হিসাব করুন, ফলাফল রাখুন গোছানো'}</h3>
           <p>{en?'Salary, arrear, deductions and reports can be prepared from one place with clear step-by-step tools.':'বেতন, এরিয়ার, কর্তন ও রিপোর্ট—এক জায়গা থেকে ধাপে ধাপে পরিষ্কারভাবে হিসাব ও প্রস্তুত করুন।'}</p>
           <div className="pwa-office-assist-actions">
@@ -2217,7 +2217,7 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
     [CalendarDays,en?'Leave & Calendar':'ছুটি ও ক্যালেন্ডার',en?'Personal leave and office-day information.':'ব্যক্তিগত ছুটি ও অফিস দিনের তথ্য।'],
     [FileText,en?'Reports & Records':'রিপোর্ট ও রেকর্ড',en?'Create and keep useful personal reports.':'প্রয়োজনীয় ব্যক্তিগত রিপোর্ট তৈরি ও সংরক্ষণ।']
   ];
-  const whatsappText=encodeURIComponent(en?'Hello, I need help with Hisab Sahayika.':'আসসালামু আলাইকুম, হিসাব সহায়িকা অ্যাপ বিষয়ে সহায়তা প্রয়োজন।');
+  const whatsappText=encodeURIComponent(en?'Hello, I need help with Smart Office Hisab.':'আসসালামু আলাইকুম, স্মার্ট অফিস হিসাব অ্যাপ বিষয়ে সহায়তা প্রয়োজন।');
 
   const HeroDevice=()=> <div className="native-device-stage" aria-label={en?'Live interface preview':'লাইভ ইন্টারফেস নমুনা'}>
     <div className="native-laptop">
@@ -2307,7 +2307,7 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
   return <div className="approved-home" id="home">
     <header className="approved-header">
       <button className="approved-brand brand-button" onClick={()=>go('home')}>
-        <span><Calculator/></span><div><b>{en?'Hisab Sahayika':'হিসাব সহায়িকা'}</b><small>{en?'Independent · unofficial calculation assistant':'স্বাধীন · অনানুষ্ঠানিক হিসাব সহায়ক প্ল্যাটফর্ম'}</small></div>
+        <span><Calculator/></span><div><b>{en?'Smart Office Hisab':'স্মার্ট অফিস হিসাব'}</b><small>{en?'Independent · unofficial calculation assistant':'স্বাধীন · অনানুষ্ঠানিক হিসাব সহায়ক প্ল্যাটফর্ম'}</small></div>
       </button>
 
       <nav className={publicMenu?'open':''} aria-label={en?'Main navigation':'প্রধান মেনু'}>
@@ -5762,7 +5762,7 @@ function App(){
   if(!user)return showLogin?<AuthPortal onLogin={u=>{setLang('bn');setUser(u);window.history.replaceState({},'',window.location.pathname)}} onBack={()=>{setShowLogin(false);setAuthMode('login');setAuthToken('');window.history.replaceState({},'',window.location.pathname)}} lang={lang} setLang={setLang} initialMode={authMode} initialToken={authToken}/>:<PublicHome onLogin={()=>{setAuthMode('login');setShowLogin(true)}} onSignup={()=>{setAuthMode('register');setShowLogin(true)}} lang={lang} setLang={setLang}/>;
   const admin=['super_admin','admin','department_admin'].includes(user.role);
   return <div className={`app ${mobileMenu?'mobile-menu-open':''}`}><button className={`mobile-drawer-backdrop ${mobileMenu?'show':''}`} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'} onClick={()=>setMobileMenu(false)}></button><aside className={`side ${mobileMenu?'mobile-open':''}`}>
-    <div className="brand"><div><b>{lang==='en'?'Hisab Sahayika':'হিসাব সহায়িকা'}</b><small>{lang==='en'?'Independent · unofficial':'স্বাধীন · অনানুষ্ঠানিক'}</small></div><button className="mobile-drawer-close" onClick={()=>setMobileMenu(false)} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'}><X size={19}/></button></div>
+    <div className="brand"><div><b>{lang==='en'?'Smart Office Hisab':'স্মার্ট অফিস হিসাব'}</b><small>{lang==='en'?'Independent · unofficial':'স্বাধীন · অনানুষ্ঠানিক'}</small></div><button className="mobile-drawer-close" onClick={()=>setMobileMenu(false)} aria-label={lang==='en'?'Close menu':'মেনু বন্ধ করুন'}><X size={19}/></button></div>
     <nav className="smart-side-nav">
       <div className="side-group"><small>{lang==='en'?'MAIN':'প্রধান'}</small>
         <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}><LayoutDashboard size={18}/>{lang==='en'?'Dashboard':'ড্যাশবোর্ড'}</button>
@@ -5820,7 +5820,7 @@ function App(){
       <button className={mobileMenu?'active':''} onClick={()=>setMobileMenu(v=>!v)}><Boxes/><span>{lang==='en'?'Services':'সেবা'}</span></button>
       <button className={page==='career'?'active':''} onClick={()=>setPage('career')}><UserRound/><span>{lang==='en'?'My':'আমার'}</span></button>
     </nav>
-    <a className="floating-whatsapp logged-in-whatsapp" href={`https://wa.me/8801759084692?text=${encodeURIComponent(lang==='en'?'Hello, I need help with Hisab Sahayika.':'আসসালামু আলাইকুম, হিসাব সহায়িকা অ্যাপ বিষয়ে সহায়তা প্রয়োজন।')}`} target="_blank" rel="noreferrer" aria-label={lang==='en'?'Message on WhatsApp':'হোয়াটসঅ্যাপে মেসেজ করুন'}><MessageCircle/><span>{lang==='en'?'WhatsApp':'হোয়াটসঅ্যাপ'}</span></a>
+    <a className="floating-whatsapp logged-in-whatsapp" href={`https://wa.me/8801759084692?text=${encodeURIComponent(lang==='en'?'Hello, I need help with Smart Office Hisab.':'আসসালামু আলাইকুম, স্মার্ট অফিস হিসাব অ্যাপ বিষয়ে সহায়তা প্রয়োজন।')}`} target="_blank" rel="noreferrer" aria-label={lang==='en'?'Message on WhatsApp':'হোয়াটসঅ্যাপে মেসেজ করুন'}><MessageCircle/><span>{lang==='en'?'WhatsApp':'হোয়াটসঅ্যাপ'}</span></a>
   </div>
 }
 createRoot(document.getElementById('root')).render(<App/>);
