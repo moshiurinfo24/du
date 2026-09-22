@@ -1808,6 +1808,7 @@ function PremiumAppFooter({lang='bn',visitorStats={},pwaStats={},dark=false}){
     </section>
 
     <section className="premium-footer-credit">
+      <small>{en?'CREDIT':'ক্রেডিট'}</small>
       <span>© 2026 {en?'Hisab Sahayika':'হিসাব সহায়িকা'}</span>
       <span>{en?'Designed & Developed by':'ডিজাইন ও ডেভেলপমেন্ট'} <b>{en?'Md. Moshiur Rahman':'মোঃ মশিউর রহমান'}</b></span>
       <a href="tel:+8801759084692"><Phone/>01759084692</a>
