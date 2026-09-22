@@ -1814,14 +1814,18 @@ function PremiumAppFooter({lang='bn',visitorStats={},pwaStats={},dark=false}){
     </section>
 
     <section className="premium-footer-credit">
-      <small>{en?'DESIGN & DEVELOPMENT':'ডিজাইন ও ডেভেলপমেন্ট'}</small>
-      <div className="premium-credit-line">
-        <a className="premium-credit-name" href={'https://wa.me/8801759084692?text='+supportText} target="_blank" rel="noreferrer"><b>{en?'Md. Moshiur Rahman':'মোঃ মশিউর রহমান'}</b></a>
-        <i>·</i>
-        <a href="tel:+8801759084692"><Phone/>01759084692</a>
-        <i>·</i>
-        <a href={'https://wa.me/8801759084692?text='+supportText} target="_blank" rel="noreferrer"><MessageCircle/>WhatsApp</a>
-        <span>© 2026 {en?'Smart Office Hisab':'স্মার্ট অফিস হিসাব'}</span>
+      <small>{en?'DESIGN, DEVELOPMENT & PREPARATION':'ডিজাইন, ডেভেলপমেন্ট ও প্রস্তুতকরণ'}</small>
+      <div className="premium-credit-block">
+        <div className="premium-credit-row person">
+          <a className="premium-credit-name" href={'https://wa.me/8801759084692?text='+supportText} target="_blank" rel="noreferrer"><b>{en?'Md. Moshiur Rahman':'মোঃ মশিউর রহমান'}</b></a>
+          <i>·</i>
+          <span>{en?'Senior Assistant':'উচ্চমান সহকারী'}</span>
+        </div>
+        <div className="premium-credit-row office">
+          <b>{en?'University of Dhaka Press':'ঢাকা বিশ্ববিদ্যালয় প্রেস'}</b>
+          <i>·</i>
+          <a href="tel:+8801759084692"><Phone/>01759084692</a>
+        </div>
       </div>
     </section>
   </footer>;
@@ -2023,10 +2027,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     <main className="pwa-app-home">
       <section className="pwa-welcome-card">
         <div className="pwa-welcome-copy"><small>{en?'WELCOME':'স্বাগতম'}</small><h1>{en?'What would you like to calculate today?':'আজ কোন হিসাবটি করতে চান?'}</h1><p>{en?'Choose a service below and get the result in a few simple steps.':'নিচের একটি সেবা নির্বাচন করুন এবং কয়েকটি সহজ ধাপে হিসাব দেখুন।'}</p></div>
-        <div className="pwa-welcome-visual" aria-hidden="true">
-          <img src="/illustrations/hisab-office-hero-v48.webp" alt="" loading="eager" decoding="async"/>
-          <span><Calculator/><b>{en?'Smart office calculations':'স্মার্ট অফিস হিসাব'}</b></span>
-        </div>
+        <div className="pwa-welcome-visual" aria-hidden="true"></div>
         <div className="pwa-welcome-meta compact">
           <span><RefreshCw/><div><small>{en?'Latest update':'সর্বশেষ আপডেট'}</small><b>{updated}</b></div></span>
         </div>
