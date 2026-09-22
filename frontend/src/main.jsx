@@ -1798,51 +1798,21 @@ function FooterUsageStats({visitorStats={},pwaStats={},lang='bn',dark=false}){
   </details>;
 }
 
-function PremiumAppFooter({lang='bn',visitorStats={},pwaStats={},onHome,onServices,onPolicies,onPrivacy,dark=false}){
+function PremiumAppFooter({lang='bn',visitorStats={},pwaStats={},dark=false}){
   const en=lang==='en';
   const supportText=encodeURIComponent(en?'Hello, I need help with Hisab Sahayika.':'আসসালামু আলাইকুম, হিসাব সহায়িকা অ্যাপ বিষয়ে সহায়তা প্রয়োজন।');
-  return <footer className={'premium-app-footer'+(dark?' dark':'')}>
-    <div className="premium-footer-main">
-      <section className="premium-footer-brand">
-        <div className="premium-footer-logo">হি</div>
-        <div>
-          <b>{en?'Hisab Sahayika':'হিসাব সহায়িকা'}</b>
-          <span>{en?'Independent · unofficial calculation assistant':'স্বাধীন · অনানুষ্ঠানিক হিসাব সহায়ক প্ল্যাটফর্ম'}</span>
-          <small><ShieldAlert/>{en?'Not an official University of Dhaka service.':'ঢাকা বিশ্ববিদ্যালয়ের কোনো অফিসিয়াল সেবা নয়।'}</small>
-        </div>
-      </section>
+  return <footer className={'premium-app-footer compact'+(dark?' dark':'')}>
+    <section className="premium-footer-stats-only">
+      <small>{en?'LIVE USAGE':'লাইভ ব্যবহার'}</small>
+      <FooterUsageStats visitorStats={visitorStats} pwaStats={pwaStats} lang={lang} dark={dark}/>
+    </section>
 
-      <section className="premium-footer-links">
-        <small>{en?'QUICK LINKS':'দ্রুত লিংক'}</small>
-        <div>
-          <button onClick={onHome}>{en?'Home':'হোম'}</button>
-          <button onClick={onServices}>{en?'Services':'সেবাসমূহ'}</button>
-          <button onClick={onPolicies}>{en?'Policies':'নীতিমালা'}</button>
-          <button onClick={onPrivacy}>{en?'Privacy':'গোপনীয়তা'}</button>
-        </div>
-      </section>
-
-      <section className="premium-footer-support">
-        <small>{en?'SUPPORT':'সহায়তা'}</small>
-        <b>{en?'Need help?':'সহায়তা প্রয়োজন?'}</b>
-        <div>
-          <a href="tel:+8801759084692"><PhoneCall/>{en?'Call':'কল করুন'}</a>
-          <a href={'https://wa.me/8801759084692?text='+supportText} target="_blank" rel="noreferrer"><MessageCircle/>WhatsApp</a>
-        </div>
-      </section>
-
-      <section className="premium-footer-stats">
-        <small>{en?'LIVE USAGE':'লাইভ ব্যবহার'}</small>
-        <FooterUsageStats visitorStats={visitorStats} pwaStats={pwaStats} lang={lang} dark={dark}/>
-      </section>
-    </div>
-
-    <div className="premium-footer-bottom">
-      <span>© 2026 {en?'Hisab Sahayika':'হিসাব সহায়িকা'} · {en?'All Rights Reserved':'সর্বস্বত্ব সংরক্ষিত'}</span>
+    <section className="premium-footer-credit">
+      <span>© 2026 {en?'Hisab Sahayika':'হিসাব সহায়িকা'}</span>
       <span>{en?'Designed & Developed by':'ডিজাইন ও ডেভেলপমেন্ট'} <b>{en?'Md. Moshiur Rahman':'মোঃ মশিউর রহমান'}</b></span>
       <a href="tel:+8801759084692"><Phone/>01759084692</a>
-      <a href={'https://wa.me/8801759084692?text='+supportText} target="_blank" rel="noreferrer"><MessageCircle/>{en?'WhatsApp Support':'WhatsApp সহায়তা'}</a>
-    </div>
+      <a href={'https://wa.me/8801759084692?text='+supportText} target="_blank" rel="noreferrer"><MessageCircle/>WhatsApp</a>
+    </section>
   </footer>;
 }
 
@@ -2064,10 +2034,6 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
         lang={lang}
         visitorStats={visitorStats}
         pwaStats={pwaStats}
-        onHome={goHome}
-        onServices={()=>setMobileCalcOpen(true)}
-        onPolicies={()=>open('reference')}
-        onPrivacy={()=>open('local-privacy')}
         dark={true}
       />
     </main>
@@ -2403,10 +2369,6 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
       lang={lang}
       visitorStats={visitorStats}
       pwaStats={pwaStats}
-      onHome={()=>go('home')}
-      onServices={()=>go('services')}
-      onPolicies={()=>go('policies')}
-      onPrivacy={()=>go('benefits')}
       dark={true}
     />
 
