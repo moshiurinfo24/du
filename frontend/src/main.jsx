@@ -2068,6 +2068,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
         onServices={()=>setMobileCalcOpen(true)}
         onPolicies={()=>open('reference')}
         onPrivacy={()=>open('local-privacy')}
+        dark={true}
       />
     </main>
 
