@@ -1,4 +1,4 @@
-const CACHE_NAME='hisab-pwa-runtime-v61';
+const CACHE_NAME='hisab-pwa-runtime-v62';
 const CORE=[
   '/',
   '/manifest.webmanifest',
@@ -57,6 +57,28 @@ self.addEventListener('fetch',event=>{
           return res;
         })
         .catch(()=>caches.match(req).then(x=>x||caches.match('/')))
+    );
+    return;
+  }
+
+  const cacheFirst=
+    url.pathname.startsWith('/assets/')||
+    url.pathname.startsWith('/branding/')||
+    url.pathname.startsWith('/illustrations/')||
+    url.pathname.startsWith('/icons/');
+
+  if(cacheFirst){
+    event.respondWith(
+      caches.match(req).then(cached=>{
+        if(cached)return cached;
+        return fetch(req).then(res=>{
+          if(res&&res.ok){
+            const copy=res.clone();
+            caches.open(CACHE_NAME).then(cache=>cache.put(req,copy)).catch(()=>{});
+          }
+          return res;
+        });
+      })
     );
     return;
   }
