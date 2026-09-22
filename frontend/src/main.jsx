@@ -1800,7 +1800,7 @@ function FooterUsageStats({visitorStats={},pwaStats={},lang='bn',dark=false}){
 
 function PremiumAppFooter({lang='bn',visitorStats={},pwaStats={},dark=false}){
   const en=lang==='en';
-  const supportText=encodeURIComponent(en?'Hello, I need help with Hisab Sahayika.':'আসসালামু আলাইকুম, হিসাব সহায়িকা অ্যাপ বিষয়ে সহায়তা প্রয়োজন।');
+  const supportText=encodeURIComponent(en?'Assalamu Alaikum, I am contacting you regarding the Hisab Sahayika app.':'আসসালামু আলাইকুম, হিসাব সহায়িকা অ্যাপ বিষয়ে যোগাযোগ করছি।');
   return <footer className={'premium-app-footer compact'+(dark?' dark':'')}>
     <section className="premium-footer-stats-only">
       <small>{en?'LIVE USAGE':'লাইভ ব্যবহার'}</small>
@@ -1808,11 +1808,15 @@ function PremiumAppFooter({lang='bn',visitorStats={},pwaStats={},dark=false}){
     </section>
 
     <section className="premium-footer-credit">
-      <small>{en?'CREDIT':'ক্রেডিট'}</small>
-      <span>© 2026 {en?'Hisab Sahayika':'হিসাব সহায়িকা'}</span>
-      <span>{en?'Designed & Developed by':'ডিজাইন ও ডেভেলপমেন্ট'} <b>{en?'Md. Moshiur Rahman':'মোঃ মশিউর রহমান'}</b></span>
-      <a href="tel:+8801759084692"><Phone/>01759084692</a>
-      <a href={'https://wa.me/8801759084692?text='+supportText} target="_blank" rel="noreferrer"><MessageCircle/>WhatsApp</a>
+      <small>{en?'DESIGN & DEVELOPMENT':'ডিজাইন ও ডেভেলপমেন্ট'}</small>
+      <div className="premium-credit-line">
+        <a className="premium-credit-name" href={'https://wa.me/8801759084692?text='+supportText} target="_blank" rel="noreferrer"><b>{en?'Md. Moshiur Rahman':'মোঃ মশিউর রহমান'}</b></a>
+        <i>·</i>
+        <a href="tel:+8801759084692"><Phone/>01759084692</a>
+        <i>·</i>
+        <a href={'https://wa.me/8801759084692?text='+supportText} target="_blank" rel="noreferrer"><MessageCircle/>WhatsApp</a>
+        <span>© 2026 {en?'Hisab Sahayika':'হিসাব সহায়িকা'}</span>
+      </div>
     </section>
   </footer>;
 }
