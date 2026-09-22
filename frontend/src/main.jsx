@@ -1778,7 +1778,7 @@ function PwaReferenceCenter({lang='bn',notices=[],policies=[]}){
 function FooterUsageStats({visitorStats={},pwaStats={},lang='bn',dark=false}){
   const en=lang==='en';
   const n=v=>v==null?'—':numLang(v,lang,0);
-  const liveN=v=>numLang(Number(v??0),lang,0);
+  const liveN=v=>v==null?'—':numLang(Number(v),lang,0);
   const items=[
     {key:'live',icon:Radio,label:en?'Live':'লাইভ',value:liveN(visitorStats.online_now),tone:'usage-live'},
     {key:'install',icon:Smartphone,label:en?'App':'অ্যাপ',value:n(pwaStats.total_installs),tone:'usage-app'},
@@ -2183,22 +2183,53 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
   const [activePublicTool,setActivePublicTool]=useState(null);
   const [notices,setNotices]=useState([]);
   const [policies,setPolicies]=useState([]);
-  const [visitorStats,setVisitorStats]=useState({
-    today_unique:0,month_unique:0,total_unique:0,
-    today_views:0,month_views:0,total_views:0,
-    online_now:0,active_5m:0,browser_online:0,pwa_online:0,
-    browser_total_users:0,browser_today_users:0,browser_month_users:0,
-    pwa_total_users:0,pwa_today_users:0,pwa_month_users:0
+  const [visitorStats,setVisitorStats]=useState(()=>{
+    try{
+      const x=JSON.parse(localStorage.getItem('hisab_public_stats_v1')||'null');
+      return x&&typeof x==='object'?x:{
+        today_unique:null,month_unique:null,total_unique:null,
+        today_views:null,month_views:null,total_views:null,
+        online_now:null,active_5m:null,browser_online:null,pwa_online:null,
+        browser_total_users:null,browser_today_users:null,browser_month_users:null,
+        pwa_total_users:null,pwa_today_users:null,pwa_month_users:null
+      };
+    }catch{return {
+      today_unique:null,month_unique:null,total_unique:null,
+      today_views:null,month_views:null,total_views:null,
+      online_now:null,active_5m:null,browser_online:null,pwa_online:null,
+      browser_total_users:null,browser_today_users:null,browser_month_users:null,
+      pwa_total_users:null,pwa_today_users:null,pwa_month_users:null
+    }}
   });
-  const [pwaStats,setPwaStats]=useState({total_installs:0,today_installs:0,month_installs:0});
+  const [pwaStats,setPwaStats]=useState(()=>{
+    try{
+      const x=JSON.parse(localStorage.getItem('hisab_pwa_stats_v1')||'null');
+      return x&&typeof x==='object'?x:{total_installs:null,today_installs:null,month_installs:null};
+    }catch{return {total_installs:null,today_installs:null,month_installs:null}}
+  });
 
   useEffect(()=>{
     let alive=true;
-    const fresh=path=>path+(path.includes('?')?'&':'?')+'_='+Date.now();
-    const loadTrafficStats=()=>api(fresh('/api/public/stats'),{cache:'no-store'}).then(x=>{if(alive)setVisitorStats(prev=>({...prev,...x}))}).catch(()=>{});
-    const loadLiveStats=()=>api(fresh('/api/public/live-stats'),{cache:'no-store'}).then(x=>{if(alive)setVisitorStats(prev=>({...prev,...x}))}).catch(()=>{});
+    const saveVisitor=next=>{
+      if(!alive)return;
+      setVisitorStats(prev=>{
+        const merged={...prev,...next};
+        try{localStorage.setItem('hisab_public_stats_v1',JSON.stringify(merged))}catch{}
+        return merged;
+      });
+    };
+    const savePwa=next=>{
+      if(!alive)return;
+      setPwaStats(prev=>{
+        const merged={...prev,...next};
+        try{localStorage.setItem('hisab_pwa_stats_v1',JSON.stringify(merged))}catch{}
+        return merged;
+      });
+    };
+    const loadTrafficStats=()=>api('/api/public/stats').then(saveVisitor).catch(()=>{});
+    const loadLiveStats=()=>api('/api/public/live-stats').then(saveVisitor).catch(()=>{});
     const loadStats=()=>Promise.allSettled([loadTrafficStats(),loadLiveStats()]);
-    const loadPwaStats=()=>api(fresh('/api/public/pwa-install-stats'),{cache:'no-store'}).then(x=>{if(alive)setPwaStats(prev=>({...prev,...x}))}).catch(()=>{});
+    const loadPwaStats=()=>api('/api/public/pwa-install-stats').then(savePwa).catch(()=>{});
     trackPublic('page_view','home').catch(()=>{});
     sendLiveHeartbeat('home').finally(()=>{loadStats();loadPwaStats()});
     Promise.allSettled([
