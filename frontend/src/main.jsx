@@ -62,6 +62,7 @@ import './premium-footer-v41.css';
 import './login-entry-v46.css';
 import './home-discovery-v47.css';
 import './office-visual-v48.css';
+import './brand-logo-v50.css';
 import {initPwaRuntime,subscribePwa,getPwaState,promptPwaInstall,formatPwaTime,manualPwaUpdateCheck,consumePwaUpdateNotice} from './pwa-client.js';
 import FiscalOfficeCalendar,{LoggedInOfficeCalendar,CalendarDashboardWidget,AdminOfficeCalendarManager} from './calendar-phase15.jsx';
 import GuestLocalCenter from './guest-local-v1.jsx';
@@ -402,13 +403,14 @@ function PwaMobileInstallGate({lang='bn'}){
 
   if(pwa.installed)return <div className="pwa-install-gate installed">
     <div className="pwa-gate-card success">
+      <img className="pwa-brand-full-logo" src="/branding/smart-office-hisab-logo-v50.webp" alt={en?'Smart Office Hisab logo':'স্মার্ট অফিস হিসাব লোগো'} />
       <div className="pwa-gate-icon success"><CheckCircle2/></div>
       <span className="pwa-gate-badge">{en?'INSTALLATION COMPLETE':'ইনস্টল সম্পন্ন'}</span>
       <div className="pwa-install-count"><Users/><span>{installStats.total_installs==null?(en?'Loading install count…':'ইনস্টল সংখ্যা লোড হচ্ছে…'):(en?`Total installs: ${numLang(installStats.total_installs,'en',0)}`:`মোট ইনস্টল: ${numLang(installStats.total_installs,'bn',0)}`)}</span></div>
       <h1>{en?'Smart Office Hisab is installed':'স্মার্ট অফিস হিসাব ইনস্টল হয়েছে'}</h1>
       <p>{en?'Open Smart Office Hisab from your phone Home Screen and use the calculation services from the app.':'এখন আপনার মোবাইলের Home Screen থেকে স্মার্ট অফিস হিসাব খুলে প্রয়োজনীয় হিসাব ও সেবাগুলো ব্যবহার করুন।'}</p>
       <div className="pwa-home-hint">
-        <span className="pwa-home-app-icon">স্মা</span>
+        <span className="pwa-home-app-icon"><img src="/branding/smart-office-hisab-logo-v50.webp" alt="" aria-hidden="true"/></span>
         <div><b>{en?'Look for this app on your Home Screen':'Home Screen-এ এই অ্যাপটি খুঁজুন'}</b><small>{en?'Smart Office Hisab · Indigo + Aqua icon':'স্মার্ট অফিস হিসাব · ইন্ডিগো + অ্যাকুয়া আইকন'}</small></div>
       </div>
       <div className="pwa-gate-service-title">{en?'Services available in the app':'অ্যাপে যা যা পাবেন'}</div>
@@ -426,8 +428,9 @@ function PwaMobileInstallGate({lang='bn'}){
 
   return <div className="pwa-install-gate">
     <div className="pwa-gate-card">
+      <img className="pwa-brand-full-logo" src="/branding/smart-office-hisab-logo-v50.webp" alt={en?'Smart Office Hisab logo':'স্মার্ট অফিস হিসাব লোগো'} />
       <div className="pwa-gate-top">
-        <span className="pwa-gate-logo">স্মা</span>
+        <span className="pwa-gate-logo"><img src="/branding/smart-office-hisab-logo-v50.webp" alt="" aria-hidden="true"/></span>
         <div><b>Smart Office Hisab</b><small>{en?'Independent calculation assistant':'স্বাধীন হিসাব সহায়ক অ্যাপ'}</small></div>
       </div>
       <span className="pwa-gate-badge">{en?'INDEPENDENT CALCULATION APP':'স্বাধীন হিসাব সহায়ক অ্যাপ'}</span>
@@ -514,7 +517,7 @@ function PwaControls({lang='bn'}){
     {pwa.updating&&<div className="pwa-update-toast"><RefreshCw/><span>{en?'New version found. Updating automatically…':'নতুন ভার্সন পাওয়া গেছে। অটো আপডেট হচ্ছে…'}</span></div>}
     {updatedNotice&&!pwa.updating&&<div className="pwa-update-toast pwa-update-complete"><CheckCircle2/><span><b>{en?'Automatic update complete':'অটো আপডেট সম্পন্ন'}</b><small>{formatPwaTime(updatedNotice,lang)}</small></span><button onClick={()=>{setUpdatedNotice('');consumePwaUpdateNotice()}} aria-label={en?'Close':'বন্ধ'}><X size={15}/></button></div>}
     {nudge&&<div className="pwa-install-nudge">
-      <span className="app-mark">স্মা</span>
+      <span className="app-mark"><img src="/branding/smart-office-hisab-logo-v50.webp" alt="" aria-hidden="true"/></span>
       <div><b>{en?'Install Smart Office Hisab':'স্মার্ট অফিস হিসাব ইনস্টল করুন'}</b><small>{pwa.iosInstallHint?(en?'Add it to your Home Screen for app-like use.':'Home Screen-এ যোগ করলে অ্যাপের মতো ব্যবহার করতে পারবেন।'):(!pwa.canInstall&&pwa.previouslyInstalled?(en?'Reinstall from your browser menu if the one-tap prompt is not available.':'এক-ট্যাপ Install না এলে browser menu থেকে আবার ইনস্টল করুন।'):(en?'One tap to install. Future updates will be automatic.':'এক ট্যাপে ইনস্টল করুন। পরের আপডেটগুলো অটো হবে।'))}</small></div>
       <button onClick={doInstall}>{en?'Install':'ইনস্টল'}</button>
       <button className="dismiss" onClick={dismiss} aria-label={en?'Dismiss':'বন্ধ'}><X size={15}/></button>
@@ -1922,7 +1925,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
 
   const desktopSidebar=<aside className="pwa-desktop-sidebar" aria-label={en?'App navigation':'অ্যাপ নেভিগেশন'}>
     <button className="pwa-desktop-brand" onClick={goHome}>
-      <span>স্মা</span><div><b>{en?'Smart Office Hisab':'স্মার্ট অফিস হিসাব'}</b><small>{en?'Independent calculation app':'স্বাধীন হিসাব সহায়ক অ্যাপ'}</small></div>
+      <span><img src="/branding/smart-office-hisab-logo-v50.webp" alt="" aria-hidden="true"/></span><div><b>{en?'Smart Office Hisab':'স্মার্ট অফিস হিসাব'}</b><small>{en?'Independent calculation app':'স্বাধীন হিসাব সহায়ক অ্যাপ'}</small></div>
     </button>
     <nav className="pwa-desktop-nav">
       <div className="pwa-desktop-nav-group">
@@ -2013,7 +2016,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
   return <div className="pwa-app-shell approved-home">
     {desktopSidebar}
     <header className="pwa-app-topbar">
-      <div className="pwa-app-brand"><span>স্মা</span><div><b>{en?'Smart Office Hisab':'স্মার্ট অফিস হিসাব'}</b><small>{en?'Independent calculation assistant':'স্বাধীন হিসাব সহায়ক অ্যাপ'}</small></div></div>
+      <div className="pwa-app-brand"><span><img src="/branding/smart-office-hisab-logo-v50.webp" alt="" aria-hidden="true"/></span><div><b>{en?'Smart Office Hisab':'স্মার্ট অফিস হিসাব'}</b><small>{en?'Independent calculation assistant':'স্বাধীন হিসাব সহায়ক অ্যাপ'}</small></div></div>
       <div className="pwa-app-head-actions"><button className="pwa-round-btn" onClick={()=>setLang(lang==='bn'?'en':'bn')}>{en?'বাং':'EN'}</button><PwaControls lang={lang}/><button className="pwa-login-entry" onClick={onLogin}><UserRound/><span>{en?'Login':'লগইন'}</span></button></div>
     </header>
 
