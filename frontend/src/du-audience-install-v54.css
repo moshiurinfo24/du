@@ -161,3 +161,19 @@
   .pwa-easy-install-points span{font-size:7px}
   .pwa-easy-install-help{width:100%;box-sizing:border-box}
 }
+
+
+/* Mobile bottom whitespace fix · V55 */
+@media(max-width:900px){
+  .pwa-app-shell.approved-home{
+    padding-bottom:calc(72px + env(safe-area-inset-bottom))!important
+  }
+  .pwa-app-shell.approved-home>.pwa-app-home{
+    padding-bottom:6px!important
+  }
+}
+@media(max-width:760px){
+  .pwa-app-shell.approved-home .premium-app-footer.compact{
+    margin-bottom:0!important
+  }
+}
