@@ -574,7 +574,19 @@ function loadJsPdf(){
 }
 const eduBn={masters:'মাস্টার্স',bachelor:'স্নাতক',hsc:'এইচএসসি',diploma:'ডিপ্লোমা',bsceng:'বিএসসি ইঞ্জিনিয়ারিং',mbbs:'এমবিবিএস'};
 const categoryBn={officer:'কর্মকর্তা',class3:'তৃতীয় শ্রেণি',class4:'চতুর্থ শ্রেণি'};
-const PDF_BRAND={website:'dhakau.pages.dev',developerBn:'মোঃ মশিউর রহমান',developerEn:'Md. Moshiur Rahman',phone:'01759084692'};
+const PDF_BRAND={
+  nameBn:'স্মার্ট অফিস হিসাব',
+  nameEn:'Smart Office Hisab',
+  taglineBn:'ঢাকা বিশ্ববিদ্যালয়ের কর্মকর্তা ও কর্মচারীদের জন্য স্বাধীন হিসাব সহায়ক অ্যাপ',
+  taglineEn:'Independent calculation assistant for University of Dhaka officers and employees',
+  unofficialBn:'এটি ঢাকা বিশ্ববিদ্যালয়ের অফিসিয়াল অ্যাপ নয়',
+  unofficialEn:'Not an official University of Dhaka app',
+  logo:'/branding/smart-office-hisab-logo-v50.webp?v=60',
+  website:'dhakau.pages.dev',
+  developerBn:'মোঃ মশিউর রহমান',
+  developerEn:'Md. Moshiur Rahman',
+  phone:'01759084692'
+};
 function pdfSafe(v){return escapeHtml(v==null?'—':String(v))}
 function pdfMoneyCell(v){return `<span style="font-family:'Hind Siliguri','Noto Sans Bengali','Inter',sans-serif;font-variant-numeric:tabular-nums;font-weight:800;white-space:nowrap">${pdfSafe(v)}</span>`}
 function pdfSummaryCards(items=[],columns=4){
@@ -631,7 +643,7 @@ function reportShell(title,subtitle,body,lang='bn',meta={}){
   const pageMinHeight=fixed?'285mm':'270mm';
   const now=new Date();
   const generated=now.toLocaleString(en?'en-GB':'bn-BD-u-nu-latn');
-  const reportId=`EDS-${String(now.getFullYear()).slice(-2)}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+  const reportId=`SOH-${String(now.getFullYear()).slice(-2)}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
   return `<div class="pdf-page premium-pdf-page" data-pdf-page="${pageNo}" data-break-after="${breakAfter?'true':'false'}" style="width:194mm;min-height:${pageMinHeight};box-sizing:border-box;font-family:'Hind Siliguri','Noto Sans Bengali','Inter',Arial,sans-serif;color:#162433;background:#f6f8f7;line-height:1.5;font-size:12.2px;${breakAfter?'page-break-after:always;break-after:page;':''}">
     <style>
       .premium-pdf-page,.premium-pdf-page *{box-sizing:border-box}
@@ -648,9 +660,11 @@ function reportShell(title,subtitle,body,lang='bn',meta={}){
       <div style="position:relative;background:linear-gradient(118deg,#082d50 0%,#0e4f68 58%,#176247 100%);color:#fff;padding:15px 18px 14px;display:flex;align-items:center;justify-content:space-between;gap:16px;overflow:hidden">
         <div style="position:absolute;right:-28px;top:-42px;width:150px;height:150px;border-radius:50%;background:rgba(217,190,116,.08)"></div>
         <div style="display:flex;align-items:center;gap:12px;min-width:0;position:relative;z-index:1">
-          <div style="width:41px;height:41px;border-radius:11px;background:linear-gradient(145deg,#fff,#edf5f2);color:#0c4a67;display:grid;place-items:center;font-family:'Inter',Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.5px;flex:0 0 auto;box-shadow:0 5px 16px rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.7)">EDS</div>
+          <div style="width:41px;height:41px;border-radius:11px;background:#fff;display:grid;place-items:center;flex:0 0 auto;box-shadow:0 5px 16px rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.76);overflow:hidden;padding:3px">
+            <img src="${PDF_BRAND.logo}" alt="" crossorigin="anonymous" style="display:block;width:100%;height:100%;object-fit:contain;border-radius:8px"/>
+          </div>
           <div style="min-width:0">
-            <div style="font-size:10.2px;font-weight:700;opacity:.92;letter-spacing:.1px">${en?'Smart Office Hisab':'স্মার্ট অফিস হিসাব'}</div>
+            <div style="font-size:10.2px;font-weight:700;opacity:.96;letter-spacing:.1px">${en?PDF_BRAND.nameEn:PDF_BRAND.nameBn}</div>
             <div style="font-size:20.8px;font-weight:700;margin-top:2px;line-height:1.22;letter-spacing:-.1px">${pdfSafe(title)}</div>
             <div style="font-size:10.4px;opacity:.9;margin-top:4px;line-height:1.38">${pdfSafe(subtitle)}</div>
           </div>
@@ -666,7 +680,7 @@ function reportShell(title,subtitle,body,lang='bn',meta={}){
       </div>
       <div class="pdf-body" style="flex:1;min-width:0;padding:12px 15px 10px;box-sizing:border-box;overflow:visible;background:linear-gradient(180deg,#ffffff,#fbfdfc)">${body}</div>
       <div class="pdf-footer" style="border-top:1px solid #d5e0e4;background:linear-gradient(90deg,#eef5f8,#f1f8f4,#fff9ed);padding:7px 16px 8px;color:#566975;font-size:8.8px;line-height:1.42">
-        <div style="margin-bottom:5px;color:#61726b">${en?'Independent/unofficial digital service report. Verify applicable rules/orders before any final administrative or financial decision.':'স্বাধীন ও অনানুষ্ঠানিক ডিজিটাল সেবা প্রতিবেদন। চূড়ান্ত প্রশাসনিক/আর্থিক সিদ্ধান্তের আগে প্রযোজ্য বিধি/আদেশ যাচাই করুন।'}</div>
+        <div style="margin-bottom:5px;color:#61726b"><b style="color:#24465d">${en?PDF_BRAND.nameEn:PDF_BRAND.nameBn}</b> · ${en?PDF_BRAND.unofficialEn:PDF_BRAND.unofficialBn}<br/><span style="font-size:8.2px">${en?'Verify applicable rules/orders before any final administrative or financial decision.':'চূড়ান্ত প্রশাসনিক/আর্থিক সিদ্ধান্তের আগে প্রযোজ্য বিধি/আদেশ যাচাই করুন।'}</span></div>
         <div style="display:grid;grid-template-columns:1fr 1.2fr auto;gap:10px;align-items:center;border-top:1px dashed #c6d4d8;padding-top:5px">
           <span><b style="font-family:'Inter','Hind Siliguri',sans-serif;color:#24465d">${PDF_BRAND.website}</b></span>
           <span style="text-align:center"><b>${en?'Design & Development':'ডিজাইন ও ডেভেলপমেন্ট'}:</b> ${en?PDF_BRAND.developerEn:PDF_BRAND.developerBn} · <span style="font-family:'Inter',Arial,sans-serif">${PDF_BRAND.phone}</span></span>
@@ -709,6 +723,12 @@ async function buildA4Pdf(element,{coverText='PDF তৈরি হচ্ছে..
   document.body.appendChild(stage);
   document.body.appendChild(cover);
   try{
+    const stageImages=[...stage.querySelectorAll('img')];
+    await Promise.all(stageImages.map(img=>img.complete?Promise.resolve():new Promise(resolve=>{
+      const done=()=>resolve();
+      img.addEventListener('load',done,{once:true});
+      img.addEventListener('error',done,{once:true});
+    })));
     await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
     const pages=[...stage.querySelectorAll('.pdf-page')];
     if(!pages.length)throw new Error('No PDF pages were generated');
@@ -2183,55 +2203,14 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
   const [activePublicTool,setActivePublicTool]=useState(null);
   const [notices,setNotices]=useState([]);
   const [policies,setPolicies]=useState([]);
-  const [visitorStats,setVisitorStats]=useState(()=>{
-    try{
-      const x=JSON.parse(localStorage.getItem('hisab_public_stats_v1')||'null');
-      return x&&typeof x==='object'?x:{
-        today_unique:null,month_unique:null,total_unique:null,
-        today_views:null,month_views:null,total_views:null,
-        online_now:null,active_5m:null,browser_online:null,pwa_online:null,
-        browser_total_users:null,browser_today_users:null,browser_month_users:null,
-        pwa_total_users:null,pwa_today_users:null,pwa_month_users:null
-      };
-    }catch{return {
-      today_unique:null,month_unique:null,total_unique:null,
-      today_views:null,month_views:null,total_views:null,
-      online_now:null,active_5m:null,browser_online:null,pwa_online:null,
-      browser_total_users:null,browser_today_users:null,browser_month_users:null,
-      pwa_total_users:null,pwa_today_users:null,pwa_month_users:null
-    }}
-  });
-  const [pwaStats,setPwaStats]=useState(()=>{
-    try{
-      const x=JSON.parse(localStorage.getItem('hisab_pwa_stats_v1')||'null');
-      return x&&typeof x==='object'?x:{total_installs:null,today_installs:null,month_installs:null};
-    }catch{return {total_installs:null,today_installs:null,month_installs:null}}
-  });
+  const [visitorStats,setVisitorStats]=useState({today_unique:null,month_unique:null,total_unique:null,total_views:null,online_now:null,active_5m:null,browser_online:null,pwa_online:null});
+  const [pwaStats,setPwaStats]=useState({total_installs:null});
 
   useEffect(()=>{
     let alive=true;
-    const saveVisitor=next=>{
-      if(!alive)return;
-      setVisitorStats(prev=>{
-        const merged={...prev,...next};
-        try{localStorage.setItem('hisab_public_stats_v1',JSON.stringify(merged))}catch{}
-        return merged;
-      });
-    };
-    const savePwa=next=>{
-      if(!alive)return;
-      setPwaStats(prev=>{
-        const merged={...prev,...next};
-        try{localStorage.setItem('hisab_pwa_stats_v1',JSON.stringify(merged))}catch{}
-        return merged;
-      });
-    };
-    const loadTrafficStats=()=>api('/api/public/stats').then(saveVisitor).catch(()=>{});
-    const loadLiveStats=()=>api('/api/public/live-stats').then(saveVisitor).catch(()=>{});
-    const loadStats=()=>Promise.allSettled([loadTrafficStats(),loadLiveStats()]);
-    const loadPwaStats=()=>api('/api/public/pwa-install-stats').then(savePwa).catch(()=>{});
-    trackPublic('page_view','home').catch(()=>{});
-    sendLiveHeartbeat('home').finally(()=>{loadStats();loadPwaStats()});
+    const loadStats=()=>Promise.all([api('/api/public/stats'),api('/api/public/live-stats')]).then(([traffic,live])=>{if(alive)setVisitorStats({...traffic,...live})}).catch(()=>{});
+    const loadPwaStats=()=>api('/api/public/pwa-install-stats').then(x=>{if(alive)setPwaStats(x)}).catch(()=>{});
+    trackPublic('page_view','home').finally(()=>{loadStats();loadPwaStats()});
     Promise.allSettled([
       api('/api/public/notices?limit=100'),
       api('/api/public/policies?limit=100')
@@ -2240,18 +2219,8 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
       if(n.status==='fulfilled')setNotices(n.value.items||n.value.notices||[]);
       if(p.status==='fulfilled')setPolicies(p.value.items||p.value.policies||[]);
     });
-    const refreshLive=()=>sendLiveHeartbeat(currentLiveSection()).finally(loadLiveStats);
-    const onVisible=()=>{if(document.visibilityState==='visible'){refreshLive();loadTrafficStats();loadPwaStats()}};
-    const onFocus=()=>{refreshLive();loadTrafficStats();loadPwaStats()};
-    const timer=setInterval(()=>{refreshLive();loadTrafficStats();loadPwaStats()},10000);
-    document.addEventListener('visibilitychange',onVisible);
-    window.addEventListener('focus',onFocus);
-    return ()=>{
-      alive=false;
-      clearInterval(timer);
-      document.removeEventListener('visibilitychange',onVisible);
-      window.removeEventListener('focus',onFocus);
-    };
+    const timer=setInterval(()=>{loadStats();loadPwaStats()},15000);
+    return ()=>{alive=false;clearInterval(timer)};
   },[]);
 
   const go=(id)=>{
