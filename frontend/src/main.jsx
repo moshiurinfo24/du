@@ -1237,7 +1237,7 @@ function SharedReportViewer({token,lang='bn',setLang}){
 function pensionReportHtml(payload,lang='bn'){
   const en=lang==='en',mode=payload?.mode||'existing',r=payload?.result||{},f=payload?.form||{},p=payload?.profile||{};
   const amt=v=>(en?'Tk ':'৳ ')+moneyLang(Number(v||0),lang);
-  const sourceNote='<div style="margin-top:10px;padding:9px 11px;border:1px solid #d9e2eb;border-left:4px solid #2b6a8a;background:#f7fafc;border-radius:8px;font-size:9.5px;color:#536575;line-height:1.45"><b>'+pdfSafe(en?'Source basis:':'উৎসভিত্তি:')+'</b> '+pdfSafe(en?'Ministry of Finance retirement-benefit order published in the Bangladesh Gazette on 17 September 2026; University of Dhaka Tenth Statutes are shown as a separate institutional reference.':'১৭ সেপ্টেম্বর ২০২৬ বাংলাদেশ গেজেটে প্রকাশিত অর্থ মন্ত্রণালয়ের অবসর-সুবিধা আদেশ; ঢাকা বিশ্ববিদ্যালয়ের Tenth Statutes আলাদা প্রাতিষ্ঠানিক রেফারেন্স হিসেবে দেখানো হয়েছে।')+'</div>';
+  const sourceNote='<div style="margin-top:10px;padding:9px 11px;border:1px solid #d9e2eb;border-left:4px solid #2b6a8a;background:#f7fafc;border-radius:8px;font-size:9.5px;color:#536575;line-height:1.45"><b>'+pdfSafe(en?'Source basis:':'উৎসভিত্তি:')+'</b> '+pdfSafe(en?'Public Bodies Pay Order 2026 and the Ministry of Finance retirement-benefit order, both published in the Bangladesh Gazette on 17 September 2026; University of Dhaka Tenth Statutes are shown separately.':'১৭ সেপ্টেম্বর ২০২৬ বাংলাদেশ গেজেটে প্রকাশিত Public Bodies বেতন ও ভাতা আদেশ ২০২৬ এবং অর্থ মন্ত্রণালয়ের অবসর-সুবিধা আদেশ; ঢাকা বিশ্ববিদ্যালয়ের Tenth Statutes আলাদা রেফারেন্স হিসেবে দেখানো হয়েছে।')+'</div>';
   if(mode==='existing'){
     const summary=pdfSummaryCards([
       {label:en?'Selected-date payable':'নির্বাচিত তারিখে প্রাপ্য',value:amt(r.current),accent:true},
@@ -1247,20 +1247,33 @@ function pensionReportHtml(payload,lang='bn'){
     ],4);
     const inputRows=[
       {label:en?'Pension type':'পেনশনের ধরন',value:f.kind==='family'?(en?'Lifetime family pensioner':'আজীবন পারিবারিক পেনশনভোগী'):(en?'Original pensioner':'মূল পেনশনভোগী')},
+      {label:en?'Date of birth':'জন্মতারিখ',value:f.dob?fmtDateLang(f.dob,lang):'—'},
       {label:en?'Net pension on 30 June 2026':'৩০ জুন ২০২৬-এর নিট পেনশন',value:amt(r.oldNet)},
       {label:en?'Payable date':'প্রাপ্য দেখানোর তারিখ',value:f.asOf?fmtDateLang(f.asOf,lang):'—'}
     ];
-    const calcRows=r.protected?[
-      {label:en?'Protection rule':'সুরক্ষা বিধান',value:en?'Existing amount retained':'বিদ্যমান অংক বহাল',emphasis:true}
+    const calcRows=(r.protected?[
+      {label:en?'Protection rule':'সুরক্ষা বিধান',value:en?'Protected amount / annual increment rule':'সুরক্ষিত অংক / বার্ষিক বৃদ্ধির নিয়ম',emphasis:true}
     ]:[
       {label:en?'Official revision rate':'সরকারি বৃদ্ধির হার',value:numLang(r.rate||0,lang,0)+'%'},
       {label:en?'Full increase':'পূর্ণ বৃদ্ধি',value:amt(r.increase)},
       {label:en?'Implemented share on selected date':'নির্বাচিত তারিখে কার্যকর অংশ',value:numLang((r.share||0)*100,lang,0)+'%'},
       {label:en?'Payable pension':'প্রাপ্য পেনশন',value:amt(r.current),emphasis:true}
-    ];
+    ]).concat([
+      {label:en?'Age on selected date':'নির্বাচিত তারিখে বয়স',value:r.age==null?'—':numLang(r.age,lang,0)+(en?' years':' বছর')},
+      {label:en?'Medical allowance / month':'চিকিৎসা ভাতা / মাস',value:r.medical?amt(r.medical):'—'},
+      {label:en?'Festival allowance / each':'উৎসব ভাতা / প্রতিবার',value:amt(r.festivalEach)},
+      {label:en?'Two festival allowances / year':'বছরে দুই উৎসব ভাতা',value:amt(r.festivalAnnual)},
+      {label:en?'Bangla New Year allowance':'বাংলা নববর্ষ ভাতা',value:numLang((r.boishakhiRate||0)*100,lang,0)+'% · '+amt(r.boishakhi)}
+    ]);
+    const timelineRows=(payload?.timeline||[]).map(x=>({
+      label:x.label,
+      detail:(en?'Medical ':'চিকিৎসা ')+(x.medical?amt(x.medical):'—')+' · '+(en?'New Year ':'নববর্ষ ')+numLang((x.boishakhiRate||0)*100,lang,0)+'%',
+      value:amt(x.amount)
+    }));
     const body=summary+
       section(en?'Input information':'প্রদত্ত তথ্য',pdfTable(inputRows,{head1:en?'Information':'তথ্য',head3:en?'Value':'মান',compact:true}),{table:true,tight:true})+
-      section(en?'Revision calculation':'পুনর্নির্ধারণ হিসাব',pdfTable(calcRows,{head1:en?'Calculation item':'হিসাবের বিষয়',head3:en?'Result':'ফলাফল',compact:true}),{table:true,tight:true})+
+      section(en?'Revision & allowance calculation':'পুনর্নির্ধারণ ও ভাতা হিসাব',pdfTable(calcRows,{head1:en?'Calculation item':'হিসাবের বিষয়',head3:en?'Result':'ফলাফল',compact:true}),{table:true,tight:true})+
+      (timelineRows.length?section(en?'2026–2028 benefit timeline':'২০২৬–২০২৮ সুবিধার টাইমলাইন',pdfTable(timelineRows,{three:true,head1:en?'Period':'সময়',head2:en?'Allowances':'ভাতা',head3:en?'Monthly pension':'মাসিক পেনশন',compact:true}),{table:true,tight:true}):'')+
       sourceNote;
     return reportShell(en?'Pension Revision Report 2026':'পেনশন পুনর্নির্ধারণ প্রতিবেদন ২০২৬',en?'Existing pensioner · Smart Office Hisab':'বর্তমান পেনশনার · স্মার্ট অফিস হিসাব',body,lang);
   }
@@ -1272,27 +1285,47 @@ function pensionReportHtml(payload,lang='bn'){
     {label:en?'Net one-time benefit':'নিট এককালীন প্রাপ্য',value:amt(r.netOneTime)}
   ],4);
   const inputRows=[
-    {label:en?'Last pensionable basic':'শেষ পেনশনযোগ্য মূল বেতন',value:amt(r.basic)},
+    {label:en?'Employee category':'কর্মচারীর ধরন',value:f.employmentType==='teacher'?(en?'Teacher':'শিক্ষক'):f.employmentType==='officer'?(en?'Officer':'কর্মকর্তা'):f.employmentType==='class4'?(en?'Class IV employee':'৪র্থ শ্রেণির কর্মচারী'):(en?'Class III employee':'৩য় শ্রেণির কর্মচারী')},
+    {label:en?'Grade on 30 Jun 2026':'৩০ জুন ২০২৬-এর গ্রেড',value:(en?'Grade ':'গ্রেড ')+String(r.grade||f.grade||'—')},
+    {label:en?'2015 basic on 30 Jun 2026':'৩০ জুন ২০২৬-এর ২০১৫ মূল বেতন',value:amt(r.oldBasic)},
+    {label:en?'Full applicable 2026 basic':'পূর্ণ প্রযোজ্য ২০২৬ মূল বেতন',value:amt(r.basic)},
+    {label:en?'Date of birth':'জন্মতারিখ',value:f.dob?fmtDateLang(f.dob,lang):'—'},
     {label:en?'First joining date':'প্রথম যোগদানের তারিখ',value:f.joiningDate?fmtDateLang(f.joiningDate,lang):'—'},
     {label:en?'Retirement date':'অবসরের তারিখ',value:f.retirementDate?fmtDateLang(f.retirementDate,lang):'—'},
-    {label:en?'Qualifying service':'পেনশনযোগ্য চাকরিকাল',value:serviceText},
-    {label:en?'Grade / post reference':'গ্রেড / পদ রেফারেন্স',value:String(p.current_grade||p.grade||p.current_post||'—')}
+    {label:en?'Qualifying service':'পেনশনযোগ্য চাকরিকাল',value:serviceText}
   ];
   const calcRows=[
     {label:en?'Government pension rate':'সরকারি পেনশন হার',value:numLang(r.rate||0,lang,0)+'%'},
-    {label:en?'Gross pension':'গ্রস পেনশন',value:amt(r.grossPension)},
-    {label:en?'Surrendered pension (50%)':'সমর্পিত পেনশন (৫০%)',value:amt(r.surrendered)},
-    {label:en?'Monthly retained pension':'মাসিক অবশিষ্ট পেনশন',value:amt(r.monthlyPension),emphasis:true},
+    {label:en?'Gross pension on full applicable basic':'পূর্ণ প্রযোজ্য basic-এ গ্রস পেনশন',value:amt(r.grossPension)},
+    {label:en?'Full net pension after 50% surrender':'৫০% সমর্পণের পর পূর্ণ নিট পেনশন',value:amt(r.fullNetPension)},
+    {label:en?'Payable phase at retirement':'অবসরের সময় কার্যকর ধাপ',value:numLang((r.phase?.share||0)*100,lang,0)+'%'},
+    {label:en?'Payable monthly pension at retirement':'অবসরের সময় প্রাপ্য মাসিক পেনশন',value:amt(r.monthlyPension),emphasis:true},
+    {label:en?'Medical allowance / month':'চিকিৎসা ভাতা / মাস',value:r.medical?amt(r.medical):'—'},
+    {label:en?'Festival allowance / each':'উৎসব ভাতা / প্রতিবার',value:amt(r.festivalEach)},
+    {label:en?'Bangla New Year allowance':'বাংলা নববর্ষ ভাতা',value:numLang((r.boishakhiRate||0)*100,lang,0)+'% · '+amt(r.boishakhi)},
     {label:en?'Gratuity multiplier':'আনুতোষিক multiplier',value:numLang(r.multiplier||0,lang,0)+' ×'},
     {label:en?'Gratuity':'আনুতোষিক',value:amt(r.gratuity)},
     {label:en?'Leave encashment':'ছুটি নগদায়ন',value:amt(r.leaveEncashment)},
+    {label:en?'DU Benevolent monthly deduction rate':'DU Benevolent মাসিক কর্তনের হার',value:numLang((r.benevolent?.rate||0)*100,lang,2)+'%'},
+    {label:en?'DU Benevolent one-time benefit':'DU Benevolent এককালীন সুবিধা',value:r.benevolent?.benefit?amt(r.benevolent.benefit):(r.benevolent?.eligible?(en?'Not included until subscription is confirmed':'subscription নিশ্চিত না হওয়া পর্যন্ত যোগ হয়নি'):(en?'Not eligible under the 10-year condition':'১০ বছরের শর্তে এখনো যোগ্য নয়'))},
+    {label:en?'PF final balance (statement)':'PF final balance (statement)',value:amt(r.pfFinal)},
+    {label:en?'Group Insurance (statement)':'Group Insurance (statement)',value:amt(r.groupInsurance)},
     {label:en?'Loan / advance / other recovery':'ঋণ / অগ্রিম / অন্যান্য কর্তন',value:'− '+amt(r.deduction)},
+    {label:en?'Gross one-time retirement benefit':'মোট এককালীন অবসর প্রাপ্য',value:amt(r.grossOneTime)},
     {label:en?'Net one-time retirement benefit':'নিট এককালীন অবসর প্রাপ্য',value:amt(r.netOneTime),emphasis:true}
   ];
+  const payRows=(payload?.payJourney||[]).map(x=>({label:x.label,detail:x.phase?.label||'',value:amt(x.payableBasic)}));
+  const pensionRows=(payload?.pensionJourney||[]).map(x=>({
+    label:x.label,
+    detail:x.notRetired?(en?'Still in service':'তখনও চাকরিতে'):((en?'Medical ':'চিকিৎসা ')+(x.medical?amt(x.medical):'—')+' · '+(en?'New Year ':'নববর্ষ ')+numLang((x.boishakhiRate||0)*100,lang,0)+'%'),
+    value:x.notRetired?'—':amt(x.net)
+  }));
   const body=summary+
     section(en?'Service & pay information':'চাকরি ও বেতন তথ্য',pdfTable(inputRows,{head1:en?'Information':'তথ্য',head3:en?'Value':'মান',compact:true}),{table:true,tight:true})+
-    section(en?'Pension & retirement calculation':'পেনশন ও অবসর হিসাব',pdfTable(calcRows,{head1:en?'Calculation item':'হিসাবের বিষয়',head3:en?'Result':'ফলাফল',compact:true}),{table:true,tight:true})+
-    '<div style="margin-top:10px;padding:9px 11px;border:1px solid #ead8a9;border-left:4px solid #c49a3d;background:#fffaf0;border-radius:8px;font-size:9.5px;color:#685626;line-height:1.45"><b>'+pdfSafe(en?'Important:':'গুরুত্বপূর্ণ:')+'</b> '+pdfSafe(en?'PF final settlement, Benevolent Fund, Group Insurance and other DU-specific benefits are not added to this total until their exact applicable records/rules are confirmed.':'PF final settlement, Benevolent Fund, Group Insurance এবং অন্যান্য DU-specific সুবিধা সঠিক প্রযোজ্য record/rule নিশ্চিত না হওয়া পর্যন্ত এই মোটে যোগ করা হয়নি।')+'</div>'+
+    section(en?'Pension, allowances & retirement calculation':'পেনশন, ভাতা ও অবসর হিসাব',pdfTable(calcRows,{head1:en?'Calculation item':'হিসাবের বিষয়',head3:en?'Result':'ফলাফল',compact:true}),{table:true,tight:true})+
+    (payRows.length?section(en?'2026–2028 grade/basic journey':'২০২৬–২০২৮ গ্রেড/মূল বেতনের যাত্রা',pdfTable(payRows,{three:true,head1:en?'Date':'তারিখ',head2:en?'Phase':'ধাপ',head3:en?'Payable basic':'প্রাপ্য মূল বেতন',compact:true}),{table:true,tight:true}):'')+
+    (pensionRows.length?section(en?'2026–2028 retirement-benefit journey':'২০২৬–২০২৮ অবসর-পরবর্তী সুবিধার যাত্রা',pdfTable(pensionRows,{three:true,head1:en?'Period':'সময়',head2:en?'Allowance':'ভাতা',head3:en?'Monthly pension':'মাসিক পেনশন',compact:true}),{table:true,tight:true}):'')+
+    '<div style="margin-top:10px;padding:9px 11px;border:1px solid #ead8a9;border-left:4px solid #c49a3d;background:#fffaf0;border-radius:8px;font-size:9.5px;color:#685626;line-height:1.45"><b>'+pdfSafe(en?'Important:':'গুরুত্বপূর্ণ:')+'</b> '+pdfSafe(en?'The DU Benevolent benefit is added only when the user confirms the prescribed subscription condition. PF and Group Insurance are included only from user-entered official statement amounts; no unverified rate is estimated.':'DU Benevolent সুবিধা শুধু নির্ধারিত subscription শর্ত user নিশ্চিত করলে যোগ হয়। PF ও Group Insurance শুধু user দেওয়া অফিসিয়াল statement-এর অংক থেকে যোগ হয়; কোনো অনিশ্চিত rate অনুমান করা হয়নি।')+'</div>'+
     sourceNote;
   return reportShell(en?'Pension & Retirement Calculation Report':'পেনশন ও অবসর হিসাব প্রতিবেদন',en?'Government-2026 baseline · Smart Office Hisab':'সরকারি ২০২৬ baseline · স্মার্ট অফিস হিসাব',body,lang);
 }
