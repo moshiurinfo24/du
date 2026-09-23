@@ -1018,6 +1018,7 @@ function CalculationHistoryCenter({lang='bn',onOpen}){
     age:{icon:UserRound,bn:'বয়স',en:'Age'},
     gap:{icon:CalendarDays,bn:'তারিখের ব্যবধান',en:'Date Difference'},
     retire:{icon:FileClock,bn:'অবসর তারিখ',en:'Retirement'},
+    pension:{icon:Landmark,bn:'পেনশন ও অবসর',en:'Pension & Retirement'},
     basic:{icon:BadgeDollarSign,bn:'ইনক্রিমেন্ট সেন্টার',en:'Increment Center'},
     pf:{icon:ReceiptText,bn:'PF ও কর্তন',en:'PF & Deductions'}
   };
@@ -1037,7 +1038,7 @@ function CalculationHistoryCenter({lang='bn',onOpen}){
     try{return new Intl.DateTimeFormat(en?'en-GB':'bn-BD',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(v))}
     catch{return v||'—'}
   };
-  const metricLabel=k=>en?({grade:'Grade',basic:'Basic',net:'Net',gross:'Gross',arrear:'Arrear',points:'Points',date:'Date',target:'Target',duration:'Duration',retirement:'Retirement',payable:'Payable basic',increment:'Increment step',monthly:'Monthly increase',annual:'Annual equivalent',pf:'Monthly PF',rate:'PF rate',deductions:'Total deductions',takeHome:'Take-home impact'}[k]||k):({grade:'গ্রেড',basic:'মূল বেতন',net:'নিট',gross:'মোট',arrear:'বকেয়া',points:'পয়েন্ট',date:'তারিখ',target:'লক্ষ্য',duration:'সময়কাল',retirement:'অবসর',payable:'প্রাপ্য মূল বেতন',increment:'ইনক্রিমেন্ট ধাপ',monthly:'মাসিক বৃদ্ধি',annual:'বার্ষিক সমপরিমাণ',pf:'মাসিক PF',rate:'PF হার',deductions:'মোট কর্তন',takeHome:'Take-home প্রভাব'}[k]||k);
+  const metricLabel=k=>en?({grade:'Grade',basic:'Basic',net:'Net',gross:'Gross',arrear:'Arrear',points:'Points',date:'Date',target:'Target',duration:'Duration',retirement:'Retirement',pension:'Pension',oneTime:'One-time benefit',revision:'Revision',payable:'Payable basic',increment:'Increment step',monthly:'Monthly increase',annual:'Annual equivalent',pf:'Monthly PF',rate:'PF rate',deductions:'Total deductions',takeHome:'Take-home impact'}[k]||k):({grade:'গ্রেড',basic:'মূল বেতন',net:'নিট',gross:'মোট',arrear:'বকেয়া',points:'পয়েন্ট',date:'তারিখ',target:'লক্ষ্য',duration:'সময়কাল',retirement:'অবসর',pension:'পেনশন',oneTime:'এককালীন প্রাপ্য',revision:'পুনর্নির্ধারণ',payable:'প্রাপ্য মূল বেতন',increment:'ইনক্রিমেন্ট ধাপ',monthly:'মাসিক বৃদ্ধি',annual:'বার্ষিক সমপরিমাণ',pf:'মাসিক PF',rate:'PF হার',deductions:'মোট কর্তন',takeHome:'Take-home প্রভাব'}[k]||k);
   return <div className="calc-history-center">
     <section className="calc-history-hero">
       <div className="calc-history-hero-icon"><History/></div>
