@@ -2373,7 +2373,7 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
     setMobileCalcOpen(false);
     if(tool==='reference')loadReferenceData();
     setActivePublicTool(tool);
-    const sectionMap={salary:'pay_scale_calculator',promotion:'promotion_calculator',house:'house_allocation_calculator',service:'service_calculator',age:'age_calculator',gap:'date_gap_calculator',retire:'retirement_calculator'};
+    const sectionMap={salary:'pay_scale_calculator',promotion:'promotion_calculator',house:'house_allocation_calculator',service:'service_calculator',age:'age_calculator',gap:'date_gap_calculator',retire:'retirement_calculator',pension:'pension_retirement_center'};
     trackPublic('calculator_view',sectionMap[tool]||'calculator');
     window.requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'smooth'}));
   };
