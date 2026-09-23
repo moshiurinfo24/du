@@ -91,10 +91,11 @@ function ageOnDate(dob,date){
 function pensionerMedical(date,dob){
   const age=ageOnDate(dob,date);
   if(age==null)return {amount:0,age:null,label:'DOB_REQUIRED'};
-  if(date<'2028-01-01')return {amount:age>=65?2500:1500,age,label:age>=65?'65+ old rule':'old rule'};
-  if(age<=50)return {amount:3000,age,label:'≤50'};
-  if(age<=60)return {amount:4000,age,label:'50+ to 60'};
-  if(age<=70)return {amount:5000,age,label:'60+ to 70'};
+  const b50=addYearsIso(dob,50),b60=addYearsIso(dob,60),b65=addYearsIso(dob,65),b70=addYearsIso(dob,70);
+  if(date<'2028-01-01')return {amount:date>=b65?2500:1500,age,label:date>=b65?'65+ old rule':'old rule'};
+  if(date<=b50)return {amount:3000,age,label:'≤50'};
+  if(date<=b60)return {amount:4000,age,label:'50+ to 60'};
+  if(date<=b70)return {amount:5000,age,label:'60+ to 70'};
   return {amount:6000,age,label:'70+'};
 }
 function pensionIncrementCount(date){
@@ -151,6 +152,23 @@ function newRetireePhase(oldNet,newNet,date){
 function retirementAgeFor(type,profileAge){
   if(Number(profileAge)>0)return Number(profileAge);
   return type==='teacher'?65:type==='officer'?62:60;
+}
+function pensionIncrementsSince(retirementDate,date){
+  if(!retirementDate||!date||date<retirementDate)return 0;
+  const startYear=Math.max(2027,Number(retirementDate.slice(0,4))||2027);
+  const endYear=Number(date.slice(0,4))||startYear;
+  let count=0;
+  for(let yr=startYear;yr<=endYear;yr++){
+    const boundary=yr+'-07-01';
+    if(retirementDate<boundary&&date>=boundary)count++;
+  }
+  return count;
+}
+function retireeNetAtDate({retirementDate,date,oldNet,fullNet}){
+  if(!retirementDate||date<retirementDate)return null;
+  if(date<='2027-06-30')return newRetireePhase(oldNet,fullNet,date).amount;
+  const increments=pensionIncrementsSince(retirementDate,date);
+  return Number(fullNet||0)*Math.pow(1.05,increments);
 }
 function RateTable({en}){
   const rows=Object.entries(PENSION_RATES);
@@ -313,8 +331,24 @@ function NewRetiree({en,profile={},onSaveCalculation,onPreviewReport}){
       grossPension,surrendered,fullNetPension,phase,monthlyPension,gratuity,leaveMonths,leaveEncashment,deduction,grossOneTime,netOneTime,
       eligible:completedYears>=5,autoService:!!autoService,...allowance};
   },[form,autoService]);
+  const pensionJourney=useMemo(()=>{
+    if(!result||!form.retirementDate)return [];
+    const dates=[
+      ['2026-12-31',en?'End 2026':'২০২৬ শেষ'],
+      ['2027-06-30',en?'30 Jun 2027':'৩০ জুন ২০২৭'],
+      ['2027-07-01',en?'1 Jul 2027':'১ জুলাই ২০২৭'],
+      ['2028-01-01',en?'1 Jan 2028':'১ জানুয়ারি ২০২৮'],
+      ['2028-07-01',en?'1 Jul 2028':'১ জুলাই ২০২৮']
+    ];
+    return dates.map(([date,label])=>{
+      const net=retireeNetAtDate({retirementDate:form.retirementDate,date,oldNet:result.oldNet,fullNet:result.fullNetPension});
+      if(net==null)return {date,label,notRetired:true};
+      const a=pensionAllowanceSnapshot({net,dob:form.dob,date});
+      return {date,label,net,...a,increments:pensionIncrementsSince(form.retirementDate,date)};
+    });
+  },[result,form.retirementDate,form.dob,en]);
   const hasProfile=Boolean(profile.current_basic_salary||profile.first_joining_date||profile.date_of_birth||profile.retirement_age||profile.grade);
-  const payload=result?{mode:'new',form,result,profile,payJourney}:null;
+  const payload=result?{mode:'new',form,result,profile,payJourney,pensionJourney}:null;
 
   return <section className="pension-mode-card">
     <div className="pension-section-head"><div><Landmark/><div><small>{en?'NEW RETIREE · SMART PREFILL':'নতুন অবসরপ্রাপ্ত · SMART PREFILL'}</small><h3>{en?'Pension, gratuity & retirement summary':'পেনশন, আনুতোষিক ও অবসর সারাংশ'}</h3><p>{en?'Saved Career Profile data is used automatically when available. Correct only the fields that need changes.':'চাকরি তথ্য-এ সংরক্ষিত ডাটা থাকলে অটোমেটিক নেওয়া হবে। শুধু যেগুলো পরিবর্তন দরকার সেগুলো ঠিক করবেন।'}</p></div></div></div>
@@ -379,6 +413,21 @@ function NewRetiree({en,profile={},onSaveCalculation,onPreviewReport}){
               <span>{en?'Payable basic':'প্রাপ্য মূল বেতন'}</span>
               <p>{x.phase?.label||''}</p>
               {x.allowance2026&&<p>{en?'New allowances active':'নতুন ভাতা কার্যকর'}</p>}
+            </article>)}
+          </div>
+        </section>}
+
+        {pensionJourney.length>0&&<section className="pension-timeline">
+          <div className="pension-timeline-head"><WalletCards/><div><b>{en?'Retirement benefit journey · 2026–2028':'অবসর-পরবর্তী সুবিধার যাত্রা · ২০২৬–২০২৮'}</b><small>{en?'Shows pension and age-based allowances only after the selected retirement date.':'নির্বাচিত অবসরের তারিখের পর থেকেই পেনশন ও বয়সভিত্তিক ভাতা দেখানো হচ্ছে।'}</small></div></div>
+          <div className="pension-timeline-grid">
+            {pensionJourney.map(x=><article key={x.date} className={x.notRetired?'muted':''}>
+              <small>{x.label}</small>
+              {x.notRetired?<><b>—</b><span>{en?'Still in service':'তখনও চাকরিতে'}</span></>:<>
+                <b>{money(x.net,en)}</b><span>{en?'Monthly pension':'মাসিক পেনশন'}</span>
+                <p>{en?'Medical':'চিকিৎসা'}: {x.medical?money(x.medical,en):'—'}</p>
+                <p>{en?'Festival ×2':'উৎসব ×২'}: {money(x.festivalAnnual,en)}</p>
+                <p>{en?'New Year':'নববর্ষ'}: {num(x.boishakhiRate*100,en)}%</p>
+              </>}
             </article>)}
           </div>
         </section>}
