@@ -5418,7 +5418,8 @@ function CalculatorCenter({lang='bn',onPage,publicMode=false,initialTool='servic
   const [service,setService]=useState({start:'',end:todayLocalIso()});
   const [age,setAge]=useState({dob:'',asOf:todayLocalIso()});
   const [gap,setGap]=useState({from:'',to:''});
-  const [retire,setRetire]=useState({dob:'',age:''});
+  const [retire,setRetire]=useState({dob:'',category:'',age:''});
+  const retirementAgeByClass={employee:'60',officer:'62',teacher:'65'};
   const [basicProj,setBasicProj]=useState({grade:'13',stage:'0',date:todayLocalIso(),incrementEligible2026:'yes'});
   const [result,setResult]=useState(null);
 
@@ -5430,7 +5431,7 @@ function CalculatorCenter({lang='bn',onPage,publicMode=false,initialTool='servic
       setAge(v=>({...v,dob:gp.date_of_birth}));
       setRetire(v=>({...v,dob:gp.date_of_birth}));
     }
-    if(gp.retirement_age)setRetire(v=>({...v,age:String(gp.retirement_age)}));
+    if(gp.retirement_age)setRetire(v=>({...v,age:String(gp.retirement_age),category:String(gp.retirement_age)==='60'?'employee':String(gp.retirement_age)==='62'?'officer':String(gp.retirement_age)==='65'?'teacher':v.category}));
     if(localPay.grade)setBasicProj(v=>({...v,grade:String(localPay.grade),stage:localPay.currentStage||'0'}));
     if(publicMode)return;
     api('/api/my-career').then(x=>{
@@ -5441,7 +5442,7 @@ function CalculatorCenter({lang='bn',onPage,publicMode=false,initialTool='servic
         setAge(v=>({...v,dob:p.date_of_birth}));
         setRetire(v=>({...v,dob:p.date_of_birth}));
       }
-      if(p.retirement_age)setRetire(v=>({...v,age:String(p.retirement_age)}));
+      if(p.retirement_age)setRetire(v=>({...v,age:String(p.retirement_age),category:String(p.retirement_age)==='60'?'employee':String(p.retirement_age)==='62'?'officer':String(p.retirement_age)==='65'?'teacher':v.category}));
       if(accountPay.grade)setBasicProj(v=>({...v,grade:String(accountPay.grade),stage:accountPay.currentStage||'0'}));
     }).catch(()=>{});
   },[publicMode]);
@@ -5573,8 +5574,18 @@ function CalculatorCenter({lang='bn',onPage,publicMode=false,initialTool='servic
         <button className="primary wide" onClick={calcGap}>{en?'Calculate Difference':'ব্যবধান হিসাব করুন'}</button>
       </>}
       {tool==='retire'&&<>
-        <div className="tool-head"><FileClock/><div><h3>{en?'Retirement Date Estimate':'অবসর তারিখ অনুমান'}</h3><p>{en?'Enter your applicable retirement age. No policy age is assumed by the system.':'আপনার ক্ষেত্রে প্রযোজ্য অবসরের বয়স দিন। সিস্টেম কোনো নীতিগত বয়স অনুমান করে না।'}</p></div></div>
-        <div className="form-grid"><DMY label={en?'Date of birth':'জন্মতারিখ'} value={retire.dob} onChange={v=>setRetire({...retire,dob:v})}/><label>{en?'Applicable retirement age':'প্রযোজ্য অবসরের বয়স'}<input type="number" min="1" max="100" value={retire.age} onChange={e=>setRetire({...retire,age:e.target.value})}/></label></div>
+        <div className="tool-head"><FileClock/><div><h3>{en?'Retirement Date Estimate':'অবসর তারিখ অনুমান'}</h3><p>{en?'Select your University category. The applicable retirement age is filled automatically.':'আপনার শ্রেণী নির্বাচন করুন। প্রযোজ্য অবসরের বয়স স্বয়ংক্রিয়ভাবে বসবে।'}</p></div></div>
+        <div className="form-grid">
+          <DMY label={en?'Date of birth':'জন্মতারিখ'} value={retire.dob} onChange={v=>setRetire({...retire,dob:v})}/>
+          <label>{en?'Category':'শ্রেণী'}<select value={retire.category} onChange={e=>{const category=e.target.value;setRetire({...retire,category,age:retirementAgeByClass[category]||''});setResult(null)}}>
+            <option value="">{en?'Select':'নির্বাচন করুন'}</option>
+            <option value="employee">{en?'Employee — 60 years':'কর্মচারী — ৬০ বছর'}</option>
+            <option value="officer">{en?'Officer — 62 years':'কর্মকর্তা — ৬২ বছর'}</option>
+            <option value="teacher">{en?'Teacher — 65 years':'শিক্ষক — ৬৫ বছর'}</option>
+          </select></label>
+          <label>{en?'Applicable retirement age':'প্রযোজ্য অবসরের বয়স'}<input type="text" readOnly value={retire.age?`${numLang(retire.age,lang,0)} ${en?'years':'বছর'}`:''} placeholder="—"/></label>
+        </div>
+        <div className="notice"><b>{en?'Dhaka University Tenth Statutes:':'ঢাকা বিশ্ববিদ্যালয় Tenth Statutes:'}</b> {en?'employees 60, officers 62 and teachers 65. From 1 July 2021, retirement takes effect on the date the applicable age is attained according to date of birth.':'কর্মচারী ৬০, কর্মকর্তা ৬২ এবং শিক্ষক ৬৫ বছর। ১ জুলাই ২০২১ থেকে জন্মতারিখ অনুযায়ী প্রযোজ্য বয়স পূর্তির তারিখে অবসর কার্যকর।'}</div>
         <button className="primary wide" onClick={calcRetire}>{en?'Estimate Retirement Date':'অবসর তারিখ হিসাব করুন'}</button>
       </>}
       {tool==='basic'&&<>
@@ -5595,7 +5606,7 @@ function CalculatorCenter({lang='bn',onPage,publicMode=false,initialTool='servic
       result.type==='service'?<><CheckCircle2/><div><small>{en?'Total service length':'মোট চাকরিকাল'}</small><h3>{showDur(result.d)}</h3><p>{fmtDateLang(result.start,lang)} → {fmtDateLang(result.end,lang)}</p></div></>:
       result.type==='age'?<><CheckCircle2/><div><small>{en?'Current age':'বর্তমান বয়স'}</small><h3>{showDur(result.d)}</h3><p>{en?'Date of birth':'জন্মতারিখ'}: {fmtDateLang(result.dob,lang)}</p></div></>:
       result.type==='gap'?<><CheckCircle2/><div><small>{en?'Exact difference':'সঠিক ব্যবধান'}</small><h3>{showDur(result.d)}</h3><p>{fmtDateLang(result.from,lang)} → {fmtDateLang(result.to,lang)}</p></div></>:
-      result.type==='retire'?<><FileClock/><div><small>{en?'Estimated retirement date':'সম্ভাব্য অবসর তারিখ'}</small><h3>{fmtDateLang(result.retirement,lang)}</h3><p>{en?`Based on the retirement age you entered: ${numLang(result.years,lang,0)} years.`:`আপনার দেওয়া অবসরের বয়স ${numLang(result.years,lang,0)} বছর ধরে হিসাব করা হয়েছে।`}</p></div></>:null}
+      result.type==='retire'?<><FileClock/><div><small>{en?'Estimated retirement date':'সম্ভাব্য অবসর তারিখ'}</small><h3>{fmtDateLang(result.retirement,lang)}</h3><p>{en?`Applicable retirement age: ${numLang(result.years,lang,0)} years.`:`প্রযোজ্য অবসরের বয়স ${numLang(result.years,lang,0)} বছর ধরে হিসাব করা হয়েছে।`}</p></div></>:null}
     </section>}
 
     
