@@ -20,6 +20,11 @@ const SECTION_META={
   'technical-house':{totalSerial:134,pages:'17–23',bn:'৩য় শ্রেণি কারিগরি — বাসা',en:'Class III technical — housing'},
   'technical-seat':{totalSerial:13,pages:'24',bn:'৩য় শ্রেণি কারিগরি — সিট বরাদ্দ',en:'Class III technical — seat allocation'}
 };
+const SECTION_ORDER=['officer-special','officer-point','employee-promoted','employee-direct','employee-seat','technical-house','technical-seat'];
+function sectionOrderValue(category){
+  const i=SECTION_ORDER.indexOf(category);
+  return i<0?999:i;
+}
 function sectionMetaFor(x){
   return SECTION_META[x.category]||{
     totalSerial:bnToNumber(x.serial),
@@ -327,14 +332,25 @@ export default function HouseAllocationDirectory({lang='bn',onOpenPoints}){
       })
       .filter(Boolean)
       .sort(function(a,b){
-        if(b.matchScore!==a.matchScore)return b.matchScore-a.matchScore;
-        const an=normalize(a.name),bn=normalize(b.name);
-        if(an!==bn)return an.localeCompare(bn,'bn');
-        return a.position-b.position;
+        if(nq){
+          if(b.matchScore!==a.matchScore)return b.matchScore-a.matchScore;
+          const an=normalize(a.name),bn=normalize(b.name);
+          if(an!==bn)return an.localeCompare(bn,'bn');
+          return a.position-b.position;
+        }
+        const sectionDiff=sectionOrderValue(a.category)-sectionOrderValue(b.category);
+        if(sectionDiff!==0)return sectionDiff;
+        if(a.position!==b.position)return a.position-b.position;
+        return a.sourcePage-b.sourcePage;
       });
   },[records,group,kind,category,nq,searchScope]);
 
   const groupedResults=useMemo(function(){
+    if(!nq){
+      return filteredRecords.map(function(x){
+        return {key:x.id,name:x.name,items:[x],primary:x,bestScore:0};
+      });
+    }
     const map=new Map();
     filteredRecords.forEach(function(x){
       const key=normalize(x.name);
@@ -347,7 +363,7 @@ export default function HouseAllocationDirectory({lang='bn',onOpenPoints}){
       if(b.bestScore!==a.bestScore)return b.bestScore-a.bestScore;
       return normalize(a.name).localeCompare(normalize(b.name),'bn');
     });
-  },[filteredRecords]);
+  },[filteredRecords,nq]);
 
   const hasIntent=Boolean(nq)||group!=='all'||kind!=='all'||category!=='all';
   const results=hasIntent?groupedResults:[];
@@ -429,9 +445,13 @@ export default function HouseAllocationDirectory({lang='bn',onOpenPoints}){
     </section>}
 
     {hasIntent&&<section className="house-dir-results-head">
-      <div><SlidersHorizontal/><span>{en?'Search results':'অনুসন্ধানের ফলাফল'}</span></div>
+      <div><SlidersHorizontal/><span>{nq?(en?'Search results':'অনুসন্ধানের ফলাফল'):(en?'Category list':'ক্যাটাগরি তালিকা')}</span></div>
       <b>{results.length.toLocaleString(en?'en-US':'bn-BD')}</b>
     </section>}
+    {hasIntent&&!nq&&<div className="house-dir-order-note">
+      <BadgeCheck/>
+      <span>{en?'Shown in the original PDF section and serial-number order.':'মূল PDF-এর অংশ ও ক্রমিক নম্বরের ধারাবাহিকতা ঠিক রেখে দেখানো হচ্ছে।'}</span>
+    </div>}
 
     <section className="house-dir-results">
       {visibleResults.map(function(g){
