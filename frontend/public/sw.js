@@ -1,4 +1,4 @@
-const CACHE_NAME='hisab-pwa-runtime-v64';
+const CACHE_NAME='hisab-pwa-runtime-v65';
 const CORE=[
   '/',
   '/manifest.webmanifest',

@@ -57,6 +57,13 @@
 
 .house-dir-person-card{min-width:0;padding:15px;border:1px solid #dce4ef;border-radius:17px;background:#fff;box-shadow:0 8px 22px rgba(28,48,92,.045);display:grid;gap:11px;transition:border-color .16s ease,box-shadow .16s ease,transform .16s ease}
 .house-dir-person-card:hover{border-color:#bfcbe0;box-shadow:0 12px 28px rgba(28,48,92,.08);transform:translateY(-1px)}
+.house-dir-rank-strip{display:flex;align-items:stretch;gap:9px;padding:8px 9px;border-radius:12px;background:linear-gradient(135deg,#eef2ff 0%,#f7fbff 100%);border:1px solid #dbe3fb}
+.house-dir-rank-serial{min-width:86px;display:flex;align-items:center;justify-content:center;gap:7px;padding:5px 9px;border-radius:9px;background:#4055b7;color:#fff;box-shadow:0 7px 18px rgba(64,85,183,.18)}
+.house-dir-rank-serial span{font-size:9px;font-weight:800;opacity:.88;white-space:nowrap}
+.house-dir-rank-serial strong{font-size:22px;line-height:1;font-weight:950}
+.house-dir-rank-summary{min-width:0;flex:1;display:flex;flex-direction:column;justify-content:center}
+.house-dir-rank-summary b{font-size:13px;line-height:1.3;color:#23386d}
+.house-dir-rank-summary small{margin-top:2px;font-size:9px;color:#73829d;font-weight:700}
 .house-dir-person-main{display:flex;align-items:flex-start;gap:11px;min-width:0}
 .house-dir-avatar{width:40px;height:40px;flex:0 0 auto;border-radius:12px;display:grid;place-items:center;background:#eef2ff;color:#4357bd;border:1px solid #dce3ff}
 .house-dir-avatar svg{width:19px}
@@ -95,6 +102,15 @@
 .house-dir-modal-head h3{margin:3px 0 0;font-size:21px;color:#172b5a;line-height:1.4}
 .house-dir-modal-head>button{width:34px;height:34px;flex:0 0 auto;border:1px solid #e0e6ef;border-radius:10px;background:#f7f9fc;color:#53647c;display:grid;place-items:center;cursor:pointer}
 .house-dir-modal-head>button svg{width:17px}
+.house-dir-rank-hero{display:grid;grid-template-columns:150px minmax(0,1fr);gap:10px;padding:10px;border:1px solid #dbe3fb;border-radius:16px;background:linear-gradient(135deg,#edf2ff 0%,#f8fbff 58%,#effaf7 100%)}
+.house-dir-rank-big{min-height:96px;border-radius:13px;background:linear-gradient(135deg,#4055b7,#5268d7);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 12px 26px rgba(64,85,183,.22)}
+.house-dir-rank-big span{font-size:10px;font-weight:900;letter-spacing:.04em;opacity:.9}
+.house-dir-rank-big strong{margin-top:2px;font-size:40px;line-height:1;font-weight:950}
+.house-dir-rank-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;align-content:center}
+.house-dir-rank-stats>div{padding:9px 10px;border-radius:11px;background:rgba(255,255,255,.84);border:1px solid #e0e7f4;display:grid;gap:3px}
+.house-dir-rank-stats span{font-size:9px;color:#748197;font-weight:800}
+.house-dir-rank-stats b{font-size:15px;color:#243765}
+.house-dir-rank-stats p{grid-column:1/-1;margin:0;padding:7px 9px;border-radius:9px;background:#fff;color:#4055b7;font-size:11px;font-weight:900;text-align:center;border:1px solid #dfe5f5}
 .house-dir-modal-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .house-dir-modal-grid>div{padding:10px;border:1px solid #e2e8f0;border-radius:11px;background:#fafbfd;display:grid;gap:3px}
 .house-dir-modal-grid span,.house-dir-detail-block>span{font-size:10px;color:#7a8799}
@@ -125,12 +141,21 @@
   .house-dir-filter>span{grid-column:2;white-space:normal}
   .house-dir-modal-backdrop{padding:0;align-items:flex-end}
   .house-dir-modal{border-radius:20px 20px 0 0;max-height:88vh;padding:16px}
+  .house-dir-rank-hero{grid-template-columns:112px minmax(0,1fr);padding:8px}
+  .house-dir-rank-big{min-height:88px}
+  .house-dir-rank-big strong{font-size:34px}
+  .house-dir-rank-stats{gap:6px}
+  .house-dir-rank-stats>div{padding:8px}
   .house-dir-modal-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(max-width:430px){
   .house-dir-groups,.house-dir-kind{width:100%;margin-left:-1px;margin-right:-1px}
   .house-dir-groups button,.house-dir-kind button{padding:7px 9px}
   .house-dir-person-card{padding:13px}
+  .house-dir-rank-strip{padding:7px}
+  .house-dir-rank-serial{min-width:78px;padding:5px 7px}
+  .house-dir-rank-serial strong{font-size:20px}
+  .house-dir-rank-summary b{font-size:12px}
   .house-dir-person-copy h3{font-size:15px}
   .house-dir-card-footer{align-items:flex-end}
   .house-dir-card-footer>span{max-width:58%}

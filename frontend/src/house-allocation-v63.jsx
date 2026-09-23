@@ -20,6 +20,26 @@ function normalize(v){
     .replace(/\s+/g,' ')
     .trim();
 }
+function bnToNumber(v){
+  const n=Number(normalize(v));
+  return Number.isFinite(n)?n:0;
+}
+function numberLabel(n,en){return Number(n||0).toLocaleString(en?'en-US':'bn-BD')}
+function ordinalLabel(n,en){
+  const value=Number(n||0);
+  if(en){
+    const mod100=value%100;
+    const suffix=(mod100>=11&&mod100<=13)?'th':({1:'st',2:'nd',3:'rd'}[value%10]||'th');
+    return value+suffix;
+  }
+  const bn=numberLabel(value,false);
+  if(value===1)return bn+'ম';
+  if(value===2)return bn+'য়';
+  if(value===3)return bn+'য়';
+  if(value===4)return bn+'র্থ';
+  return bn+'তম';
+}
+function listKey(x){return [x.sourceId,x.group,x.category,x.allocationType].join('|')}
 function sourceFor(id){return DATA.sources.find(function(x){return x.id===id})||{}}
 function escapeRegExp(v){return String(v||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}
 function Highlight({text,q}){
@@ -203,7 +223,17 @@ export default function HouseAllocationDirectory({lang='bn',onOpenPoints}){
   },[]);
 
   const records=useMemo(function(){
-    return visiblePages.flatMap(parsePage).filter(function(x){return x.name&&x.name.length>1});
+    const parsed=visiblePages.flatMap(parsePage).filter(function(x){return x.name&&x.name.length>1});
+    const totals=new Map();
+    parsed.forEach(function(x){
+      const position=bnToNumber(x.serial);
+      const key=listKey(x);
+      if(position>(totals.get(key)||0))totals.set(key,position);
+    });
+    return parsed.map(function(x){
+      const position=bnToNumber(x.serial);
+      return {...x,position,listTotal:totals.get(listKey(x))||position};
+    });
   },[visiblePages]);
 
   const groupOptions=[
@@ -326,6 +356,16 @@ export default function HouseAllocationDirectory({lang='bn',onOpenPoints}){
       {visibleResults.map(function(x){
         const s=sourceFor(x.sourceId);
         return <article className="house-dir-person-card" key={x.id}>
+          <div className="house-dir-rank-strip">
+            <div className="house-dir-rank-serial">
+              <span>{en?'Serial no.':'ক্রমিক নং'}</span>
+              <strong>{numberLabel(x.position,en)}</strong>
+            </div>
+            <div className="house-dir-rank-summary">
+              <b>{en?(ordinalLabel(x.position,true)+' of '+numberLabel(x.listTotal,true)):(numberLabel(x.listTotal,false)+' জনের মধ্যে '+ordinalLabel(x.position,false))}</b>
+              <small>{en?'Position in the published list':'প্রকাশিত তালিকায় অবস্থান'}</small>
+            </div>
+          </div>
           <div className="house-dir-person-main">
             <div className="house-dir-avatar"><UserRound/></div>
             <div className="house-dir-person-copy">
@@ -368,6 +408,17 @@ export default function HouseAllocationDirectory({lang='bn',onOpenPoints}){
         <div className="house-dir-modal-head">
           <div><small>{en?'ALLOCATION RECORD':'বরাদ্দ তথ্য'}</small><h3>{selected.name}</h3></div>
           <button onClick={function(){setSelected(null)}} aria-label={en?'Close':'বন্ধ করুন'}><X/></button>
+        </div>
+        <div className="house-dir-rank-hero">
+          <div className="house-dir-rank-big">
+            <span>{en?'Serial no.':'ক্রমিক নং'}</span>
+            <strong>{numberLabel(selected.position,en)}</strong>
+          </div>
+          <div className="house-dir-rank-stats">
+            <div><span>{en?'Position':'তালিকায় অবস্থান'}</span><b>{ordinalLabel(selected.position,en)}</b></div>
+            <div><span>{en?'Total in list':'মোট তালিকা'}</span><b>{numberLabel(selected.listTotal,en)}{en?'':' জন'}</b></div>
+            <p>{en?(ordinalLabel(selected.position,true)+' among '+numberLabel(selected.listTotal,true)+' people'):(numberLabel(selected.listTotal,false)+' জনের মধ্যে '+ordinalLabel(selected.position,false))}</p>
+          </div>
         </div>
         <div className="house-dir-modal-grid">
           <div><span>{en?'Group':'ধরন'}</span><b>{en?selected.groupEn:selected.groupBn}</b></div>
