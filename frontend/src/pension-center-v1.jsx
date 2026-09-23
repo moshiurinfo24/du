@@ -88,7 +88,14 @@ function RateTable({en}){
   </details>
 }
 
-function ExistingPensioner({en}){
+function ResultActions({en,onSave,onPreview}){
+  return <div className="pension-result-actions">
+    <button className="secondary" onClick={onSave}><History/>{en?'Save to My Calculations':'আমার হিসাবে সংরক্ষণ'}</button>
+    <button className="primary" onClick={onPreview}><FileText/>{en?'A4 PDF Preview & Download':'A4 PDF প্রিভিউ ও ডাউনলোড'}</button>
+  </div>
+}
+
+function ExistingPensioner({en,onSaveCalculation,onPreviewReport}){
   const [form,setForm]=useState({oldNet:'',asOf:todayIso(),kind:'original'});
   const result=useMemo(()=>{
     const oldNet=Number(form.oldNet||0);
