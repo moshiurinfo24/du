@@ -58,6 +58,8 @@
 .house-dir-results-head>div{display:flex;align-items:center;gap:7px;color:#465a7a;font-size:13px;font-weight:900}
 .house-dir-results-head svg{width:16px}
 .house-dir-results-head>b{display:grid;place-items:center;min-width:30px;height:28px;padding:0 8px;border-radius:999px;background:#eef1ff;color:#3149aa;font-size:12px}
+.house-dir-order-note{display:flex;align-items:center;gap:7px;padding:8px 10px;border:1px solid #dfe5f5;border-radius:11px;background:#f7f9ff;color:#536782;font-size:10px;font-weight:800}
+.house-dir-order-note svg{width:14px;flex:0 0 auto;color:#4055b7}
 .house-dir-results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 
 .house-dir-person-card{min-width:0;padding:15px;border:1px solid #dce4ef;border-radius:17px;background:#fff;box-shadow:0 8px 22px rgba(28,48,92,.045);display:grid;gap:11px;transition:border-color .16s ease,box-shadow .16s ease,transform .16s ease}
