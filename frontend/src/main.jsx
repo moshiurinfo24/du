@@ -74,6 +74,7 @@ const LoggedInOfficeCalendar=React.lazy(()=>import('./calendar-phase15.jsx').the
 const CalendarDashboardWidget=React.lazy(()=>import('./calendar-phase15.jsx').then(m=>({default:m.CalendarDashboardWidget})));
 const AdminOfficeCalendarManager=React.lazy(()=>import('./calendar-phase15.jsx').then(m=>({default:m.AdminOfficeCalendarManager})));
 const GuestLocalCenter=React.lazy(()=>import('./guest-local-v1.jsx'));
+const HouseAllocationDirectory=React.lazy(()=>import('./house-allocation-v63.jsx'));
 import {
   PAY2015,PAY2026,PAY_SCALE_2026_META,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
   annualPromotionCycle,futureRoadmap,serviceExperiencePoints,fixed2026,implementationRate,houseRent2015,salary2026Snapshot,incremented2015Basic,incremented2026Basic,specialBenefit2025
@@ -1918,7 +1919,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     salary:en?'Pay Scale & Salary':'পে-স্কেল ও বেতন',
     arrear:en?'Arrear / Outstanding':'বকেয়া / এরিয়ার',
     promotion:en?'Promotion':'পদোন্নতি',
-    house:en?'House Points':'বাসা পয়েন্ট',
+    house:en?'House & Seat Allocation':'বাসা ও সিট বরাদ্দ তথ্য',
     service:en?'Service Length':'চাকরিকাল',
     age:en?'Age':'বয়স',
     gap:en?'Date Gap':'তারিখ ব্যবধান',
@@ -1962,7 +1963,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     ['arrear',ReceiptText,en?'Arrear':'বকেয়া / এরিয়ার','aqua'],
     ['promotion',TrendingUp,en?'Promotion':'পদোন্নতি','violet'],
     ['points',Award,en?'Points':'পয়েন্ট হিসাব','teal'],
-    ['house',Home,en?'House Points':'বাসা বরাদ্দ পয়েন্ট','gold'],
+    ['house',Home,en?'House & Seat':'বাসা ও সিট বরাদ্দ','gold'],
     ['service',Clock3,en?'Service Length':'চাকরিকাল','aqua'],
     ['retire',FileClock,en?'Retirement Date':'অবসর তারিখ','amber'],
     ['calendar',CalendarDays,en?'Office Calendar':'অফিস ক্যালেন্ডার','sky']
@@ -2066,7 +2067,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
       <main className="pwa-tool-content">
         {['salary','arrear'].includes(activePublicTool)&&<SalaryCalculator key={activePublicTool} lang={lang} publicMode={true} initialArrear={activePublicTool==='arrear'}/>}
         {activePublicTool==='promotion'&&<section className="public-tool-only-shell"><PromotionCenter lang={lang} publicMode={true}/></section>}
-        {activePublicTool==='house'&&<section className="public-tool-only-shell"><HouseAllocationPoints lang={lang} publicMode={true}/></section>}
+        {activePublicTool==='house'&&<section className="public-tool-only-shell"><HouseAllocationHub lang={lang} publicMode={true}/></section>}
         {['service','age','gap','retire','basic'].includes(activePublicTool)&&<section className="public-tool-only-shell"><CalculatorCenter lang={lang} publicMode={true} initialTool={activePublicTool} singleTool={true}/></section>}
         {activePublicTool==='pf'&&<section className="public-tool-only-shell"><PfDeductionCenter lang={lang} publicMode={true}/></section>}
         {activePublicTool==='points'&&<section className="public-tool-only-shell"><PointsCalculator lang={lang} publicMode={true}/></section>}
@@ -2373,7 +2374,7 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
   const toolLabels={
     salary:en?'Pay Scale 2026–2028':'পে-স্কেল ২০২৬–২০২৮',
     promotion:en?'Promotion Calculator':'পদোন্নতি ক্যালকুলেটর',
-    house:en?'House Allocation Points':'বাসা বরাদ্দ পয়েন্ট',
+    house:en?'House & Seat Allocation':'বাসা ও সিট বরাদ্দ তথ্য',
     service:en?'Service Length Calculator':'চাকরিকাল ক্যালকুলেটর',
     age:en?'Age Calculator':'বয়স ক্যালকুলেটর',
     gap:en?'Date Difference Calculator':'তারিখের ব্যবধান',
@@ -2571,7 +2572,7 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
         </button>
         <button className={activePublicTool==='house'?'active':''} onClick={()=>openPublicTool('house')}>
           <span className="hub-icon house"><Home/></span>
-          <div><small>{en?'HOUSING':'বাসা'}</small><h3>{en?'House Allocation Points':'বাসা বরাদ্দ পয়েন্ট'}</h3><p>{en?'Enter the required information and see the supported allocation points clearly.':'প্রয়োজনীয় তথ্য দিয়ে বাসা বরাদ্দের পয়েন্ট সহজভাবে দেখুন।'}</p><b>{en?'Start calculation':'হিসাব শুরু করুন'}<ArrowRight/></b></div>
+          <div><small>{en?'HOUSING':'বাসা'}</small><h3>{en?'House & Seat Allocation':'বাসা ও সিট বরাদ্দ তথ্য'}</h3><p>{en?'Search published panels and drafts by name, office, point, house or seat, or calculate your allocation points.':'নাম, অফিস, পয়েন্ট, বাসা বা সিট দিয়ে প্রকাশিত প্যানেল/খসড়া খুঁজুন, অথবা নিজের বরাদ্দ পয়েন্ট হিসাব করুন।'}</p><b>{en?'Open housing info':'তথ্য দেখুন'}<ArrowRight/></b></div>
         </button>
       </div>
       {!activePublicTool&&<div className="calculator-hub-guide"><Calculator/><div><b>{en?'No login needed for calculation':'হিসাবের জন্য লগইন লাগবে না'}</b><span>{en?'Choose a card above and enter only the information that applies to you.':'উপরের একটি সেবা বেছে নিয়ে শুধু আপনার ক্ষেত্রে প্রযোজ্য তথ্য দিন।'}</span></div></div>}
@@ -2626,7 +2627,7 @@ function PublicHome({onLogin,onSignup,lang,setLang}){
       </div>
       {activePublicTool==='salary'&&<PublicPayScaleHub lang={lang}/>}
       {activePublicTool==='promotion'&&<section className="public-tool-only-shell"><PromotionCenter lang={lang} publicMode={true}/></section>}
-      {activePublicTool==='house'&&<section className="public-tool-only-shell"><HouseAllocationPoints lang={lang} publicMode={true}/></section>}
+      {activePublicTool==='house'&&<section className="public-tool-only-shell"><HouseAllocationHub lang={lang} publicMode={true}/></section>}
       {['service','age','gap','retire','basic'].includes(activePublicTool)&&<section className="public-tool-only-shell"><CalculatorCenter lang={lang} publicMode={true} initialTool={activePublicTool} singleTool={true}/></section>}
       {activePublicTool==='points'&&<section className="public-tool-only-shell"><PointsCalculator lang={lang} publicMode={true}/></section>}
       {activePublicTool==='calendar'&&<section className="public-tool-only-shell"><FiscalOfficeCalendar lang={lang}/></section>}
@@ -4932,6 +4933,18 @@ function PointsCalculator({lang='bn',publicMode=false}){
 }
 
 
+
+function HouseAllocationHub({lang='bn',publicMode=false}){
+  const en=lang==='en';
+  const [view,setView]=useState('directory');
+  return <div className="house-allocation-hub-v63">
+    <div className="points-tabs house-directory-tabs">
+      <button className={view==='directory'?'active':''} onClick={()=>setView('directory')}><Search/>{en?'Published Lists':'প্রকাশিত তালিকা'}</button>
+      <button className={view==='points'?'active':''} onClick={()=>setView('points')}><Calculator/>{en?'Point Calculator':'পয়েন্ট হিসাব'}</button>
+    </div>
+    {view==='directory'?<React.Suspense fallback={<div className="loading">{en?'Loading housing information...':'বাসা বরাদ্দ তথ্য লোড হচ্ছে...'}</div>}><HouseAllocationDirectory lang={lang} onOpenPoints={()=>setView('points')}/></React.Suspense>:<HouseAllocationPoints lang={lang} publicMode={publicMode}/>} 
+  </div>
+}
 
 function HouseAllocationPoints({lang='bn',publicMode=false}){
   const en=lang==='en';
