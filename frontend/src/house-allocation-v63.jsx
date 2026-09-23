@@ -8,7 +8,8 @@ import './house-directory-v63.css';
 
 const BN_DIGITS='০১২৩৪৫৬৭৮৯';
 const VISIBLE_GROUPS=new Set(['officer','employee','technical']);
-const ROLE_RE=/(পরিচালক|উপ-পরীক্ষা নিয়ন্ত্রক|পরীক্ষা নিয়ন্ত্রক|রেজিস্ট্রার|ডেপুটি রেজিস্ট্রার|সহকারী রেজিস্ট্রার|সিনিয়র প্রশাসনিক কর্মকর্তা|সি\. প্রশাসনিক কর্মকর্তা|প্রশাসনিক কর্মকর্তা|সিনিয়র টেকনিক্যাল অফিসার|টেকনিক্যাল অফিসার|প্রিন্সিপ্যাল মুয়াজ্জিন|সিনিয়র অফিস সহায়ক|অফিস সহায়ক|সিনিয়র দপ্তরী|দপ্তরী|সিনিয়র নিরাপত্তা প্রহরী|নিরাপত্তা প্রহরী|সিনিয়র স্টোনোগ্রাফার|স্টোনোগ্রাফার|প্রধান সহকারী|উচ্চমান সহকারী|সহকারী হিসাবরক্ষক|জুনিয়র সহকারী হিসাবরক্ষক|হিসাবরক্ষক|কেয়ারটেকার|সিনিয়র লাইব্রেরী সহকারী|লাইব্রেরী সহকারী|সিনিয়র প্লাম্বার|প্লাম্বার|সিনিয়র ল্যাব সহকারী|ল্যাব সহকারী|ল্যাবরেটরী সহকারী|ল্যাবরেটরী টেকনেশিয়ান|টেকনেশিয়ান|সিনিয়র কম্পাউন্ডার|কম্পাউন্ডার|ড্রাইভার|টিনস্মিথ|ক্রাফট ইন্সট্রাক্টর|ক্রাফট ইন্সট্রাক্টট|রাজমিস্ত্রী|ফিল্টার অপারেটর|মেশিন অপারেটর|লিফটম্যান|গেস্টেনার মেশিন অপারেটর|সেলস ম্যান|স্টোর কিপার|সটার্র|বার্তাবাহক|মুয়াজ্জিন)/;
+const ROLE_HINT_TOKEN_RE=/(অফিসার|কর্মকর্তা|সহকারী|পরিদর্শক|গ্রন্থাগারিক|লাইব্রেরিয়ান|প্রকৌশলী|সাইন্টিস্ট|সায়েন্টিস্ট|ফোরম্যান|ইমাম|খতিব|প্রোগ্রামার|ডেমনস্ট্রেটর|ম্যানেজার|হিসাবরক্ষক|সহযোগী|প্রহরী|দপ্তরী|বার্তাবাহক|স্টোনোগ্রাফার|টেকনেশিয়ান|মেকানিক|অপারেটর|রাজমিস্ত্রী|প্লাম্বার|কম্পাউন্ডার|ড্রাইভার|টিনস্মিথ|লিফটম্যান|মেশিনম্যান|কেয়ারটেকার|সটার্র|স্টোরকিপার|মুয়াজ্জিন|মিস্ত্রি|ইলেকট্রিশিয়ান|ড্রাফটসম্যান|টাইপিস্ট|ক্যাশিয়ার|অডিটর|সুপারভাইজার)/;
+const ROLE_PREFIXES=new Set(['প্রধান','সিনিয়র','সিনি','সি','প্রিন্সিপ্যাল','প্রি','জুনিয়র','ডেপুটি','উপ','নির্বাহী','তত্ত্বাবধায়ক','মেডিকেল','টেকনিক্যাল','টেক','এ্যাডমিনিস্ট্রেটিভ','এ্যাড','প্রশাসনিক','একাউন্টস','স্টোর','সেকশন','কলেজ','ফার্মাসিউটিক্যাল','গবেষণা','কম্পিউটার','ল্যাব','ল্যাবরেটরী','নিরাপত্তা','লাইব্রেরী','হিসাবরক্ষণ','সেলস','গেস্টেনার','মেশিন','লিফট','ক্রাফট','অফিস','উচ্চমান','সায়েন্টিফিক','সাইন্টিফিক']);
 
 function normalize(v){
   return String(v||'')
@@ -43,10 +44,22 @@ function cleanName(v){
 }
 function splitRoleOffice(beforePoint){
   const value=String(beforePoint||'').trim();
-  const m=value.match(ROLE_RE);
-  if(!m)return {name:cleanName(value),roleOffice:''};
-  const i=m.index||0;
-  return {name:cleanName(value.slice(0,i)),roleOffice:value.slice(i).trim()};
+  const tokens=value.split(/\s+/).filter(Boolean);
+  let roleAt=-1;
+  for(let i=0;i<tokens.length;i++){
+    const key=tokens[i].replace(/[,.()]/g,'').toLowerCase();
+    if(ROLE_HINT_TOKEN_RE.test(key)){roleAt=i;break}
+  }
+  if(roleAt<0)return {name:cleanName(value),roleOffice:''};
+  while(roleAt>0){
+    const prev=tokens[roleAt-1].replace(/[,.()]/g,'').replace(/[-–—]+$/,'').toLowerCase();
+    if(!ROLE_PREFIXES.has(prev))break;
+    roleAt-=1;
+  }
+  return {
+    name:cleanName(tokens.slice(0,roleAt).join(' ')),
+    roleOffice:tokens.slice(roleAt).join(' ').trim()
+  };
 }
 function findPoint(text){
   const m=String(text||'').match(/([০-৯]{2,3}-[০-৯]{1,2})(?!-[০-৯])/);
@@ -84,7 +97,8 @@ function parseTablePage(page){
     const segment=body.slice(item.contentStart,end).trim();
     if(segment.length<12)return;
     const point=findPoint(segment);
-    const pointIndex=point?segment.indexOf(point):-1;
+    if(!point)return;
+    const pointIndex=segment.indexOf(point);
     const beforePoint=(pointIndex>=0?segment.slice(0,pointIndex):segment).trim();
     const parsed=splitRoleOffice(beforePoint);
     if(!parsed.name||parsed.name.length>120)return;
