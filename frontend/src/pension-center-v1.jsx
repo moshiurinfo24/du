@@ -482,7 +482,7 @@ export default function PensionRetirementCenter({lang='bn',profile={},onSaveCalc
       <button className={mode==='new'?'active':''} onClick={()=>setMode('new')}><Landmark/><span><b>{en?'New retiree / planning':'নতুন অবসরপ্রাপ্ত / পরিকল্পনা'}</b><small>{en?'Career data prefilled automatically':'চাকরি তথ্য অটো-ফিল হবে'}</small></span></button>
     </div>
 
-    {mode==='existing'?<ExistingPensioner en={en} onSaveCalculation={onSaveCalculation} onPreviewReport={onPreviewReport}/>:<NewRetiree en={en} profile={profile} onSaveCalculation={onSaveCalculation} onPreviewReport={onPreviewReport}/>}
+    {mode==='existing'?<ExistingPensioner en={en} profile={profile} onSaveCalculation={onSaveCalculation} onPreviewReport={onPreviewReport}/>:<NewRetiree en={en} profile={profile} onSaveCalculation={onSaveCalculation} onPreviewReport={onPreviewReport}/>}
 
     <section className="pension-phase-note">
       <FileText/>
