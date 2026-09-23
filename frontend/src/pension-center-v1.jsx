@@ -259,42 +259,62 @@ function ExistingPensioner({en,onSaveCalculation,onPreviewReport,profile={}}){
 
 function NewRetiree({en,profile={},onSaveCalculation,onPreviewReport}){
   const saved=readPref();
-  const profileRetirement=profile.date_of_birth&&profile.retirement_age?addYearsIso(profile.date_of_birth,profile.retirement_age):'';
+  const inferredType=saved.employmentType||(Number(profile.retirement_age)===65?'teacher':Number(profile.retirement_age)===62?'officer':'employee');
+  const inferredGrade=String(saved.pensionGrade||profile.grade||'');
+  const profileBasic=Number(profile.current_basic_salary||0);
+  const initialBasic=String(saved.oldBasic||((PAY2015[inferredGrade]||[]).includes(profileBasic)?profileBasic:'')||'');
+  const profileRetirement=profile.date_of_birth?addYearsIso(profile.date_of_birth,retirementAgeFor(inferredType,profile.retirement_age)):'';
   const [form,setForm]=useState({
-    basic:String(saved.basic||profile.current_basic_salary||''),
+    employmentType:inferredType,
+    dob:saved.retireeDob||profile.date_of_birth||'',
+    grade:inferredGrade,
+    oldBasic:initialBasic,
+    incrementEligible2026:saved.incrementEligible2026!==false,
     joiningDate:saved.joiningDate||profile.first_joining_date||'',
     retirementDate:saved.retirementDate||profileRetirement||'',
     years:String(saved.years||'25'),months:String(saved.months||'0'),
     leaveMonths:String(saved.leaveMonths||'0'),otherDeduction:String(saved.otherDeduction||'0')
   });
-  useEffect(()=>{
-    setForm(v=>({...v,
-      basic:v.basic||String(profile.current_basic_salary||''),
-      joiningDate:v.joiningDate||profile.first_joining_date||'',
-      retirementDate:v.retirementDate||profileRetirement||''
-    }));
-  },[profile.current_basic_salary,profile.first_joining_date,profileRetirement]);
-  useEffect(()=>{savePref({...readPref(),basic:form.basic,joiningDate:form.joiningDate,retirementDate:form.retirementDate,years:form.years,months:form.months,leaveMonths:form.leaveMonths,otherDeduction:form.otherDeduction})},[form]);
+  const gradeSteps=PAY2015[String(form.grade)]||[];
+  useEffect(()=>{savePref({...readPref(),
+    employmentType:form.employmentType,retireeDob:form.dob,pensionGrade:form.grade,oldBasic:form.oldBasic,
+    incrementEligible2026:form.incrementEligible2026,joiningDate:form.joiningDate,retirementDate:form.retirementDate,
+    years:form.years,months:form.months,leaveMonths:form.leaveMonths,otherDeduction:form.otherDeduction
+  })},[form]);
   const autoService=useMemo(()=>serviceYmd(form.joiningDate,form.retirementDate),[form.joiningDate,form.retirementDate]);
+  const payJourney=useMemo(()=>{
+    const g=String(form.grade),oldBasic=Number(form.oldBasic||0);
+    if(!g||!oldBasic)return [];
+    return [
+      ['2026-07-01',en?'1 Jul 2026':'১ জুলাই ২০২৬'],
+      ['2027-01-01',en?'1 Jan 2027':'১ জানুয়ারি ২০২৭'],
+      ['2027-07-01',en?'1 Jul 2027':'১ জুলাই ২০২৭'],
+      ['2028-01-01',en?'1 Jan 2028':'১ জানুয়ারি ২০২৮']
+    ].map(([date,label])=>({date,label,...salary2026Snapshot({grade:g,currentBasic:oldBasic,date,incrementEligible2026:form.incrementEligible2026,housing:'no',zone:'dhaka',ageBand:'under50',children:0,tiffin:false,conveyance:false,mobile:false})}));
+  },[form.grade,form.oldBasic,form.incrementEligible2026,en]);
   const result=useMemo(()=>{
-    const basic=Number(form.basic||0),years=autoService?autoService.y:Math.floor(Number(form.years||0)),months=autoService?autoService.m:Math.max(0,Math.min(11,Number(form.months||0)));
-    if(!basic||years<0)return null;
-    const completedYears=years;
-    const rate=pensionRateFor(completedYears);
-    const multiplier=gratuityMultiplier(completedYears);
-    const grossPension=basic*(rate/100);
-    const surrendered=grossPension*0.50;
-    const monthlyPension=grossPension-surrendered;
+    const grade=String(form.grade||''),oldBasic=Number(form.oldBasic||0),years=autoService?autoService.y:Math.floor(Number(form.years||0)),months=autoService?autoService.m:Math.max(0,Math.min(11,Number(form.months||0)));
+    if(!grade||!oldBasic||years<0)return null;
+    const completedYears=years,rate=pensionRateFor(completedYears),multiplier=gratuityMultiplier(completedYears);
+    const retireDate=form.retirementDate||todayIso();
+    const snap=salary2026Snapshot({grade,currentBasic:oldBasic,date:retireDate,incrementEligible2026:form.incrementEligible2026,housing:'no',zone:'dhaka',ageBand:'under50',children:0,tiffin:false,conveyance:false,mobile:false});
+    const fullBasic=retireDate<'2026-07-01'?oldBasic:(retireDate<'2027-07-01'?snap.fixedWithFirstIncrement:snap.fullWithIncrements);
+    const oldGross=oldBasic*(rate/100),oldNet=oldGross*0.50;
+    const grossPension=fullBasic*(rate/100),surrendered=grossPension*0.50,fullNetPension=grossPension-surrendered;
+    const phase=newRetireePhase(oldNet,fullNetPension,retireDate);
+    const monthlyPension=phase.amount;
     const gratuity=surrendered*multiplier;
     const leaveMonths=Math.max(0,Math.min(18,Number(form.leaveMonths||0)));
-    const leaveEncashment=basic*leaveMonths;
+    const leaveEncashment=fullBasic*leaveMonths;
     const deduction=Math.max(0,Number(form.otherDeduction||0));
-    const grossOneTime=gratuity+leaveEncashment;
-    const netOneTime=Math.max(0,grossOneTime-deduction);
-    return {basic,years,months,days:autoService?.d||0,completedYears,rate,multiplier,grossPension,surrendered,monthlyPension,gratuity,leaveMonths,leaveEncashment,deduction,grossOneTime,netOneTime,eligible:completedYears>=5,autoService:!!autoService};
+    const grossOneTime=gratuity+leaveEncashment,netOneTime=Math.max(0,grossOneTime-deduction);
+    const allowance=pensionAllowanceSnapshot({net:monthlyPension,dob:form.dob,date:retireDate});
+    return {grade,oldBasic,basic:fullBasic,oldGross,oldNet,years,months,days:autoService?.d||0,completedYears,rate,multiplier,
+      grossPension,surrendered,fullNetPension,phase,monthlyPension,gratuity,leaveMonths,leaveEncashment,deduction,grossOneTime,netOneTime,
+      eligible:completedYears>=5,autoService:!!autoService,...allowance};
   },[form,autoService]);
-  const hasProfile=Boolean(profile.current_basic_salary||profile.first_joining_date||profile.date_of_birth||profile.retirement_age);
-  const payload=result?{mode:'new',form,result,profile}:null;
+  const hasProfile=Boolean(profile.current_basic_salary||profile.first_joining_date||profile.date_of_birth||profile.retirement_age||profile.grade);
+  const payload=result?{mode:'new',form,result,profile,payJourney}:null;
 
   return <section className="pension-mode-card">
     <div className="pension-section-head"><div><Landmark/><div><small>{en?'NEW RETIREE · SMART PREFILL':'নতুন অবসরপ্রাপ্ত · SMART PREFILL'}</small><h3>{en?'Pension, gratuity & retirement summary':'পেনশন, আনুতোষিক ও অবসর সারাংশ'}</h3><p>{en?'Saved Career Profile data is used automatically when available. Correct only the fields that need changes.':'চাকরি তথ্য-এ সংরক্ষিত ডাটা থাকলে অটোমেটিক নেওয়া হবে। শুধু যেগুলো পরিবর্তন দরকার সেগুলো ঠিক করবেন।'}</p></div></div></div>
@@ -302,9 +322,13 @@ function NewRetiree({en,profile={},onSaveCalculation,onPreviewReport}){
     {hasProfile&&<div className="pension-profile-prefill"><UserRound/><div><b>{en?'Career-profile data found':'চাকরি তথ্য থেকে ডাটা পাওয়া গেছে'}</b><p>{en?'Basic salary, joining date and retirement date are prefilled where available.':'মূল বেতন, যোগদানের তারিখ ও অবসরের তারিখ পাওয়া গেলে অটো বসানো হয়েছে।'}</p></div></div>}
 
     <div className="pension-form-grid pension-form-smart">
-      <label>{en?'Last / applicable pensionable basic':'শেষ / প্রযোজ্য পেনশনযোগ্য মূল বেতন'}<input type="number" min="0" value={form.basic} onChange={e=>setForm({...form,basic:e.target.value})} placeholder={en?'e.g. 50000':'যেমন ৫০০০০'}/><small>{profile.current_basic_salary?(en?'Prefilled from Career Profile; verify the final pensionable basic.':'চাকরি তথ্য থেকে অটো এসেছে; চূড়ান্ত pensionable basic যাচাই করুন।'):''}</small></label>
+      <label>{en?'Employee category':'কর্মচারীর ধরন'}<select value={form.employmentType} onChange={e=>{const t=e.target.value;const age=retirementAgeFor(t,0);setForm({...form,employmentType:t,retirementDate:form.dob?addYearsIso(form.dob,age):form.retirementDate})}}><option value="teacher">{en?'Teacher · retirement 65':'শিক্ষক · অবসর ৬৫'}</option><option value="officer">{en?'Officer · retirement 62':'কর্মকর্তা · অবসর ৬২'}</option><option value="employee">{en?'Employee · retirement 60':'কর্মচারী · অবসর ৬০'}</option></select></label>
+      <label>{en?'Date of birth':'জন্মতারিখ'}<input type="date" value={form.dob} onChange={e=>{const dob=e.target.value;setForm({...form,dob,retirementDate:dob?addYearsIso(dob,retirementAgeFor(form.employmentType,0)):form.retirementDate})}}/></label>
+      <label>{en?'Grade on 30 Jun 2026':'৩০ জুন ২০২৬-এর গ্রেড'}<select value={form.grade} onChange={e=>{const g=e.target.value;const steps=PAY2015[g]||[];setForm({...form,grade:g,oldBasic:String(steps[0]||'')})}}><option value="">{en?'Select grade':'গ্রেড বাছাই করুন'}</option>{Array.from({length:20},(_,i)=>String(i+1)).map(g=><option key={g} value={g}>{en?'Grade ':'গ্রেড '}{num(g,en)}</option>)}</select></label>
+      <label className="pension-focus-input">{en?'30 Jun 2026 basic / scale step':'৩০ জুন ২০২৬-এর মূল বেতন / ধাপ'}<select value={form.oldBasic} onChange={e=>setForm({...form,oldBasic:e.target.value})} disabled={!form.grade}><option value="">{en?'Select scale step':'বেতন ধাপ বাছাই করুন'}</option>{gradeSteps.map((v,i)=><option key={v} value={v}>{en?('Step '+(i+1)+' · '+money(v,true)):('ধাপ '+(i+1).toLocaleString('bn-BD')+' · '+money(v,false))}</option>)}</select><small>{en?'No manual basic typing: choose the official 2015 step for your grade.':'ম্যানুয়াল basic লিখতে হবে না—নিজের গ্রেডের অফিসিয়াল ২০১৫ ধাপ বাছাই করুন।'}</small></label>
       <label>{en?'First joining date':'প্রথম যোগদানের তারিখ'}<input type="date" value={form.joiningDate} onChange={e=>setForm({...form,joiningDate:e.target.value})}/></label>
-      <label>{en?'Retirement date':'অবসরের তারিখ'}<input type="date" value={form.retirementDate} onChange={e=>setForm({...form,retirementDate:e.target.value})}/><small>{profileRetirement?(en?'Calculated from saved DOB + retirement age.':'সংরক্ষিত জন্মতারিখ + অবসরের বয়স থেকে অটো হিসাব।'):''}</small></label>
+      <label>{en?'Retirement date':'অবসরের তারিখ'}<input type="date" value={form.retirementDate} onChange={e=>setForm({...form,retirementDate:e.target.value})}/><small>{form.dob?(en?'Auto from DOB + category retirement age; editable if an official order differs.':'জন্মতারিখ + ধরন অনুযায়ী অটো; অফিসিয়াল আদেশে ভিন্ন হলে পরিবর্তনযোগ্য।'):''}</small></label>
+      <label className="pension-check-label"><input type="checkbox" checked={form.incrementEligible2026} onChange={e=>setForm({...form,incrementEligible2026:e.target.checked})}/><span>{en?'Eligible for the applicable annual increment in 2026 fixation':'২০২৬ বেতন নির্ধারণে প্রযোজ্য বার্ষিক ইনক্রিমেন্ট পাবেন'}</span></label>
       {autoService?<div className="pension-auto-service"><CalendarDays/><div><span>{en?'Auto qualifying service':'অটো চাকরিকাল'}</span><b>{en?(autoService.y+'y '+autoService.m+'m '+autoService.d+'d'):(autoService.y.toLocaleString('bn-BD')+' বছর '+autoService.m.toLocaleString('bn-BD')+' মাস '+autoService.d.toLocaleString('bn-BD')+' দিন')}</b><small>{en?'Completed years are used for the pension-rate table.':'পেনশন হার নির্ধারণে পূর্ণ বছর ব্যবহার হচ্ছে।'}</small></div></div>:<>
         <label>{en?'Completed qualifying years':'পূর্ণ পেনশনযোগ্য চাকরির বছর'}<input type="number" min="0" max="60" value={form.years} onChange={e=>setForm({...form,years:e.target.value})}/></label>
         <label>{en?'Additional months':'অতিরিক্ত মাস'}<input type="number" min="0" max="11" value={form.months} onChange={e=>setForm({...form,months:e.target.value})}/></label>
@@ -316,8 +340,16 @@ function NewRetiree({en,profile={},onSaveCalculation,onPreviewReport}){
     {result&&<div className="pension-result-wrap">
       {!result.eligible?<div className="pension-warning"><AlertTriangle/><div><b>{en?'Pension rate not applied':'পেনশন হার প্রয়োগ করা হয়নি'}</b><p>{en?'This Phase-1 calculator starts the government pension-rate table at 5 completed qualifying years.':'এই Phase-1 ক্যালকুলেটরে সরকারি পেনশন হার ৫ পূর্ণ পেনশনযোগ্য বছর থেকে শুরু করা হয়েছে।'}</p></div></div>:<>
         <div className="pension-result-hero new">
-          <div><small>{en?'ESTIMATED MONTHLY PENSION · BASE':'সম্ভাব্য মাসিক পেনশন · BASE'}</small><strong>{money(result.monthlyPension,en)}</strong><p>{en?('Gross pension '+money(result.grossPension,true)+' · 50% surrendered for gratuity'):('গ্রস পেনশন '+money(result.grossPension,false)+' · আনুতোষিকের জন্য ৫০% সমর্পিত')}</p></div>
+          <div><small>{en?'PAYABLE MONTHLY PENSION AT RETIREMENT':'অবসরের সময় প্রাপ্য মাসিক পেনশন'}</small><strong>{money(result.monthlyPension,en)}</strong><p>{en?('Full 2026-scale net pension '+money(result.fullNetPension,true)+' · payable phase '+num(result.phase.share*100,true)+'% of the increase'):('পূর্ণ ২০২৬-স্কেল নিট পেনশন '+money(result.fullNetPension,false)+' · বর্ধিত অংশের প্রাপ্য ধাপ '+num(result.phase.share*100,false)+'%')}</p></div>
           <Coins/>
+        </div>
+
+        <div className="pension-pay-fix-summary">
+          <div><span>{en?'2015 basic · 30 Jun 2026':'২০১৫ মূল বেতন · ৩০ জুন ২০২৬'}</span><b>{money(result.oldBasic,en)}</b></div>
+          <ChevronRight/>
+          <div><span>{en?'Full applicable 2026 basic':'পূর্ণ প্রযোজ্য ২০২৬ মূল বেতন'}</span><b>{money(result.basic,en)}</b></div>
+          <ChevronRight/>
+          <div className="accent"><span>{en?'Grade':'গ্রেড'}</span><b>{num(result.grade,en)}</b></div>
         </div>
 
         <div className="pension-kpi-grid six">
@@ -328,6 +360,28 @@ function NewRetiree({en,profile={},onSaveCalculation,onPreviewReport}){
           <article><span>{en?'Gratuity':'আনুতোষিক'}</span><b>{money(result.gratuity,en)}</b></article>
           <article><span>{en?'Leave encashment':'ছুটি নগদায়ন'}</span><b>{money(result.leaveEncashment,en)}</b></article>
         </div>
+
+        <div className="pension-kpi-grid six pension-allowance-kpis">
+          <article><span>{en?'Age at retirement':'অবসরের সময় বয়স'}</span><b>{result.age==null?'—':(num(result.age,en)+(en?' years':' বছর'))}</b></article>
+          <article><span>{en?'Medical allowance / month':'চিকিৎসা ভাতা / মাস'}</span><b>{result.medical?money(result.medical,en):'—'}</b></article>
+          <article><span>{en?'Festival allowance / each':'উৎসব ভাতা / প্রতিবার'}</span><b>{money(result.festivalEach,en)}</b></article>
+          <article><span>{en?'Festival ×2 / year':'উৎসব ×২ / বছর'}</span><b>{money(result.festivalAnnual,en)}</b></article>
+          <article><span>{en?'Bangla New Year rate':'বাংলা নববর্ষ হার'}</span><b>{num(result.boishakhiRate*100,en)}%</b></article>
+          <article><span>{en?'Bangla New Year allowance':'বাংলা নববর্ষ ভাতা'}</span><b>{money(result.boishakhi,en)}</b></article>
+        </div>
+
+        {payJourney.length>0&&<section className="pension-timeline">
+          <div className="pension-timeline-head"><CalendarDays/><div><b>{en?'Grade & basic journey · 2026–2028':'গ্রেড ও মূল বেতনের যাত্রা · ২০২৬–২০২৮'}</b><small>{en?'Uses the same 2026 pay-fixation engine as the Pay Scale module.':'পে-স্কেল মডিউলের একই ২০২৬ pay-fixation engine ব্যবহার করা হয়েছে।'}</small></div></div>
+          <div className="pension-timeline-grid pay">
+            {payJourney.map(x=><article key={x.date}>
+              <small>{x.label}</small>
+              <b>{money(x.payableBasic,en)}</b>
+              <span>{en?'Payable basic':'প্রাপ্য মূল বেতন'}</span>
+              <p>{x.phase?.label||''}</p>
+              {x.allowance2026&&<p>{en?'New allowances active':'নতুন ভাতা কার্যকর'}</p>}
+            </article>)}
+          </div>
+        </section>}
 
         <div className="pension-one-time">
           <div><small>{en?'GROSS ONE-TIME BENEFIT':'মোট এককালীন প্রাপ্য'}</small><b>{money(result.grossOneTime,en)}</b><span>{en?'Gratuity + leave encashment':'আনুতোষিক + ছুটি নগদায়ন'}</span></div>
