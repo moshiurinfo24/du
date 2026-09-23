@@ -7,6 +7,7 @@ import './pension-center-v1.css';
 import {PAY2015,PAY2026,fixed2026,salary2026Snapshot} from './rules';
 
 const GAZETTE_URL='https://www.dpp.gov.bd/upload_file/gazettes/62983_75061.pdf';
+const PAY_GAZETTE_URL='https://www.dpp.gov.bd/upload_file/gazettes/62976_48524.pdf';
 const DU_STATUTE_URL='https://www.du.ac.bd/fontView/ordinance/Calendar_Part_II.pdf';
 const PREF_KEY='hisab_pension_prefill_v1';
 
@@ -475,8 +476,9 @@ export default function PensionRetirementCenter({lang='bn',profile={},onSaveCalc
       <div><b>{en?'Current verified scope':'বর্তমান যাচাইকৃত সীমা'}</b><p>{en?'A4 PDF report is now available. PF final settlement, Benevolent Fund, Group Insurance, family-pension eligibility and DU past-service contribution remain separate until exact applicable DU records/rules are confirmed.':'A4 PDF রিপোর্ট এখন আছে। PF final settlement, Benevolent Fund, Group Insurance, family-pension eligibility এবং DU past-service contribution-এর সঠিক প্রযোজ্য DU record/rule নিশ্চিত না হওয়া পর্যন্ত মোট প্রাপ্যে মেশানো হচ্ছে না।'}</p></div>
     </section>
 
-    <section className="pension-sources">
-      <div><BookOpen/><span><b>{en?'Government Gazette · 17 Sep 2026':'সরকারি গেজেট · ১৭ সেপ্টেম্বর ২০২৬'}</b><small>{en?'Retirement benefits determination / revision':'অবসরকালীন সুবিধাদি নির্ধারণ / পুনর্নির্ধারণ'}</small></span><a href={GAZETTE_URL} target="_blank" rel="noreferrer">{en?'Open':'দেখুন'}<ChevronRight/></a></div>
+    <section className="pension-sources three">
+      <div><BookOpen/><span><b>{en?'Public Bodies Pay Order 2026':'Public Bodies বেতন ও ভাতা আদেশ ২০২৬'}</b><small>{en?'Grade, scale steps, phased basic and allowances':'গ্রেড, ধাপ, মূল বেতন বাস্তবায়ন ও ভাতা'}</small></span><a href={PAY_GAZETTE_URL} target="_blank" rel="noreferrer">{en?'Open':'দেখুন'}<ChevronRight/></a></div>
+      <div><BookOpen/><span><b>{en?'Retirement Benefits Order · 2026':'অবসরকালীন সুবিধা আদেশ · ২০২৬'}</b><small>{en?'Pension, gratuity and pension revision':'পেনশন, আনুতোষিক ও পুনর্নির্ধারণ'}</small></span><a href={GAZETTE_URL} target="_blank" rel="noreferrer">{en?'Open':'দেখুন'}<ChevronRight/></a></div>
       <div><BookOpen/><span><b>{en?'University of Dhaka · Tenth Statutes':'ঢাকা বিশ্ববিদ্যালয় · Tenth Statutes'}</b><small>{en?'Employees Pension / Gratuity Statutes':'Employees Pension / Gratuity Statutes'}</small></span><a href={DU_STATUTE_URL} target="_blank" rel="noreferrer">{en?'Open':'দেখুন'}<ChevronRight/></a></div>
     </section>
 
