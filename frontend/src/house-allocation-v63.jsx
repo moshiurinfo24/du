@@ -11,6 +11,24 @@ const VISIBLE_GROUPS=new Set(['officer','employee','technical']);
 const ROLE_HINT_TOKEN_RE=/(অফিসার|কর্মকর্তা|সহকারী|পরিদর্শক|গ্রন্থাগারিক|লাইব্রেরিয়ান|প্রকৌশলী|সাইন্টিস্ট|সায়েন্টিস্ট|ফোরম্যান|ইমাম|খতিব|প্রোগ্রামার|ডেমনস্ট্রেটর|ম্যানেজার|হিসাবরক্ষক|সহযোগী|প্রহরী|দপ্তরী|বার্তাবাহক|স্টোনোগ্রাফার|টেকনেশিয়ান|মেকানিক|অপারেটর|রাজমিস্ত্রী|প্লাম্বার|কম্পাউন্ডার|ড্রাইভার|টিনস্মিথ|লিফটম্যান|মেশিনম্যান|কেয়ারটেকার|সটার্র|স্টোরকিপার|মুয়াজ্জিন|মিস্ত্রি|ইলেকট্রিশিয়ান|ড্রাফটসম্যান|টাইপিস্ট|ক্যাশিয়ার|অডিটর|সুপারভাইজার)/;
 const ROLE_PREFIXES=new Set(['প্রধান','সিনিয়র','সিনি','সি','প্রিন্সিপ্যাল','প্রি','জুনিয়র','ডেপুটি','উপ','নির্বাহী','তত্ত্বাবধায়ক','মেডিকেল','টেকনিক্যাল','টেক','এ্যাডমিনিস্ট্রেটিভ','এ্যাড','প্রশাসনিক','একাউন্টস','স্টোর','সেকশন','কলেজ','ফার্মাসিউটিক্যাল','গবেষণা','কম্পিউটার','ল্যাব','ল্যাবরেটরী','নিরাপত্তা','লাইব্রেরী','হিসাবরক্ষণ','সেলস','গেস্টেনার','মেশিন','লিফট','ক্রাফট','অফিস','উচ্চমান','সায়েন্টিফিক','সাইন্টিফিক']);
 
+const SECTION_META={
+  'officer-special':{totalSerial:12,pages:'16–17',bn:'কর্মকর্তা — বিশেষ বিবেচনার আবেদন',en:'Officers — special consideration'},
+  'officer-point':{totalSerial:188,pages:'18–26',bn:'কর্মকর্তা — সেন্ট্রালপুল পয়েন্ট সিনিয়রিটি',en:'Officers — central pool point seniority'},
+  'employee-promoted':{totalSerial:104,pages:'1–7',bn:'পদোন্নতিপ্রাপ্ত ৩য় শ্রেণি — বাসা',en:'Promoted Class III — housing'},
+  'employee-direct':{totalSerial:147,pages:'8–15',bn:'সরাসরি নিয়োগপ্রাপ্ত ৩য় শ্রেণি — বাসা',en:'Direct-recruit Class III — housing'},
+  'employee-seat':{totalSerial:10,pages:'16',bn:'৩য় শ্রেণি — সিট বরাদ্দ',en:'Class III — seat allocation'},
+  'technical-house':{totalSerial:134,pages:'17–23',bn:'৩য় শ্রেণি কারিগরি — বাসা',en:'Class III technical — housing'},
+  'technical-seat':{totalSerial:13,pages:'24',bn:'৩য় শ্রেণি কারিগরি — সিট বরাদ্দ',en:'Class III technical — seat allocation'}
+};
+function sectionMetaFor(x){
+  return SECTION_META[x.category]||{
+    totalSerial:bnToNumber(x.serial),
+    pages:String(x.sourcePage||''),
+    bn:x.categoryBn||'',
+    en:x.categoryEn||''
+  };
+}
+
 function normalize(v){
   return String(v||'')
     .toLowerCase()
@@ -39,7 +57,6 @@ function ordinalLabel(n,en){
   if(value===4)return bn+'র্থ';
   return bn+'তম';
 }
-function listKey(x){return [x.sourceId,x.group,x.category,x.allocationType].join('|')}
 function sourceFor(id){return DATA.sources.find(function(x){return x.id===id})||{}}
 function escapeRegExp(v){return String(v||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}
 function Highlight({text,q}){
@@ -224,15 +241,10 @@ export default function HouseAllocationDirectory({lang='bn',onOpenPoints}){
 
   const records=useMemo(function(){
     const parsed=visiblePages.flatMap(parsePage).filter(function(x){return x.name&&x.name.length>1});
-    const totals=new Map();
-    parsed.forEach(function(x){
-      const position=bnToNumber(x.serial);
-      const key=listKey(x);
-      if(position>(totals.get(key)||0))totals.set(key,position);
-    });
     return parsed.map(function(x){
       const position=bnToNumber(x.serial);
-      return {...x,position,listTotal:totals.get(listKey(x))||position};
+      const meta=sectionMetaFor(x);
+      return {...x,position,listTotal:meta.totalSerial,sectionPages:meta.pages,sectionBn:meta.bn,sectionEn:meta.en};
     });
   },[visiblePages]);
 
@@ -362,8 +374,8 @@ export default function HouseAllocationDirectory({lang='bn',onOpenPoints}){
               <strong>{numberLabel(x.position,en)}</strong>
             </div>
             <div className="house-dir-rank-summary">
-              <b>{en?(ordinalLabel(x.position,true)+' of '+numberLabel(x.listTotal,true)):(numberLabel(x.listTotal,false)+' জনের মধ্যে '+ordinalLabel(x.position,false))}</b>
-              <small>{en?'Position in the published list':'প্রকাশিত তালিকায় অবস্থান'}</small>
+              <b>{en?('Serial '+numberLabel(x.position,true)+' / '+numberLabel(x.listTotal,true)):('ক্রমিক '+numberLabel(x.position,false)+' / '+numberLabel(x.listTotal,false))}</b>
+              <small>{en?(x.sectionEn+' • position '+ordinalLabel(x.position,true)):(x.sectionBn+' • অবস্থান '+ordinalLabel(x.position,false))}</small>
             </div>
           </div>
           <div className="house-dir-person-main">
@@ -415,10 +427,15 @@ export default function HouseAllocationDirectory({lang='bn',onOpenPoints}){
             <strong>{numberLabel(selected.position,en)}</strong>
           </div>
           <div className="house-dir-rank-stats">
-            <div><span>{en?'Position':'তালিকায় অবস্থান'}</span><b>{ordinalLabel(selected.position,en)}</b></div>
-            <div><span>{en?'Total in list':'মোট তালিকা'}</span><b>{numberLabel(selected.listTotal,en)}{en?'':' জন'}</b></div>
-            <p>{en?(ordinalLabel(selected.position,true)+' among '+numberLabel(selected.listTotal,true)+' people'):(numberLabel(selected.listTotal,false)+' জনের মধ্যে '+ordinalLabel(selected.position,false))}</p>
+            <div><span>{en?'Position in this section':'এই অংশে অবস্থান'}</span><b>{ordinalLabel(selected.position,en)}</b></div>
+            <div><span>{en?'Last serial in this section':'এই অংশের শেষ ক্রমিক'}</span><b>{numberLabel(selected.listTotal,en)}</b></div>
+            <p>{en?('Section serial '+numberLabel(selected.position,true)+' / '+numberLabel(selected.listTotal,true)):('এই অংশের ক্রমিক '+numberLabel(selected.position,false)+' / '+numberLabel(selected.listTotal,false))}</p>
           </div>
+        </div>
+        <div className="house-dir-part-label">
+          <span>{en?'PDF section / part':'PDF-এর অংশ / তালিকা'}</span>
+          <b>{en?selected.sectionEn:selected.sectionBn}</b>
+          <small>{en?('Source pages '+selected.sectionPages):('উৎস পৃষ্ঠা '+selected.sectionPages)}</small>
         </div>
         <div className="house-dir-modal-grid">
           <div><span>{en?'Group':'ধরন'}</span><b>{en?selected.groupEn:selected.groupBn}</b></div>
