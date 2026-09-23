@@ -169,33 +169,47 @@ function ResultActions({en,onSave,onPreview}){
   </div>
 }
 
-function ExistingPensioner({en,onSaveCalculation,onPreviewReport}){
+function ExistingPensioner({en,onSaveCalculation,onPreviewReport,profile={}}){
   const saved=readPref();
-  const [form,setForm]=useState({oldNet:String(saved.oldNet||''),asOf:saved.asOf||todayIso(),kind:saved.kind||'original'});
+  const [form,setForm]=useState({
+    oldNet:String(saved.oldNet||''),
+    asOf:saved.asOf||todayIso(),
+    kind:saved.kind||'original',
+    dob:saved.pensionDob||profile.date_of_birth||''
+  });
   const result=useMemo(()=>{
     const oldNet=Number(form.oldNet||0);
     if(!oldNet||oldNet<0)return null;
-    if(oldNet>70200){
-      return {
-        protected:true,oldNet,fullTarget:oldNet,current:oldNet,increase:0,
-        note:en?'Existing pension above Tk 70,200 remains protected up to the next applicable annual increase. This Phase-1 calculator does not estimate a later annual increment.':'৳৭০,২০০-এর বেশি বিদ্যমান পেনশন পরবর্তী প্রযোজ্য বার্ষিক বৃদ্ধির আগ পর্যন্ত সুরক্ষিত থাকবে। Phase-1 এ পরবর্তী annual increment অনুমান করা হচ্ছে না।'
-      };
-    }
-    const slab=slabFor(oldNet);
-    const fullTarget=clamp(oldNet*(1+slab.rate/100),slab.min,slab.maxNew);
-    const increase=Math.max(0,fullTarget-oldNet);
-    const share=phasedShare(oldNet,form.asOf);
-    const current=oldNet+(increase*share);
-    return {...slab,oldNet,fullTarget,increase,share,current,protected:false};
-  },[form,en]);
-  useEffect(()=>{savePref({...readPref(),oldNet:form.oldNet,asOf:form.asOf,kind:form.kind})},[form]);
-  const payload=result?{mode:'existing',form,result}:null;
+    const selected=revisedExistingAt(oldNet,form.asOf);
+    const allowance=pensionAllowanceSnapshot({net:selected.amount,dob:form.dob,date:form.asOf});
+    const fullIncrease=Math.max(0,selected.fullTarget-oldNet);
+    return {...selected,oldNet,current:selected.amount,increase:fullIncrease,...allowance};
+  },[form]);
+  const timeline=useMemo(()=>{
+    const oldNet=Number(form.oldNet||0);
+    if(!oldNet)return [];
+    const dates=[
+      ['2026-12-31',en?'Jul–Dec 2026':'জুলাই–ডিসেম্বর ২০২৬'],
+      ['2027-06-30',en?'Jan–Jun 2027':'জানুয়ারি–জুন ২০২৭'],
+      ['2027-07-01',en?'From 1 Jul 2027':'১ জুলাই ২০২৭ থেকে'],
+      ['2028-01-01',en?'From 1 Jan 2028':'১ জানুয়ারি ২০২৮ থেকে'],
+      ['2028-07-01',en?'From 1 Jul 2028':'১ জুলাই ২০২৮ থেকে']
+    ];
+    return dates.map(([date,label])=>{
+      const p=revisedExistingAt(oldNet,date);
+      const a=pensionAllowanceSnapshot({net:p.amount,dob:form.dob,date});
+      return {date,label,...p,...a};
+    });
+  },[form.oldNet,form.dob,en]);
+  useEffect(()=>{savePref({...readPref(),oldNet:form.oldNet,asOf:form.asOf,kind:form.kind,pensionDob:form.dob})},[form]);
+  const payload=result?{mode:'existing',form,result,timeline}:null;
 
   return <section className="pension-mode-card">
     <div className="pension-section-head"><div><WalletCards/><div><small>{en?'2026 REVISION':'২০২৬ পুনর্নির্ধারণ'}</small><h3>{en?'Existing pensioner revision':'বর্তমান পেনশনারের নতুন হিসাব'}</h3><p>{en?'Only enter the net pension received on 30 June 2026. The slab, revision rate and phased payable amount are calculated automatically.':'শুধু ৩০ জুন ২০২৬-এ পাওয়া নিট পেনশনের অংক দিন। স্ল্যাব, বৃদ্ধির হার ও ধাপভিত্তিক প্রাপ্য অটোমেটিক হিসাব হবে।'}</p></div></div></div>
     <div className="pension-simple-guide"><BadgeCheck/><div><b>{en?'One main figure is enough':'মূলত একটি অংকই দিতে হবে'}</b><p>{en?'Enter the 30 June 2026 net pension. The rest of the calculation is automatic.':'৩০ জুন ২০২৬-এর নিট পেনশন দিন। বাকি হিসাব অটোমেটিক।'}</p></div></div>
     <div className="pension-form-grid">
       <label>{en?'Pension type':'পেনশনের ধরন'}<select value={form.kind} onChange={e=>setForm({...form,kind:e.target.value})}><option value="original">{en?'Original pensioner':'মূল পেনশনভোগী'}</option><option value="family">{en?'Lifetime family pensioner':'আজীবন পারিবারিক পেনশনভোগী'}</option></select></label>
+      <label>{en?'Date of birth':'জন্মতারিখ'}<input type="date" value={form.dob} onChange={e=>setForm({...form,dob:e.target.value})}/><small>{en?'Used only for age-based medical allowance.':'শুধু বয়সভিত্তিক চিকিৎসা ভাতা হিসাবের জন্য।'}</small></label>
       <label className="pension-focus-input">{en?'Net pension on 30 June 2026':'৩০ জুন ২০২৬-এর নিট পেনশন'}<input type="number" min="1" value={form.oldNet} onChange={e=>setForm({...form,oldNet:e.target.value})} placeholder={en?'e.g. 18000':'যেমন ১৮০০০'}/><small>{en?'Remembered on this device.':'এই ডিভাইসে মনে রাখা হবে।'}</small></label>
       <label>{en?'Show payable as of':'কোন তারিখের প্রাপ্য দেখাবেন'}<input type="date" min="2026-07-01" value={form.asOf} onChange={e=>setForm({...form,asOf:e.target.value})}/></label>
     </div>
@@ -212,8 +226,32 @@ function ExistingPensioner({en,onSaveCalculation,onPreviewReport}){
         <article><span>{en?'Implemented share':'কার্যকর অংশ'}</span><b>{num(result.share*100,en)}%</b></article>
       </div>}
       {!result.protected&&<div className="pension-explain">
-        <Calculator/><div><b>{en?'How this result was applied':'হিসাব কীভাবে প্রয়োগ হয়েছে'}</b><p>{en?('The full revised pension is constrained to the official slab range '+money(result.min,true)+'–'+money(result.maxNew,true)+'. The selected date receives '+num(result.share*100,true)+'% of the increase over the 30 June 2026 pension.'):('পূর্ণ পুনর্নির্ধারিত পেনশন সরকারি স্ল্যাব '+money(result.min,false)+'–'+money(result.maxNew,false)+' এর মধ্যে সীমাবদ্ধ। নির্বাচিত তারিখে ৩০ জুন ২০২৬-এর পেনশনের ওপর বৃদ্ধির '+num(result.share*100,false)+'% কার্যকর ধরা হয়েছে।')}</p></div>
+        <Calculator/><div><b>{en?'How this result was applied':'হিসাব কীভাবে প্রয়োগ হয়েছে'}</b><p>{en?('The full revised pension is constrained to the official slab range '+money(result.min,true)+'–'+money(result.maxNew,true)+'. The selected date receives the applicable phased share; from July 2027 the full revised pension continues with annual pension increment rules.'):('পূর্ণ পুনর্নির্ধারিত পেনশন সরকারি স্ল্যাব '+money(result.min,false)+'–'+money(result.maxNew,false)+' এর মধ্যে সীমাবদ্ধ। নির্বাচিত তারিখ অনুযায়ী ধাপভিত্তিক অংশ প্রযোজ্য; জুলাই ২০২৭ থেকে পূর্ণ পেনশন বার্ষিক পেনশন বৃদ্ধির নিয়মসহ চলবে।')}</p></div>
       </div>}
+
+      <div className="pension-kpi-grid six pension-allowance-kpis">
+        <article><span>{en?'Age on selected date':'নির্বাচিত তারিখে বয়স'}</span><b>{result.age==null?'—':(num(result.age,en)+(en?' years':' বছর'))}</b></article>
+        <article><span>{en?'Medical allowance / month':'চিকিৎসা ভাতা / মাস'}</span><b>{result.medical?money(result.medical,en):'—'}</b></article>
+        <article><span>{en?'Festival allowance / each':'উৎসব ভাতা / প্রতিবার'}</span><b>{money(result.festivalEach,en)}</b></article>
+        <article><span>{en?'Festival allowance / year':'উৎসব ভাতা / বছর'}</span><b>{money(result.festivalAnnual,en)}</b></article>
+        <article><span>{en?'Bangla New Year rate':'বাংলা নববর্ষ ভাতার হার'}</span><b>{num(result.boishakhiRate*100,en)}%</b></article>
+        <article><span>{en?'Bangla New Year allowance':'বাংলা নববর্ষ ভাতা'}</span><b>{money(result.boishakhi,en)}</b></article>
+      </div>
+
+      <section className="pension-timeline">
+        <div className="pension-timeline-head"><CalendarDays/><div><b>{en?'2026–2028 benefit timeline':'২০২৬–২০২৮ সুবিধার টাইমলাইন'}</b><small>{en?'Monthly pension and age-based allowances at each government transition point.':'সরকারি পরিবর্তনের প্রতিটি ধাপে মাসিক পেনশন ও বয়সভিত্তিক ভাতা।'}</small></div></div>
+        <div className="pension-timeline-grid">
+          {timeline.map(x=><article key={x.date}>
+            <small>{x.label}</small>
+            <b>{money(x.amount,en)}</b>
+            <span>{en?'Monthly pension':'মাসিক পেনশন'}</span>
+            <p>{en?'Medical':'চিকিৎসা'}: {x.medical?money(x.medical,en):'—'}</p>
+            <p>{en?'Festival ×2':'উৎসব ×২'}: {money(x.festivalAnnual,en)}</p>
+            <p>{en?'New Year':'নববর্ষ'}: {num(x.boishakhiRate*100,en)}% · {money(x.boishakhi,en)}</p>
+          </article>)}
+        </div>
+      </section>
+
       <ResultActions en={en} onSave={()=>onSaveCalculation?.(payload)} onPreview={()=>onPreviewReport?.(payload)}/>
     </div>}
   </section>
