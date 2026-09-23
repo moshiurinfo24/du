@@ -60,12 +60,12 @@ function ordinalLabel(n,en){
 function sourceFor(id){return DATA.sources.find(function(x){return x.id===id})||{}}
 function roleOfficeFields(v){
   const value=String(v||'').trim();
-  if(!value)return {designation:'',office:''};
+  if(!value)return {designation:'',office:'',combined:''};
   const comma=value.indexOf(',');
   if(comma>0&&comma<value.length-1){
-    return {designation:value.slice(0,comma).trim(),office:value.slice(comma+1).trim()};
+    return {designation:value.slice(0,comma).trim(),office:value.slice(comma+1).trim(),combined:''};
   }
-  return {designation:value,office:''};
+  return {designation:'',office:'',combined:value};
 }
 function searchMatch(x,nq,scope){
   if(!nq)return {score:0,reason:'browse'};
@@ -356,7 +356,7 @@ export default function HouseAllocationDirectory({lang='bn',onOpenPoints}){
   const visibleSourceIds=new Set(records.map(function(x){return x.sourceId}));
   const visibleSources=DATA.sources.filter(function(s){return visibleSourceIds.has(s.id)});
   const selectedRecord=selected?selected.record:null;
-  const selectedFields=selectedRecord?roleOfficeFields(selectedRecord.roleOffice):{designation:'',office:''};
+  const selectedFields=selectedRecord?roleOfficeFields(selectedRecord.roleOffice):{designation:'',office:'',combined:''};
 
   function chooseGroup(v){setGroup(v);setCategory('all')}
   function chooseKind(v){setKind(v);setCategory('all')}
@@ -391,7 +391,7 @@ export default function HouseAllocationDirectory({lang='bn',onOpenPoints}){
     <section className="house-dir-search-panel">
       <div className="house-dir-search">
         <Search/>
-        <input value={q} onChange={function(e){setQ(e.target.value)}} placeholder={en?'Search name, designation, office, point, house or seat':'নাম, পদবি, অফিস, পয়েন্ট, বাসা বা সিট লিখে খুঁজুন'} autoComplete="off"/>
+        <input value={q} onChange={function(e){setQ(e.target.value)}} placeholder={searchScope==='name'?(en?'Search by name':'নাম লিখে খুঁজুন'):(en?'Search name, designation, office, point, house or seat':'নাম, পদবি, অফিস, পয়েন্ট, বাসা বা সিট লিখে খুঁজুন')} autoComplete="off"/>
         {q&&<button onClick={function(){setQ('')}} aria-label={en?'Clear':'মুছুন'}><X/></button>}
       </div>
       <div className="house-dir-search-scope">
@@ -515,9 +515,10 @@ export default function HouseAllocationDirectory({lang='bn',onOpenPoints}){
           {selectedRecord.point&&<div><span>{en?'Point':'পয়েন্ট'}</span><b>{selectedRecord.point}</b></div>}
           <div><span>{en?'Source page':'উৎস পৃষ্ঠা'}</span><b>{selectedRecord.sourcePage.toLocaleString(en?'en-US':'bn-BD')}</b></div>
         </div>
-        {selectedFields.designation&&<div className="house-dir-structured-fields">
-          <div><span>{en?'Designation':'পদবি'}</span><p>{selectedFields.designation}</p></div>
+        {(selectedFields.designation||selectedFields.combined)&&<div className="house-dir-structured-fields">
+          {selectedFields.designation&&<div><span>{en?'Designation':'পদবি'}</span><p>{selectedFields.designation}</p></div>}
           {selectedFields.office&&<div><span>{en?'Office / department':'অফিস / বিভাগ'}</span><p>{selectedFields.office}</p></div>}
+          {selectedFields.combined&&<div className="full"><span>{en?'Designation / office':'পদবি / অফিস'}</span><p>{selectedFields.combined}</p></div>}
         </div>}
         {selectedRecord.request&&<div className="house-dir-detail-block"><span>{en?'Application / allocation note':'আবেদন / বরাদ্দ সংক্রান্ত তথ্য'}</span><p>{selectedRecord.request}</p></div>}
         {selected.group.items.length>1&&<div className="house-dir-record-history">
