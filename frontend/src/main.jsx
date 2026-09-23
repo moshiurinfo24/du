@@ -68,6 +68,7 @@ import './office-visual-v48.css';
 import './brand-logo-v50.css';
 import './du-audience-install-v54.css';
 import './ui-stability-v58.css';
+import './pension-center-v1.css';
 import {initPwaRuntime,subscribePwa,getPwaState,promptPwaInstall,formatPwaTime,manualPwaUpdateCheck,consumePwaUpdateNotice} from './pwa-client.js';
 const FiscalOfficeCalendar=React.lazy(()=>import('./calendar-phase15.jsx').then(m=>({default:m.default})));
 const LoggedInOfficeCalendar=React.lazy(()=>import('./calendar-phase15.jsx').then(m=>({default:m.LoggedInOfficeCalendar})));
@@ -75,6 +76,7 @@ const CalendarDashboardWidget=React.lazy(()=>import('./calendar-phase15.jsx').th
 const AdminOfficeCalendarManager=React.lazy(()=>import('./calendar-phase15.jsx').then(m=>({default:m.AdminOfficeCalendarManager})));
 const GuestLocalCenter=React.lazy(()=>import('./guest-local-v1.jsx'));
 const HouseAllocationDirectory=React.lazy(()=>import('./house-allocation-v63.jsx'));
+const PensionRetirementCenter=React.lazy(()=>import('./pension-center-v1.jsx'));
 import {
   PAY2015,PAY2026,PAY_SCALE_2026_META,PROMO_RULES,money,fmtDate,diffYMD,durationBn,addYears,
   annualPromotionCycle,futureRoadmap,serviceExperiencePoints,fixed2026,implementationRate,houseRent2015,salary2026Snapshot,incremented2015Basic,incremented2026Basic,specialBenefit2025
@@ -1924,6 +1926,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     age:en?'Age':'বয়স',
     gap:en?'Date Gap':'তারিখ ব্যবধান',
     retire:en?'Retirement':'অবসর',
+    pension:en?'Pension & Retirement':'পেনশন ও অবসর',
     basic:en?'Increment Center':'ইনক্রিমেন্ট সেন্টার',
     pf:en?'PF & Deduction Center':'PF ও কর্তন সেন্টার',
     points:en?'Points Center':'পয়েন্ট',
@@ -1940,7 +1943,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     'local-reports':en?'My Reports':'রিপোর্ট',
     'local-privacy':en?'Data & Backup':'ডাটা ও ব্যাকআপ'
   };
-  const icons={salary:WalletCards,arrear:ReceiptText,promotion:TrendingUp,house:Home,service:Clock3,age:UserRound,gap:CalendarDays,retire:FileClock,basic:BadgeDollarSign,pf:ReceiptText,points:Award,calendar:CalendarDays,reference:BookOpen,history:History,'pdf-center':FileText,'local-dashboard':LayoutDashboard,'local-profile':Briefcase,'local-education':GraduationCap,'local-timeline':Route,'local-salary':WalletCards,'local-leave':CalendarDays,'local-reports':FileText,'local-privacy':ShieldCheck};
+  const icons={salary:WalletCards,arrear:ReceiptText,promotion:TrendingUp,house:Home,service:Clock3,age:UserRound,gap:CalendarDays,retire:FileClock,pension:Landmark,basic:BadgeDollarSign,pf:ReceiptText,points:Award,calendar:CalendarDays,reference:BookOpen,history:History,'pdf-center':FileText,'local-dashboard':LayoutDashboard,'local-profile':Briefcase,'local-education':GraduationCap,'local-timeline':Route,'local-salary':WalletCards,'local-leave':CalendarDays,'local-reports':FileText,'local-privacy':ShieldCheck};
   const open=(tool)=>{
     const next=[tool,...recent.filter(x=>x!==tool)].slice(0,3);
     setRecent(next);
@@ -1966,6 +1969,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     ['house',Home,en?'House & Seat':'বাসা ও সিট বরাদ্দ','gold'],
     ['service',Clock3,en?'Service Length':'চাকরিকাল','aqua'],
     ['retire',FileClock,en?'Retirement Date':'অবসর তারিখ','amber'],
+    ['pension',Landmark,en?'Pension & Retirement':'পেনশন ও অবসর','indigo'],
     ['calendar',CalendarDays,en?'Office Calendar':'অফিস ক্যালেন্ডার','sky']
   ];
   const moreTools=[
@@ -2025,6 +2029,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
         <button className={activePublicTool==='house'?'active':''} onClick={()=>open('house')}><Home/><span>{en?'House Allocation':'বাসা বরাদ্দ'}</span></button>
         <button className={activePublicTool==='service'?'active':''} onClick={()=>open('service')}><Clock3/><span>{en?'Service Length':'চাকরিকাল'}</span></button>
         <button className={activePublicTool==='retire'?'active':''} onClick={()=>open('retire')}><FileClock/><span>{en?'Retirement':'অবসর তারিখ'}</span></button>
+        <button className={activePublicTool==='pension'?'active':''} onClick={()=>open('pension')}><Landmark/><span>{en?'Pension & Retirement':'পেনশন ও অবসর'}</span></button>
         <button className={activePublicTool==='calendar'?'active':''} onClick={()=>open('calendar')}><CalendarDays/><span>{en?'Office Calendar':'অফিস ক্যালেন্ডার'}</span></button>
       </div>
       <div className="pwa-desktop-nav-group compact">
@@ -2069,6 +2074,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
         {activePublicTool==='promotion'&&<section className="public-tool-only-shell"><PromotionCenter lang={lang} publicMode={true}/></section>}
         {activePublicTool==='house'&&<section className="public-tool-only-shell"><HouseAllocationHub lang={lang} publicMode={true}/></section>}
         {['service','age','gap','retire','basic'].includes(activePublicTool)&&<section className="public-tool-only-shell"><CalculatorCenter lang={lang} publicMode={true} initialTool={activePublicTool} singleTool={true}/></section>}
+        {activePublicTool==='pension'&&<section className="public-tool-only-shell"><PensionRetirementCenter lang={lang}/></section>}
         {activePublicTool==='pf'&&<section className="public-tool-only-shell"><PfDeductionCenter lang={lang} publicMode={true}/></section>}
         {activePublicTool==='points'&&<section className="public-tool-only-shell"><PointsCalculator lang={lang} publicMode={true}/></section>}
         {activePublicTool==='calendar'&&<section className="public-tool-only-shell"><FiscalOfficeCalendar lang={lang}/></section>}
