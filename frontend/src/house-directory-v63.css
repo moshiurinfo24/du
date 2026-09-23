@@ -30,6 +30,11 @@
 .house-dir-search input::placeholder{color:#8a97aa}
 .house-dir-search button{border:0;background:#eef2f8;color:#526177;width:31px;height:31px;border-radius:9px;display:grid;place-items:center;cursor:pointer}
 .house-dir-search button svg{width:16px}
+.house-dir-search-scope{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:2px 1px 0}
+.house-dir-search-scope>span{font-size:10px;font-weight:900;color:#66758d;margin-right:2px}
+.house-dir-search-scope button{border:1px solid #d8e1ee;background:#fff;color:#566982;border-radius:999px;padding:6px 10px;font-size:10px;font-weight:900;cursor:pointer}
+.house-dir-search-scope button.active{background:#eef1ff;border-color:#9ba8ec;color:#3045a6}
+.house-dir-search-scope small{font-size:9px;color:#8793a5;margin-left:3px}
 
 .house-dir-control-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .house-dir-groups,.house-dir-kind{display:flex;gap:7px;overflow:auto;padding-bottom:1px}
@@ -73,6 +78,8 @@
 .house-dir-status{display:inline-flex!important;align-items:center!important;width:max-content;padding:4px 7px!important;border-radius:999px!important;font-size:10px!important;font-weight:900!important}
 .house-dir-status.draft{background:#fff0cf!important;color:#85590a!important;border:1px solid #f0d18b!important}
 .house-dir-status.panel{background:#eaf1ff!important;color:#3454a4!important;border:1px solid #ccd9fa!important}
+.house-dir-result-tags .house-dir-match-badge{background:#eaf8f4!important;color:#237765!important;border:1px solid #ccebe2!important}
+.house-dir-result-tags .house-dir-multi-badge{background:#fff4db!important;color:#8a5a09!important;border:1px solid #efd69e!important}
 .house-dir-person-copy h3{font-size:16px;line-height:1.42;margin:7px 0 4px;color:#172b5a;word-break:break-word}
 .house-dir-person-copy mark,.house-dir-request mark{background:#fff1a8;color:inherit;border-radius:3px;padding:0 1px}
 .house-dir-role{margin:0;display:flex;align-items:flex-start;gap:6px;color:#53667e;font-size:12px;line-height:1.55}
@@ -123,6 +130,21 @@
 .house-dir-detail-block>span{display:block;margin-bottom:4px;font-weight:800}
 .house-dir-detail-block p{margin:0;color:#394e69;font-size:12px;line-height:1.65}
 .house-dir-detail-block.source{background:#f7f9ff;border-color:#dfe4f7}
+.house-dir-structured-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.house-dir-structured-fields>div{padding:11px 12px;border:1px solid #e1e7ef;border-radius:12px;background:#fff}
+.house-dir-structured-fields>div.full{grid-column:1/-1}
+.house-dir-structured-fields span{display:block;margin-bottom:4px;font-size:10px;font-weight:800;color:#7a8799}
+.house-dir-structured-fields p{margin:0;color:#394e69;font-size:12px;line-height:1.6}
+.house-dir-record-history{padding:12px;border:1px solid #dfe5ef;border-radius:13px;background:#fafbfd;display:grid;gap:9px}
+.house-dir-record-history-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.house-dir-record-history-head b{font-size:11px;color:#2b3d61}
+.house-dir-record-history-head span{display:grid;place-items:center;min-width:24px;height:24px;padding:0 6px;border-radius:999px;background:#eef1ff;color:#4055b7;font-size:10px;font-weight:900}
+.house-dir-record-history-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.house-dir-record-history-list button{min-width:0;border:1px solid #dde5ef;background:#fff;border-radius:10px;padding:8px 9px;display:grid;gap:2px;text-align:left;cursor:pointer}
+.house-dir-record-history-list button.active{border-color:#9ba8ec;background:#f2f4ff;box-shadow:0 0 0 2px rgba(64,85,183,.06)}
+.house-dir-record-history-list strong{font-size:10px;color:#4055b7}
+.house-dir-record-history-list span{font-size:10px;line-height:1.35;color:#3d4f6b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.house-dir-record-history-list small{font-size:9px;color:#7c899a}
 .house-dir-raw{border-top:1px solid #edf1f6;padding-top:11px}
 .house-dir-raw summary{cursor:pointer;color:#5268bd;font-size:11px;font-weight:900}
 .house-dir-raw p{margin:9px 0 0;color:#5f6f82;font-size:11px;line-height:1.7}
@@ -141,6 +163,8 @@
   .house-dir-points-btn{grid-column:1/-1;justify-content:center;width:100%}
   .house-dir-search-panel{padding:11px;border-radius:15px}
   .house-dir-search{height:48px}
+  .house-dir-search-scope{align-items:flex-start}
+  .house-dir-search-scope small{width:100%;margin:1px 0 0 0}
   .house-dir-filter{grid-template-columns:auto 1fr}
   .house-dir-filter>span{grid-column:2;white-space:normal}
   .house-dir-modal-backdrop{padding:0;align-items:flex-end}
@@ -151,6 +175,9 @@
   .house-dir-rank-stats{gap:6px}
   .house-dir-rank-stats>div{padding:8px}
   .house-dir-modal-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .house-dir-structured-fields{grid-template-columns:1fr}
+  .house-dir-structured-fields>div.full{grid-column:auto}
+  .house-dir-record-history-list{grid-template-columns:1fr}
 }
 @media(max-width:430px){
   .house-dir-groups,.house-dir-kind{width:100%;margin-left:-1px;margin-right:-1px}
