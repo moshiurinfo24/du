@@ -33,6 +33,25 @@
 .pension-form-grid input,.pension-form-grid select{width:100%;min-width:0;border:1px solid #d7e0ec;border-radius:10px;background:#fff;padding:10px 11px;font:inherit;color:#20324f;outline:none}
 .pension-form-grid input:focus,.pension-form-grid select:focus{border-color:#7182d7;box-shadow:0 0 0 3px rgba(64,85,183,.08)}
 .pension-form-grid small{font-size:9px;font-weight:600;color:#8a95a6}
+.pension-focus-input{padding:9px;border:1px solid #b9c6ef;border-radius:12px;background:#f7f9ff}
+.pension-focus-input input{font-size:16px!important;font-weight:900;color:#233d8f}
+.pension-simple-guide,.pension-profile-prefill{display:flex;align-items:flex-start;gap:9px;padding:10px 12px;border-radius:12px}
+.pension-simple-guide{border:1px solid #dfe5f6;background:#f7f9ff;color:#3e5278}
+.pension-profile-prefill{border:1px solid #cfe6de;background:#f3fbf8;color:#315e55}
+.pension-simple-guide>svg,.pension-profile-prefill>svg{width:17px;flex:0 0 auto;margin-top:2px}
+.pension-simple-guide b,.pension-profile-prefill b{font-size:11px}
+.pension-simple-guide p,.pension-profile-prefill p{margin:2px 0 0;font-size:10px;line-height:1.5}
+.pension-auto-service{grid-column:span 2;display:flex;align-items:flex-start;gap:9px;padding:10px 11px;border:1px solid #d7e6f4;border-radius:11px;background:#f4f9fd}
+.pension-auto-service>svg{width:18px;flex:0 0 auto;color:#4055b7;margin-top:2px}
+.pension-auto-service div{display:grid;gap:2px}
+.pension-auto-service span{font-size:9px;color:#6f7f96}
+.pension-auto-service b{font-size:13px;color:#263e78}
+.pension-auto-service small{font-size:9px;color:#7f8da1}
+.pension-result-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;padding-top:2px}
+.pension-result-actions button{border-radius:10px;padding:9px 12px;font:inherit;font-size:10px;font-weight:900;display:flex;align-items:center;gap:6px;cursor:pointer}
+.pension-result-actions button svg{width:15px}
+.pension-result-actions .secondary{border:1px solid #ccd6e6;background:#fff;color:#4055b7}
+.pension-result-actions .primary{border:1px solid #4055b7;background:#4055b7;color:#fff;box-shadow:0 7px 18px rgba(64,85,183,.16)}
 
 .pension-result-wrap{display:grid;gap:11px}
 .pension-result-hero{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px;border-radius:16px;background:linear-gradient(135deg,#eef3ff,#f7fbff);border:1px solid #dce4fb}
@@ -98,6 +117,9 @@
   .pension-mode-tabs{grid-template-columns:1fr}
   .pension-mode-card{padding:13px}
   .pension-form-grid{grid-template-columns:1fr}
+  .pension-auto-service{grid-column:auto}
+  .pension-result-actions{display:grid;grid-template-columns:1fr}
+  .pension-result-actions button{justify-content:center}
   .pension-kpi-grid,.pension-kpi-grid.six{grid-template-columns:repeat(2,minmax(0,1fr))}
   .pension-result-hero strong{font-size:23px}
   .pension-one-time{grid-template-columns:1fr}
