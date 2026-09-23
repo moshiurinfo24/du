@@ -145,10 +145,27 @@ function ExistingPensioner({en,onSaveCalculation,onPreviewReport}){
   </section>
 }
 
-function NewRetiree({en}){
-  const [form,setForm]=useState({basic:'',years:'25',months:'0',leaveMonths:'0',otherDeduction:'0'});
+function NewRetiree({en,profile={},onSaveCalculation,onPreviewReport}){
+  const saved=readPref();
+  const profileRetirement=profile.date_of_birth&&profile.retirement_age?addYearsIso(profile.date_of_birth,profile.retirement_age):'';
+  const [form,setForm]=useState({
+    basic:String(saved.basic||profile.current_basic_salary||''),
+    joiningDate:saved.joiningDate||profile.first_joining_date||'',
+    retirementDate:saved.retirementDate||profileRetirement||'',
+    years:String(saved.years||'25'),months:String(saved.months||'0'),
+    leaveMonths:String(saved.leaveMonths||'0'),otherDeduction:String(saved.otherDeduction||'0')
+  });
+  useEffect(()=>{
+    setForm(v=>({...v,
+      basic:v.basic||String(profile.current_basic_salary||''),
+      joiningDate:v.joiningDate||profile.first_joining_date||'',
+      retirementDate:v.retirementDate||profileRetirement||''
+    }));
+  },[profile.current_basic_salary,profile.first_joining_date,profileRetirement]);
+  useEffect(()=>{savePref({...readPref(),basic:form.basic,joiningDate:form.joiningDate,retirementDate:form.retirementDate,years:form.years,months:form.months,leaveMonths:form.leaveMonths,otherDeduction:form.otherDeduction})},[form]);
+  const autoService=useMemo(()=>serviceYmd(form.joiningDate,form.retirementDate),[form.joiningDate,form.retirementDate]);
   const result=useMemo(()=>{
-    const basic=Number(form.basic||0),years=Math.floor(Number(form.years||0)),months=Math.max(0,Math.min(11,Number(form.months||0)));
+    const basic=Number(form.basic||0),years=autoService?autoService.y:Math.floor(Number(form.years||0)),months=autoService?autoService.m:Math.max(0,Math.min(11,Number(form.months||0)));
     if(!basic||years<0)return null;
     const completedYears=years;
     const rate=pensionRateFor(completedYears);
@@ -162,17 +179,25 @@ function NewRetiree({en}){
     const deduction=Math.max(0,Number(form.otherDeduction||0));
     const grossOneTime=gratuity+leaveEncashment;
     const netOneTime=Math.max(0,grossOneTime-deduction);
-    return {basic,years,months,completedYears,rate,multiplier,grossPension,surrendered,monthlyPension,gratuity,leaveMonths,leaveEncashment,deduction,grossOneTime,netOneTime,eligible:completedYears>=5};
-  },[form]);
+    return {basic,years,months,days:autoService?.d||0,completedYears,rate,multiplier,grossPension,surrendered,monthlyPension,gratuity,leaveMonths,leaveEncashment,deduction,grossOneTime,netOneTime,eligible:completedYears>=5,autoService:!!autoService};
+  },[form,autoService]);
+  const hasProfile=Boolean(profile.current_basic_salary||profile.first_joining_date||profile.date_of_birth||profile.retirement_age);
+  const payload=result?{mode:'new',form,result,profile}:null;
 
   return <section className="pension-mode-card">
-    <div className="pension-section-head"><div><Landmark/><div><small>{en?'NEW RETIREE · PHASE 1':'নতুন অবসরপ্রাপ্ত · PHASE 1'}</small><h3>{en?'Pension, gratuity & retirement summary':'পেনশন, আনুতোষিক ও অবসর সারাংশ'}</h3><p>{en?'Government-2026 baseline calculation. University sanction and DU-specific eligibility remain subject to the applicable statute/order.':'সরকারি ২০২৬ baseline অনুযায়ী হিসাব। চূড়ান্ত বিশ্ববিদ্যালয় অনুমোদন ও DU-specific eligibility সংশ্লিষ্ট statute/order অনুযায়ী হবে।'}</p></div></div></div>
+    <div className="pension-section-head"><div><Landmark/><div><small>{en?'NEW RETIREE · SMART PREFILL':'নতুন অবসরপ্রাপ্ত · SMART PREFILL'}</small><h3>{en?'Pension, gratuity & retirement summary':'পেনশন, আনুতোষিক ও অবসর সারাংশ'}</h3><p>{en?'Saved Career Profile data is used automatically when available. Correct only the fields that need changes.':'চাকরি তথ্য-এ সংরক্ষিত ডাটা থাকলে অটোমেটিক নেওয়া হবে। শুধু যেগুলো পরিবর্তন দরকার সেগুলো ঠিক করবেন।'}</p></div></div></div>
 
-    <div className="pension-form-grid">
-      <label>{en?'Last pensionable basic':'শেষ পেনশনযোগ্য মূল বেতন'}<input type="number" min="0" value={form.basic} onChange={e=>setForm({...form,basic:e.target.value})} placeholder={en?'e.g. 50000':'যেমন ৫০০০০'}/></label>
-      <label>{en?'Completed qualifying years':'পূর্ণ পেনশনযোগ্য চাকরির বছর'}<input type="number" min="0" max="60" value={form.years} onChange={e=>setForm({...form,years:e.target.value})}/></label>
-      <label>{en?'Additional months (reference only)':'অতিরিক্ত মাস (তথ্যের জন্য)'}<input type="number" min="0" max="11" value={form.months} onChange={e=>setForm({...form,months:e.target.value})}/></label>
-      <label>{en?'Eligible leave encashment months':'ছুটি নগদায়নের প্রাপ্য মাস'}<input type="number" min="0" max="18" step="0.5" value={form.leaveMonths} onChange={e=>setForm({...form,leaveMonths:e.target.value})}/><small>{en?'Maximum 18 months in this calculator.':'এই ক্যালকুলেটরে সর্বোচ্চ ১৮ মাস।'}</small></label>
+    {hasProfile&&<div className="pension-profile-prefill"><UserRound/><div><b>{en?'Career-profile data found':'চাকরি তথ্য থেকে ডাটা পাওয়া গেছে'}</b><p>{en?'Basic salary, joining date and retirement date are prefilled where available.':'মূল বেতন, যোগদানের তারিখ ও অবসরের তারিখ পাওয়া গেলে অটো বসানো হয়েছে।'}</p></div></div>}
+
+    <div className="pension-form-grid pension-form-smart">
+      <label>{en?'Last / applicable pensionable basic':'শেষ / প্রযোজ্য পেনশনযোগ্য মূল বেতন'}<input type="number" min="0" value={form.basic} onChange={e=>setForm({...form,basic:e.target.value})} placeholder={en?'e.g. 50000':'যেমন ৫০০০০'}/><small>{profile.current_basic_salary?(en?'Prefilled from Career Profile; verify the final pensionable basic.':'চাকরি তথ্য থেকে অটো এসেছে; চূড়ান্ত pensionable basic যাচাই করুন।'):''}</small></label>
+      <label>{en?'First joining date':'প্রথম যোগদানের তারিখ'}<input type="date" value={form.joiningDate} onChange={e=>setForm({...form,joiningDate:e.target.value})}/></label>
+      <label>{en?'Retirement date':'অবসরের তারিখ'}<input type="date" value={form.retirementDate} onChange={e=>setForm({...form,retirementDate:e.target.value})}/><small>{profileRetirement?(en?'Calculated from saved DOB + retirement age.':'সংরক্ষিত জন্মতারিখ + অবসরের বয়স থেকে অটো হিসাব।'):''}</small></label>
+      {autoService?<div className="pension-auto-service"><CalendarDays/><div><span>{en?'Auto qualifying service':'অটো চাকরিকাল'}</span><b>{en?(autoService.y+'y '+autoService.m+'m '+autoService.d+'d'):(autoService.y.toLocaleString('bn-BD')+' বছর '+autoService.m.toLocaleString('bn-BD')+' মাস '+autoService.d.toLocaleString('bn-BD')+' দিন')}</b><small>{en?'Completed years are used for the pension-rate table.':'পেনশন হার নির্ধারণে পূর্ণ বছর ব্যবহার হচ্ছে।'}</small></div></div>:<>
+        <label>{en?'Completed qualifying years':'পূর্ণ পেনশনযোগ্য চাকরির বছর'}<input type="number" min="0" max="60" value={form.years} onChange={e=>setForm({...form,years:e.target.value})}/></label>
+        <label>{en?'Additional months':'অতিরিক্ত মাস'}<input type="number" min="0" max="11" value={form.months} onChange={e=>setForm({...form,months:e.target.value})}/></label>
+      </>}
+      <label>{en?'Eligible leave encashment months':'ছুটি নগদায়নের প্রাপ্য মাস'}<input type="number" min="0" max="18" step="0.5" value={form.leaveMonths} onChange={e=>setForm({...form,leaveMonths:e.target.value})}/><small>{en?'Maximum 18 months; enter only actually eligible leave.':'সর্বোচ্চ ১৮ মাস; বাস্তবে যত মাস প্রাপ্য সেটাই দিন।'}</small></label>
       <label>{en?'Loan / advance / other recovery':'ঋণ / অগ্রিম / অন্যান্য কর্তন'}<input type="number" min="0" value={form.otherDeduction} onChange={e=>setForm({...form,otherDeduction:e.target.value})}/></label>
     </div>
 
@@ -199,6 +224,7 @@ function NewRetiree({en}){
         </div>
 
         <div className="pension-explain"><ReceiptText/><div><b>{en?'Core formula':'মূল হিসাব'}</b><p>{en?('Gross pension = last basic × '+num(result.rate,true)+'%. Monthly pension shown here = 50% of gross pension after surrender. Gratuity = surrendered pension × '+num(result.multiplier,true)+'.'):('গ্রস পেনশন = শেষ মূল বেতন × '+num(result.rate,false)+'%। এখানে মাসিক পেনশন = ৫০% সমর্পণের পর অবশিষ্ট অংশ। আনুতোষিক = সমর্পিত পেনশন × '+num(result.multiplier,false)+'।')}</p></div></div>
+        <ResultActions en={en} onSave={()=>onSaveCalculation?.(payload)} onPreview={()=>onPreviewReport?.(payload)}/>
       </>}
       <RateTable en={en}/>
     </div>}
