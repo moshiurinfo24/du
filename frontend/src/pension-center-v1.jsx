@@ -4,6 +4,7 @@ import {
   Coins,FileText,History,Landmark,ReceiptText,ShieldCheck,UserRound,WalletCards
 } from 'lucide-react';
 import './pension-center-v1.css';
+import {PAY2015,PAY2026,fixed2026,salary2026Snapshot} from './rules';
 
 const GAZETTE_URL='https://www.dpp.gov.bd/upload_file/gazettes/62983_75061.pdf';
 const DU_STATUTE_URL='https://www.du.ac.bd/fontView/ordinance/Calendar_Part_II.pdf';
@@ -77,6 +78,79 @@ function phasedShare(oldNet,asOf){
   if(asOf<='2026-12-31')return Number(oldNet)<=20000?0.50:0.40;
   if(asOf<='2027-06-30')return Number(oldNet)<=20000?0.75:0.70;
   return 1;
+}
+function ageOnDate(dob,date){
+  if(!dob||!date)return null;
+  const b=new Date(dob+'T00:00:00'),d=new Date(date+'T00:00:00');
+  if(Number.isNaN(b.getTime())||Number.isNaN(d.getTime())||d<b)return null;
+  let age=d.getFullYear()-b.getFullYear();
+  const beforeBirthday=(d.getMonth()<b.getMonth())||(d.getMonth()===b.getMonth()&&d.getDate()<b.getDate());
+  if(beforeBirthday)age-=1;
+  return age;
+}
+function pensionerMedical(date,dob){
+  const age=ageOnDate(dob,date);
+  if(age==null)return {amount:0,age:null,label:'DOB_REQUIRED'};
+  if(date<'2028-01-01')return {amount:age>=65?2500:1500,age,label:age>=65?'65+ old rule':'old rule'};
+  if(age<=50)return {amount:3000,age,label:'≤50'};
+  if(age<=60)return {amount:4000,age,label:'50+ to 60'};
+  if(age<=70)return {amount:5000,age,label:'60+ to 70'};
+  return {amount:6000,age,label:'70+'};
+}
+function pensionIncrementCount(date){
+  if(date<'2027-07-01')return 0;
+  const y=Number(date.slice(0,4))||2027;
+  let count=0;
+  for(let yr=2027;yr<=y;yr++)if(date>=yr+'-07-01')count++;
+  return count;
+}
+function revisedExistingAt(oldNet,date){
+  const old=Number(oldNet||0);
+  if(!old)return null;
+  const protectedHigh=old>70200;
+  let fullTarget=old,rate=0,min=old,maxNew=old;
+  if(!protectedHigh){
+    const slab=slabFor(old);
+    rate=slab.rate;min=slab.min;maxNew=slab.maxNew;
+    fullTarget=clamp(old*(1+rate/100),min,maxNew);
+  }
+  if(date<'2026-07-01')return {amount:old,fullTarget,rate,share:0,protected:protectedHigh};
+  if(date<='2026-12-31'){
+    const share=old<=20000?0.50:0.40;
+    return {amount:protectedHigh?old:old+(fullTarget-old)*share,fullTarget,rate,share,protected:protectedHigh};
+  }
+  if(date<='2027-06-30'){
+    const share=old<=20000?0.75:0.70;
+    return {amount:protectedHigh?old:old+(fullTarget-old)*share,fullTarget,rate,share,protected:protectedHigh};
+  }
+  const increments=pensionIncrementCount(date);
+  const base=protectedHigh?old:fullTarget;
+  return {amount:base*Math.pow(1.05,increments),fullTarget,rate,share:1,protected:protectedHigh,increments};
+}
+function pensionAllowanceSnapshot({net,dob,date}){
+  const med=pensionerMedical(date,dob);
+  const newRates=date>='2028-01-01';
+  const festivalEach=Number(net||0);
+  const boishakhiRate=newRates?0.15:0.20;
+  const boishakhi=Number(net||0)*boishakhiRate;
+  return {medical:med.amount,age:med.age,medicalBand:med.label,festivalEach,festivalAnnual:festivalEach*2,boishakhiRate,boishakhi};
+}
+function newRetireePhase(oldNet,newNet,date){
+  const old=Number(oldNet||0),full=Number(newNet||0);
+  if(date<'2026-07-01')return {share:0,amount:old,label:'2015'};
+  if(date<='2026-12-31'){
+    const share=old<=20000?0.50:0.40;
+    return {share,amount:old+(full-old)*share,label:'2026-H2'};
+  }
+  if(date<='2027-06-30'){
+    const share=old<=20000?0.75:0.70;
+    return {share,amount:old+(full-old)*share,label:'2027-H1'};
+  }
+  return {share:1,amount:full,label:'full'};
+}
+function retirementAgeFor(type,profileAge){
+  if(Number(profileAge)>0)return Number(profileAge);
+  return type==='teacher'?65:type==='officer'?62:60;
 }
 function RateTable({en}){
   const rows=Object.entries(PENSION_RATES);
