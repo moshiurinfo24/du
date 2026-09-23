@@ -76,6 +76,12 @@
 .pension-timeline-grid span{font-size:8px;color:#7b8798}
 .pension-timeline-grid p{margin:1px 0 0;font-size:8px;line-height:1.35;color:#607186}
 .pension-timeline-grid.pay article{background:linear-gradient(145deg,#fff,#f7f9ff)}
+.pension-annual-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.pension-annual-grid article{padding:10px;border:1px solid #e0e6ef;border-radius:10px;background:linear-gradient(145deg,#fffdf7,#fff)}
+.pension-annual-grid article>small{display:block;margin-bottom:7px;font-size:9px;font-weight:900;color:#6b5a2d}
+.pension-annual-grid article>div{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px dashed #e8dfc7}
+.pension-annual-grid span{font-size:9px;color:#6f7786}
+.pension-annual-grid b{font-size:10px;color:#76591e;text-align:right}
 .pension-du-benefits{display:grid;gap:9px;padding:12px;border:1px solid #d5e6df;border-radius:14px;background:linear-gradient(145deg,#f8fcfa,#f6f9ff)}
 .pension-du-benefits .pension-kpi-grid article{background:#fff}
 
@@ -140,6 +146,7 @@
   .pension-kpi-grid,.pension-kpi-grid.six{grid-template-columns:repeat(2,minmax(0,1fr))}
   .pension-rate-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
   .pension-timeline-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pension-annual-grid{grid-template-columns:1fr}
   .pension-sources.three{grid-template-columns:1fr}
 }
 @media(max-width:640px){
