@@ -231,13 +231,16 @@ function NewRetiree({en,profile={},onSaveCalculation,onPreviewReport}){
   </section>
 }
 
-export default function PensionRetirementCenter({lang='bn'}){
+export default function PensionRetirementCenter({lang='bn',profile={},onSaveCalculation,onPreviewReport}){
   const en=lang==='en';
-  const [mode,setMode]=useState('existing');
+  const pref=readPref();
+  const suggested=profile.current_basic_salary||profile.first_joining_date?'new':'existing';
+  const [mode,setMode]=useState(pref.mode||suggested);
+  useEffect(()=>{savePref({...readPref(),mode})},[mode]);
   return <div className="pension-center-v1">
     <section className="pension-hero">
       <div className="pension-hero-icon"><Landmark/></div>
-      <div><small>{en?'SMART OFFICE HISAB · PENSION CENTER':'স্মার্ট অফিস হিসাব · পেনশন সেন্টার'}</small><h2>{en?'Pension & Retirement Center':'পেনশন ও অবসর সেন্টার'}</h2><p>{en?'Government-2026 pension revision and a Phase-1 retirement-benefit calculator for University of Dhaka officers and employees.':'সরকারি ২০২৬ পেনশন পুনর্নির্ধারণ এবং ঢাকা বিশ্ববিদ্যালয়ের কর্মকর্তা-কর্মচারীদের জন্য Phase-1 অবসর সুবিধার সহায়ক হিসাব।'}</p></div>
+      <div><small>{en?'SMART OFFICE HISAB · PENSION CENTER':'স্মার্ট অফিস হিসাব · পেনশন সেন্টার'}</small><h2>{en?'Pension & Retirement Center':'পেনশন ও অবসর সেন্টার'}</h2><p>{en?'Auto-prefill from Career Profile, clear calculation breakdown, and A4 PDF preview/download.':'চাকরি তথ্য থেকে অটো-ফিল, পরিষ্কার হিসাবের ব্যাখ্যা এবং A4 PDF রিপোর্ট প্রিভিউ/ডাউনলোড।'}</p></div>
     </section>
 
     <section className="pension-rule-banner">
@@ -246,15 +249,15 @@ export default function PensionRetirementCenter({lang='bn'}){
     </section>
 
     <div className="pension-mode-tabs">
-      <button className={mode==='existing'?'active':''} onClick={()=>setMode('existing')}><WalletCards/><span><b>{en?'Existing pensioner':'বর্তমান পেনশনার'}</b><small>{en?'2026 revised net pension':'২০২৬ পুনর্নির্ধারিত নিট পেনশন'}</small></span></button>
-      <button className={mode==='new'?'active':''} onClick={()=>setMode('new')}><Landmark/><span><b>{en?'New retiree':'নতুন অবসরপ্রাপ্ত'}</b><small>{en?'Pension + gratuity + leave':'পেনশন + আনুতোষিক + ছুটি'}</small></span></button>
+      <button className={mode==='existing'?'active':''} onClick={()=>setMode('existing')}><WalletCards/><span><b>{en?'Existing pensioner':'বর্তমান পেনশনার'}</b><small>{en?'Only 30 Jun 2026 net pension needed':'শুধু ৩০ জুন ২০২৬-এর নিট পেনশন দিন'}</small></span></button>
+      <button className={mode==='new'?'active':''} onClick={()=>setMode('new')}><Landmark/><span><b>{en?'New retiree / planning':'নতুন অবসরপ্রাপ্ত / পরিকল্পনা'}</b><small>{en?'Career data prefilled automatically':'চাকরি তথ্য অটো-ফিল হবে'}</small></span></button>
     </div>
 
-    {mode==='existing'?<ExistingPensioner en={en}/>:<NewRetiree en={en}/>}
+    {mode==='existing'?<ExistingPensioner en={en} onSaveCalculation={onSaveCalculation} onPreviewReport={onPreviewReport}/>:<NewRetiree en={en} profile={profile} onSaveCalculation={onSaveCalculation} onPreviewReport={onPreviewReport}/>}
 
     <section className="pension-phase-note">
       <FileText/>
-      <div><b>{en?'Phase-1 scope':'Phase-1 সীমা'}</b><p>{en?'PF final settlement, Benevolent Fund, Group Insurance, family-pension eligibility, DU past-service contribution and PDF export will be added as separate verified layers. They are intentionally not guessed in this first release.':'PF final settlement, Benevolent Fund, Group Insurance, family-pension eligibility, DU past-service contribution এবং PDF export পরবর্তী যাচাইকৃত layer-এ যোগ হবে। প্রথম release-এ এগুলো অনুমান করে হিসাব করা হয়নি।'}</p></div>
+      <div><b>{en?'Current verified scope':'বর্তমান যাচাইকৃত সীমা'}</b><p>{en?'A4 PDF report is now available. PF final settlement, Benevolent Fund, Group Insurance, family-pension eligibility and DU past-service contribution remain separate until exact applicable DU records/rules are confirmed.':'A4 PDF রিপোর্ট এখন আছে। PF final settlement, Benevolent Fund, Group Insurance, family-pension eligibility এবং DU past-service contribution-এর সঠিক প্রযোজ্য DU record/rule নিশ্চিত না হওয়া পর্যন্ত মোট প্রাপ্যে মেশানো হচ্ছে না।'}</p></div>
     </section>
 
     <section className="pension-sources">
