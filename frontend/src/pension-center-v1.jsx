@@ -154,6 +154,18 @@ function retirementAgeFor(type,profileAge){
   if(Number(profileAge)>0)return Number(profileAge);
   return type==='teacher'?65:type==='officer'?62:60;
 }
+function benevolentRateFor(type){
+  if(type==='teacher'||type==='officer')return 0.05;
+  if(type==='class3')return 0.04;
+  if(type==='class4')return 0.0275;
+  return 0;
+}
+function benevolentPotential({type,basic,serviceYears,confirmed}){
+  const rate=benevolentRateFor(type);
+  const eligible=Number(serviceYears||0)>=10;
+  const benefit=confirmed&&eligible?Math.max(6000,Number(basic||0)*24):0;
+  return {rate,eligible,benefit,confirmed:!!confirmed};
+}
 function pensionIncrementsSince(retirementDate,date){
   if(!retirementDate||!date||date<retirementDate)return 0;
   const startYear=Math.max(2027,Number(retirementDate.slice(0,4))||2027);
@@ -290,7 +302,7 @@ function ExistingPensioner({en,onSaveCalculation,onPreviewReport,profile={}}){
 
 function NewRetiree({en,profile={},onSaveCalculation,onPreviewReport}){
   const saved=readPref();
-  const inferredType=saved.employmentType||(Number(profile.retirement_age)===65?'teacher':Number(profile.retirement_age)===62?'officer':'employee');
+  const inferredType=saved.employmentType||(Number(profile.retirement_age)===65?'teacher':Number(profile.retirement_age)===62?'officer':'class3');
   const inferredGrade=String(saved.pensionGrade||profile.grade||'');
   const profileBasic=Number(profile.current_basic_salary||0);
   const initialBasic=String(saved.oldBasic||((PAY2015[inferredGrade]||[]).includes(profileBasic)?profileBasic:'')||'');
@@ -304,13 +316,17 @@ function NewRetiree({en,profile={},onSaveCalculation,onPreviewReport}){
     joiningDate:saved.joiningDate||profile.first_joining_date||'',
     retirementDate:saved.retirementDate||profileRetirement||'',
     years:String(saved.years||'25'),months:String(saved.months||'0'),
-    leaveMonths:String(saved.leaveMonths||'0'),otherDeduction:String(saved.otherDeduction||'0')
+    leaveMonths:String(saved.leaveMonths||'0'),otherDeduction:String(saved.otherDeduction||'0'),
+    benevolentConfirmed:saved.benevolentConfirmed===true,
+    pfFinal:String(saved.pfFinal||''),
+    groupInsurance:String(saved.groupInsurance||'')
   });
   const gradeSteps=PAY2015[String(form.grade)]||[];
   useEffect(()=>{savePref({...readPref(),
     employmentType:form.employmentType,retireeDob:form.dob,pensionGrade:form.grade,oldBasic:form.oldBasic,
     incrementEligible2026:form.incrementEligible2026,joiningDate:form.joiningDate,retirementDate:form.retirementDate,
-    years:form.years,months:form.months,leaveMonths:form.leaveMonths,otherDeduction:form.otherDeduction
+    years:form.years,months:form.months,leaveMonths:form.leaveMonths,otherDeduction:form.otherDeduction,
+    benevolentConfirmed:form.benevolentConfirmed,pfFinal:form.pfFinal,groupInsurance:form.groupInsurance
   })},[form]);
   const autoService=useMemo(()=>serviceYmd(form.joiningDate,form.retirementDate),[form.joiningDate,form.retirementDate]);
   const payJourney=useMemo(()=>{
@@ -321,8 +337,11 @@ function NewRetiree({en,profile={},onSaveCalculation,onPreviewReport}){
       ['2027-01-01',en?'1 Jan 2027':'১ জানুয়ারি ২০২৭'],
       ['2027-07-01',en?'1 Jul 2027':'১ জুলাই ২০২৭'],
       ['2028-01-01',en?'1 Jan 2028':'১ জানুয়ারি ২০২৮']
-    ].map(([date,label])=>({date,label,...salary2026Snapshot({grade:g,currentBasic:oldBasic,date,incrementEligible2026:form.incrementEligible2026,housing:'no',zone:'dhaka',ageBand:'under50',children:0,tiffin:false,conveyance:false,mobile:false})}));
-  },[form.grade,form.oldBasic,form.incrementEligible2026,en]);
+    ].map(([date,label])=>{
+      const snap=salary2026Snapshot({grade:g,currentBasic:oldBasic,date,incrementEligible2026:form.incrementEligible2026,housing:'no',zone:'dhaka',ageBand:'under50',children:0,tiffin:false,conveyance:false,mobile:false});
+      return {date,label,...snap,benevolentDeduction:Math.round(snap.payableBasic*benevolentRateFor(form.employmentType))};
+    });
+  },[form.grade,form.oldBasic,form.incrementEligible2026,form.employmentType,en]);
   const result=useMemo(()=>{
     const grade=String(form.grade||''),oldBasic=Number(form.oldBasic||0),years=autoService?autoService.y:Math.floor(Number(form.years||0)),months=autoService?autoService.m:Math.max(0,Math.min(11,Number(form.months||0)));
     if(!grade||!oldBasic||years<0)return null;
@@ -337,12 +356,16 @@ function NewRetiree({en,profile={},onSaveCalculation,onPreviewReport}){
     const gratuity=surrendered*multiplier;
     const leaveMonths=Math.max(0,Math.min(18,Number(form.leaveMonths||0)));
     const leaveEncashment=fullBasic*leaveMonths;
+    const benevolent=benevolentPotential({type:form.employmentType,basic:fullBasic,serviceYears:completedYears,confirmed:form.benevolentConfirmed});
+    const pfFinal=Math.max(0,Number(form.pfFinal||0));
+    const groupInsurance=Math.max(0,Number(form.groupInsurance||0));
     const deduction=Math.max(0,Number(form.otherDeduction||0));
-    const grossOneTime=gratuity+leaveEncashment,netOneTime=Math.max(0,grossOneTime-deduction);
+    const grossOneTime=gratuity+leaveEncashment+benevolent.benefit+pfFinal+groupInsurance;
+    const netOneTime=Math.max(0,grossOneTime-deduction);
     const allowance=pensionAllowanceSnapshot({net:monthlyPension,dob:form.dob,date:retireDate});
     return {grade,oldBasic,basic:fullBasic,oldGross,oldNet,years,months,days:autoService?.d||0,completedYears,rate,multiplier,
-      grossPension,surrendered,fullNetPension,phase,monthlyPension,gratuity,leaveMonths,leaveEncashment,deduction,grossOneTime,netOneTime,
-      eligible:completedYears>=5,autoService:!!autoService,...allowance};
+      grossPension,surrendered,fullNetPension,phase,monthlyPension,gratuity,leaveMonths,leaveEncashment,benevolent,pfFinal,groupInsurance,
+      deduction,grossOneTime,netOneTime,eligible:completedYears>=5,autoService:!!autoService,...allowance};
   },[form,autoService]);
   const pensionJourney=useMemo(()=>{
     if(!result||!form.retirementDate)return [];
