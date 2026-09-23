@@ -1018,6 +1018,7 @@ function CalculationHistoryCenter({lang='bn',onOpen}){
     age:{icon:UserRound,bn:'বয়স',en:'Age'},
     gap:{icon:CalendarDays,bn:'তারিখের ব্যবধান',en:'Date Difference'},
     retire:{icon:FileClock,bn:'অবসর তারিখ',en:'Retirement'},
+    pension:{icon:Landmark,bn:'পেনশন ও অবসর',en:'Pension & Retirement'},
     basic:{icon:BadgeDollarSign,bn:'ইনক্রিমেন্ট সেন্টার',en:'Increment Center'},
     pf:{icon:ReceiptText,bn:'PF ও কর্তন',en:'PF & Deductions'}
   };
@@ -1037,7 +1038,7 @@ function CalculationHistoryCenter({lang='bn',onOpen}){
     try{return new Intl.DateTimeFormat(en?'en-GB':'bn-BD',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(v))}
     catch{return v||'—'}
   };
-  const metricLabel=k=>en?({grade:'Grade',basic:'Basic',net:'Net',gross:'Gross',arrear:'Arrear',points:'Points',date:'Date',target:'Target',duration:'Duration',retirement:'Retirement',payable:'Payable basic',increment:'Increment step',monthly:'Monthly increase',annual:'Annual equivalent',pf:'Monthly PF',rate:'PF rate',deductions:'Total deductions',takeHome:'Take-home impact'}[k]||k):({grade:'গ্রেড',basic:'মূল বেতন',net:'নিট',gross:'মোট',arrear:'বকেয়া',points:'পয়েন্ট',date:'তারিখ',target:'লক্ষ্য',duration:'সময়কাল',retirement:'অবসর',payable:'প্রাপ্য মূল বেতন',increment:'ইনক্রিমেন্ট ধাপ',monthly:'মাসিক বৃদ্ধি',annual:'বার্ষিক সমপরিমাণ',pf:'মাসিক PF',rate:'PF হার',deductions:'মোট কর্তন',takeHome:'Take-home প্রভাব'}[k]||k);
+  const metricLabel=k=>en?({grade:'Grade',basic:'Basic',net:'Net',gross:'Gross',arrear:'Arrear',points:'Points',date:'Date',target:'Target',duration:'Duration',retirement:'Retirement',pension:'Pension',oneTime:'One-time benefit',revision:'Revision',payable:'Payable basic',increment:'Increment step',monthly:'Monthly increase',annual:'Annual equivalent',pf:'Monthly PF',rate:'PF rate',deductions:'Total deductions',takeHome:'Take-home impact'}[k]||k):({grade:'গ্রেড',basic:'মূল বেতন',net:'নিট',gross:'মোট',arrear:'বকেয়া',points:'পয়েন্ট',date:'তারিখ',target:'লক্ষ্য',duration:'সময়কাল',retirement:'অবসর',pension:'পেনশন',oneTime:'এককালীন প্রাপ্য',revision:'পুনর্নির্ধারণ',payable:'প্রাপ্য মূল বেতন',increment:'ইনক্রিমেন্ট ধাপ',monthly:'মাসিক বৃদ্ধি',annual:'বার্ষিক সমপরিমাণ',pf:'মাসিক PF',rate:'PF হার',deductions:'মোট কর্তন',takeHome:'Take-home প্রভাব'}[k]||k);
   return <div className="calc-history-center">
     <section className="calc-history-hero">
       <div className="calc-history-hero-icon"><History/></div>
@@ -1233,6 +1234,69 @@ function SharedReportViewer({token,lang='bn',setLang}){
     </main>
   </div>
 }
+function pensionReportHtml(payload,lang='bn'){
+  const en=lang==='en',mode=payload?.mode||'existing',r=payload?.result||{},f=payload?.form||{},p=payload?.profile||{};
+  const amt=v=>(en?'Tk ':'৳ ')+moneyLang(Number(v||0),lang);
+  const sourceNote='<div style="margin-top:10px;padding:9px 11px;border:1px solid #d9e2eb;border-left:4px solid #2b6a8a;background:#f7fafc;border-radius:8px;font-size:9.5px;color:#536575;line-height:1.45"><b>'+pdfSafe(en?'Source basis:':'উৎসভিত্তি:')+'</b> '+pdfSafe(en?'Ministry of Finance retirement-benefit order published in the Bangladesh Gazette on 17 September 2026; University of Dhaka Tenth Statutes are shown as a separate institutional reference.':'১৭ সেপ্টেম্বর ২০২৬ বাংলাদেশ গেজেটে প্রকাশিত অর্থ মন্ত্রণালয়ের অবসর-সুবিধা আদেশ; ঢাকা বিশ্ববিদ্যালয়ের Tenth Statutes আলাদা প্রাতিষ্ঠানিক রেফারেন্স হিসেবে দেখানো হয়েছে।')+'</div>';
+  if(mode==='existing'){
+    const summary=pdfSummaryCards([
+      {label:en?'Selected-date payable':'নির্বাচিত তারিখে প্রাপ্য',value:amt(r.current),accent:true},
+      {label:en?'30 Jun 2026 net pension':'৩০ জুন ২০২৬ নিট পেনশন',value:amt(r.oldNet)},
+      {label:en?'Full revised pension':'পূর্ণ পুনর্নির্ধারিত পেনশন',value:amt(r.fullTarget)},
+      {label:en?'Revision rate':'বৃদ্ধির হার',value:r.protected?(en?'Protected':'সুরক্ষিত'):(numLang(r.rate||0,lang,0)+'%')}
+    ],4);
+    const inputRows=[
+      {label:en?'Pension type':'পেনশনের ধরন',value:f.kind==='family'?(en?'Lifetime family pensioner':'আজীবন পারিবারিক পেনশনভোগী'):(en?'Original pensioner':'মূল পেনশনভোগী')},
+      {label:en?'Net pension on 30 June 2026':'৩০ জুন ২০২৬-এর নিট পেনশন',value:amt(r.oldNet)},
+      {label:en?'Payable date':'প্রাপ্য দেখানোর তারিখ',value:f.asOf?fmtDateLang(f.asOf,lang):'—'}
+    ];
+    const calcRows=r.protected?[
+      {label:en?'Protection rule':'সুরক্ষা বিধান',value:en?'Existing amount retained':'বিদ্যমান অংক বহাল',emphasis:true}
+    ]:[
+      {label:en?'Official revision rate':'সরকারি বৃদ্ধির হার',value:numLang(r.rate||0,lang,0)+'%'},
+      {label:en?'Full increase':'পূর্ণ বৃদ্ধি',value:amt(r.increase)},
+      {label:en?'Implemented share on selected date':'নির্বাচিত তারিখে কার্যকর অংশ',value:numLang((r.share||0)*100,lang,0)+'%'},
+      {label:en?'Payable pension':'প্রাপ্য পেনশন',value:amt(r.current),emphasis:true}
+    ];
+    const body=summary+
+      section(en?'Input information':'প্রদত্ত তথ্য',pdfTable(inputRows,{head1:en?'Information':'তথ্য',head3:en?'Value':'মান',compact:true}),{table:true,tight:true})+
+      section(en?'Revision calculation':'পুনর্নির্ধারণ হিসাব',pdfTable(calcRows,{head1:en?'Calculation item':'হিসাবের বিষয়',head3:en?'Result':'ফলাফল',compact:true}),{table:true,tight:true})+
+      sourceNote;
+    return reportShell(en?'Pension Revision Report 2026':'পেনশন পুনর্নির্ধারণ প্রতিবেদন ২০২৬',en?'Existing pensioner · Smart Office Hisab':'বর্তমান পেনশনার · স্মার্ট অফিস হিসাব',body,lang);
+  }
+  const serviceText=en?((r.years||0)+' years '+(r.months||0)+' months'):((Number(r.years||0)).toLocaleString('bn-BD')+' বছর '+(Number(r.months||0)).toLocaleString('bn-BD')+' মাস');
+  const summary=pdfSummaryCards([
+    {label:en?'Monthly base pension':'মাসিক base pension',value:amt(r.monthlyPension),accent:true},
+    {label:en?'Gratuity':'আনুতোষিক',value:amt(r.gratuity)},
+    {label:en?'Leave encashment':'ছুটি নগদায়ন',value:amt(r.leaveEncashment)},
+    {label:en?'Net one-time benefit':'নিট এককালীন প্রাপ্য',value:amt(r.netOneTime)}
+  ],4);
+  const inputRows=[
+    {label:en?'Last pensionable basic':'শেষ পেনশনযোগ্য মূল বেতন',value:amt(r.basic)},
+    {label:en?'First joining date':'প্রথম যোগদানের তারিখ',value:f.joiningDate?fmtDateLang(f.joiningDate,lang):'—'},
+    {label:en?'Retirement date':'অবসরের তারিখ',value:f.retirementDate?fmtDateLang(f.retirementDate,lang):'—'},
+    {label:en?'Qualifying service':'পেনশনযোগ্য চাকরিকাল',value:serviceText},
+    {label:en?'Grade / post reference':'গ্রেড / পদ রেফারেন্স',value:String(p.current_grade||p.grade||p.current_post||'—')}
+  ];
+  const calcRows=[
+    {label:en?'Government pension rate':'সরকারি পেনশন হার',value:numLang(r.rate||0,lang,0)+'%'},
+    {label:en?'Gross pension':'গ্রস পেনশন',value:amt(r.grossPension)},
+    {label:en?'Surrendered pension (50%)':'সমর্পিত পেনশন (৫০%)',value:amt(r.surrendered)},
+    {label:en?'Monthly retained pension':'মাসিক অবশিষ্ট পেনশন',value:amt(r.monthlyPension),emphasis:true},
+    {label:en?'Gratuity multiplier':'আনুতোষিক multiplier',value:numLang(r.multiplier||0,lang,0)+' ×'},
+    {label:en?'Gratuity':'আনুতোষিক',value:amt(r.gratuity)},
+    {label:en?'Leave encashment':'ছুটি নগদায়ন',value:amt(r.leaveEncashment)},
+    {label:en?'Loan / advance / other recovery':'ঋণ / অগ্রিম / অন্যান্য কর্তন',value:'− '+amt(r.deduction)},
+    {label:en?'Net one-time retirement benefit':'নিট এককালীন অবসর প্রাপ্য',value:amt(r.netOneTime),emphasis:true}
+  ];
+  const body=summary+
+    section(en?'Service & pay information':'চাকরি ও বেতন তথ্য',pdfTable(inputRows,{head1:en?'Information':'তথ্য',head3:en?'Value':'মান',compact:true}),{table:true,tight:true})+
+    section(en?'Pension & retirement calculation':'পেনশন ও অবসর হিসাব',pdfTable(calcRows,{head1:en?'Calculation item':'হিসাবের বিষয়',head3:en?'Result':'ফলাফল',compact:true}),{table:true,tight:true})+
+    '<div style="margin-top:10px;padding:9px 11px;border:1px solid #ead8a9;border-left:4px solid #c49a3d;background:#fffaf0;border-radius:8px;font-size:9.5px;color:#685626;line-height:1.45"><b>'+pdfSafe(en?'Important:':'গুরুত্বপূর্ণ:')+'</b> '+pdfSafe(en?'PF final settlement, Benevolent Fund, Group Insurance and other DU-specific benefits are not added to this total until their exact applicable records/rules are confirmed.':'PF final settlement, Benevolent Fund, Group Insurance এবং অন্যান্য DU-specific সুবিধা সঠিক প্রযোজ্য record/rule নিশ্চিত না হওয়া পর্যন্ত এই মোটে যোগ করা হয়নি।')+'</div>'+
+    sourceNote;
+  return reportShell(en?'Pension & Retirement Calculation Report':'পেনশন ও অবসর হিসাব প্রতিবেদন',en?'Government-2026 baseline · Smart Office Hisab':'সরকারি ২০২৬ baseline · স্মার্ট অফিস হিসাব',body,lang);
+}
+
 function promotionReportHtml(r,lang='bn'){
   const en=lang==='en',f=r.input||{};
   const edu=en?{masters:'Masters',bachelor:"Bachelor's",hsc:'HSC',diploma:'Diploma',bsceng:'BSc Engineering',mbbs:'MBBS'}:eduBn;
@@ -1913,6 +1977,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
   });
   const [toolSearch,setToolSearch]=useState('');
   const [installHelp,setInstallHelp]=useState('');
+  const [pensionPreview,setPensionPreview]=useState(null);
   const [favoriteTools,setFavoriteTools]=useState(()=>{
     try{return JSON.parse(localStorage.getItem('hisab_favorite_tools_v1')||'[]').slice(0,8)}catch{return[]}
   });
@@ -1961,6 +2026,37 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     setInstallHelp(result?.outcome==='accepted'?'accepted':(result?.outcome==='dismissed'?'dismissed':'manual'));
   };
   const localProfile=guestLocalProfile();
+  const savePensionCalculation=(payload)=>{
+    if(!payload?.result)return;
+    const r=payload.result||{},f=payload.form||{};
+    if(payload.mode==='existing'){
+      rememberCalculationHistory({
+        tool:'pension',title_bn:'পেনশন পুনর্নির্ধারণ ২০২৬',title_en:'Pension Revision 2026',
+        summary_bn:'নির্বাচিত তারিখে প্রাপ্য ৳'+moneyLang(r.current||0,'bn')+' · পূর্ণ পুনর্নির্ধারিত ৳'+moneyLang(r.fullTarget||0,'bn'),
+        summary_en:'Selected-date payable Tk '+moneyLang(r.current||0,'en')+' · Full revised Tk '+moneyLang(r.fullTarget||0,'en'),
+        metrics:{pension:'৳'+moneyLang(r.current||0,'bn'),revision:(r.protected?'Protected':numLang(r.rate||0,'bn',0)+'%')},input:{mode:payload.mode,...f}
+      });
+    }else{
+      rememberCalculationHistory({
+        tool:'pension',title_bn:'পেনশন ও অবসর হিসাব',title_en:'Pension & Retirement Calculation',
+        summary_bn:'মাসিক পেনশন ৳'+moneyLang(r.monthlyPension||0,'bn')+' · নিট এককালীন ৳'+moneyLang(r.netOneTime||0,'bn'),
+        summary_en:'Monthly pension Tk '+moneyLang(r.monthlyPension||0,'en')+' · Net one-time Tk '+moneyLang(r.netOneTime||0,'en'),
+        metrics:{pension:'৳'+moneyLang(r.monthlyPension||0,'bn'),oneTime:'৳'+moneyLang(r.netOneTime||0,'bn'),rate:numLang(r.rate||0,'bn',0)+'%'},input:{mode:payload.mode,...f}
+      });
+    }
+  };
+  const openPensionReport=(payload)=>{
+    if(!payload?.result)return;
+    savePensionCalculation(payload);
+    const html=pensionReportHtml(payload,lang);
+    const existing=payload.mode==='existing';
+    setPensionPreview({
+      html,
+      filename:existing?'pension-revision-2026.pdf':'pension-retirement-report.pdf',
+      title:existing?(en?'Pension Revision Report 2026':'পেনশন পুনর্নির্ধারণ প্রতিবেদন ২০২৬'):(en?'Pension & Retirement Report':'পেনশন ও অবসর হিসাব প্রতিবেদন'),
+      summary:existing?(en?'2026 revised pension calculation':'২০২৬ পুনর্নির্ধারিত পেনশন হিসাব'):(en?'Pension, gratuity and retirement-benefit summary':'পেনশন, আনুতোষিক ও অবসর সুবিধার সারাংশ')
+    });
+  };
   const tools=[
     ['salary',WalletCards,en?'Pay Scale 2026–2028':'পে-স্কেল ২০২৬–২০২৮','indigo'],
     ['arrear',ReceiptText,en?'Arrear':'বকেয়া / এরিয়ার','aqua'],
@@ -2074,7 +2170,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
         {activePublicTool==='promotion'&&<section className="public-tool-only-shell"><PromotionCenter lang={lang} publicMode={true}/></section>}
         {activePublicTool==='house'&&<section className="public-tool-only-shell"><HouseAllocationHub lang={lang} publicMode={true}/></section>}
         {['service','age','gap','retire','basic'].includes(activePublicTool)&&<section className="public-tool-only-shell"><CalculatorCenter lang={lang} publicMode={true} initialTool={activePublicTool} singleTool={true}/></section>}
-        {activePublicTool==='pension'&&<section className="public-tool-only-shell"><PensionRetirementCenter lang={lang}/></section>}
+        {activePublicTool==='pension'&&<section className="public-tool-only-shell"><PensionRetirementCenter lang={lang} profile={localProfile} onSaveCalculation={savePensionCalculation} onPreviewReport={openPensionReport}/></section>}
         {activePublicTool==='pf'&&<section className="public-tool-only-shell"><PfDeductionCenter lang={lang} publicMode={true}/></section>}
         {activePublicTool==='points'&&<section className="public-tool-only-shell"><PointsCalculator lang={lang} publicMode={true}/></section>}
         {activePublicTool==='calendar'&&<section className="public-tool-only-shell"><FiscalOfficeCalendar lang={lang}/></section>}
@@ -2100,6 +2196,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
           <button className="pwa-sheet-sync" onClick={onLogin}><UserRound/><span>{en?'Login to your account':'আপনার অ্যাকাউন্টে লগইন করুন'}</span></button>
         </section>
       </div>}
+      {pensionPreview&&<PdfPreviewModal html={pensionPreview.html} filename={pensionPreview.filename} onClose={()=>setPensionPreview(null)} lang={lang} shareTitle={pensionPreview.title} shareSummary={pensionPreview.summary}/>}
     </div>;
   }
 

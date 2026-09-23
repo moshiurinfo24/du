@@ -1,12 +1,13 @@
-import React,{useMemo,useState} from 'react';
+import React,{useEffect,useMemo,useState} from 'react';
 import {
   AlertTriangle,BadgeCheck,BookOpen,Calculator,CalendarDays,ChevronRight,
-  Coins,FileText,Landmark,ReceiptText,ShieldCheck,WalletCards
+  Coins,FileText,History,Landmark,ReceiptText,ShieldCheck,UserRound,WalletCards
 } from 'lucide-react';
 import './pension-center-v1.css';
 
 const GAZETTE_URL='https://www.dpp.gov.bd/upload_file/gazettes/62983_75061.pdf';
 const DU_STATUTE_URL='https://www.du.ac.bd/fontView/ordinance/Calendar_Part_II.pdf';
+const PREF_KEY='hisab_pension_prefill_v1';
 
 const PENSION_RATES={
   5:21,6:24,7:27,8:30,9:33,10:36,11:39,12:43,13:47,14:51,15:54,16:57,
@@ -35,6 +36,28 @@ function todayIso(){
   const d=new Date(),y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');
   return y+'-'+m+'-'+day;
 }
+function addYearsIso(iso,years){
+  if(!iso||!Number.isFinite(Number(years)))return '';
+  const d=new Date(iso+'T00:00:00');
+  if(Number.isNaN(d.getTime()))return '';
+  d.setFullYear(d.getFullYear()+Number(years));
+  const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+day;
+}
+function serviceYmd(start,end){
+  if(!start||!end)return null;
+  const a=new Date(start+'T00:00:00'),b=new Date(end+'T00:00:00');
+  if(Number.isNaN(a.getTime())||Number.isNaN(b.getTime())||b<a)return null;
+  let y=b.getFullYear()-a.getFullYear(),m=b.getMonth()-a.getMonth(),d=b.getDate()-a.getDate();
+  if(d<0){m-=1;d+=new Date(b.getFullYear(),b.getMonth(),0).getDate()}
+  if(m<0){y-=1;m+=12}
+  return {y,m,d};
+}
+function readPref(){
+  try{const x=JSON.parse(localStorage.getItem(PREF_KEY)||'null');return x&&typeof x==='object'?x:{}}catch{return {}}
+}
+function savePref(next){try{localStorage.setItem(PREF_KEY,JSON.stringify(next||{}))}catch{}}
+
 function pensionRateFor(years){
   const y=Math.floor(Number(years||0));
   if(y<5)return 0;
@@ -65,8 +88,16 @@ function RateTable({en}){
   </details>
 }
 
-function ExistingPensioner({en}){
-  const [form,setForm]=useState({oldNet:'',asOf:todayIso(),kind:'original'});
+function ResultActions({en,onSave,onPreview}){
+  return <div className="pension-result-actions">
+    <button className="secondary" onClick={onSave}><History/>{en?'Save to My Calculations':'আমার হিসাবে সংরক্ষণ'}</button>
+    <button className="primary" onClick={onPreview}><FileText/>{en?'A4 PDF Preview & Download':'A4 PDF প্রিভিউ ও ডাউনলোড'}</button>
+  </div>
+}
+
+function ExistingPensioner({en,onSaveCalculation,onPreviewReport}){
+  const saved=readPref();
+  const [form,setForm]=useState({oldNet:String(saved.oldNet||''),asOf:saved.asOf||todayIso(),kind:saved.kind||'original'});
   const result=useMemo(()=>{
     const oldNet=Number(form.oldNet||0);
     if(!oldNet||oldNet<0)return null;
@@ -83,12 +114,15 @@ function ExistingPensioner({en}){
     const current=oldNet+(increase*share);
     return {...slab,oldNet,fullTarget,increase,share,current,protected:false};
   },[form,en]);
+  useEffect(()=>{savePref({...readPref(),oldNet:form.oldNet,asOf:form.asOf,kind:form.kind})},[form]);
+  const payload=result?{mode:'existing',form,result}:null;
 
   return <section className="pension-mode-card">
-    <div className="pension-section-head"><div><WalletCards/><div><small>{en?'2026 REVISION':'২০২৬ পুনর্নির্ধারণ'}</small><h3>{en?'Existing pensioner revision':'বর্তমান পেনশনারের নতুন হিসাব'}</h3><p>{en?'Uses the net pension received on 30 June 2026 and the phased implementation stated in the 2026 retirement-benefit order.':'৩০ জুন ২০২৬-এর নিট পেনশন এবং ২০২৬ অবসর-সুবিধা আদেশের ধাপভিত্তিক বাস্তবায়ন ধরে হিসাব।'}</p></div></div></div>
+    <div className="pension-section-head"><div><WalletCards/><div><small>{en?'2026 REVISION':'২০২৬ পুনর্নির্ধারণ'}</small><h3>{en?'Existing pensioner revision':'বর্তমান পেনশনারের নতুন হিসাব'}</h3><p>{en?'Only enter the net pension received on 30 June 2026. The slab, revision rate and phased payable amount are calculated automatically.':'শুধু ৩০ জুন ২০২৬-এ পাওয়া নিট পেনশনের অংক দিন। স্ল্যাব, বৃদ্ধির হার ও ধাপভিত্তিক প্রাপ্য অটোমেটিক হিসাব হবে।'}</p></div></div></div>
+    <div className="pension-simple-guide"><BadgeCheck/><div><b>{en?'One main figure is enough':'মূলত একটি অংকই দিতে হবে'}</b><p>{en?'Enter the 30 June 2026 net pension. The rest of the calculation is automatic.':'৩০ জুন ২০২৬-এর নিট পেনশন দিন। বাকি হিসাব অটোমেটিক।'}</p></div></div>
     <div className="pension-form-grid">
       <label>{en?'Pension type':'পেনশনের ধরন'}<select value={form.kind} onChange={e=>setForm({...form,kind:e.target.value})}><option value="original">{en?'Original pensioner':'মূল পেনশনভোগী'}</option><option value="family">{en?'Lifetime family pensioner':'আজীবন পারিবারিক পেনশনভোগী'}</option></select></label>
-      <label>{en?'Net pension on 30 June 2026':'৩০ জুন ২০২৬-এর নিট পেনশন'}<input type="number" min="1" value={form.oldNet} onChange={e=>setForm({...form,oldNet:e.target.value})} placeholder={en?'e.g. 18000':'যেমন ১৮০০০'}/></label>
+      <label className="pension-focus-input">{en?'Net pension on 30 June 2026':'৩০ জুন ২০২৬-এর নিট পেনশন'}<input type="number" min="1" value={form.oldNet} onChange={e=>setForm({...form,oldNet:e.target.value})} placeholder={en?'e.g. 18000':'যেমন ১৮০০০'}/><small>{en?'Remembered on this device.':'এই ডিভাইসে মনে রাখা হবে।'}</small></label>
       <label>{en?'Show payable as of':'কোন তারিখের প্রাপ্য দেখাবেন'}<input type="date" min="2026-07-01" value={form.asOf} onChange={e=>setForm({...form,asOf:e.target.value})}/></label>
     </div>
 
@@ -106,14 +140,32 @@ function ExistingPensioner({en}){
       {!result.protected&&<div className="pension-explain">
         <Calculator/><div><b>{en?'How this result was applied':'হিসাব কীভাবে প্রয়োগ হয়েছে'}</b><p>{en?('The full revised pension is constrained to the official slab range '+money(result.min,true)+'–'+money(result.maxNew,true)+'. The selected date receives '+num(result.share*100,true)+'% of the increase over the 30 June 2026 pension.'):('পূর্ণ পুনর্নির্ধারিত পেনশন সরকারি স্ল্যাব '+money(result.min,false)+'–'+money(result.maxNew,false)+' এর মধ্যে সীমাবদ্ধ। নির্বাচিত তারিখে ৩০ জুন ২০২৬-এর পেনশনের ওপর বৃদ্ধির '+num(result.share*100,false)+'% কার্যকর ধরা হয়েছে।')}</p></div>
       </div>}
+      <ResultActions en={en} onSave={()=>onSaveCalculation?.(payload)} onPreview={()=>onPreviewReport?.(payload)}/>
     </div>}
   </section>
 }
 
-function NewRetiree({en}){
-  const [form,setForm]=useState({basic:'',years:'25',months:'0',leaveMonths:'0',otherDeduction:'0'});
+function NewRetiree({en,profile={},onSaveCalculation,onPreviewReport}){
+  const saved=readPref();
+  const profileRetirement=profile.date_of_birth&&profile.retirement_age?addYearsIso(profile.date_of_birth,profile.retirement_age):'';
+  const [form,setForm]=useState({
+    basic:String(saved.basic||profile.current_basic_salary||''),
+    joiningDate:saved.joiningDate||profile.first_joining_date||'',
+    retirementDate:saved.retirementDate||profileRetirement||'',
+    years:String(saved.years||'25'),months:String(saved.months||'0'),
+    leaveMonths:String(saved.leaveMonths||'0'),otherDeduction:String(saved.otherDeduction||'0')
+  });
+  useEffect(()=>{
+    setForm(v=>({...v,
+      basic:v.basic||String(profile.current_basic_salary||''),
+      joiningDate:v.joiningDate||profile.first_joining_date||'',
+      retirementDate:v.retirementDate||profileRetirement||''
+    }));
+  },[profile.current_basic_salary,profile.first_joining_date,profileRetirement]);
+  useEffect(()=>{savePref({...readPref(),basic:form.basic,joiningDate:form.joiningDate,retirementDate:form.retirementDate,years:form.years,months:form.months,leaveMonths:form.leaveMonths,otherDeduction:form.otherDeduction})},[form]);
+  const autoService=useMemo(()=>serviceYmd(form.joiningDate,form.retirementDate),[form.joiningDate,form.retirementDate]);
   const result=useMemo(()=>{
-    const basic=Number(form.basic||0),years=Math.floor(Number(form.years||0)),months=Math.max(0,Math.min(11,Number(form.months||0)));
+    const basic=Number(form.basic||0),years=autoService?autoService.y:Math.floor(Number(form.years||0)),months=autoService?autoService.m:Math.max(0,Math.min(11,Number(form.months||0)));
     if(!basic||years<0)return null;
     const completedYears=years;
     const rate=pensionRateFor(completedYears);
@@ -127,17 +179,25 @@ function NewRetiree({en}){
     const deduction=Math.max(0,Number(form.otherDeduction||0));
     const grossOneTime=gratuity+leaveEncashment;
     const netOneTime=Math.max(0,grossOneTime-deduction);
-    return {basic,years,months,completedYears,rate,multiplier,grossPension,surrendered,monthlyPension,gratuity,leaveMonths,leaveEncashment,deduction,grossOneTime,netOneTime,eligible:completedYears>=5};
-  },[form]);
+    return {basic,years,months,days:autoService?.d||0,completedYears,rate,multiplier,grossPension,surrendered,monthlyPension,gratuity,leaveMonths,leaveEncashment,deduction,grossOneTime,netOneTime,eligible:completedYears>=5,autoService:!!autoService};
+  },[form,autoService]);
+  const hasProfile=Boolean(profile.current_basic_salary||profile.first_joining_date||profile.date_of_birth||profile.retirement_age);
+  const payload=result?{mode:'new',form,result,profile}:null;
 
   return <section className="pension-mode-card">
-    <div className="pension-section-head"><div><Landmark/><div><small>{en?'NEW RETIREE · PHASE 1':'নতুন অবসরপ্রাপ্ত · PHASE 1'}</small><h3>{en?'Pension, gratuity & retirement summary':'পেনশন, আনুতোষিক ও অবসর সারাংশ'}</h3><p>{en?'Government-2026 baseline calculation. University sanction and DU-specific eligibility remain subject to the applicable statute/order.':'সরকারি ২০২৬ baseline অনুযায়ী হিসাব। চূড়ান্ত বিশ্ববিদ্যালয় অনুমোদন ও DU-specific eligibility সংশ্লিষ্ট statute/order অনুযায়ী হবে।'}</p></div></div></div>
+    <div className="pension-section-head"><div><Landmark/><div><small>{en?'NEW RETIREE · SMART PREFILL':'নতুন অবসরপ্রাপ্ত · SMART PREFILL'}</small><h3>{en?'Pension, gratuity & retirement summary':'পেনশন, আনুতোষিক ও অবসর সারাংশ'}</h3><p>{en?'Saved Career Profile data is used automatically when available. Correct only the fields that need changes.':'চাকরি তথ্য-এ সংরক্ষিত ডাটা থাকলে অটোমেটিক নেওয়া হবে। শুধু যেগুলো পরিবর্তন দরকার সেগুলো ঠিক করবেন।'}</p></div></div></div>
 
-    <div className="pension-form-grid">
-      <label>{en?'Last pensionable basic':'শেষ পেনশনযোগ্য মূল বেতন'}<input type="number" min="0" value={form.basic} onChange={e=>setForm({...form,basic:e.target.value})} placeholder={en?'e.g. 50000':'যেমন ৫০০০০'}/></label>
-      <label>{en?'Completed qualifying years':'পূর্ণ পেনশনযোগ্য চাকরির বছর'}<input type="number" min="0" max="60" value={form.years} onChange={e=>setForm({...form,years:e.target.value})}/></label>
-      <label>{en?'Additional months (reference only)':'অতিরিক্ত মাস (তথ্যের জন্য)'}<input type="number" min="0" max="11" value={form.months} onChange={e=>setForm({...form,months:e.target.value})}/></label>
-      <label>{en?'Eligible leave encashment months':'ছুটি নগদায়নের প্রাপ্য মাস'}<input type="number" min="0" max="18" step="0.5" value={form.leaveMonths} onChange={e=>setForm({...form,leaveMonths:e.target.value})}/><small>{en?'Maximum 18 months in this calculator.':'এই ক্যালকুলেটরে সর্বোচ্চ ১৮ মাস।'}</small></label>
+    {hasProfile&&<div className="pension-profile-prefill"><UserRound/><div><b>{en?'Career-profile data found':'চাকরি তথ্য থেকে ডাটা পাওয়া গেছে'}</b><p>{en?'Basic salary, joining date and retirement date are prefilled where available.':'মূল বেতন, যোগদানের তারিখ ও অবসরের তারিখ পাওয়া গেলে অটো বসানো হয়েছে।'}</p></div></div>}
+
+    <div className="pension-form-grid pension-form-smart">
+      <label>{en?'Last / applicable pensionable basic':'শেষ / প্রযোজ্য পেনশনযোগ্য মূল বেতন'}<input type="number" min="0" value={form.basic} onChange={e=>setForm({...form,basic:e.target.value})} placeholder={en?'e.g. 50000':'যেমন ৫০০০০'}/><small>{profile.current_basic_salary?(en?'Prefilled from Career Profile; verify the final pensionable basic.':'চাকরি তথ্য থেকে অটো এসেছে; চূড়ান্ত pensionable basic যাচাই করুন।'):''}</small></label>
+      <label>{en?'First joining date':'প্রথম যোগদানের তারিখ'}<input type="date" value={form.joiningDate} onChange={e=>setForm({...form,joiningDate:e.target.value})}/></label>
+      <label>{en?'Retirement date':'অবসরের তারিখ'}<input type="date" value={form.retirementDate} onChange={e=>setForm({...form,retirementDate:e.target.value})}/><small>{profileRetirement?(en?'Calculated from saved DOB + retirement age.':'সংরক্ষিত জন্মতারিখ + অবসরের বয়স থেকে অটো হিসাব।'):''}</small></label>
+      {autoService?<div className="pension-auto-service"><CalendarDays/><div><span>{en?'Auto qualifying service':'অটো চাকরিকাল'}</span><b>{en?(autoService.y+'y '+autoService.m+'m '+autoService.d+'d'):(autoService.y.toLocaleString('bn-BD')+' বছর '+autoService.m.toLocaleString('bn-BD')+' মাস '+autoService.d.toLocaleString('bn-BD')+' দিন')}</b><small>{en?'Completed years are used for the pension-rate table.':'পেনশন হার নির্ধারণে পূর্ণ বছর ব্যবহার হচ্ছে।'}</small></div></div>:<>
+        <label>{en?'Completed qualifying years':'পূর্ণ পেনশনযোগ্য চাকরির বছর'}<input type="number" min="0" max="60" value={form.years} onChange={e=>setForm({...form,years:e.target.value})}/></label>
+        <label>{en?'Additional months':'অতিরিক্ত মাস'}<input type="number" min="0" max="11" value={form.months} onChange={e=>setForm({...form,months:e.target.value})}/></label>
+      </>}
+      <label>{en?'Eligible leave encashment months':'ছুটি নগদায়নের প্রাপ্য মাস'}<input type="number" min="0" max="18" step="0.5" value={form.leaveMonths} onChange={e=>setForm({...form,leaveMonths:e.target.value})}/><small>{en?'Maximum 18 months; enter only actually eligible leave.':'সর্বোচ্চ ১৮ মাস; বাস্তবে যত মাস প্রাপ্য সেটাই দিন।'}</small></label>
       <label>{en?'Loan / advance / other recovery':'ঋণ / অগ্রিম / অন্যান্য কর্তন'}<input type="number" min="0" value={form.otherDeduction} onChange={e=>setForm({...form,otherDeduction:e.target.value})}/></label>
     </div>
 
@@ -164,19 +224,23 @@ function NewRetiree({en}){
         </div>
 
         <div className="pension-explain"><ReceiptText/><div><b>{en?'Core formula':'মূল হিসাব'}</b><p>{en?('Gross pension = last basic × '+num(result.rate,true)+'%. Monthly pension shown here = 50% of gross pension after surrender. Gratuity = surrendered pension × '+num(result.multiplier,true)+'.'):('গ্রস পেনশন = শেষ মূল বেতন × '+num(result.rate,false)+'%। এখানে মাসিক পেনশন = ৫০% সমর্পণের পর অবশিষ্ট অংশ। আনুতোষিক = সমর্পিত পেনশন × '+num(result.multiplier,false)+'।')}</p></div></div>
+        <ResultActions en={en} onSave={()=>onSaveCalculation?.(payload)} onPreview={()=>onPreviewReport?.(payload)}/>
       </>}
       <RateTable en={en}/>
     </div>}
   </section>
 }
 
-export default function PensionRetirementCenter({lang='bn'}){
+export default function PensionRetirementCenter({lang='bn',profile={},onSaveCalculation,onPreviewReport}){
   const en=lang==='en';
-  const [mode,setMode]=useState('existing');
+  const pref=readPref();
+  const suggested=profile.current_basic_salary||profile.first_joining_date?'new':'existing';
+  const [mode,setMode]=useState(pref.mode||suggested);
+  useEffect(()=>{savePref({...readPref(),mode})},[mode]);
   return <div className="pension-center-v1">
     <section className="pension-hero">
       <div className="pension-hero-icon"><Landmark/></div>
-      <div><small>{en?'SMART OFFICE HISAB · PENSION CENTER':'স্মার্ট অফিস হিসাব · পেনশন সেন্টার'}</small><h2>{en?'Pension & Retirement Center':'পেনশন ও অবসর সেন্টার'}</h2><p>{en?'Government-2026 pension revision and a Phase-1 retirement-benefit calculator for University of Dhaka officers and employees.':'সরকারি ২০২৬ পেনশন পুনর্নির্ধারণ এবং ঢাকা বিশ্ববিদ্যালয়ের কর্মকর্তা-কর্মচারীদের জন্য Phase-1 অবসর সুবিধার সহায়ক হিসাব।'}</p></div>
+      <div><small>{en?'SMART OFFICE HISAB · PENSION CENTER':'স্মার্ট অফিস হিসাব · পেনশন সেন্টার'}</small><h2>{en?'Pension & Retirement Center':'পেনশন ও অবসর সেন্টার'}</h2><p>{en?'Auto-prefill from Career Profile, clear calculation breakdown, and A4 PDF preview/download.':'চাকরি তথ্য থেকে অটো-ফিল, পরিষ্কার হিসাবের ব্যাখ্যা এবং A4 PDF রিপোর্ট প্রিভিউ/ডাউনলোড।'}</p></div>
     </section>
 
     <section className="pension-rule-banner">
@@ -185,15 +249,15 @@ export default function PensionRetirementCenter({lang='bn'}){
     </section>
 
     <div className="pension-mode-tabs">
-      <button className={mode==='existing'?'active':''} onClick={()=>setMode('existing')}><WalletCards/><span><b>{en?'Existing pensioner':'বর্তমান পেনশনার'}</b><small>{en?'2026 revised net pension':'২০২৬ পুনর্নির্ধারিত নিট পেনশন'}</small></span></button>
-      <button className={mode==='new'?'active':''} onClick={()=>setMode('new')}><Landmark/><span><b>{en?'New retiree':'নতুন অবসরপ্রাপ্ত'}</b><small>{en?'Pension + gratuity + leave':'পেনশন + আনুতোষিক + ছুটি'}</small></span></button>
+      <button className={mode==='existing'?'active':''} onClick={()=>setMode('existing')}><WalletCards/><span><b>{en?'Existing pensioner':'বর্তমান পেনশনার'}</b><small>{en?'Only 30 Jun 2026 net pension needed':'শুধু ৩০ জুন ২০২৬-এর নিট পেনশন দিন'}</small></span></button>
+      <button className={mode==='new'?'active':''} onClick={()=>setMode('new')}><Landmark/><span><b>{en?'New retiree / planning':'নতুন অবসরপ্রাপ্ত / পরিকল্পনা'}</b><small>{en?'Career data prefilled automatically':'চাকরি তথ্য অটো-ফিল হবে'}</small></span></button>
     </div>
 
-    {mode==='existing'?<ExistingPensioner en={en}/>:<NewRetiree en={en}/>}
+    {mode==='existing'?<ExistingPensioner en={en} onSaveCalculation={onSaveCalculation} onPreviewReport={onPreviewReport}/>:<NewRetiree en={en} profile={profile} onSaveCalculation={onSaveCalculation} onPreviewReport={onPreviewReport}/>}
 
     <section className="pension-phase-note">
       <FileText/>
-      <div><b>{en?'Phase-1 scope':'Phase-1 সীমা'}</b><p>{en?'PF final settlement, Benevolent Fund, Group Insurance, family-pension eligibility, DU past-service contribution and PDF export will be added as separate verified layers. They are intentionally not guessed in this first release.':'PF final settlement, Benevolent Fund, Group Insurance, family-pension eligibility, DU past-service contribution এবং PDF export পরবর্তী যাচাইকৃত layer-এ যোগ হবে। প্রথম release-এ এগুলো অনুমান করে হিসাব করা হয়নি।'}</p></div>
+      <div><b>{en?'Current verified scope':'বর্তমান যাচাইকৃত সীমা'}</b><p>{en?'A4 PDF report is now available. PF final settlement, Benevolent Fund, Group Insurance, family-pension eligibility and DU past-service contribution remain separate until exact applicable DU records/rules are confirmed.':'A4 PDF রিপোর্ট এখন আছে। PF final settlement, Benevolent Fund, Group Insurance, family-pension eligibility এবং DU past-service contribution-এর সঠিক প্রযোজ্য DU record/rule নিশ্চিত না হওয়া পর্যন্ত মোট প্রাপ্যে মেশানো হচ্ছে না।'}</p></div>
     </section>
 
     <section className="pension-sources">
