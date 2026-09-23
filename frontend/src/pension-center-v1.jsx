@@ -116,18 +116,18 @@ function revisedExistingAt(oldNet,date){
     rate=slab.rate;min=slab.min;maxNew=slab.maxNew;
     fullTarget=clamp(old*(1+rate/100),min,maxNew);
   }
-  if(date<'2026-07-01')return {amount:old,fullTarget,rate,share:0,protected:protectedHigh};
+  if(date<'2026-07-01')return {amount:old,fullTarget,rate,min,maxNew,share:0,protected:protectedHigh};
   if(date<='2026-12-31'){
     const share=old<=20000?0.50:0.40;
-    return {amount:protectedHigh?old:old+(fullTarget-old)*share,fullTarget,rate,share,protected:protectedHigh};
+    return {amount:protectedHigh?old:old+(fullTarget-old)*share,fullTarget,rate,min,maxNew,share,protected:protectedHigh};
   }
   if(date<='2027-06-30'){
     const share=old<=20000?0.75:0.70;
-    return {amount:protectedHigh?old:old+(fullTarget-old)*share,fullTarget,rate,share,protected:protectedHigh};
+    return {amount:protectedHigh?old:old+(fullTarget-old)*share,fullTarget,rate,min,maxNew,share,protected:protectedHigh};
   }
   const increments=pensionIncrementCount(date);
   const base=protectedHigh?old:fullTarget;
-  return {amount:base*Math.pow(1.05,increments),fullTarget,rate,share:1,protected:protectedHigh,increments};
+  return {amount:base*Math.pow(1.05,increments),fullTarget,rate,min,maxNew,share:1,protected:protectedHigh,increments};
 }
 function pensionAllowanceSnapshot({net,dob,date}){
   const med=pensionerMedical(date,dob);
@@ -226,7 +226,9 @@ function ExistingPensioner({en,onSaveCalculation,onPreviewReport,profile={}}){
     const selected=revisedExistingAt(oldNet,form.asOf);
     const allowance=pensionAllowanceSnapshot({net:selected.amount,dob:form.dob,date:form.asOf});
     const fullIncrease=Math.max(0,selected.fullTarget-oldNet);
-    return {...selected,oldNet,current:selected.amount,increase:fullIncrease,...allowance};
+    return {...selected,oldNet,current:selected.amount,increase:fullIncrease,...allowance,
+      note:selected.protected?(en?'Existing pension above Tk 70,200 remains protected through the applicable transition and then follows the annual pension-increment rule.':'৳৭০,২০০-এর বেশি বিদ্যমান পেনশন প্রযোজ্য transition পর্যন্ত সুরক্ষিত থাকবে এবং পরে বার্ষিক pension-increment rule অনুযায়ী চলবে.'):''
+    };
   },[form]);
   const timeline=useMemo(()=>{
     const oldNet=Number(form.oldNet||0);
@@ -524,7 +526,7 @@ export default function PensionRetirementCenter({lang='bn',profile={},onSaveCalc
 
     <section className="pension-phase-note">
       <FileText/>
-      <div><b>{en?'Current verified scope':'বর্তমান যাচাইকৃত সীমা'}</b><p>{en?'A4 PDF report is now available. PF final settlement, Benevolent Fund, Group Insurance, family-pension eligibility and DU past-service contribution remain separate until exact applicable DU records/rules are confirmed.':'A4 PDF রিপোর্ট এখন আছে। PF final settlement, Benevolent Fund, Group Insurance, family-pension eligibility এবং DU past-service contribution-এর সঠিক প্রযোজ্য DU record/rule নিশ্চিত না হওয়া পর্যন্ত মোট প্রাপ্যে মেশানো হচ্ছে না।'}</p></div>
+      <div><b>{en?'Current verified scope':'বর্তমান যাচাইকৃত সীমা'}</b><p>{en?'Government pension, grade/step fixation, age-based medical, festival/New Year allowance and verified DU Benevolent rules are calculated automatically. PF and Group Insurance are included only when you enter the amount from an official statement; no unverified rate is guessed.':'সরকারি pension, grade/step fixation, বয়সভিত্তিক চিকিৎসা, উৎসব/নববর্ষ ভাতা এবং যাচাইকৃত DU Benevolent rule অটো হিসাব হয়। PF ও Group Insurance শুধু অফিসিয়াল statement-এর অংক দিলে মোটে যোগ হবে—কোনো অনিশ্চিত rate অনুমান করা হচ্ছে না।'}</p></div>
     </section>
 
     <section className="pension-sources three">
