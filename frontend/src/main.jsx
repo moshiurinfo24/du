@@ -1285,7 +1285,7 @@ function pensionReportHtml(payload,lang='bn'){
     {label:en?'Net one-time benefit':'নিট এককালীন প্রাপ্য',value:amt(r.netOneTime)}
   ],4);
   const inputRows=[
-    {label:en?'Employee category':'কর্মচারীর ধরন',value:f.employmentType==='teacher'?(en?'Teacher':'শিক্ষক'):f.employmentType==='officer'?(en?'Officer':'কর্মকর্তা'):(en?'Employee':'কর্মচারী')},
+    {label:en?'Employee category':'কর্মচারীর ধরন',value:f.employmentType==='teacher'?(en?'Teacher':'শিক্ষক'):f.employmentType==='officer'?(en?'Officer':'কর্মকর্তা'):f.employmentType==='class4'?(en?'Class IV employee':'৪র্থ শ্রেণির কর্মচারী'):(en?'Class III employee':'৩য় শ্রেণির কর্মচারী')},
     {label:en?'Grade on 30 Jun 2026':'৩০ জুন ২০২৬-এর গ্রেড',value:(en?'Grade ':'গ্রেড ')+String(r.grade||f.grade||'—')},
     {label:en?'2015 basic on 30 Jun 2026':'৩০ জুন ২০২৬-এর ২০১৫ মূল বেতন',value:amt(r.oldBasic)},
     {label:en?'Full applicable 2026 basic':'পূর্ণ প্রযোজ্য ২০২৬ মূল বেতন',value:amt(r.basic)},
@@ -1306,7 +1306,12 @@ function pensionReportHtml(payload,lang='bn'){
     {label:en?'Gratuity multiplier':'আনুতোষিক multiplier',value:numLang(r.multiplier||0,lang,0)+' ×'},
     {label:en?'Gratuity':'আনুতোষিক',value:amt(r.gratuity)},
     {label:en?'Leave encashment':'ছুটি নগদায়ন',value:amt(r.leaveEncashment)},
+    {label:en?'DU Benevolent monthly deduction rate':'DU Benevolent মাসিক কর্তনের হার',value:numLang((r.benevolent?.rate||0)*100,lang,2)+'%'},
+    {label:en?'DU Benevolent one-time benefit':'DU Benevolent এককালীন সুবিধা',value:r.benevolent?.benefit?amt(r.benevolent.benefit):(r.benevolent?.eligible?(en?'Not included until subscription is confirmed':'subscription নিশ্চিত না হওয়া পর্যন্ত যোগ হয়নি'):(en?'Not eligible under the 10-year condition':'১০ বছরের শর্তে এখনো যোগ্য নয়'))},
+    {label:en?'PF final balance (statement)':'PF final balance (statement)',value:amt(r.pfFinal)},
+    {label:en?'Group Insurance (statement)':'Group Insurance (statement)',value:amt(r.groupInsurance)},
     {label:en?'Loan / advance / other recovery':'ঋণ / অগ্রিম / অন্যান্য কর্তন',value:'− '+amt(r.deduction)},
+    {label:en?'Gross one-time retirement benefit':'মোট এককালীন অবসর প্রাপ্য',value:amt(r.grossOneTime)},
     {label:en?'Net one-time retirement benefit':'নিট এককালীন অবসর প্রাপ্য',value:amt(r.netOneTime),emphasis:true}
   ];
   const payRows=(payload?.payJourney||[]).map(x=>({label:x.label,detail:x.phase?.label||'',value:amt(x.payableBasic)}));
@@ -1320,7 +1325,7 @@ function pensionReportHtml(payload,lang='bn'){
     section(en?'Pension, allowances & retirement calculation':'পেনশন, ভাতা ও অবসর হিসাব',pdfTable(calcRows,{head1:en?'Calculation item':'হিসাবের বিষয়',head3:en?'Result':'ফলাফল',compact:true}),{table:true,tight:true})+
     (payRows.length?section(en?'2026–2028 grade/basic journey':'২০২৬–২০২৮ গ্রেড/মূল বেতনের যাত্রা',pdfTable(payRows,{three:true,head1:en?'Date':'তারিখ',head2:en?'Phase':'ধাপ',head3:en?'Payable basic':'প্রাপ্য মূল বেতন',compact:true}),{table:true,tight:true}):'')+
     (pensionRows.length?section(en?'2026–2028 retirement-benefit journey':'২০২৬–২০২৮ অবসর-পরবর্তী সুবিধার যাত্রা',pdfTable(pensionRows,{three:true,head1:en?'Period':'সময়',head2:en?'Allowance':'ভাতা',head3:en?'Monthly pension':'মাসিক পেনশন',compact:true}),{table:true,tight:true}):'')+
-    '<div style="margin-top:10px;padding:9px 11px;border:1px solid #ead8a9;border-left:4px solid #c49a3d;background:#fffaf0;border-radius:8px;font-size:9.5px;color:#685626;line-height:1.45"><b>'+pdfSafe(en?'Important:':'গুরুত্বপূর্ণ:')+'</b> '+pdfSafe(en?'PF final settlement, Benevolent Fund, Group Insurance and other DU-specific benefits are not added to this total until their exact applicable records/rules are confirmed.':'PF final settlement, Benevolent Fund, Group Insurance এবং অন্যান্য DU-specific সুবিধা সঠিক প্রযোজ্য record/rule নিশ্চিত না হওয়া পর্যন্ত এই মোটে যোগ করা হয়নি।')+'</div>'+
+    '<div style="margin-top:10px;padding:9px 11px;border:1px solid #ead8a9;border-left:4px solid #c49a3d;background:#fffaf0;border-radius:8px;font-size:9.5px;color:#685626;line-height:1.45"><b>'+pdfSafe(en?'Important:':'গুরুত্বপূর্ণ:')+'</b> '+pdfSafe(en?'The DU Benevolent benefit is added only when the user confirms the prescribed subscription condition. PF and Group Insurance are included only from user-entered official statement amounts; no unverified rate is estimated.':'DU Benevolent সুবিধা শুধু নির্ধারিত subscription শর্ত user নিশ্চিত করলে যোগ হয়। PF ও Group Insurance শুধু user দেওয়া অফিসিয়াল statement-এর অংক থেকে যোগ হয়; কোনো অনিশ্চিত rate অনুমান করা হয়নি।')+'</div>'+
     sourceNote;
   return reportShell(en?'Pension & Retirement Calculation Report':'পেনশন ও অবসর হিসাব প্রতিবেদন',en?'Government-2026 baseline · Smart Office Hisab':'সরকারি ২০২৬ baseline · স্মার্ট অফিস হিসাব',body,lang);
 }
