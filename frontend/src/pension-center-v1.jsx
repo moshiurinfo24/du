@@ -181,6 +181,18 @@ function RateTable({en}){
   </details>
 }
 
+function GradeScaleTable({en}){
+  return <details className="pension-rate-table pension-grade-table">
+    <summary><Landmark/>{en?'2026 grade-wise pay scale':'২০২৬ গ্রেডভিত্তিক পূর্ণ বেতনস্কেল'}</summary>
+    <div className="pension-grade-grid">
+      {Array.from({length:20},(_,i)=>String(i+1)).map(g=>{
+        const a=PAY2026[g]||[],first=a[0]||0,last=a[a.length-1]||first;
+        return <span key={g}><b>{en?'Grade ':'গ্রেড '}{num(g,en)}</b><em>{money(first,en)} → {money(last,en)}</em><small>{en?(a.length+' step(s)'):(a.length.toLocaleString('bn-BD')+'টি ধাপ')}</small></span>
+      })}
+    </div>
+  </details>
+}
+
 function ResultActions({en,onSave,onPreview}){
   return <div className="pension-result-actions">
     <button className="secondary" onClick={onSave}><History/>{en?'Save to My Calculations':'আমার হিসাবে সংরক্ষণ'}</button>
@@ -443,6 +455,7 @@ function NewRetiree({en,profile={},onSaveCalculation,onPreviewReport}){
         <ResultActions en={en} onSave={()=>onSaveCalculation?.(payload)} onPreview={()=>onPreviewReport?.(payload)}/>
       </>}
       <RateTable en={en}/>
+      <GradeScaleTable en={en}/>
     </div>}
   </section>
 }
