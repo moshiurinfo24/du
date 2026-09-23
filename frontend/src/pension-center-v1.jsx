@@ -137,6 +137,24 @@ function pensionAllowanceSnapshot({net,dob,date}){
   const boishakhi=Number(net||0)*boishakhiRate;
   return {medical:med.amount,age:med.age,medicalBand:med.label,festivalEach,festivalAnnual:festivalEach*2,boishakhiRate,boishakhi};
 }
+function existingAnnualAllowances(oldNet,dob,en){
+  const years=[2026,2027,2028];
+  return years.map(year=>{
+    const referenceDate=year+'-04-14';
+    const p=revisedExistingAt(oldNet,referenceDate);
+    const a=pensionAllowanceSnapshot({net:p.amount,dob,date:referenceDate});
+    return {
+      year,
+      referenceDate,
+      net:p.amount,
+      festivalEach:a.festivalEach,
+      festivalAnnual:a.festivalAnnual,
+      boishakhiRate:a.boishakhiRate,
+      boishakhi:a.boishakhi,
+      label:en?String(year):year.toLocaleString('bn-BD')
+    };
+  });
+}
 function newRetireePhase(oldNet,newNet,date){
   const old=Number(oldNet||0),full=Number(newNet||0);
   if(date<'2026-07-01')return {share:0,amount:old,label:'2015'};
@@ -246,8 +264,12 @@ function ExistingPensioner({en,onSaveCalculation,onPreviewReport,profile={}}){
       return {date,label,...p,...a};
     });
   },[form.oldNet,form.dob,en]);
+  const annualAllowances=useMemo(()=>{
+    const oldNet=Number(form.oldNet||0);
+    return oldNet?existingAnnualAllowances(oldNet,form.dob,en):[];
+  },[form.oldNet,form.dob,en]);
   useEffect(()=>{savePref({...readPref(),oldNet:form.oldNet,asOf:form.asOf,kind:form.kind,pensionDob:form.dob})},[form]);
-  const payload=result?{mode:'existing',form,result,timeline}:null;
+  const payload=result?{mode:'existing',form,result,timeline,annualAllowances}:null;
 
   return <section className="pension-mode-card">
     <div className="pension-section-head"><div><WalletCards/><div><small>{en?'2026 REVISION':'২০২৬ পুনর্নির্ধারণ'}</small><h3>{en?'Existing pensioner revision':'বর্তমান পেনশনারের নতুন হিসাব'}</h3><p>{en?'Only enter the net pension received on 30 June 2026. The slab, revision rate and phased payable amount are calculated automatically.':'শুধু ৩০ জুন ২০২৬-এ পাওয়া নিট পেনশনের অংক দিন। স্ল্যাব, বৃদ্ধির হার ও ধাপভিত্তিক প্রাপ্য অটোমেটিক হিসাব হবে।'}</p></div></div></div>
@@ -274,13 +296,11 @@ function ExistingPensioner({en,onSaveCalculation,onPreviewReport,profile={}}){
         <Calculator/><div><b>{en?'How this result was applied':'হিসাব কীভাবে প্রয়োগ হয়েছে'}</b><p>{en?('The full revised pension is constrained to the official slab range '+money(result.min,true)+'–'+money(result.maxNew,true)+'. The selected date receives the applicable phased share; from July 2027 the full revised pension continues with annual pension increment rules.'):('পূর্ণ পুনর্নির্ধারিত পেনশন সরকারি স্ল্যাব '+money(result.min,false)+'–'+money(result.maxNew,false)+' এর মধ্যে সীমাবদ্ধ। নির্বাচিত তারিখ অনুযায়ী ধাপভিত্তিক অংশ প্রযোজ্য; জুলাই ২০২৭ থেকে পূর্ণ পেনশন বার্ষিক পেনশন বৃদ্ধির নিয়মসহ চলবে।')}</p></div>
       </div>}
 
-      <div className="pension-kpi-grid six pension-allowance-kpis">
+      <div className="pension-kpi-grid pension-allowance-kpis">
         <article><span>{en?'Age on selected date':'নির্বাচিত তারিখে বয়স'}</span><b>{result.age==null?'—':(num(result.age,en)+(en?' years':' বছর'))}</b></article>
         <article><span>{en?'Medical allowance / month':'চিকিৎসা ভাতা / মাস'}</span><b>{result.medical?money(result.medical,en):'—'}</b></article>
-        <article><span>{en?'Festival allowance / each':'উৎসব ভাতা / প্রতিবার'}</span><b>{money(result.festivalEach,en)}</b></article>
-        <article><span>{en?'Festival allowance / year':'উৎসব ভাতা / বছর'}</span><b>{money(result.festivalAnnual,en)}</b></article>
-        <article><span>{en?'Bangla New Year rate':'বাংলা নববর্ষ ভাতার হার'}</span><b>{num(result.boishakhiRate*100,en)}%</b></article>
-        <article><span>{en?'Bangla New Year allowance':'বাংলা নববর্ষ ভাতা'}</span><b>{money(result.boishakhi,en)}</b></article>
+        <article><span>{en?'Festival allowance':'উৎসব ভাতা'}</span><b>{en?'Twice yearly':'বছরে ২ বার'}</b></article>
+        <article><span>{en?'Bangla New Year allowance':'বাংলা নববর্ষ ভাতা'}</span><b>{en?'Once yearly':'বছরে ১ বার'}</b></article>
       </div>
 
       <section className="pension-timeline">
@@ -290,9 +310,18 @@ function ExistingPensioner({en,onSaveCalculation,onPreviewReport,profile={}}){
             <small>{x.label}</small>
             <b>{money(x.amount,en)}</b>
             <span>{en?'Monthly pension':'মাসিক পেনশন'}</span>
-            <p>{en?'Medical':'চিকিৎসা'}: {x.medical?money(x.medical,en):'—'}</p>
-            <p>{en?'Festival ×2':'উৎসব ×২'}: {money(x.festivalAnnual,en)}</p>
-            <p>{en?'New Year':'নববর্ষ'}: {num(x.boishakhiRate*100,en)}% · {money(x.boishakhi,en)}</p>
+            <p>{en?'Medical / month':'চিকিৎসা / মাস'}: {x.medical?money(x.medical,en):'—'}</p>
+          </article>)}
+        </div>
+      </section>
+
+      <section className="pension-timeline pension-annual-allowances">
+        <div className="pension-timeline-head"><CalendarDays/><div><b>{en?'Annual one-time allowances':'বার্ষিক এককালীন ভাতা'}</b><small>{en?'Festival allowance is paid twice a year; Bangla New Year allowance is paid once a year. It is not a monthly benefit.':'উৎসব ভাতা বছরে ২ বার; বাংলা নববর্ষ ভাতা বছরে ১ বার। এগুলো মাসিক ভাতা নয়।'}</small></div></div>
+        <div className="pension-annual-grid">
+          {annualAllowances.map(x=><article key={x.year}>
+            <small>{x.label}</small>
+            <div><span>{en?'Festival allowance':'উৎসব ভাতা'}</span><b>{money(x.festivalEach,en)} × 2</b></div>
+            <div><span>{en?'Bangla New Year · once':'বাংলা নববর্ষ · ১ বার'}</span><b>{num(x.boishakhiRate*100,en)}% · {money(x.boishakhi,en)}</b></div>
           </article>)}
         </div>
       </section>
@@ -440,9 +469,9 @@ function NewRetiree({en,profile={},onSaveCalculation,onPreviewReport}){
           <article><span>{en?'Age at retirement':'অবসরের সময় বয়স'}</span><b>{result.age==null?'—':(num(result.age,en)+(en?' years':' বছর'))}</b></article>
           <article><span>{en?'Medical allowance / month':'চিকিৎসা ভাতা / মাস'}</span><b>{result.medical?money(result.medical,en):'—'}</b></article>
           <article><span>{en?'Festival allowance / each':'উৎসব ভাতা / প্রতিবার'}</span><b>{money(result.festivalEach,en)}</b></article>
-          <article><span>{en?'Festival ×2 / year':'উৎসব ×২ / বছর'}</span><b>{money(result.festivalAnnual,en)}</b></article>
+          <article><span>{en?'Festival frequency':'উৎসব ভাতার সংখ্যা'}</span><b>{en?'2 times / year':'বছরে ২ বার'}</b></article>
           <article><span>{en?'Bangla New Year rate':'বাংলা নববর্ষ হার'}</span><b>{num(result.boishakhiRate*100,en)}%</b></article>
-          <article><span>{en?'Bangla New Year allowance':'বাংলা নববর্ষ ভাতা'}</span><b>{money(result.boishakhi,en)}</b></article>
+          <article><span>{en?'Bangla New Year frequency':'বাংলা নববর্ষ ভাতার সংখ্যা'}</span><b>{en?'Once / year':'বছরে ১ বার'}</b></article>
         </div>
 
         {payJourney.length>0&&<section className="pension-timeline">
@@ -465,9 +494,7 @@ function NewRetiree({en,profile={},onSaveCalculation,onPreviewReport}){
               <small>{x.label}</small>
               {x.notRetired?<><b>—</b><span>{en?'Still in service':'তখনও চাকরিতে'}</span></>:<>
                 <b>{money(x.net,en)}</b><span>{en?'Monthly pension':'মাসিক পেনশন'}</span>
-                <p>{en?'Medical':'চিকিৎসা'}: {x.medical?money(x.medical,en):'—'}</p>
-                <p>{en?'Festival ×2':'উৎসব ×২'}: {money(x.festivalAnnual,en)}</p>
-                <p>{en?'New Year':'নববর্ষ'}: {num(x.boishakhiRate*100,en)}%</p>
+                <p>{en?'Medical / month':'চিকিৎসা / মাস'}: {x.medical?money(x.medical,en):'—'}</p>
               </>}
             </article>)}
           </div>
