@@ -392,7 +392,7 @@ function NewRetiree({en,profile={},onSaveCalculation,onPreviewReport}){
     {hasProfile&&<div className="pension-profile-prefill"><UserRound/><div><b>{en?'Career-profile data found':'চাকরি তথ্য থেকে ডাটা পাওয়া গেছে'}</b><p>{en?'Basic salary, joining date and retirement date are prefilled where available.':'মূল বেতন, যোগদানের তারিখ ও অবসরের তারিখ পাওয়া গেলে অটো বসানো হয়েছে।'}</p></div></div>}
 
     <div className="pension-form-grid pension-form-smart">
-      <label>{en?'Employee category':'কর্মচারীর ধরন'}<select value={form.employmentType} onChange={e=>{const t=e.target.value;const age=retirementAgeFor(t,0);setForm({...form,employmentType:t,retirementDate:form.dob?addYearsIso(form.dob,age):form.retirementDate})}}><option value="teacher">{en?'Teacher · retirement 65':'শিক্ষক · অবসর ৬৫'}</option><option value="officer">{en?'Officer · retirement 62':'কর্মকর্তা · অবসর ৬২'}</option><option value="employee">{en?'Employee · retirement 60':'কর্মচারী · অবসর ৬০'}</option></select></label>
+      <label>{en?'Employee category':'কর্মচারীর ধরন'}<select value={form.employmentType} onChange={e=>{const t=e.target.value;const age=retirementAgeFor(t,0);setForm({...form,employmentType:t,retirementDate:form.dob?addYearsIso(form.dob,age):form.retirementDate})}}><option value="teacher">{en?'Teacher · retirement 65':'শিক্ষক · অবসর ৬৫'}</option><option value="officer">{en?'Officer · retirement 62':'কর্মকর্তা · অবসর ৬২'}</option><option value="class3">{en?'Class III employee · retirement 60':'৩য় শ্রেণির কর্মচারী · অবসর ৬০'}</option><option value="class4">{en?'Class IV employee · retirement 60':'৪র্থ শ্রেণির কর্মচারী · অবসর ৬০'}</option></select></label>
       <label>{en?'Date of birth':'জন্মতারিখ'}<input type="date" value={form.dob} onChange={e=>{const dob=e.target.value;setForm({...form,dob,retirementDate:dob?addYearsIso(dob,retirementAgeFor(form.employmentType,0)):form.retirementDate})}}/></label>
       <label>{en?'Grade on 30 Jun 2026':'৩০ জুন ২০২৬-এর গ্রেড'}<select value={form.grade} onChange={e=>{const g=e.target.value;const steps=PAY2015[g]||[];setForm({...form,grade:g,oldBasic:String(steps[0]||'')})}}><option value="">{en?'Select grade':'গ্রেড বাছাই করুন'}</option>{Array.from({length:20},(_,i)=>String(i+1)).map(g=><option key={g} value={g}>{en?'Grade ':'গ্রেড '}{num(g,en)}</option>)}</select></label>
       <label className="pension-focus-input">{en?'30 Jun 2026 basic / scale step':'৩০ জুন ২০২৬-এর মূল বেতন / ধাপ'}<select value={form.oldBasic} onChange={e=>setForm({...form,oldBasic:e.target.value})} disabled={!form.grade}><option value="">{en?'Select scale step':'বেতন ধাপ বাছাই করুন'}</option>{gradeSteps.map((v,i)=><option key={v} value={v}>{en?('Step '+(i+1)+' · '+money(v,true)):('ধাপ '+(i+1).toLocaleString('bn-BD')+' · '+money(v,false))}</option>)}</select><small>{en?'No manual basic typing: choose the official 2015 step for your grade.':'ম্যানুয়াল basic লিখতে হবে না—নিজের গ্রেডের অফিসিয়াল ২০১৫ ধাপ বাছাই করুন।'}</small></label>
@@ -404,6 +404,9 @@ function NewRetiree({en,profile={},onSaveCalculation,onPreviewReport}){
         <label>{en?'Additional months':'অতিরিক্ত মাস'}<input type="number" min="0" max="11" value={form.months} onChange={e=>setForm({...form,months:e.target.value})}/></label>
       </>}
       <label>{en?'Eligible leave encashment months':'ছুটি নগদায়নের প্রাপ্য মাস'}<input type="number" min="0" max="18" step="0.5" value={form.leaveMonths} onChange={e=>setForm({...form,leaveMonths:e.target.value})}/><small>{en?'Maximum 18 months; enter only actually eligible leave.':'সর্বোচ্চ ১৮ মাস; বাস্তবে যত মাস প্রাপ্য সেটাই দিন।'}</small></label>
+      <label className="pension-check-label"><input type="checkbox" checked={form.benevolentConfirmed} onChange={e=>setForm({...form,benevolentConfirmed:e.target.checked})}/><span>{en?'I have subscribed to the DU Benevolent Fund at the prescribed rate for at least 10 years':'আমি DU Benevolent Fund-এ নির্ধারিত হারে অন্তত ১০ বছর subscription দিয়েছি'}</span></label>
+      <label>{en?'PF final balance from statement (optional)':'PF statement-এর final balance (ঐচ্ছিক)'}<input type="number" min="0" value={form.pfFinal} onChange={e=>setForm({...form,pfFinal:e.target.value})} placeholder={en?'Enter only from official PF statement':'শুধু অফিসিয়াল PF statement থেকে দিন'}/></label>
+      <label>{en?'Group Insurance amount from statement (optional)':'Group Insurance statement-এর অংক (ঐচ্ছিক)'}<input type="number" min="0" value={form.groupInsurance} onChange={e=>setForm({...form,groupInsurance:e.target.value})} placeholder={en?'Enter verified amount only':'যাচাইকৃত অংক দিন'}/></label>
       <label>{en?'Loan / advance / other recovery':'ঋণ / অগ্রিম / অন্যান্য কর্তন'}<input type="number" min="0" value={form.otherDeduction} onChange={e=>setForm({...form,otherDeduction:e.target.value})}/></label>
     </div>
 
@@ -468,8 +471,20 @@ function NewRetiree({en,profile={},onSaveCalculation,onPreviewReport}){
           </div>
         </section>}
 
+        <section className="pension-du-benefits">
+          <div className="pension-timeline-head"><ShieldCheck/><div><b>{en?'DU retirement benefits & deductions':'ঢাবি অবসর সুবিধা ও কর্তন'}</b><small>{en?'Benevolent benefit is automatic only after you confirm the statutory subscription condition. PF and Group Insurance use statement amounts only.':'Benevolent benefit statutory subscription শর্ত confirm করলে অটো হবে। PF ও Group Insurance শুধু statement-এর অংক ধরবে।'}</small></div></div>
+          <div className="pension-kpi-grid six">
+            <article><span>{en?'Benevolent monthly deduction rate':'Benevolent মাসিক কর্তনের হার'}</span><b>{num((result.benevolent?.rate||0)*100,en)}%</b></article>
+            <article><span>{en?'DU Benevolent one-time benefit':'DU Benevolent এককালীন সুবিধা'}</span><b>{result.benevolent?.benefit?money(result.benevolent.benefit,en):(result.benevolent?.eligible?(en?'Confirm subscription':'subscription নিশ্চিত করুন'):(en?'Not yet eligible':'এখনও যোগ্য নয়'))}</b></article>
+            <article><span>{en?'PF final balance':'PF final balance'}</span><b>{money(result.pfFinal,en)}</b></article>
+            <article><span>{en?'Group Insurance':'Group Insurance'}</span><b>{money(result.groupInsurance,en)}</b></article>
+            <article><span>{en?'Loan / recovery':'ঋণ / কর্তন'}</span><b>{money(result.deduction,en)}</b></article>
+            <article><span>{en?'Benevolent basis':'Benevolent ভিত্তি'}</span><b>{result.benevolent?.eligible?(en?'24 months basic':'২৪ মাসের basic'):(en?'Own subscription refund rule':'নিজস্ব subscription ফেরত বিধান')}</b></article>
+          </div>
+        </section>
+
         <div className="pension-one-time">
-          <div><small>{en?'GROSS ONE-TIME BENEFIT':'মোট এককালীন প্রাপ্য'}</small><b>{money(result.grossOneTime,en)}</b><span>{en?'Gratuity + leave encashment':'আনুতোষিক + ছুটি নগদায়ন'}</span></div>
+          <div><small>{en?'GROSS ONE-TIME BENEFIT':'মোট এককালীন প্রাপ্য'}</small><b>{money(result.grossOneTime,en)}</b><span>{en?'Gratuity + leave + confirmed DU benefits':'আনুতোষিক + ছুটি + নিশ্চিত DU সুবিধা'}</span></div>
           <ChevronRight/>
           <div><small>{en?'NET AFTER RECOVERY':'কর্তনের পর নিট'}</small><b>{money(result.netOneTime,en)}</b><span>{en?('Recovery '+money(result.deduction,true)):('কর্তন '+money(result.deduction,false))}</span></div>
         </div>
