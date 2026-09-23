@@ -1976,6 +1976,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
   });
   const [toolSearch,setToolSearch]=useState('');
   const [installHelp,setInstallHelp]=useState('');
+  const [pensionPreview,setPensionPreview]=useState(null);
   const [favoriteTools,setFavoriteTools]=useState(()=>{
     try{return JSON.parse(localStorage.getItem('hisab_favorite_tools_v1')||'[]').slice(0,8)}catch{return[]}
   });
@@ -2024,6 +2025,37 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
     setInstallHelp(result?.outcome==='accepted'?'accepted':(result?.outcome==='dismissed'?'dismissed':'manual'));
   };
   const localProfile=guestLocalProfile();
+  const savePensionCalculation=(payload)=>{
+    if(!payload?.result)return;
+    const r=payload.result||{},f=payload.form||{};
+    if(payload.mode==='existing'){
+      rememberCalculationHistory({
+        tool:'pension',title_bn:'পেনশন পুনর্নির্ধারণ ২০২৬',title_en:'Pension Revision 2026',
+        summary_bn:'নির্বাচিত তারিখে প্রাপ্য ৳'+moneyLang(r.current||0,'bn')+' · পূর্ণ পুনর্নির্ধারিত ৳'+moneyLang(r.fullTarget||0,'bn'),
+        summary_en:'Selected-date payable Tk '+moneyLang(r.current||0,'en')+' · Full revised Tk '+moneyLang(r.fullTarget||0,'en'),
+        metrics:{pension:'৳'+moneyLang(r.current||0,'bn'),revision:(r.protected?'Protected':numLang(r.rate||0,'bn',0)+'%')},input:{mode:payload.mode,...f}
+      });
+    }else{
+      rememberCalculationHistory({
+        tool:'pension',title_bn:'পেনশন ও অবসর হিসাব',title_en:'Pension & Retirement Calculation',
+        summary_bn:'মাসিক পেনশন ৳'+moneyLang(r.monthlyPension||0,'bn')+' · নিট এককালীন ৳'+moneyLang(r.netOneTime||0,'bn'),
+        summary_en:'Monthly pension Tk '+moneyLang(r.monthlyPension||0,'en')+' · Net one-time Tk '+moneyLang(r.netOneTime||0,'en'),
+        metrics:{pension:'৳'+moneyLang(r.monthlyPension||0,'bn'),oneTime:'৳'+moneyLang(r.netOneTime||0,'bn'),rate:numLang(r.rate||0,'bn',0)+'%'},input:{mode:payload.mode,...f}
+      });
+    }
+  };
+  const openPensionReport=(payload)=>{
+    if(!payload?.result)return;
+    savePensionCalculation(payload);
+    const html=pensionReportHtml(payload,lang);
+    const existing=payload.mode==='existing';
+    setPensionPreview({
+      html,
+      filename:existing?'pension-revision-2026.pdf':'pension-retirement-report.pdf',
+      title:existing?(en?'Pension Revision Report 2026':'পেনশন পুনর্নির্ধারণ প্রতিবেদন ২০২৬'):(en?'Pension & Retirement Report':'পেনশন ও অবসর হিসাব প্রতিবেদন'),
+      summary:existing?(en?'2026 revised pension calculation':'২০২৬ পুনর্নির্ধারিত পেনশন হিসাব'):(en?'Pension, gratuity and retirement-benefit summary':'পেনশন, আনুতোষিক ও অবসর সুবিধার সারাংশ')
+    });
+  };
   const tools=[
     ['salary',WalletCards,en?'Pay Scale 2026–2028':'পে-স্কেল ২০২৬–২০২৮','indigo'],
     ['arrear',ReceiptText,en?'Arrear':'বকেয়া / এরিয়ার','aqua'],
@@ -2137,7 +2169,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
         {activePublicTool==='promotion'&&<section className="public-tool-only-shell"><PromotionCenter lang={lang} publicMode={true}/></section>}
         {activePublicTool==='house'&&<section className="public-tool-only-shell"><HouseAllocationHub lang={lang} publicMode={true}/></section>}
         {['service','age','gap','retire','basic'].includes(activePublicTool)&&<section className="public-tool-only-shell"><CalculatorCenter lang={lang} publicMode={true} initialTool={activePublicTool} singleTool={true}/></section>}
-        {activePublicTool==='pension'&&<section className="public-tool-only-shell"><PensionRetirementCenter lang={lang}/></section>}
+        {activePublicTool==='pension'&&<section className="public-tool-only-shell"><PensionRetirementCenter lang={lang} profile={localProfile} onSaveCalculation={savePensionCalculation} onPreviewReport={openPensionReport}/></section>}
         {activePublicTool==='pf'&&<section className="public-tool-only-shell"><PfDeductionCenter lang={lang} publicMode={true}/></section>}
         {activePublicTool==='points'&&<section className="public-tool-only-shell"><PointsCalculator lang={lang} publicMode={true}/></section>}
         {activePublicTool==='calendar'&&<section className="public-tool-only-shell"><FiscalOfficeCalendar lang={lang}/></section>}
@@ -2163,6 +2195,7 @@ function PwaStandaloneShell({lang='bn',setLang,activePublicTool,openPublicTool,s
           <button className="pwa-sheet-sync" onClick={onLogin}><UserRound/><span>{en?'Login to your account':'আপনার অ্যাকাউন্টে লগইন করুন'}</span></button>
         </section>
       </div>}
+      {pensionPreview&&<PdfPreviewModal html={pensionPreview.html} filename={pensionPreview.filename} onClose={()=>setPensionPreview(null)} lang={lang} shareTitle={pensionPreview.title} shareSummary={pensionPreview.summary}/>}
     </div>;
   }
 
