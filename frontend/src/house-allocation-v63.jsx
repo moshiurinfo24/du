@@ -20,7 +20,7 @@ function normalize(v){
     .trim();
 }
 function sourceFor(id){return DATA.sources.find(function(x){return x.id===id})||{}}
-function escapeRegExp(v){return String(v||'').replace(/[.*+?^\${}()|[\]\\\\]/g,'\\function escapeRegExp(v){return String(v||'').replace(/[.*+?^$()|[\]{}\\]/g,'\\$&')}')}
+function escapeRegExp(v){return String(v||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}
 function Highlight({text,q}){
   const src=String(text||'');
   const needle=String(q||'').trim();
