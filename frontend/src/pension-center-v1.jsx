@@ -1,12 +1,13 @@
-import React,{useMemo,useState} from 'react';
+import React,{useEffect,useMemo,useState} from 'react';
 import {
   AlertTriangle,BadgeCheck,BookOpen,Calculator,CalendarDays,ChevronRight,
-  Coins,FileText,Landmark,ReceiptText,ShieldCheck,WalletCards
+  Coins,FileText,History,Landmark,ReceiptText,ShieldCheck,UserRound,WalletCards
 } from 'lucide-react';
 import './pension-center-v1.css';
 
 const GAZETTE_URL='https://www.dpp.gov.bd/upload_file/gazettes/62983_75061.pdf';
 const DU_STATUTE_URL='https://www.du.ac.bd/fontView/ordinance/Calendar_Part_II.pdf';
+const PREF_KEY='hisab_pension_prefill_v1';
 
 const PENSION_RATES={
   5:21,6:24,7:27,8:30,9:33,10:36,11:39,12:43,13:47,14:51,15:54,16:57,
@@ -35,6 +36,28 @@ function todayIso(){
   const d=new Date(),y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');
   return y+'-'+m+'-'+day;
 }
+function addYearsIso(iso,years){
+  if(!iso||!Number.isFinite(Number(years)))return '';
+  const d=new Date(iso+'T00:00:00');
+  if(Number.isNaN(d.getTime()))return '';
+  d.setFullYear(d.getFullYear()+Number(years));
+  const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+day;
+}
+function serviceYmd(start,end){
+  if(!start||!end)return null;
+  const a=new Date(start+'T00:00:00'),b=new Date(end+'T00:00:00');
+  if(Number.isNaN(a.getTime())||Number.isNaN(b.getTime())||b<a)return null;
+  let y=b.getFullYear()-a.getFullYear(),m=b.getMonth()-a.getMonth(),d=b.getDate()-a.getDate();
+  if(d<0){m-=1;d+=new Date(b.getFullYear(),b.getMonth(),0).getDate()}
+  if(m<0){y-=1;m+=12}
+  return {y,m,d};
+}
+function readPref(){
+  try{const x=JSON.parse(localStorage.getItem(PREF_KEY)||'null');return x&&typeof x==='object'?x:{}}catch{return {}}
+}
+function savePref(next){try{localStorage.setItem(PREF_KEY,JSON.stringify(next||{}))}catch{}}
+
 function pensionRateFor(years){
   const y=Math.floor(Number(years||0));
   if(y<5)return 0;
