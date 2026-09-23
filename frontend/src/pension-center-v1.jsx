@@ -96,7 +96,8 @@ function ResultActions({en,onSave,onPreview}){
 }
 
 function ExistingPensioner({en,onSaveCalculation,onPreviewReport}){
-  const [form,setForm]=useState({oldNet:'',asOf:todayIso(),kind:'original'});
+  const saved=readPref();
+  const [form,setForm]=useState({oldNet:String(saved.oldNet||''),asOf:saved.asOf||todayIso(),kind:saved.kind||'original'});
   const result=useMemo(()=>{
     const oldNet=Number(form.oldNet||0);
     if(!oldNet||oldNet<0)return null;
@@ -113,12 +114,15 @@ function ExistingPensioner({en,onSaveCalculation,onPreviewReport}){
     const current=oldNet+(increase*share);
     return {...slab,oldNet,fullTarget,increase,share,current,protected:false};
   },[form,en]);
+  useEffect(()=>{savePref({...readPref(),oldNet:form.oldNet,asOf:form.asOf,kind:form.kind})},[form]);
+  const payload=result?{mode:'existing',form,result}:null;
 
   return <section className="pension-mode-card">
-    <div className="pension-section-head"><div><WalletCards/><div><small>{en?'2026 REVISION':'২০২৬ পুনর্নির্ধারণ'}</small><h3>{en?'Existing pensioner revision':'বর্তমান পেনশনারের নতুন হিসাব'}</h3><p>{en?'Uses the net pension received on 30 June 2026 and the phased implementation stated in the 2026 retirement-benefit order.':'৩০ জুন ২০২৬-এর নিট পেনশন এবং ২০২৬ অবসর-সুবিধা আদেশের ধাপভিত্তিক বাস্তবায়ন ধরে হিসাব।'}</p></div></div></div>
+    <div className="pension-section-head"><div><WalletCards/><div><small>{en?'2026 REVISION':'২০২৬ পুনর্নির্ধারণ'}</small><h3>{en?'Existing pensioner revision':'বর্তমান পেনশনারের নতুন হিসাব'}</h3><p>{en?'Only enter the net pension received on 30 June 2026. The slab, revision rate and phased payable amount are calculated automatically.':'শুধু ৩০ জুন ২০২৬-এ পাওয়া নিট পেনশনের অংক দিন। স্ল্যাব, বৃদ্ধির হার ও ধাপভিত্তিক প্রাপ্য অটোমেটিক হিসাব হবে।'}</p></div></div></div>
+    <div className="pension-simple-guide"><BadgeCheck/><div><b>{en?'One main figure is enough':'মূলত একটি অংকই দিতে হবে'}</b><p>{en?'Enter the 30 June 2026 net pension. The rest of the calculation is automatic.':'৩০ জুন ২০২৬-এর নিট পেনশন দিন। বাকি হিসাব অটোমেটিক।'}</p></div></div>
     <div className="pension-form-grid">
       <label>{en?'Pension type':'পেনশনের ধরন'}<select value={form.kind} onChange={e=>setForm({...form,kind:e.target.value})}><option value="original">{en?'Original pensioner':'মূল পেনশনভোগী'}</option><option value="family">{en?'Lifetime family pensioner':'আজীবন পারিবারিক পেনশনভোগী'}</option></select></label>
-      <label>{en?'Net pension on 30 June 2026':'৩০ জুন ২০২৬-এর নিট পেনশন'}<input type="number" min="1" value={form.oldNet} onChange={e=>setForm({...form,oldNet:e.target.value})} placeholder={en?'e.g. 18000':'যেমন ১৮০০০'}/></label>
+      <label className="pension-focus-input">{en?'Net pension on 30 June 2026':'৩০ জুন ২০২৬-এর নিট পেনশন'}<input type="number" min="1" value={form.oldNet} onChange={e=>setForm({...form,oldNet:e.target.value})} placeholder={en?'e.g. 18000':'যেমন ১৮০০০'}/><small>{en?'Remembered on this device.':'এই ডিভাইসে মনে রাখা হবে।'}</small></label>
       <label>{en?'Show payable as of':'কোন তারিখের প্রাপ্য দেখাবেন'}<input type="date" min="2026-07-01" value={form.asOf} onChange={e=>setForm({...form,asOf:e.target.value})}/></label>
     </div>
 
@@ -136,6 +140,7 @@ function ExistingPensioner({en,onSaveCalculation,onPreviewReport}){
       {!result.protected&&<div className="pension-explain">
         <Calculator/><div><b>{en?'How this result was applied':'হিসাব কীভাবে প্রয়োগ হয়েছে'}</b><p>{en?('The full revised pension is constrained to the official slab range '+money(result.min,true)+'–'+money(result.maxNew,true)+'. The selected date receives '+num(result.share*100,true)+'% of the increase over the 30 June 2026 pension.'):('পূর্ণ পুনর্নির্ধারিত পেনশন সরকারি স্ল্যাব '+money(result.min,false)+'–'+money(result.maxNew,false)+' এর মধ্যে সীমাবদ্ধ। নির্বাচিত তারিখে ৩০ জুন ২০২৬-এর পেনশনের ওপর বৃদ্ধির '+num(result.share*100,false)+'% কার্যকর ধরা হয়েছে।')}</p></div>
       </div>}
+      <ResultActions en={en} onSave={()=>onSaveCalculation?.(payload)} onPreview={()=>onPreviewReport?.(payload)}/>
     </div>}
   </section>
 }
