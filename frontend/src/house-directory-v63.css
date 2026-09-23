@@ -111,6 +111,10 @@
 .house-dir-rank-stats span{font-size:9px;color:#748197;font-weight:800}
 .house-dir-rank-stats b{font-size:15px;color:#243765}
 .house-dir-rank-stats p{grid-column:1/-1;margin:0;padding:7px 9px;border-radius:9px;background:#fff;color:#4055b7;font-size:11px;font-weight:900;text-align:center;border:1px solid #dfe5f5}
+.house-dir-part-label{padding:10px 12px;border:1px solid #dfe6ef;border-radius:12px;background:#f9fbfd;display:grid;gap:3px}
+.house-dir-part-label span{font-size:9px;font-weight:800;color:#7a8799}
+.house-dir-part-label b{font-size:12px;line-height:1.45;color:#263957}
+.house-dir-part-label small{font-size:9px;color:#718099}
 .house-dir-modal-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .house-dir-modal-grid>div{padding:10px;border:1px solid #e2e8f0;border-radius:11px;background:#fafbfd;display:grid;gap:3px}
 .house-dir-modal-grid span,.house-dir-detail-block>span{font-size:10px;color:#7a8799}
