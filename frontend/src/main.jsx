@@ -625,6 +625,7 @@ function loadJsPdf(){
 }
 const eduBn={masters:'মাস্টার্স',bachelor:'স্নাতক',hsc:'এইচএসসি',diploma:'ডিপ্লোমা',bsceng:'বিএসসি ইঞ্জিনিয়ারিং',mbbs:'এমবিবিএস'};
 const categoryBn={officer:'কর্মকর্তা',class3:'তৃতীয় শ্রেণি',class4:'চতুর্থ শ্রেণি'};
+const DEVELOPER_CREDIT={label:'Designed & Developed by',name:'softbari.com',url:'https://softbari.com'};
 const PDF_BRAND={
   nameBn:'স্মার্ট অফিস হিসাব',
   nameEn:'Smart Office Hisab',
@@ -633,10 +634,7 @@ const PDF_BRAND={
   unofficialBn:'এটি ঢাকা বিশ্ববিদ্যালয়ের অফিসিয়াল অ্যাপ নয়',
   unofficialEn:'Not an official University of Dhaka app',
   logo:'/branding/smart-office-hisab-logo-v50.webp?v=60',
-  website:'dhakau.pages.dev',
-  developerBn:'মোঃ মশিউর রহমান',
-  developerEn:'Md. Moshiur Rahman',
-  phone:'01759084692'
+  website:'dhakau.pages.dev'
 };
 function pdfSafe(v){return escapeHtml(v==null?'—':String(v))}
 function pdfMoneyCell(v){return `<span style="font-family:'Hind Siliguri','Noto Sans Bengali','Inter',sans-serif;font-variant-numeric:tabular-nums;font-weight:800;white-space:nowrap">${pdfSafe(v)}</span>`}
@@ -734,7 +732,7 @@ function reportShell(title,subtitle,body,lang='bn',meta={}){
         <div style="margin-bottom:5px;color:#61726b"><b style="color:#24465d">${en?PDF_BRAND.nameEn:PDF_BRAND.nameBn}</b> · ${en?PDF_BRAND.unofficialEn:PDF_BRAND.unofficialBn}<br/><span style="font-size:8.2px">${en?'Verify applicable rules/orders before any final administrative or financial decision.':'চূড়ান্ত প্রশাসনিক/আর্থিক সিদ্ধান্তের আগে প্রযোজ্য বিধি/আদেশ যাচাই করুন।'}</span></div>
         <div style="display:grid;grid-template-columns:1fr 1.2fr auto;gap:10px;align-items:center;border-top:1px dashed #c6d4d8;padding-top:5px">
           <span><b style="font-family:'Inter','Hind Siliguri',sans-serif;color:#24465d">${PDF_BRAND.website}</b></span>
-          <span style="text-align:center"><b>${en?'Design & Development':'ডিজাইন ও ডেভেলপমেন্ট'}:</b> ${en?PDF_BRAND.developerEn:PDF_BRAND.developerBn} · <span style="font-family:'Inter',Arial,sans-serif">${PDF_BRAND.phone}</span></span>
+          <span style="text-align:center;font-family:'Inter',Arial,sans-serif"><b>${DEVELOPER_CREDIT.label}</b> <a href="${DEVELOPER_CREDIT.url}" target="_blank" rel="noopener noreferrer" style="color:#24465d;font-weight:800;text-decoration:none">${DEVELOPER_CREDIT.name}</a></span>
           <span style="font-family:'Inter','Hind Siliguri',sans-serif;font-weight:900;color:#23465c;background:#fff;border:1px solid #d1dde1;border-radius:7px;padding:3px 6px">${en?'Page':'পৃষ্ঠা'} ${pageNo} / ${totalPages}</span>
         </div>
       </div>
@@ -1982,7 +1980,6 @@ function FooterUsageStats({visitorStats={},pwaStats={},lang='bn',dark=false}){
 
 function PremiumAppFooter({lang='bn',visitorStats={},pwaStats={},dark=false}){
   const en=lang==='en';
-  const supportText=encodeURIComponent(en?'Assalamu Alaikum, I am contacting you regarding the Smart Office Hisab app.':'আসসালামু আলাইকুম, স্মার্ট অফিস হিসাব অ্যাপ বিষয়ে যোগাযোগ করছি।');
   return <footer className={'premium-app-footer compact'+(dark?' dark':'')}>
     <section className="premium-footer-stats-only">
       <small>{en?'LIVE USAGE':'লাইভ ব্যবহার'}</small>
@@ -1990,17 +1987,10 @@ function PremiumAppFooter({lang='bn',visitorStats={},pwaStats={},dark=false}){
     </section>
 
     <section className="premium-footer-credit">
-      <small>{en?'DESIGN, DEVELOPMENT & PREPARATION':'ডিজাইন, ডেভেলপমেন্ট ও প্রস্তুতকরণ'}</small>
+      <small>{DEVELOPER_CREDIT.label}</small>
       <div className="premium-credit-block">
-        <div className="premium-credit-row person">
-          <a className="premium-credit-name" href={'https://wa.me/8801759084692?text='+supportText} target="_blank" rel="noreferrer"><b>{en?'Md. Moshiur Rahman':'মোঃ মশিউর রহমান'}</b></a>
-          <i>·</i>
-          <span>{en?'Senior Assistant':'উচ্চমান সহকারী'}</span>
-        </div>
-        <div className="premium-credit-row office">
-          <b>{en?'University of Dhaka Press':'ঢাকা বিশ্ববিদ্যালয় প্রেস'}</b>
-          <i>·</i>
-          <a href="tel:+8801759084692"><Phone/>01759084692</a>
+        <div className="premium-credit-row">
+          <a className="premium-credit-name" href={DEVELOPER_CREDIT.url} target="_blank" rel="noopener noreferrer"><b>{DEVELOPER_CREDIT.name}</b></a>
         </div>
       </div>
     </section>
